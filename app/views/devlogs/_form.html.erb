@@ -1,0 +1,29 @@
+<%= form_with(model: [@project, devlog]) do |form| %>
+  <% if devlog.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(devlog.errors.count, "error") %> prohibited this devlog from being saved:</h2>
+
+      <ul>
+        <% devlog.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%# Project ID is set via nesting %>
+
+  <div>
+    <%= form.label :title, style: "display: block" %>
+    <%= form.text_field :title %>
+  </div>
+
+  <div>
+    <%= form.label :content, style: "display: block" %>
+    <%= form.text_area :content, rows: 5, style: "width: 100%" %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

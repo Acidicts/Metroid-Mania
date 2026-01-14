@@ -1,0 +1,20 @@
+<h1>Leaderboard</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Rank</th>
+      <th>User</th>
+      <th>Total Time (Hours)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @users.each_with_index do |user, index| %>
+      <tr>
+        <td><%= index + 1 %></td>
+        <td><%= user.name %></td>
+        <td><%= (user.total_time / 3600.0).round(2) %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

@@ -1,0 +1,18 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  name: MyString
+  repository_url: MyString
+  status: MyString
+  hackatime_id: MyString
+  # give the fixture plenty of time so tests can create devlogs by default
+  total_seconds: 86400
+
+two:
+  user: two
+  name: MyString
+  repository_url: MyString
+  status: MyString
+  hackatime_id: MyString
+  total_seconds: 86400

@@ -1,0 +1,23 @@
+<p style="color: green"><%= notice %></p>
+<p style="color: red"><%= alert %></p>
+
+<h1>Store</h1>
+
+<% if admin? %>
+  <%= link_to "New product (Admin)", new_product_path %>
+<% end %>
+
+<div id="products" style="display: flex; flex-wrap: wrap; gap: 20px;">
+  <% @products.each do |product| %>
+    <div style="border: 1px solid #ccc; padding: 10px; width: 250px;">
+      <h3><%= product.name %></h3>
+      <p>Cost: <%= format_credits product.price_currency %></p>
+      
+      <% if product.steam_price_cents %>
+        <p><small>Steam Price: $<%= (product.steam_price_cents / 100.0).round(2) %></small></p>
+      <% end %>
+
+      <%= button_to "Buy Now", orders_path(product_id: product.id), method: :post, data: { turbo: false } %>
+    </div>
+  <% end %>
+</div>

@@ -1,0 +1,36 @@
+<div class="admin-panel">
+  <h1>Orders</h1>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Product</th>
+        <th>Cost</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @orders.each do |o| %>
+        <tr>
+          <td><%= o.user.name %> (<%= o.user.email %>)</td>
+          <td><%= o.product.name %></td>
+          <td><%= o.cost %></td>
+          <td><%= o.status %></td>
+          <td><%= o.created_at %></td>
+          <td>
+            <% if o.pending? || o.unshipped? %>
+              <%= button_to "Fulfill", fulfill_admin_order_path(o), method: :post, class: 'btn-admin' %>
+              <%= button_to "Decline & Refund", decline_admin_order_path(o), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-admin btn-admin-danger' %>
+            <% else %>
+              <em>No actions</em>
+            <% end %>
+            <%= link_to 'View', admin_order_path(o), class: 'btn-admin' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

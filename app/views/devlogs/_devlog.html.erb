@@ -1,0 +1,24 @@
+<div id="<%= dom_id devlog %>" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+  <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: baseline;">
+    <strong style=""><%= devlog.title %></strong>
+    <small style="font-size: 0.8em; color: gray;"><%= devlog.log_date&.strftime("%b %-d, %Y") %></small>
+  </h3>
+
+  <div class="devlog-content">
+    <%= simple_format devlog.content %>
+  </div>
+
+  <% if devlog.duration_minutes && devlog.duration_minutes > 0 %>
+    <p>
+      <strong>Time logged:</strong> <%= format_duration(devlog.duration_minutes * 60) %>
+    </p>
+  <% end %>
+
+  <p style="margin-top: 8px;">
+    <% if defined?(current_user) && current_user && current_user == devlog.project.user %>
+      <%= link_to "Edit", edit_project_devlog_path(devlog.project, devlog), class: "btn btn-sm" %>
+      <%= button_to "Delete", [devlog.project, devlog], method: :delete, data: { confirm: "Are you sure you want to delete this devlog?" }, form: { style: "display: inline" }, class: "btn btn-sm btn-danger" %>
+    <% end %>
+  </p>
+
+</div>

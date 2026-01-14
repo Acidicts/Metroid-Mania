@@ -1,0 +1,16 @@
+<h1>Edit User</h1>
+
+<%= form_with model: [:admin, @user], local: true do |f| %>
+  <% if @user.superadmin? %>
+    <p><em>This is the superadmin and their role cannot be changed.</em></p>
+  <% end %>
+
+  <div>
+    <%= f.label :role %><br>
+    <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, disabled: @user.superadmin? %>
+  </div>
+
+  <div style="margin-top: 8px;">
+    <%= f.submit "Save", class: "btn btn-primary" %>
+  </div>
+<% end %>

@@ -1,0 +1,34 @@
+<h1>Metroid-Mania</h1>
+
+<% if logged_in? %>
+  <p>Welcome, <%= current_user.name %>!</p>
+  <p>Your Balance: <%= format_credits(current_user.currency || 0) %></p>
+  
+  <nav>
+    <%= link_to "My Projects", projects_path %> |
+    <%= link_to "Store", products_path %> |
+    <%= link_to "My Orders", orders_path %> |
+    <%= link_to "Leaderboard", leaderboards_path %> |
+    <%= link_to "Profile", profile_path %>
+    <% if admin? %>
+     | <%= link_to "Admin Dashboard", admin_dashboard_path %>
+    <% end %>
+    | <%= button_to "Logout", logout_path, method: :delete %>
+  </nav>
+
+<% else %>
+  <p>Welcome to Metroid-Mania, the Hack Club YSWS where you build Metroidvania games!</p>
+  <!-- Use a form POST for production security -->
+  <%= form_with url: "/auth/hackclub", method: :post, local: true, style: "display: inline-block;" do %>
+    <%= hidden_field_tag :origin, (params[:origin] || request.original_url) %>
+    <%= submit_tag "Login with Hack Club (POST)" %>
+  <% end %>
+  
+  <% if Rails.env.development? %>
+    <br><br>
+    <!-- Fallback GET link for development/debugging if CSRF fails -->
+    <%= link_to "Login with Hack Club (GET - Dev only)", "/auth/hackclub", data: { turbo: false } %>
+  <% end %>
+  
+  <!-- If you still get InvalidAuthenticityToken, ensure APP_URL matches the host you visit and is registered as the redirect URI in the Hack Club OAuth app -->
+<% end %>

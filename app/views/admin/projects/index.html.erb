@@ -1,0 +1,57 @@
+<div class="admin-panel">
+  <h1>All Projects</h1>
+
+  <%= form_with url: admin_bulk_update_admin_projects_path, method: :post, local: true do |hf| %>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th><%= check_box_tag 'select_all', '', false, id: 'select_all' %></th>
+          <th>User</th>
+          <th>Project</th>
+          <th>Status</th>
+          <th>Credits/hr</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @projects.each do |project| %>
+          <tr>
+            <td><%= check_box_tag 'project_ids[]', project.id %></td>
+            <td><%= project.user.name %></td>
+            <td><%= link_to project.name, admin_project_path(project) %></td>
+            <td>
+              <%= select_tag "status_for_#{project.id}", options_for_select(Project::STATUSES, project.status) %>
+            </td>
+            <td>
+              <%= number_field_tag "credits_for_#{project.id}", project.credits_per_hour, min: 0, style: 'width: 100px;' %>
+            </td>
+            <td>
+              <% if project.shipped? %>
+                <%= button_to "Unship", unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
+              <% else %>
+                <%= button_to "Ship", ship_admin_project_path(project), method: :post, class: 'btn-admin' %>
+              <% end %>
+              <%= button_to "Force Ship", force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+
+    <div style="margin-top: 12px;">
+      <%= select_tag 'bulk_status', options_for_select([['Set status...',''], ['pending','pending'], ['approved','approved'], ['rejected','rejected'], ['denied','denied']]), class: 'form-control' %>
+      <%= number_field_tag 'bulk_credits', nil, placeholder: 'Credits/hr (optional)', min: 0, style: 'width: 180px; margin-left: 8px;' %>
+      <%= submit_tag 'Apply to selected', class: 'btn-admin', data: { confirm: 'Apply changes to selected projects?' } %>
+    </div>
+  <% end %>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const selectAll = document.getElementById('select_all')
+      if (!selectAll) return
+      selectAll.addEventListener('change', () => {
+        document.querySelectorAll("input[name='project_ids[]']").forEach(cb => cb.checked = selectAll.checked)
+      })
+    })
+  </script>
+</div>

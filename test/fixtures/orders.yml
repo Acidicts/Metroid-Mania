@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  product: one
+  status: pending
+  cost: 1.5
+
+two:
+  user: two
+  product: two
+  status: pending
+  cost: 1.5

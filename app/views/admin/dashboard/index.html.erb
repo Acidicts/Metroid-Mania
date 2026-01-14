@@ -1,0 +1,95 @@
+<div class="admin-panel">
+  <h1>Admin Dashboard</h1>
+
+  <div class="admin-stats">
+    <div class="admin-card">Users: <strong><%= @users_count %></strong></div>
+    <div class="admin-card">Orders: <strong><%= @orders_count %></strong></div>
+  </div>
+
+  <h2>Pending Projects</h2>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Project</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @pending_projects.each do |project| %>
+        <tr>
+          <td><%= project.user.name %></td>
+          <td><%= link_to project.name, project_path(project) %></td>
+          <td>
+            <%= button_to "Approve", approve_admin_project_path(project), method: :post, class: 'btn-admin' %>
+            <%= button_to "Reject", reject_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
+          </td>
+          <td>
+            <%= form_with url: set_status_admin_project_path(project), method: :post, local: true do |f| %>
+              <%= f.select :status, options_for_select(Project::STATUSES, selected: project.status), {}, { style: 'margin-right: 6px;' } %>
+              <%= f.submit 'Set', class: 'btn-admin' %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <h2>Ship Requests</h2>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Project</th>
+        <th>Requested At</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% Project.where.not(ship_requested_at: nil).each do |project| %>
+        <tr>
+          <td><%= project.user.name %></td>
+          <td><%= link_to project.name, project_path(project) %></td>
+          <td><%= project.ship_requested_at %></td>
+          <td>
+            <%= form_with url: approve_admin_project_path(project), method: :post, local: true do |f| %>
+              <%= number_field_tag :credits_per_hour, project.credits_per_hour, min: 0, placeholder: 'Credits/hr', style: 'width: 100px; margin-right: 6px;' %>
+              <%= f.submit 'Approve & Ship', class: 'btn-admin' %>
+            <% end %>
+            <%= button_to "Reject", reject_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { confirm: 'Reject this ship request?' } %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+
+  <h2>Approved Projects</h2>
+  <p><%= link_to 'View all projects', admin_projects_path, class: 'btn-admin' %></p>
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>User</th>
+        <th>Project</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% Project.where(status: 'approved').each do |project| %>
+        <tr>
+          <td><%= project.user.name %></td>
+          <td><%= link_to project.name, project_path(project) %></td>
+          <td><%= project.shipped? ? 'Shipped' : 'Unshipped' %></td>
+          <td>
+            <% if project.shipped? %>
+              <%= button_to "Unship", unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning', data: { confirm: 'Unship this project?' } %>
+            <% else %>
+              <%= button_to "Ship", ship_admin_project_path(project), method: :post, class: 'btn-admin', data: { confirm: 'Ship this project?' } %>
+              <%= button_to "Force Ship", force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { confirm: 'Force ship this project? This will bypass devlog requirement.' } %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

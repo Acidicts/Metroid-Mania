@@ -1,0 +1,16 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Devlogs for #{@project.name}" %>
+
+<h1>Devlogs for <%= @project.name %></h1>
+
+<div id="devlogs">
+  <% @devlogs.each do |devlog| %>
+    <%= render devlog %>
+    <p>
+      <%= link_to "Show this devlog", project_devlog_path(@project, devlog) %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New devlog", new_project_devlog_path(@project) %>

@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  provider: MyString
+  uid: uid_one
+  email: user1@example.com
+  name: User One
+  slack_id: MyString
+  verification_status: MyString
+  role: 0
+  currency: 1.5
+
+two:
+  provider: MyString
+  uid: uid_two
+  email: user2@example.com
+  name: User Two
+  slack_id: MyString
+  verification_status: MyString
+  role: 0
+  currency: 1.5

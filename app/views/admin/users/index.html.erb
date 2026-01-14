@@ -1,0 +1,34 @@
+<div class="admin-panel">
+  <h1>Users</h1>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @users.each do |u| %>
+        <tr>
+          <td><%= u.email %></td>
+          <td>
+            <% if u.superadmin? %>
+              <strong>Superadmin</strong>
+            <% else %>
+              <%= u.role %>
+            <% end %>
+          </td>
+          <td>
+            <%= link_to 'Edit', edit_admin_user_path(u), class: 'btn-admin' %>
+            <%= button_to 'Revert Actions', revert_actions_admin_user_path(u), method: :post, data: { confirm: 'Are you sure? This will remove orders and devlogs and unship projects.' }, class: 'btn-admin btn-admin-warning' %>
+            <% unless u.superadmin? %>
+              <%= button_to 'Delete', admin_user_path(u), method: :delete, data: { confirm: 'Delete user?' }, class: 'btn-admin btn-admin-danger' %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,48 @@
+<div id="<%= dom_id project %>">
+  <h2><%= project.name %></h2>
+  
+  <p>
+    <strong>Status:</strong>
+    <%= project.status %>
+  </p>
+
+  <% if project.description.present? %>
+  <p>
+    <strong>Description:</strong>
+    <%= project.description %>
+  </p>
+  <% end %>
+
+  <% if project.readme_url.present? %>
+  <p>
+    <strong>Readme:</strong>
+    <%= link_to project.readme_url, project.readme_url, target: "_blank" %>
+  </p>
+  <% end %>
+
+  <p>
+    <strong>GitHub Repo:</strong>
+    <%= link_to project.repository_url, project.repository_url, target: "_blank" %>
+  </p>
+
+  <p>
+    <strong>Hackatime Project:</strong>
+    <%= project.hackatime_id.presence || "Not Linked" %>
+  </p>
+
+  <p>
+    <strong>Total Time:</strong>
+    <%= format_duration(project.total_seconds) %>
+  </p>
+
+  <p>
+    <strong>Devlogged Time:</strong>
+    <%= format_duration(project.total_devlogged_seconds) %>
+  </p>
+
+  <p>
+    <strong>Undocumented Time:</strong>
+    <%= format_duration([project.total_seconds.to_i - project.total_devlogged_seconds, 0].max) %>
+  </p>
+
+</div>

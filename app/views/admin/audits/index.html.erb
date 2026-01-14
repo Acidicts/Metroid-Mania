@@ -1,0 +1,26 @@
+<div class="admin-panel">
+  <h1>Audit Log</h1>
+
+  <table class="admin-table">
+    <thead>
+      <tr>
+        <th>When</th>
+        <th>Admin</th>
+        <th>Project</th>
+        <th>Action</th>
+        <th>Details</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @audits.each do |a| %>
+        <tr>
+          <td><%= a.created_at %></td>
+          <td><%= a.user&.name || a.user&.email %></td>
+          <td><%= a.project ? link_to(a.project.name, admin_project_path(a.project)) : '-' %></td>
+          <td><%= a.action %></td>
+          <td><%= JSON.pretty_generate(a.details || {}) %></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

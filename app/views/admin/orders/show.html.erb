@@ -1,0 +1,17 @@
+<div class="admin-panel">
+  <h1>Order <%= @order.id %></h1>
+
+  <p><strong>User:</strong> <%= @order.user.name %> (<%= @order.user.email %>)</p>
+  <p><strong>Product:</strong> <%= @order.product.name %></p>
+  <p><strong>Cost:</strong> <%= @order.cost %></p>
+  <p><strong>Status:</strong> <%= @order.status %></p>
+  <p><strong>Created:</strong> <%= @order.created_at %></p>
+
+  <div>
+    <% if @order.pending? || @order.unshipped? %>
+      <%= button_to "Fulfill", fulfill_admin_order_path(@order), method: :post, class: 'btn-admin' %>
+      <%= button_to "Decline & Refund", decline_admin_order_path(@order), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-admin btn-admin-danger' %>
+    <% end %>
+    <%= link_to 'Back', admin_orders_path, class: 'btn-admin' %>
+  </div>
+</div>
