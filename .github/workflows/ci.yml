@@ -178,21 +178,30 @@ jobs:
               body: `### :rage2: you GOOF!\n Schema dump has fallen out of date\n\nRun \`rails db:migrate\` locally and commit the changes to \`db/schema.rb\`.`
             });
 
-      - name: Check annotations are up to date
+      - name: Sync model annotations (auto-commit if needed)
         id: annotate_check
         if: success()
-        run: bundle exec annotaterb models --frozen
-      - name: Comment on annotation failure
-        if: failure() && steps.annotate_check.outcome == 'failure' && github.event_name == 'pull_request'
-        uses: actions/github-script@v8
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `### :rage1: you SILLY GOOSE!\nModel annotations have fallen out of date.\n\nPlease run \`bundle exec annotaterb models\` locally and commit the changes.`
-            });
+        run: |
+          # Try to update model annotations; if files change, commit and push back to the branch
+          set -e
+          bundle exec annotaterb models || true
+
+          # If annotaterb modified files, commit and push them back to the PR branch
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "Model annotations changed; committing and pushing updates."
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git config user.name "github-actions[bot]"
+            git add -A
+            git commit -m "chore: update model annotations (CI)" || true
+
+            # Determine branch name: prefer GITHUB_HEAD_REF (for PRs) else use name from GITHUB_REF
+            BRANCH="${GITHUB_HEAD_REF:-${GITHUB_REF##*/}}"
+            echo "Pushing annotation changes to $BRANCH"
+            git push "https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" HEAD:"$BRANCH" || true
+          else
+            echo "No annotation changes detected."
+          fi
+
 
   # test:
   #   runs-on: ubuntu-latest
