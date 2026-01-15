@@ -41,6 +41,8 @@ group :development do
   gem "web-console"
   gem 'guard'
   gem 'guard-livereload', require: false
+  # Lint ERB templates
+  gem 'erb_lint', require: false
 end
 
 group :test do
