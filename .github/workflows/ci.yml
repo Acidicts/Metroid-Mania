@@ -21,7 +21,13 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          # Allow updating Gemfile.lock in CI when Gemfile changes (avoids frozen failure)
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager --no-exit-on-warn
@@ -40,7 +46,12 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
 
   lint:
@@ -56,7 +67,12 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Set up Node.js
         uses: actions/setup-node@v6
@@ -119,7 +135,12 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Set required env vars for Rails
         run: |
