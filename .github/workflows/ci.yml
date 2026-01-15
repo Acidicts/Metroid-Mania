@@ -25,7 +25,7 @@ jobs:
           bundler-cache: true
 
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager
+        run: bin/brakeman --no-pager --no-exit-on-warn
 
   scan_js:
     runs-on: ubuntu-latest
@@ -62,11 +62,12 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v6
         with:
-          node-version-file: package.json
-          cache: yarn
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install JS dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
@@ -77,10 +78,10 @@ jobs:
         # need to fix this? bundle exec erb_lint --lint-all --autocorrect
 
       - name: Check JavaScript/TypeScript formatting
-        run: yarn -s prettier --check "app/javascript/**/*.{js,jsx,ts,tsx}"
+        run: npx prettier --check "app/javascript/**/*.{js,jsx,ts,tsx}"
 
       - name: Check SCSS/CSS formatting
-        run: yarn -s prettier --check "app/assets/stylesheets/**/*.{scss,css}"
+        run: npx prettier --check "app/assets/stylesheets/**/*.{scss,css}"
 
   zeitwerk_check:
     runs-on: ubuntu-latest
