@@ -37,6 +37,8 @@ end
 
 group :development do
   gem "web-console"
+  gem 'guard'
+  gem 'guard-livereload', require: false
 end
 
 group :test do
