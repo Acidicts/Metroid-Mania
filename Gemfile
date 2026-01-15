@@ -43,6 +43,8 @@ group :development do
   gem 'guard-livereload', require: false
   # Lint ERB templates
   gem 'erb_lint', require: false
+  # Annotate models (adds `annotaterb` executable)
+  gem 'annotaterb', require: false
 end
 
 group :test do
