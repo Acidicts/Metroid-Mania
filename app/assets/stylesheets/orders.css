@@ -1,4 +1,4 @@
 /* Styles for Orders views */
 
 /* Add controller/view-specific rules here. */
-.orders-placeholder { display: block; }
+body.orders .orders-placeholder { display: block; }

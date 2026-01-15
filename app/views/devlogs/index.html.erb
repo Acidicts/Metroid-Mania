@@ -5,11 +5,23 @@
 <h1>Devlogs for <%= @project.name %></h1>
 
 <div id="devlogs">
+  <% ships = @ships.to_a %>
   <% @devlogs.each do |devlog| %>
+    <%# Insert ship markers that occurred at or after this devlog's created_at %>
+    <% while ships.any? && ships.first.shipped_at >= devlog.created_at %>
+      <div class="ship-marker">Project shipped on <%= ships.first.shipped_at %> (devlogged: <%= format_duration(ships.first.devlogged_seconds.to_i) %>)</div>
+      <% ships.shift %>
+    <% end %>
+
     <%= render devlog %>
     <p>
       <%= link_to "Show this devlog", project_devlog_path(@project, devlog) %>
     </p>
+  <% end %>
+
+  <%# Any remaining ships that happened after the last devlog (most recent) %>
+  <% ships.each do |s| %>
+    <div class="ship-marker">Project shipped on <%= s.shipped_at %> (devlogged: <%= format_duration(s.devlogged_seconds.to_i) %>)</div>
   <% end %>
 </div>
 

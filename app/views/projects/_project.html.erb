@@ -26,8 +26,18 @@
   </p>
 
   <p>
-    <strong>Hackatime Project:</strong>
-    <%= project.hackatime_id.presence || "Not Linked" %>
+    <strong>Hackatime Project(s):</strong>
+    <% if defined?(local_assigns) && local_assigns[:@hackatime_breakdown] && @hackatime_breakdown.any? %>
+      <ul>
+        <% @hackatime_breakdown.each do |h| %>
+          <li><%= h[:name] %> — <%= format_duration(h[:seconds]) %></li>
+        <% end %>
+      </ul>
+    <% elsif project.hackatime_ids.present? && project.hackatime_ids.any? %>
+      <%= project.hackatime_ids.join(", ") %>
+    <% else %>
+      <%= project.hackatime_id.presence || "Not Linked" %>
+    <% end %>
   </p>
 
   <p>

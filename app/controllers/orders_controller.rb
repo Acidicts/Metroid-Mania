@@ -18,19 +18,37 @@ class OrdersController < ApplicationController
   def create
     @product = Product.find(params[:product_id])
 
-    # Prevent duplicate pending orders for same product by same user
-    existing = current_user.orders.find_by(product: @product, status: 'pending')
-    if existing
-      redirect_to existing, notice: "You already have a pending order for this product"
-      return
-    end
+    begin
+      # Prevent duplicate pending orders for same product by same user
+      existing = current_user.orders.find_by(product: @product, status: 'pending')
+      if existing
+        redirect_to existing, notice: "You already have a pending order for this product"
+        return
+      end
 
-    @order = current_user.orders.build(product: @product)
+      @order = current_user.orders.build(product: @product)
 
-    if @order.save
-      redirect_to @order, notice: "Order placed successfully!"
-    else
-      redirect_to products_path, alert: @order.errors.full_messages.to_sentence
+      if @order.save
+        redirect_to @order, notice: "Order placed successfully!"
+      else
+        redirect_to products_path, alert: @order.errors.full_messages.to_sentence
+      end
+    rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, StandardError => e
+      # Some DB adapters (SQLite) may raise different exceptions for UNIQUE constraint violations.
+      msg = e.message.to_s
+      if msg.include?("UNIQUE constraint failed") || msg.match?(/duplicate/i)
+        # In a race condition both requests may attempt to create a pending order.
+        # Find the existing pending order and redirect to it.
+        existing = current_user.orders.find_by(product: @product, status: 'pending')
+        if existing
+          redirect_to existing, notice: "Order already placed"
+        else
+          # If we couldn't find it, re-raise so the error can be investigated
+          raise
+        end
+      else
+        raise
+      end
     end
   end
 

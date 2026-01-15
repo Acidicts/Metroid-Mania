@@ -5,7 +5,8 @@ one:
   name: MyString
   repository_url: MyString
   status: MyString
-  hackatime_id: MyString
+  hackatime_ids:
+    - MyStringOne
   # give the fixture plenty of time so tests can create devlogs by default
   total_seconds: 86400
 
@@ -14,5 +15,6 @@ two:
   name: MyString
   repository_url: MyString
   status: MyString
-  hackatime_id: MyString
+  hackatime_ids:
+    - MyStringTwo
   total_seconds: 86400

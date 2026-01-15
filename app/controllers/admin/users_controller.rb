@@ -19,7 +19,13 @@ module Admin
         return
       end
 
+      previous_currency = @user.currency
       if @user.update(user_params)
+        # Audit currency changes when an admin adjusts a user's credits
+        if user_params.key?(:currency) && previous_currency.to_f != @user.currency.to_f
+          Audit.create!(user: current_user, action: 'update_currency', details: { user_id: @user.id, before: previous_currency.to_f, after: @user.currency.to_f })
+        end
+
         redirect_to admin_users_path, notice: "User updated"
       else
         render :edit, status: :unprocessable_entity
@@ -67,8 +73,10 @@ module Admin
     # Returning a plain hash avoids permitting dangerous keys globally.
     def user_params
       permitted = {}
-      if params[:user] && current_user&.superadmin? && params[:user][:role].present?
-        permitted[:role] = params[:user][:role]
+      if params[:user] && (current_user&.superadmin? || current_user&.admin?)
+        permitted[:role] = params[:user][:role] if params[:user][:role].present?
+        # Allow admins to adjust user credits safely
+        permitted[:currency] = params[:user][:currency] if params[:user].key?(:currency)
       end
       permitted
     end

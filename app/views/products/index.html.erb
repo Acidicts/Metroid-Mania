@@ -17,7 +17,7 @@
         <p><small>Steam Price: $<%= (product.steam_price_cents / 100.0).round(2) %></small></p>
       <% end %>
 
-      <%= button_to "Buy Now", orders_path(product_id: product.id), method: :post, data: { turbo: false } %>
+      <%= button_to "Buy Now", orders_path(product_id: product.id), method: :post, data: { turbo: false, disable_with: 'Processing...' } %>
     </div>
   <% end %>
 </div>

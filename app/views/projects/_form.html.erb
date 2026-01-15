@@ -1,4 +1,4 @@
-<%= form_with(model: project) do |form| %>
+<%= form_with(model: project, id: 'new-project-form', html: { multipart: true }) do |form| %>
   <% if project.errors.any? %>
     <div style="color: red">
       <h2><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</h2>
@@ -13,40 +13,79 @@
 
   <!-- User ID is handled automatically by controller -->
 
-  <div class="project-text-input" id="new-project-name" style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-name">
     <%= form.label :name, "Project Title/Name", style: "display: block" %>
-    <%= form.text_field :name, class: "form-control", style: "width: 100%;" %>
+    <%= form.text_field :name, class: "form-control" %>
   </div>
 
-  <div class="project-text-input" id="new-project-description" style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-description">
     <%= form.label :description, style: "display: block" %>
-    <%= form.text_area :description, rows: 3, class: "form-control", style: "width: 100%;" %>
+    <%= form.text_area :description, rows: 3, class: "form-control" %>
   </div>
 
-  <div class="project-text-input" id="new-project-repository-url" style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-repository-url">
     <%= form.label :repository_url, "GitHub Repo URL", style: "display: block" %>
-    <%= form.text_field :repository_url, class: "form-control", style: "width: 100%;" %>
+    <%= form.text_field :repository_url, class: "form-control" %>
   </div>
 
-  <div class="project-text-input" id="new-project-readme-url" style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-readme-url">
     <%= form.label :readme_url, "Readme Address", style: "display: block" %>
-    <%= form.text_field :readme_url, class: "form-control", style: "width: 100%;" %>
+    <%= form.text_field :readme_url, class: "form-control" %>
   </div>
 
-  <div class="project-text-input" id="new-project-hackatime-id" style="margin-bottom: 15px;">
-    <%= form.label :hackatime_id, "Link Hackatime Project", style: "display: block" %>
+  <div class="project-text-input" id="new-project-image">
+    <%= form.label :image, "Project image (optional)", style: "display: block" %>
+    <% if project.respond_to?(:image) && project.image.attached? %>
+      <div style="margin-bottom:8px">
+        <%= image_tag project.image.variant(resize_to_limit: [600, 360]), alt: project.name, style: "max-width:100%; height:auto; border: 3px solid var(--main-700); border-radius:6px;" %>
+      </div>
+      <div style="margin-bottom:8px">
+        <label><%= form.check_box :remove_image, {}, '1', '0' %> Remove image</label>
+      </div>
+    <% end %>
+    <%= form.file_field :image, class: "form-control" %>
+  </div>
+
+  <div class="project-text-input" id="new-project-hackatime-id" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
+    <%= form.label :hackatime_ids, "Link Hackatime Projects", style: "display: block", id: "new-project-hackatime-id-label" %>
     <% if @hackatime_projects.present? %>
-       <%= form.select :hackatime_id, @hackatime_projects.map { |p| ["#{p['name']} - #{format_duration(p['seconds'])}", p['name']] }, { include_blank: "Select a Hackatime project..." }, { style: "display: block; width: 100%; padding: 0.5rem;" } %>
-       <p style="font-size: 0.8em; color: gray;">Select the Hackatime project to sync time from.</p>
+      <div>
+        <select id="hackatime-dropdown" class="form-control" data-action="change->hackatime-selector#add">
+          <option value="">Select a Hackatime project...</option>
+          <% @hackatime_projects.each do |p| %>
+            <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
+          <% end %>
+        </select>
+      </div>
     <% else %>
        <p>
          <em>No Hackatime Projects</em>
          <em>Start <a href="https://hackatime.hackclub.com/">here</a></em>
        </p>
     <% end %>
-  </div>
 
-  <div>
-    <%= form.submit %>
+    <div id="hackatime-selected" class="hackatime-selected">
+      <% (f_h = project.hackatime_ids).to_a.each do |h| %>
+        <% seconds = (@hackatime_seconds || {})[h] || (@hackatime_projects || []).find { |p| p['name'] == h }&.dig('seconds') %>
+        <div class="hackatime-chip" data-hackatime-value="<%= h %>">
+          <span class="hackatime-label"><%= h %></span>
+          <% if seconds.present? && seconds.to_i > 0 %>
+            <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
+          <% end %>
+          <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
+          <input type="hidden" name="project[hackatime_ids][]" value="<%= h %>">
+        </div>
+      <% end %>
+    </div>
+  </div>
+  <div id="project-form-actions">
+    <div id="project-form-submit">
+      <%= form.submit %>
+    </div>
+    <% if project.persisted? %>
+      <div id="project-editing-info">
+        <strong>Editing existing project.</strong>
+      </div>
+    <% end %>
   </div>
 <% end %>

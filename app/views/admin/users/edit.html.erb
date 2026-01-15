@@ -10,6 +10,13 @@
     <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, disabled: @user.superadmin? %>
   </div>
 
+  <% if current_user&.admin? || current_user&.superadmin? %>
+    <div style="margin-top:8px;">
+      <%= f.label :currency, "Total Credits" %><br>
+      <%= f.number_field :currency, step: 0.01, value: @user.currency || 0.0 %>
+    </div>
+  <% end %>
+
   <div style="margin-top: 8px;">
     <%= f.submit "Save", class: "btn btn-primary" %>
   </div>

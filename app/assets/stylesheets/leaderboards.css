@@ -1,4 +1,4 @@
 /* Styles for Leaderboards views */
 
 /* Add controller/view-specific rules here. */
-.leaderboards-placeholder { display: block; }
+body.leaderboards .leaderboards-placeholder { display: block; }

@@ -1,22 +1,61 @@
 <div id="<%= dom_id order %>">
-  <div>
-    <strong>User:</strong>
-    <%= order.user_id %>
-  </div>
+  <style>
+    #order-card {
+      border: 2px solid var(--main-700);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 12px;
+      background-color: var(--main-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-family: Arial, sans-serif;
+    }
 
-  <div>
-    <strong>Product:</strong>
-    <%= order.product_id %>
-  </div>
+    #order-details div, #order-status div {
+      margin-bottom: 8px;
+    }
 
-  <div>
-    <strong>Status:</strong>
-    <%= order.status %>
-  </div>
+    #order-details strong, #order-status strong {
+      color: var(--main-900);
+    }
+  </style>
+  <div id="order-card">
+    <div id="order-details">
+      <div>
+        <strong>Product:</strong>
+        <%= order.product_id %>
+      </div>
 
-  <div>
-    <strong>Cost:</strong>
-    <%= order.cost %>
-  </div>
+      <div>
+        <strong>ID:</strong>
+        <%= order.id %>
+      </div>
 
+      <div>
+        <strong>Cost:</strong>
+        <%= order.cost %>
+      </div>
+    </div>
+    <div id="order-status">
+      <div>
+        <strong>Status:</strong>
+        <% if order.status == "denied" %>
+          <span style="color: red;">Denied</span>
+        <% elsif order.status == "pending" %>
+          <span style="color: orange;">Pending</span>
+        <% elsif order.status == "approved" %>
+          <span style="color: green;">Fulfilled</span>
+        <% end %>
+      </div>
+
+      <div>
+        <strong>Created At:</strong>
+        <%= order.created_at.strftime("%B %d, %Y %I:%M %p") %>
+      </div>
+      
+      <div style="margin-top:8px">
+        <%= link_to "Show this order", order, class: 'btn-retro btn-retro--outline' %>
+      </div>
+    </div>
 </div>

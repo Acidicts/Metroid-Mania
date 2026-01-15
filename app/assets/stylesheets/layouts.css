@@ -1,4 +1,4 @@
 /* Styles for layouts (application-wide layout tweaks) */
 
 /* Add layout-specific rules here. */
-.layout-placeholder { display: block; }
+body.layouts .layout-placeholder { display: block; }

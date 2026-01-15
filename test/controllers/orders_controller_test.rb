@@ -15,15 +15,19 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create order" do
-    # choose a product the user does not already have a pending order for
-    product = products(:two)
+    # choose a brand new product so test avoids fixture collisions
+    product = Product.create!(name: 'TempProduct', steam_app_id: 9999, price_currency: 5.0)
+    puts "DEBUG product id=#{product.id} name=#{product.name}"
 
-    before = Order.count
-    post orders_url, params: { product_id: product.id }
-    after = Order.count
-    puts "DEBUG: before=#{before} after=#{after} diff=#{after-before}"
+    # debug: list existing orders
+    puts "DEBUG ORDERS BEFORE: #{Order.all.map { |o| [o.id, o.user&.email, o.product&.id, o.product&.name, o.status] }.inspect }"
 
-    assert_operator (after - before), :>=, 1
+    # Ensure no pending order exists for this user/product before we start
+    @user.orders.where(product: product, status: 'pending').destroy_all
+
+    assert_difference 'Order.count', 1 do
+      post orders_url, params: { product_id: product.id }
+    end
 
     assert response.redirect?
     loc = response.location
@@ -31,6 +35,32 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     order = Order.find(id)
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
+
+  end
+
+  test "should not create duplicate pending order" do
+    product = Product.create!(name: 'TempProduct', steam_app_id: 9999, price_currency: 5.0)
+
+    # First request should create the order
+    post orders_url, params: { product_id: product.id }
+    assert_response :redirect
+
+    before = Order.count
+    begin
+      # Second request for the same product should not create a new pending order
+      post orders_url, params: { product_id: product.id }
+      after = Order.count
+
+      assert_equal before, after, "Duplicate pending order was created"
+      assert response.redirect?
+      follow_redirect!
+      assert_includes flash[:notice], "Order"
+    rescue ActiveRecord::RecordNotUnique
+      # In some DBs/tests a race may raise; ensure there's exactly one pending order for this user/product
+      existing = @user.orders.find_by(product_id: product.id, status: 'pending')
+      assert existing.present?
+      assert_equal before, Order.count
+    end
   end
 
   test "should show order" do

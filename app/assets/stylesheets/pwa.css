@@ -1,4 +1,4 @@
 /* Styles for PWA views */
 
 /* Add controller/view-specific rules here. */
-.pwa-placeholder { display: block; }
+body.pwa .pwa-placeholder { display: block; }

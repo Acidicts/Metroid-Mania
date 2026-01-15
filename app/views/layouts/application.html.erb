@@ -24,7 +24,41 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body>
-    <%= yield %>
+  <body class="<%= controller.controller_name %> <%= controller.action_name %>">
+    <header>
+      <nav class="retro-navbar">
+        <%= link_to 'Home', root_path %>
+        <%= link_to 'Projects', projects_path %>
+        <div style="flex:1"></div>
+        <% if logged_in? %>
+          <%= link_to current_user.name || current_user.email, profile_path, class: 'btn-retro btn-retro--outline' %>
+          <%= link_to 'Sign out', logout_path, method: :delete, class: 'btn-retro' %>
+        <% else %>
+          <% if Rails.env.development? || Rails.env.test? %>
+            <%= button_to 'Dev sign in', dev_login_path, method: :post, params: { email: 'user@example.com' }, class: 'btn-retro' %>
+          <% else %>
+            <%= link_to 'Sign in', '/auth/slack', class: 'btn-retro' %>
+          <% end %>
+        <% end %>
+      </nav>
+    </header>
+
+    <% if flash.any? %>
+      <div class="retro-container" style="margin-top:12px;">
+        <% flash.each do |key, msg| %>
+          <div class="callout" data-flash="<%= key %>"><strong><%= key.to_s.titleize %>:</strong> <%= msg %></div>
+        <% end %>
+      </div>
+    <% end %>
+
+    <main class="retro-container" role="main" style="padding-top:18px; padding-bottom:18px;">
+      <%= yield %>
+    </main>
+
+    <footer class="retro-footer">
+      <div class="retro-container">
+        <div class="kv"><div class="label">Metroid Mania</div><div class="value">Built with ☕️ + retro pixels</div></div>
+      </div>
+    </footer>
   </body>
 </html>

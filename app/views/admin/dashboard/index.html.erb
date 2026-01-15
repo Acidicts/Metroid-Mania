@@ -63,7 +63,7 @@
     </tbody>
   </table>
 
-  <h2>Approved Projects</h2>
+  <h2>Projects</h2>
   <p><%= link_to 'View all projects', admin_projects_path, class: 'btn-admin' %></p>
   <table class="admin-table">
     <thead>
@@ -75,7 +75,7 @@
       </tr>
     </thead>
     <tbody>
-      <% Project.where(status: 'approved').each do |project| %>
+      <% @shippable_projects.each do |project| %>
         <tr>
           <td><%= project.user.name %></td>
           <td><%= link_to project.name, project_path(project) %></td>

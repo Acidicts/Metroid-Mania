@@ -16,6 +16,24 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'admin', @user.reload.role
   end
 
+  test "admin can update user's credits" do
+    sign_in_as(@admin, password: 'password')
+
+    assert_difference 'Audit.count', 1 do
+      patch admin_user_url(@user), params: { user: { currency: 42.5 } }
+    end
+
+    assert_redirected_to admin_users_url
+    assert_in_delta 42.5, @user.reload.currency, 0.001
+
+    a = Audit.last
+    assert_equal 'update_currency', a.action
+    assert_equal @admin, a.user
+    assert_equal @user.id, a.details['user_id']
+    assert_in_delta 0.0, a.details['before'].to_f, 0.001
+    assert_in_delta 42.5, a.details['after'].to_f, 0.001
+  end
+
   test "cannot change superadmin role" do
     ENV['SUPERADMIN_EMAIL'] = 'super@example.com'
     super_user = User.create!(provider: 'dev', uid: 'super-1', email: 'super@example.com', name: 'Super', role: :user)

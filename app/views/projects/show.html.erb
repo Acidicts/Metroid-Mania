@@ -1,43 +1,95 @@
 <p style="color: green"><%= notice %></p>
 
-<%= render @project %>
+<div class="retro-container">
 
-<hr>
+  <section class="project-hero" style="margin-top:18px;">
+    <div class="hero-left">
+      <div class="project-media">
+        <% if @project.respond_to?(:image_url) && @project.image_url.present? %>
+          <img src="<%= @project.image_url %>" alt="<%= @project.name %>">
+        <% elsif @project.respond_to?(:image) && @project.image.respond_to?(:attached?) && @project.image.attached? %>
+          <%= image_tag(@project.image, alt: @project.name) %>
+        <% else %>
+          <img src="https://placehold.co/300x200" alt="<%= @project.name %>">
+        <% end %>
+      </div>
 
-<div class="devlogs-section">
-  <div style="display: flex; justify-content: space-between; align-items: center;">
-    <h2>Devlogs</h2>
-    <%= link_to "New Devlog", new_project_devlog_path(@project), class: "btn btn-primary" %>
+      <div style="margin-top:12px">
+        <h1 class="project-title"><%= @project.name %></h1>
+        <div class="kv" style="margin-bottom:8px">
+          <div class="label">By</div>
+          <div class="value"><%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.email %></div>
+        </div>
+        <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet.') %></p>
+
+        <div style="margin-top:12px" class="tech-list">
+          <% if @project.hackatime_ids.present? %>
+            <% @project.hackatime_ids.each do |t| %>
+              <span class="tech"><%= t %></span>
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="cta-row">
+          <%= link_to 'View Repo', @project.repository_url, class: 'btn-retro', target: '_blank', rel: 'noopener' %>
+          <% if @project.readme_url.present? %>
+            <%= link_to 'Readme', @project.readme_url, class: 'btn-retro btn-retro--outline', target: '_blank', rel: 'noopener' %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <aside class="hero-right">
+      <div class="featured-project">
+        <% if @project.shipped? %>
+          <div class="badge-retro">Shipped ✅</div>
+        <% elsif @project.ship_requested_at %>
+          <div class="badge-retro">Ship requested</div>
+        <% end %>
+
+        <div style="margin-top:10px">
+          <p><strong>Owner:</strong> <%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.email %></p>
+          <p><strong>Total time:</strong> <%= format_duration(@project.total_seconds) %></p>
+          <p><strong>Devlogged:</strong> <%= format_duration(@project.total_devlogged_seconds) %></p>
+          <p><strong>Undocumented:</strong> <%= format_duration([@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max) %></p>
+        </div>
+
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+          <% if @project.user == current_user %>
+            <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
+
+            <% if @project.shipped? %>
+              <% if @project.devlogs.where('created_at >= ?', @project.shipped_at || @project.approved_at || @project.created_at).sum(:duration_minutes) >= 15 %>
+                <%= button_to 'Request another ship', ship_project_path(@project), method: :post, data: { confirm: 'Request a new ship?' }, class: 'btn-retro' %>
+              <% else %>
+                <span style="color:var(--main-700);">Add a devlog to request another ship.</span>
+              <% end %>
+            <% elsif @project.ship_requested_at %>
+              <span style="color:var(--accent2); font-weight:700">Awaiting approval</span>
+            <% elsif @project.eligible_for_ship_request? %>
+              <%= button_to 'Request Ship', ship_project_path(@project), method: :post, data: { confirm: 'Request to ship this project?' }, class: 'btn-retro' %>
+            <% end %>
+          <% else %>
+            <%= link_to 'Back to projects', projects_path, class: 'btn-retro btn-retro--outline' %>
+          <% end %>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <hr style="margin:24px 0">
+
+  <div class="devlogs-section">
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+      <h2>Devlogs</h2>
+      <%= link_to "New Devlog", new_project_devlog_path(@project), class: "btn-retro" %>
+    </div>
+
+    <% if @project.devlogs.any? %>
+      <%= render @project.devlogs.order(log_date: :desc) %>
+    <% else %>
+      <p>No devlogs yet. Document your progress!</p>
+    <% end %>
   </div>
 
-  <% if @project.devlogs.any? %>
-    <%= render @project.devlogs.order(log_date: :desc) %>
-  <% else %>
-    <p>No devlogs yet. Document your progress!</p>
-  <% end %>
-</div>
-
-<hr>
-
-<div>
-  <%= link_to "Edit this project", edit_project_path(@project) %> |
-  <%= link_to "Back to projects", projects_path %>
-
-  <% if @project.user == current_user %>
-    <% if @project.shipped? %>
-      <p><strong>Status:</strong> Shipped ✅</p>
-      <%# Allow another request only if there's a devlog after the last approval %>
-      <% if @project.approved_at.present? && @project.devlogs.where('created_at >= ?', @project.approved_at).exists? %>
-        <%= button_to "Request another ship", ship_project_path(@project), method: :post, data: { confirm: 'Request a new ship?' }, class: 'btn btn-primary' %>
-      <% else %>
-        <p style="color: #6b7280;">To ship again, add a devlog after approval, then request shipping. <%= link_to "Create a devlog", new_project_devlog_path(@project) %></p>
-      <% end %>
-    <% elsif @project.ship_requested_at %>
-      <p style="color: #b45309;"><strong>Ship requested:</strong> Awaiting admin approval since <%= @project.ship_requested_at %></p>
-    <% else %>
-      <%= button_to "Request Ship", ship_project_path(@project), method: :post, data: { confirm: 'Request to ship this project?' }, class: 'btn btn-primary' %>
-    <% end %>
-  <% end %>
-
-  <%= button_to "Destroy this project", @project, method: :delete %>
 </div>

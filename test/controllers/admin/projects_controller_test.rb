@@ -8,25 +8,24 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     @project = projects(:one)
   end
 
-  test "ship allowed only after approval and a new devlog" do
+  test "ship allowed only after a pending request with a new devlog" do
     sign_in_as(@admin, password: 'password')
 
-    # Try shipping before approval
+    # Try shipping before a pending request exists
     post ship_admin_project_url(@project)
     assert_redirected_to admin_dashboard_url
     assert_match /cannot be shipped/i, flash[:alert]
 
-    # Approve the project
-    post approve_admin_project_url(@project)
-    assert_redirected_to admin_dashboard_url
+    # Simulate owner request
+    @project.update!(status: 'pending', ship_requested_at: Time.current, shipped: false)
 
-    # Still cannot ship until a devlog is created after approval
+    # Still cannot ship until a devlog is created after request (15 minutes required)
     post ship_admin_project_url(@project)
     assert_redirected_to admin_dashboard_url
     assert_match /cannot be shipped/i, flash[:alert]
 
-    # Create a devlog after approval
-    post project_devlogs_url(@project), params: { devlog: { title: 'Post-approve note', content: 'Work done' } }
+    # Create a devlog after request with sufficient duration
+    post project_devlogs_url(@project), params: { devlog: { title: 'Post-request work', content: 'Work done', duration_minutes: 20 } }
 
     # Now shipping should succeed
     post ship_admin_project_url(@project)
@@ -36,7 +35,7 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "unship works and protected by admin" do
     sign_in_as(@admin, password: 'password')
-    @project.update!(status: 'approved', approved_at: Time.current, shipped: true)
+    @project.update!(status: 'shipped', shipped_at: Time.current, shipped: true)
 
     post unship_admin_project_url(@project)
     assert_redirected_to admin_dashboard_url
@@ -46,8 +45,8 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
   test "force ship bypasses devlog requirement" do
     sign_in_as(@admin, password: 'password')
 
-    # Ensure project is not approved/has no post-approval devlog
-    @project.update!(status: 'pending', approved_at: nil, shipped: false)
+    # Ensure project is pending and has no post-request devlog
+    @project.update!(status: 'pending', approved_at: nil, shipped: false, ship_requested_at: Time.current)
 
     post force_ship_admin_project_url(@project)
     assert_redirected_to admin_dashboard_url
@@ -60,6 +59,9 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     # simulate owner request
     @project.update!(status: 'pending', ship_requested_at: Time.current, shipped: false)
 
+    # Create sufficient devlogs to allow approval
+    post project_devlogs_url(@project), params: { devlog: { title: 'Pre-approve work', content: 'Work', duration_minutes: 20 } }
+
     post approve_admin_project_url(@project), params: { credits_per_hour: 7 }
     assert_redirected_to admin_dashboard_url
     @project.reload
@@ -70,9 +72,10 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     # audit recorded
     assert_audit_created(action: 'approve', project: @project, user: @admin)
 
-    # credit awarded and reflected on user
+    # credit awarded and reflected on user: only for the post-request devlogs
     @project.reload
-    assert_equal projects(:one).user.currency, users(:one).reload.currency
+    ship = Ship.where(project: @project).order(created_at: :desc).first
+    assert_equal 1, ship.devlogged_seconds / 60 / 20 # sanity: at least reflects minutes
     assert_audit_created(action: 'credit_awarded', project: @project, user: @admin)
   end
 
@@ -84,8 +87,8 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     # pick a project and change status via set_status
     project = projects(:one)
-    post set_status_admin_project_url(project), params: { status: 'approved' }
+    post set_status_admin_project_url(project), params: { status: 'shipped' }
     assert_redirected_to admin_dashboard_url
-    assert_equal 'approved', project.reload.status
+    assert_equal 'shipped', project.reload.status
   end
 end

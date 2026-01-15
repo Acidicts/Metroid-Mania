@@ -24,6 +24,16 @@
   </div>
 
   <div>
+    <strong>Duration (minutes):</strong>
+    <% if devlog.duration_minutes.present? %>
+      <%= format_duration(devlog.duration_minutes * 60) %>
+    <% else %>
+      <em>Not available</em>
+    <% end %>
+    <p><em>Duration is automatically calculated from remaining undocumented time and cannot be edited.</em></p>
+  </div>
+
+  <div>
     <%= form.submit %>
   </div>
 <% end %>

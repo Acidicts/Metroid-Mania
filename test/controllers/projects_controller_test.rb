@@ -20,7 +20,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create project" do
     assert_difference("Project.count") do
-      post projects_url, params: { project: { hackatime_id: @project.hackatime_id, name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
+      post projects_url, params: { project: { hackatime_ids: ['NewProjectForCreate'], name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
     end
 
     assert_redirected_to project_url(Project.last)
@@ -37,8 +37,17 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update project" do
-    patch project_url(@project), params: { project: { hackatime_id: @project.hackatime_id, name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
+    patch project_url(@project), params: { project: { name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
     assert_redirected_to project_url(@project)
+  end
+
+  test "can remove hackatime projects by clearing selection" do
+    p = projects(:one)
+    p.update!(hackatime_ids: ['A','B'])
+
+    patch project_url(p), params: { project: { name: p.name } } # no hackatime_ids param
+    assert_redirected_to project_url(p)
+    assert_empty p.reload.hackatime_ids
   end
 
   test "should destroy project" do
@@ -51,7 +60,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "owner can request ship and admin approves to ship" do
     # Owner creates a devlog (initial work)
-    post project_devlogs_url(@project), params: { devlog: { title: 'Initial work', content: 'Done' } }
+    post project_devlogs_url(@project), params: { devlog: { title: 'Initial work', content: 'Done', duration_minutes: 20 } }
 
     # Owner requests shipping
     post ship_project_url(@project)
@@ -80,12 +89,12 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "owner sees explanation when missing post-approval devlog" do
-    # Project is approved and shipped, but there's no post-approval devlog
-    @project.update!(status: 'approved', approved_at: Time.current, shipped: true)
+    # Project is shipped, but there's no post-ship devlog
+    @project.update!(status: 'shipped', shipped: true, shipped_at: Time.current)
 
     get project_url(@project)
     assert_response :success
-    assert_select 'p', /To ship again, add a devlog after approval/ # explanation present
+    assert_select 'p', /To ship again, add a devlog after approval|To ship again, add a devlog after the last ship/ # explanation present
     assert_select 'a', 'Create a devlog'
   end
 end

@@ -1,22 +1,21 @@
 /* Styles for Projects views */
 
 /* Add controller/view-specific rules here. */
-.projects-placeholder { display: block; }
+body.projects .projects-placeholder { display: block; }
 
-body { background-color: beige; }
+body.projects { background-color: beige; }
 
-.project-text-input {
+body.projects .project-text-input {
     font-family: Arial, sans-serif;
     font-size: 14px;
     color: #333333;
     margin-bottom: 10px;
     border-radius: 15px;
+    margin: 15px 15px;
 }
 
-
-
-#new-project-form {
-    background-color: #f9f9f9;
+body.projects #new-project-form {
+    background-color: var(--main-800);
     padding: 20px;
     border: 1px solid #dddddd;
     border-radius: 10px;
@@ -25,8 +24,34 @@ body { background-color: beige; }
     position: relative;
 }
 
+#project-form-submit {
+    margin-top: 15px;
+    text-align: center;
+}
+
+#project-form-actions {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: row;
+}
+
+#project-editing-info {
+    font-size: 14px;
+    right: 10px;
+    position: absolute;
+    margin-top: 15px;
+    color: blue;
+}
+
+/* Ensure form controls fill available width and match spacing used previously */
+body.projects .project-text-input .form-control,
+body.projects .project-text-input select.form-control {
+  width: 100%;
+  padding: 0.5rem;
+}
+
 @media (max-width: 600px) {
-  body {
+  body.projects {
     background-color: #fff8e1;
   }
   .project-text-input {
@@ -39,4 +64,39 @@ body { background-color: beige; }
     padding: 10px;
     border-radius: 5px;
   }
+}
+
+/* Hackatime selector chips */
+.hackatime-selected {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hackatime-chip {
+  background: #e6f0ff;
+  border: 1px solid #a9c1ff;
+  border-radius: 999px;
+  padding: 6px 10px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hackatime-label {
+  margin-right: 8px;
+}
+
+.hackatime-seconds {
+  margin-right: 8px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.hackatime-remove {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #333;
+  font-weight: bold;
 }

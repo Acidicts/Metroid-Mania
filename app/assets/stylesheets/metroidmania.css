@@ -1,4 +1,4 @@
 /* Styles for Metroidmania views */
 
 /* Add controller/view-specific rules here. */
-.metroidmania-placeholder { display: block; }
+body.metroidmania .metroidmania-placeholder { display: block; }

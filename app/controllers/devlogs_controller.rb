@@ -4,7 +4,8 @@ class DevlogsController < ApplicationController
 
   # GET /projects/:project_id/devlogs
   def index
-    @devlogs = @project.devlogs
+    @devlogs = @project.devlogs.order(created_at: :desc)
+    @ships = @project.ships.order(shipped_at: :desc)
   end
 
   # GET /projects/:project_id/devlogs/1
@@ -16,11 +17,20 @@ class DevlogsController < ApplicationController
     @devlog = @project.devlogs.build
     @devlog.log_date = Date.current
 
+    # Always use remaining undocumented time for duration; project must have total_seconds set
+    if @project.total_seconds.blank?
+      redirect_to project_path(@project), alert: "Cannot create a devlog: project time is not set. Link Hackatime or set total time first."
+      return
+    end
+
     undocumented_seconds = [@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max
     min_seconds = 15 * 60
     if undocumented_seconds < min_seconds
       redirect_to project_path(@project), alert: "Not enough undocumented time left (minimum 15 minutes required)"
+      return
     end
+
+    @devlog.duration_minutes = undocumented_seconds / 60
   end
 
   # GET /projects/:project_id/devlogs/1/edit
@@ -31,26 +41,34 @@ class DevlogsController < ApplicationController
   def create
     @devlog = @project.devlogs.build(devlog_params)
 
-    # Set log date to today (server-side) since field is removed from the form
+    # Set log date to today (server-side)
     @devlog.log_date = Date.current
 
-    # Automatically set duration to the remaining undocumented time
-    undocumented_seconds = [@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max
-
-    min_seconds = 15 * 60
-    if undocumented_seconds < min_seconds
-      @devlog.errors.add(:base, "Not enough undocumented time left (minimum 15 minutes required)")
-      respond_to do |format|
-        format.html { render :new, status: :unprocessable_entity }
-        format.json { render json: { error: "Not enough undocumented time left (minimum 15 minutes required)" }, status: :unprocessable_entity }
+    # Project must have a total_seconds value and we auto-calc duration from remaining undocumented time
+    if @project.total_seconds.blank?
+      @devlog.errors.add(:base, "Project time not set; cannot create devlog")
+    else
+      undocumented_seconds = [@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max
+      min_seconds = 15 * 60
+      if undocumented_seconds < min_seconds
+        @devlog.errors.add(:base, "Not enough undocumented time left (minimum 15 minutes required)")
+      else
+        # Allow optional requested duration (e.g., tests or API clients). Cap to remaining undocumented time.
+        requested = params.dig(:devlog, :duration_minutes)&.to_i
+        if requested.present?
+          if requested < 15
+            @devlog.errors.add(:duration_minutes, "must be at least 15 minutes")
+          end
+          cap_minutes = (undocumented_seconds / 60).to_i
+          @devlog.duration_minutes = [requested, cap_minutes].min
+        else
+          @devlog.duration_minutes = undocumented_seconds / 60
+        end
       end
-      return
     end
 
-    @devlog.duration_minutes = undocumented_seconds / 60
-
     respond_to do |format|
-      if @devlog.save
+      if @devlog.errors.empty? && @devlog.save
         format.html { redirect_to project_path(@project), notice: "Devlog was successfully created." }
         format.json { render :show, status: :created, location: [@project, @devlog] }
       else
@@ -93,6 +111,6 @@ class DevlogsController < ApplicationController
     end
 
     def devlog_params
-      params.require(:devlog).permit(:title, :content)
+      params.require(:devlog).permit(:title, :content, :duration_minutes)
     end
 end

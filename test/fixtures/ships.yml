@@ -1,0 +1,15 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  project: one
+  user: one
+  shipped_at: 2026-01-15 22:32:21
+  devlogged_seconds: 1
+  credits_awarded: 1.5
+
+two:
+  project: two
+  user: two
+  shipped_at: 2026-01-15 22:32:21
+  devlogged_seconds: 1
+  credits_awarded: 1.5

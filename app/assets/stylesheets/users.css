@@ -1,4 +1,4 @@
 /* Styles for Users views */
 
 /* Add controller/view-specific rules here. */
-.users-placeholder { display: block; }
+body.users .users-placeholder { display: block; }

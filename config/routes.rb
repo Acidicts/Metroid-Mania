@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
   get "metroidmania/index"
+  get "shared/_retro_sample"
   get '/auth/:provider/callback', to: 'sessions#create'
   get '/auth/failure', to: 'sessions#failure'
   delete '/logout', to: 'sessions#destroy'
@@ -62,6 +63,9 @@ Rails.application.routes.draw do
 
   get "home/index"
   get "home" => "home#index"
+
+  # Local-only preview route for the shared retro sample partial
+  get "/shared/_retro_sample", to: "shared#_retro_sample" if Rails.env.development? || Rails.env.test?
   
   get "up" => "rails/health#show", as: :rails_health_check
 

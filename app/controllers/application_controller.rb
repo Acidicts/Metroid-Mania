@@ -6,6 +6,10 @@ class ApplicationController < ActionController::Base
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
 
+  # Graceful handling for unique constraint races (e.g., duplicate pending orders)
+  rescue_from ActiveRecord::RecordNotUnique, with: :handle_record_not_unique
+  rescue_from ActiveRecord::StatementInvalid, with: :handle_record_not_unique
+
   def current_user
     @current_user ||= User.find(session[:user_id]) if session[:user_id]
   end
@@ -44,5 +48,23 @@ class ApplicationController < ActionController::Base
     rescue => e
       Rails.logger.warn("Invalid APP_URL: #{e.message}")
     end
+  end
+
+  def handle_record_not_unique(exception)
+    msg = exception.message.to_s
+    # If this appears to be the 'duplicate pending order' unique index, try to find the existing pending order and redirect
+    if msg.include?("orders.user_id, orders.product_id") || msg.match?(/orders.*user_id.*product_id/)
+      prod_id = params[:product_id] || params.dig(:order, :product_id)
+      if prod_id.present? && current_user
+        existing = current_user.orders.find_by(product_id: prod_id, status: 'pending')
+        if existing
+          redirect_to existing, notice: "Order already placed"
+          return
+        end
+      end
+    end
+
+    # Not handled above — re-raise for visibility
+    raise exception
   end
 end
