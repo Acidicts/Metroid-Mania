@@ -97,6 +97,20 @@ jobs:
           ruby-version: .ruby-version
           bundler-cache: true
 
+      - name: Set required env vars for Rails
+        run: |
+          # Use secrets when available, otherwise provide safe dummy values so initializers don't crash
+          if [ -z "${{ secrets.HACKCLUB_CLIENT_ID }}" ]; then
+            echo "HACKCLUB_CLIENT_ID=dummy" >> $GITHUB_ENV
+          else
+            echo "HACKCLUB_CLIENT_ID=${{ secrets.HACKCLUB_CLIENT_ID }}" >> $GITHUB_ENV
+          fi
+          if [ -z "${{ secrets.HACKCLUB_CLIENT_SECRET }}" ]; then
+            echo "HACKCLUB_CLIENT_SECRET=dummy" >> $GITHUB_ENV
+          else
+            echo "HACKCLUB_CLIENT_SECRET=${{ secrets.HACKCLUB_CLIENT_SECRET }}" >> $GITHUB_ENV
+          fi
+
       - name: Check zeitwerk loader
         run: bin/rails zeitwerk:check
 
@@ -123,6 +137,20 @@ jobs:
         with:
           ruby-version: .ruby-version
           bundler-cache: true
+
+      - name: Set required env vars for Rails
+        run: |
+          # Use secrets when available, otherwise provide safe dummy values so initializers don't crash
+          if [ -z "${{ secrets.HACKCLUB_CLIENT_ID }}" ]; then
+            echo "HACKCLUB_CLIENT_ID=dummy" >> $GITHUB_ENV
+          else
+            echo "HACKCLUB_CLIENT_ID=${{ secrets.HACKCLUB_CLIENT_ID }}" >> $GITHUB_ENV
+          fi
+          if [ -z "${{ secrets.HACKCLUB_CLIENT_SECRET }}" ]; then
+            echo "HACKCLUB_CLIENT_SECRET=dummy" >> $GITHUB_ENV
+          else
+            echo "HACKCLUB_CLIENT_SECRET=${{ secrets.HACKCLUB_CLIENT_SECRET }}" >> $GITHUB_ENV
+          fi
 
       - name: Check schema matches migrations
         id: migration_check
