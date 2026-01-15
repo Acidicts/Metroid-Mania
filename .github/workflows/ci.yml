@@ -22,7 +22,7 @@ jobs:
         run: bin/brakeman --no-pager
       
       - name: Scan for known security vulnerabilities in gems used
-        run: bin/bundler-audit
+        run: bundle audit
       
   scan_js:
     runs-on: ubuntu-latest
