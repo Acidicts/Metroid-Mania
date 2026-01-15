@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  get "metroidmania/index"
   get '/auth/:provider/callback', to: 'sessions#create'
   get '/auth/failure', to: 'sessions#failure'
   delete '/logout', to: 'sessions#destroy'

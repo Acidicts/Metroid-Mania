@@ -3,27 +3,25 @@ class HackatimeService
   #             YYYY-MM-DD
   START_DATE = "2025-12-15"
 
-  def initialize(api_key, slack_id: nil)
-    @api_key = api_key
+  def initialize(slack_id: nil)
     @slack_id = slack_id
   end
 
   # Instance method interface for Controllers
   def get_all_projects
-    uid = @slack_id || self.class.fetch_authenticated_user(@api_key)
-    Rails.logger.info "HackatimeService: Resolving UID. slack_id: #{@slack_id}, api_key present: #{@api_key.present?}"
-    return [] unless uid
+    Rails.logger.info "HackatimeService: Resolving UID. slack_id: #{@slack_id}"
+    return [] unless @slack_id
 
     # Get totals starting from START_DATE
-    all_stats = self.class.fetch_stats(uid, start_date: START_DATE)
+    all_stats = self.class.fetch_stats(@slack_id, start_date: START_DATE)
     # Get recent totals (last 30 days) for ordering by recency
     recent_start = 30.days.ago.to_date.to_s
-    recent_stats = self.class.fetch_stats(uid, start_date: recent_start)
+    recent_stats = self.class.fetch_stats(@slack_id, start_date: recent_start)
 
     all_projects = all_stats && all_stats[:projects] ? all_stats[:projects] : {}
     recent_projects = recent_stats && recent_stats[:projects] ? recent_stats[:projects] : {}
 
-    Rails.logger.info "HackatimeService: Found #{all_projects.size} projects since #{START_DATE} and #{recent_projects.size} recent projects for UID=#{uid}"
+    Rails.logger.info "HackatimeService: Found #{all_projects.size} projects since #{START_DATE} and #{recent_projects.size} recent projects for UID=#{@slack_id}"
 
     projects = all_projects.map do |name, total_seconds|
       {
@@ -39,7 +37,7 @@ class HackatimeService
 
   def get_leaderboard
     response = self.class.connection.get("leaderboard") do |req|
-      req.headers["Authorization"] = "Bearer #{@api_key}" if @api_key.present?
+      req.headers["Authorization"] = "Bearer #{ENV["HACKATIME_API_KEY"]}" if ENV["HACKATIME_API_KEY"].present?
     end
     
     if response.success?
@@ -55,10 +53,9 @@ class HackatimeService
   
   # Method to fetch stats for the current user (used for sync)
   def get_project_stats(project_name)
-    uid = @slack_id || self.class.fetch_authenticated_user(@api_key)
-    return 0 unless uid
+    return 0 unless @slack_id
 
-    stats = self.class.fetch_stats(uid)
+    stats = self.class.fetch_stats(@slack_id)
     return 0 unless stats && stats[:projects]
 
     stats[:projects][project_name] || 0

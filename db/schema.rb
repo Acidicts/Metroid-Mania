@@ -11,9 +11,6 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_01_14_193449) do
-  # These are extensions that must be enabled in order to support this database
-  enable_extension "pg_catalog.plpgsql"
-
   create_table "audits", force: :cascade do |t|
     t.string "action", null: false
     t.datetime "created_at", null: false
@@ -59,16 +56,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_14_193449) do
   end
 
   create_table "projects", force: :cascade do |t|
-    t.datetime "approved_at"
     t.datetime "created_at", null: false
-    t.integer "credits_per_hour"
     t.text "description"
     t.string "hackatime_id"
     t.string "name"
     t.string "readme_url"
     t.string "repository_url"
-    t.datetime "ship_requested_at"
-    t.boolean "shipped", default: false, null: false
     t.string "status"
     t.integer "total_seconds"
     t.datetime "updated_at", null: false
@@ -82,14 +75,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_14_193449) do
     t.string "email"
     t.string "hackatime_api_key"
     t.string "name"
-    t.string "password_digest"
     t.string "provider"
     t.integer "role"
     t.string "slack_id"
     t.string "uid"
     t.datetime "updated_at", null: false
     t.string "verification_status"
-    t.index ["uid"], name: "index_users_on_uid"
   end
 
   add_foreign_key "audits", "projects"

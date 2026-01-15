@@ -13,37 +13,35 @@
 
   <!-- User ID is handled automatically by controller -->
 
-  <div style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-name" style="margin-bottom: 15px;">
     <%= form.label :name, "Project Title/Name", style: "display: block" %>
     <%= form.text_field :name, class: "form-control", style: "width: 100%;" %>
   </div>
 
-  <div style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-description" style="margin-bottom: 15px;">
     <%= form.label :description, style: "display: block" %>
     <%= form.text_area :description, rows: 3, class: "form-control", style: "width: 100%;" %>
   </div>
 
-  <div style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-repository-url" style="margin-bottom: 15px;">
     <%= form.label :repository_url, "GitHub Repo URL", style: "display: block" %>
     <%= form.text_field :repository_url, class: "form-control", style: "width: 100%;" %>
   </div>
 
-  <div style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-readme-url" style="margin-bottom: 15px;">
     <%= form.label :readme_url, "Readme Address", style: "display: block" %>
     <%= form.text_field :readme_url, class: "form-control", style: "width: 100%;" %>
   </div>
 
-  <div style="margin-bottom: 15px;">
+  <div class="project-text-input" id="new-project-hackatime-id" style="margin-bottom: 15px;">
     <%= form.label :hackatime_id, "Link Hackatime Project", style: "display: block" %>
     <% if @hackatime_projects.present? %>
        <%= form.select :hackatime_id, @hackatime_projects.map { |p| ["#{p['name']} - #{format_duration(p['seconds'])}", p['name']] }, { include_blank: "Select a Hackatime project..." }, { style: "display: block; width: 100%; padding: 0.5rem;" } %>
        <p style="font-size: 0.8em; color: gray;">Select the Hackatime project to sync time from.</p>
     <% else %>
        <p>
-         <em>No Hackatime projects found or API key not set.</em>
-         <% unless current_user.hackatime_api_key.present? %>
-           <a href="<%= profile_path %>">Link your Hackatime API Key</a>
-         <% end %>
+         <em>No Hackatime Projects</em>
+         <em>Start <a href="https://hackatime.hackclub.com/">here</a></em>
        </p>
     <% end %>
   </div>

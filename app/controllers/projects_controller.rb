@@ -104,8 +104,8 @@ class ProjectsController < ApplicationController
     end
     
     def load_hackatime_projects
-      if current_user.hackatime_api_key.present?
-        service = HackatimeService.new(current_user.hackatime_api_key, slack_id: current_user.slack_id)
+      if current_user.slack_id.present?
+        service = HackatimeService.new(slack_id: current_user.slack_id)
         @hackatime_projects = service.get_all_projects
       else
         @hackatime_projects = []

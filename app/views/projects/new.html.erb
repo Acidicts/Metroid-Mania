@@ -1,11 +1,15 @@
-<% content_for :title, "New project" %>
+<div id="new-project">
+  <% content_for :title, "New project" %>
 
-<h1>New project</h1>
+  <h1>New project</h1>
 
-<%= render "form", project: @project %>
+  <div id="new-project-form">
+    <%= render "form", project: @project %>
+  </div>
 
-<br>
+  <br>
 
-<div>
-  <%= link_to "Back to projects", projects_path %>
+  <div>
+    <%= link_to "Back to projects", projects_path %>
+  </div>
 </div>

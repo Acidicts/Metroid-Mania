@@ -1,0 +1,42 @@
+/* Styles for Projects views */
+
+/* Add controller/view-specific rules here. */
+.projects-placeholder { display: block; }
+
+body { background-color: beige; }
+
+.project-text-input {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    color: #333333;
+    margin-bottom: 10px;
+    border-radius: 15px;
+}
+
+
+
+#new-project-form {
+    background-color: #f9f9f9;
+    padding: 20px;
+    border: 1px solid #dddddd;
+    border-radius: 10px;
+    width: 60%;
+    left: 20%;
+    position: relative;
+}
+
+@media (max-width: 600px) {
+  body {
+    background-color: #fff8e1;
+  }
+  .project-text-input {
+    font-size: 12px;
+    margin-bottom: 6px;
+  }
+  #new-project-form {
+    margin: 2.5%;
+    width: 95%;
+    padding: 10px;
+    border-radius: 5px;
+  }
+}
