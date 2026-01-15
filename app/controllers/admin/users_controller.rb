@@ -63,8 +63,14 @@ module Admin
       @user = User.find(params[:id])
     end
 
+    # Only permit role changes when the current user is a superadmin.
+    # Returning a plain hash avoids permitting dangerous keys globally.
     def user_params
-      params.require(:user).permit(:role)
+      permitted = {}
+      if params[:user] && current_user&.superadmin? && params[:user][:role].present?
+        permitted[:role] = params[:user][:role]
+      end
+      permitted
     end
   end
 end

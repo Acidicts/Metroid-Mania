@@ -23,7 +23,7 @@
               <%= select_tag "status_for_#{project.id}", options_for_select(Project::STATUSES, project.status) %>
             </td>
             <td>
-              <%= number_field_tag "credits_for_#{project.id}", project.credits_per_hour, min: 0, style: 'width: 100px;' %>
+              <%= number_field_tag "credits_for_#{project.id}", project.credits_per_hour, min: 0, autocomplete: 'off', style: 'width: 100px;' %>
             </td>
             <td>
               <% if project.shipped? %>
@@ -40,7 +40,7 @@
 
     <div style="margin-top: 12px;">
       <%= select_tag 'bulk_status', options_for_select([['Set status...',''], ['pending','pending'], ['approved','approved'], ['rejected','rejected'], ['denied','denied']]), class: 'form-control' %>
-      <%= number_field_tag 'bulk_credits', nil, placeholder: 'Credits/hr (optional)', min: 0, style: 'width: 180px; margin-left: 8px;' %>
+      <%= number_field_tag 'bulk_credits', nil, placeholder: 'Credits/hr (optional)', min: 0, autocomplete: 'off', style: 'width: 180px; margin-left: 8px;' %>
       <%= submit_tag 'Apply to selected', class: 'btn-admin', data: { confirm: 'Apply changes to selected projects?' } %>
     </div>
   <% end %>

@@ -3,7 +3,7 @@
 <% if logged_in? %>
   <p>Welcome, <%= current_user.name %>!</p>
   <p>Your Balance: <%= format_credits(current_user.currency || 0) %></p>
-  
+
   <nav>
     <%= link_to "My Projects", projects_path %> |
     <%= link_to "Store", products_path %> |
@@ -23,12 +23,12 @@
     <%= hidden_field_tag :origin, (params[:origin] || request.original_url) %>
     <%= submit_tag "Login with Hack Club (POST)" %>
   <% end %>
-  
+
   <% if Rails.env.development? %>
     <br><br>
     <!-- Fallback GET link for development/debugging if CSRF fails -->
     <%= link_to "Login with Hack Club (GET - Dev only)", "/auth/hackclub", data: { turbo: false } %>
   <% end %>
-  
+
   <!-- If you still get InvalidAuthenticityToken, ensure APP_URL matches the host you visit and is registered as the redirect URI in the Hack Club OAuth app -->
 <% end %>

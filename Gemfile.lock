@@ -77,10 +77,20 @@ GEM
       uri (>= 0.13.1)
     addressable (2.8.8)
       public_suffix (>= 2.0.2, < 8.0)
+    annotaterb (4.20.0)
+      activerecord (>= 6.0.0)
+      activesupport (>= 6.0.0)
     ast (2.4.3)
     base64 (0.3.0)
     bcrypt (3.1.21)
     bcrypt_pbkdf (1.1.2)
+    better_html (2.2.0)
+      actionview (>= 7.0)
+      activesupport (>= 7.0)
+      ast (~> 2.0)
+      erubi (~> 1.4)
+      parser (>= 2.4)
+      smart_properties
     bigdecimal (4.0.1)
     bindex (0.8.1)
     bootsnap (1.21.0)
@@ -119,6 +129,13 @@ GEM
       eventmachine (>= 0.12.9)
       http_parser.rb (~> 0)
     erb (6.0.1)
+    erb_lint (0.9.0)
+      activesupport
+      better_html (>= 2.0.1)
+      parser (>= 2.7.1.4)
+      rainbow
+      rubocop (>= 1)
+      smart_properties
     erubi (1.13.1)
     et-orbi (1.4.0)
       tzinfo
@@ -282,6 +299,11 @@ GEM
     parser (3.3.10.1)
       ast (~> 2.4.1)
       racc
+    pg (1.6.3)
+    pg (1.6.3-aarch64-linux)
+    pg (1.6.3-aarch64-linux-musl)
+    pg (1.6.3-x86_64-linux)
+    pg (1.6.3-x86_64-linux-musl)
     pp (0.6.3)
       prettyprint
     prettyprint (0.2.0)
@@ -398,6 +420,7 @@ GEM
       rubyzip (>= 1.2.2, < 4.0)
       websocket (~> 1.0)
     shellany (0.0.1)
+    smart_properties (1.17.0)
     snaky_hash (2.0.3)
       hashie (>= 0.1.0, < 6)
       version_gem (>= 1.1.8, < 3)
@@ -475,6 +498,7 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  annotaterb
   bcrypt (~> 3.1.18)
   bootsnap
   brakeman
@@ -482,6 +506,7 @@ DEPENDENCIES
   capybara
   debug
   dotenv-rails (~> 3.2)
+  erb_lint
   faraday (~> 2.14)
   guard
   guard-livereload
@@ -493,6 +518,7 @@ DEPENDENCIES
   omniauth (~> 2.1)
   omniauth-oauth2 (~> 1.9)
   omniauth-rails_csrf_protection (~> 2.0)
+  pg (>= 1.5)
   propshaft
   puma (>= 5.0)
   rails (~> 8.1.2)
