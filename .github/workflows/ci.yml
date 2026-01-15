@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev
+        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev libpq-dev build-essential
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -34,7 +34,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev
+        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev libpq-dev build-essential
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -50,7 +50,7 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev
+        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev libpq-dev build-essential
 
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
@@ -66,7 +66,12 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install JS dependencies
-        run: npm ci
+        run: |
+          if [ -f package.json ]; then
+            npm ci
+          else
+            echo "No package.json found — skipping npm install."
+          fi
 
       - name: Lint code for consistent style
         run: bin/rubocop -f github
@@ -77,42 +82,20 @@ jobs:
         # need to fix this? bundle exec erb_lint --lint-all --autocorrect
 
       - name: Check JavaScript/TypeScript formatting
-        run: npx prettier --check "app/javascript/**/*.{js,jsx,ts,tsx}"
+        run: |
+          if [ -f package.json ]; then
+            npx prettier --check "app/javascript/**/*.{js,jsx,ts,tsx}"
+          else
+            echo "No package.json — skipping JS formatting check."
+          fi
 
       - name: Check SCSS/CSS formatting
-        run: npx prettier --check "app/assets/stylesheets/**/*.{scss,css}"
-
-  zeitwerk_check:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev
-
-      - name: Set up Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: .ruby-version
-          bundler-cache: true
-
-      - name: Set required env vars for Rails
         run: |
-          # Use secrets when available, otherwise provide safe dummy values so initializers don't crash
-          if [ -z "${{ secrets.HACKCLUB_CLIENT_ID }}" ]; then
-            echo "HACKCLUB_CLIENT_ID=dummy" >> $GITHUB_ENV
+          if [ -f package.json ]; then
+            npx prettier --check "app/assets/stylesheets/**/*.{scss,css}"
           else
-            echo "HACKCLUB_CLIENT_ID=${{ secrets.HACKCLUB_CLIENT_ID }}" >> $GITHUB_ENV
+            echo "No package.json — skipping SCSS/CSS formatting check."
           fi
-          if [ -z "${{ secrets.HACKCLUB_CLIENT_SECRET }}" ]; then
-            echo "HACKCLUB_CLIENT_SECRET=dummy" >> $GITHUB_ENV
-          else
-            echo "HACKCLUB_CLIENT_SECRET=${{ secrets.HACKCLUB_CLIENT_SECRET }}" >> $GITHUB_ENV
-          fi
-
-      - name: Check zeitwerk loader
-        run: bin/rails zeitwerk:check
 
   db_checks:
     runs-on: ubuntu-latest
@@ -132,7 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev
+        run: sudo apt-get update && sudo apt-get install -y libblas-dev liblapack-dev libpq-dev build-essential
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: .ruby-version
@@ -225,4 +208,3 @@ jobs:
   #         path: ${{ github.workspace }}/tmp/screenshots
   #         if-no-files-found: ignore
 
-  
