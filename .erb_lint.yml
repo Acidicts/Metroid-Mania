@@ -1,0 +1,54 @@
+---
+# ERB Lint configuration for Metroid-Mania
+# Enables a set of linters tuned to the project's conventions.
+# See: https://github.com/Shopify/erb_lint for options and linter docs.
+
+# Keep default linters enabled and add/override specific ones below
+EnableDefaultLinters: true
+
+# Exclude vendor and node modules
+exclude:
+  - '**/vendor/**/*'
+  - '**/node_modules/**/*'
+
+linters:
+  # Require autocomplete on input helpers for accessibility
+  RequireInputAutocomplete:
+    enabled: true
+
+  # Trailing whitespace and extra newlines
+  TrailingWhitespace:
+    enabled: true
+  ExtraNewline:
+    enabled: true
+  FinalNewline:
+    enabled: true
+    present: true
+
+  # Basic HTML spacing rules
+  SpaceInHtmlTag:
+    enabled: true
+
+  # ERB tag spacing and trimming
+  SpaceAroundErbTag:
+    enabled: true
+  RightTrim:
+    enabled: true
+
+  # Enforce self closing style for void elements (allow HTML5 style)
+  SelfClosingTag:
+    enabled: true
+    enforced_style: 'never'
+
+  # Run RuboCop on embedded Ruby (inherit project config)
+  Rubocop:
+    enabled: true
+    rubocop_config:
+      inherit_from:
+        - .rubocop.yml
+
+  # Optional: warn about missing script nonces in scripts (disabled by default)
+  RequireScriptNonce:
+    enabled: false
+
+# You can add project-specific linter customizations below

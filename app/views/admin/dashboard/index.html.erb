@@ -53,7 +53,7 @@
           <td><%= project.ship_requested_at %></td>
           <td>
             <%= form_with url: approve_admin_project_path(project), method: :post, local: true do |f| %>
-              <%= number_field_tag :credits_per_hour, project.credits_per_hour, min: 0, placeholder: 'Credits/hr', style: 'width: 100px; margin-right: 6px;' %>
+              <%= number_field_tag :credits_per_hour, project.credits_per_hour, min: 0, placeholder: 'Credits/hr', autocomplete: 'off', style: 'width: 100px; margin-right: 6px;' %>
               <%= f.submit 'Approve & Ship', class: 'btn-admin' %>
             <% end %>
             <%= button_to "Reject", reject_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { confirm: 'Reject this ship request?' } %>

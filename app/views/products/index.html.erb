@@ -12,7 +12,7 @@
     <div style="border: 1px solid #ccc; padding: 10px; width: 250px;">
       <h3><%= product.name %></h3>
       <p>Cost: <%= format_credits product.price_currency %></p>
-      
+
       <% if product.steam_price_cents %>
         <p><small>Steam Price: $<%= (product.steam_price_cents / 100.0).round(2) %></small></p>
       <% end %>
