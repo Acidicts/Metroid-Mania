@@ -21,11 +21,11 @@ linters:
     enabled: true
   ExtraNewline:
     enabled: true
+  # FinalNewline can be noisy when migrating; keep optional for now
   FinalNewline:
-    enabled: true
-    present: true
+    enabled: false
 
-  # Basic HTML spacing rules
+  # Basic HTML spacing rules (keep these)
   SpaceInHtmlTag:
     enabled: true
 
@@ -35,17 +35,25 @@ linters:
   RightTrim:
     enabled: true
 
+  # Avoid enforcing array spacing and comma spacing in ERB to reduce churn
+  SpaceInsideArrayLiteralBrackets:
+    enabled: false
+  SpaceAfterComma:
+    enabled: false
+
   # Enforce self closing style for void elements (allow HTML5 style)
   SelfClosingTag:
     enabled: true
     enforced_style: 'never'
 
-  # Run RuboCop on embedded Ruby (inherit project config)
+  # Run RuboCop on embedded Ruby but disable string-literal rule for ERB
   Rubocop:
     enabled: true
     rubocop_config:
       inherit_from:
         - .rubocop.yml
+      Style/StringLiterals:
+        Enabled: false
 
   # Optional: warn about missing script nonces in scripts (disabled by default)
   RequireScriptNonce:
