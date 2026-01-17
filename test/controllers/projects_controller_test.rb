@@ -94,7 +94,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     get project_url(@project)
     assert_response :success
-    assert_select 'p', /To ship again, add a devlog after approval|To ship again, add a devlog after the last ship/ # explanation present
-    assert_select 'a', 'Create a devlog'
+    # UI uses a span message and the link text is 'New Devlog' now
+    assert_select 'span', /Add a devlog to request another ship/ 
+    assert_select 'a', 'New Devlog'
   end
 end

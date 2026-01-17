@@ -40,11 +40,11 @@
     <div id="order-status">
       <div>
         <strong>Status:</strong>
-        <% if order.status == "denied" %>
+        <% if order.status == "1" %>
           <span style="color: red;">Denied</span>
-        <% elsif order.status == "pending" %>
+        <% elsif order.status == "0" %>
           <span style="color: orange;">Pending</span>
-        <% elsif order.status == "approved" %>
+        <% elsif order.status == "2" %>
           <span style="color: green;">Fulfilled</span>
         <% end %>
       </div>
@@ -55,7 +55,10 @@
       </div>
       
       <div style="margin-top:8px">
-        <%= link_to "Show this order", order, class: 'btn-retro btn-retro--outline' %>
+        <% unless current_page?(order_path(order)) %>
+          <%= link_to "Show this order", order, class: 'btn-retro btn-retro--outline' %>
+        <% end %>
       </div>
     </div>
+  </div>
 </div>

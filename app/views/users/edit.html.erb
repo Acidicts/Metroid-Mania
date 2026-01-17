@@ -1,5 +1,7 @@
 <h2>Edit Profile</h2>
 
+<p><%= @user.slack_id %></p>
+
 <%= form_with(model: @user, url: profile_path, local: true) do |form| %>
   <% if @user.errors.any? %>
     <div style="color: red">

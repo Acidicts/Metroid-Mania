@@ -11,7 +11,17 @@ class ApplicationController < ActionController::Base
   rescue_from ActiveRecord::StatementInvalid, with: :handle_record_not_unique
 
   def current_user
-    @current_user ||= User.find(session[:user_id]) if session[:user_id]
+    return @current_user if defined?(@current_user)
+
+    user_id = session[:user_id] || cookies.signed[:user_id]
+    @current_user = User.find_by(id: user_id)
+
+    unless @current_user
+      session.delete(:user_id)
+      cookies.delete(:user_id)
+    end
+
+    @current_user
   end
 
   def logged_in?

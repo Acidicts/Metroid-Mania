@@ -11,7 +11,8 @@
 #  user_id    :integer          not null
 #
 class Audit < ApplicationRecord
-  belongs_to :user
+  # Audits may be created by a user or by the system (nil user)
+  belongs_to :user, optional: true
   belongs_to :project, optional: true
 
   validates :action, presence: true

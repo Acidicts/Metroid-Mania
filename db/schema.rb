@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_15_234500) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_17_000000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -61,11 +61,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_15_234500) do
     t.float "cost"
     t.datetime "created_at", null: false
     t.integer "product_id", null: false
-    t.string "status"
+    t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["product_id"], name: "index_orders_on_product_id"
-    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending", unique: true, where: "status = 'pending'"
+    t.index ["status"], name: "index_orders_on_status"
+    t.index ["user_id", "product_id", "status"], name: "index_orders_on_user_product_status", unique: true
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 

@@ -19,6 +19,8 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   test "admin can update user's credits" do
     sign_in_as(@admin, password: 'password')
 
+    user_before = (@user.currency || 0)
+
     assert_difference 'Audit.count', 1 do
       patch admin_user_url(@user), params: { user: { currency: 42.5 } }
     end
@@ -30,7 +32,8 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'update_currency', a.action
     assert_equal @admin, a.user
     assert_equal @user.id, a.details['user_id']
-    assert_in_delta 0.0, a.details['before'].to_f, 0.001
+
+    assert_in_delta user_before, a.details['before'].to_f, 0.001
     assert_in_delta 42.5, a.details['after'].to_f, 0.001
   end
 

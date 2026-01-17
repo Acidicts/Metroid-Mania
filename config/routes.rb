@@ -35,6 +35,8 @@ Rails.application.routes.draw do
       member do
         post :fulfill
         post :decline
+        post :delete
+        post :pend
       end
     end
     resources :projects do
@@ -68,6 +70,26 @@ Rails.application.routes.draw do
   get "/shared/_retro_sample", to: "shared#_retro_sample" if Rails.env.development? || Rails.env.test?
   
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # Ensure a DELETE /logout exists for link_to(..., method: :delete).
+  # Be defensive: if a route or helper named :logout already exists, skip adding to avoid ArgumentError.
+  begin
+    unless Rails.application.routes.named_routes.key?(:logout)
+      delete "/logout", to: "sessions#destroy", as: :logout
+    end
+  rescue ArgumentError
+    # another route with the same name/path was registered elsewhere — ignore to keep routes loadable
+  end
+
+  # Development-only GET fallback when JS isn't running — only add if it won't collide
+  if Rails.env.development?
+    begin
+      # add GET fallback only when it won't raise due to duplicate routes
+      get "/logout", to: "sessions#destroy" unless Rails.application.routes.recognize_path("/logout", method: :get) rescue true
+    rescue ArgumentError, ActionController::RoutingError
+      # skip adding fallback if it collides or can't be recognized
+    end
+  end
 
   root "home#index"
 end

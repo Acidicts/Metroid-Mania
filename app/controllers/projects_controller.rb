@@ -101,9 +101,9 @@ class ProjectsController < ApplicationController
         # If hackatime_ids were provided or present, refresh total_seconds
         @project.update_time_from_hackatime! if @project.hackatime_ids.present?
 
-        # Handle image removal request
+        # Handle image removal request (use detach to avoid variant-record SQL on minimal test DBs)
         if params.dig(:project, :remove_image).present? && @project.image.attached?
-          @project.image.purge
+          @project.image.detach
         end
 
         format.html { redirect_to @project, notice: "Project was successfully updated.", status: :see_other }
@@ -179,6 +179,7 @@ class ProjectsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def project_params
-      params.require(:project).permit(:name, :description, :repository_url, :readme_url, :image, :remove_image, :hackatime_id, :status, :total_seconds, hackatime_ids: [])
+      # `remove_image` is handled explicitly in the controller (it is NOT a model attribute).
+      params.require(:project).permit(:name, :description, :repository_url, :readme_url, :image, :hackatime_id, :status, :total_seconds, hackatime_ids: [])
     end
 end

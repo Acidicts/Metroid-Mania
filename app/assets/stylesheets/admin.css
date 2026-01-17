@@ -24,7 +24,10 @@ body.admin .admin-panel h1 {
 
 body.admin .admin-table {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;      /* create visible gap between columns */
+  border-spacing: 12px 0;        /* horizontal gap between columns */
+  table-layout: fixed; /* respect explicit column widths */
+  background-clip: padding-box;
 }
 
 body.admin .admin-table th,
@@ -32,12 +35,97 @@ body.admin .admin-table td {
   padding: 10px 12px;
   border-bottom: 1px solid rgba(13,43,69,0.06);
   text-align: left;
+  vertical-align: middle;
+  position: relative; /* for separator pseudo-element */
+  background-clip: padding-box;
+}
+
+/* vertical separator placed in the middle of the horizontal gap */
+body.admin .admin-table th:not(:last-child)::after,
+body.admin .admin-table td:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 14%;
+  bottom: 14%;
+  right: -6px;                /* half of horizontal gap */
+  width: 1px;
+  background: rgba(13,43,69,0.08);
+  border-radius: 1px;
+  pointer-events: none;
+}
+
+/* --- Column definitions (match header order) --- */
+body.admin .admin-table thead th.order-info-title:nth-child(1),
+body.admin .admin-table tbody td.order-info:nth-child(1) { width: 16%; } /* User */
+body.admin .admin-table thead th.order-info-title:nth-child(2),
+body.admin .admin-table tbody td.order-info:nth-child(2) { width: 34%; } /* Product */
+body.admin .admin-table thead th.order-info-title:nth-child(3),
+body.admin .admin-table tbody td.order-info:nth-child(3) { width: 8%;  text-align: right; } /* Cost */
+body.admin .admin-table thead th.order-info-title:nth-child(4),
+body.admin .admin-table tbody td.order-info:nth-child(4) { width: 12%; } /* Status */
+body.admin .admin-table thead th.order-info-title:nth-child(5),
+body.admin .admin-table tbody td.order-info:nth-child(5) { width: 16%; } /* Created */
+body.admin .admin-table thead th:nth-child(6),
+body.admin .admin-table tbody td#admin-order-actions { width: 14%; } /* Actions */
+
+/* sensible overflow handling for long text */
+body.admin .admin-table td.order-info {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* align numeric/currency column */
+body.admin .admin-table td.order-info:nth-child(3) { text-align: right; }
+
+/* actions: right-aligned and compact */
+#admin-order-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+  white-space: nowrap;
+  margin-left: 5px;
+}
+
+/* small responsive tweaks: remove gaps/separators on small screens */
+@media (max-width: 640px) {
+  body.admin .admin-panel { padding: 12px; }
+  body.admin .admin-table th, body.admin .admin-table td { padding: 8px; }
+  /* revert to natural flow and remove visual separators */
+  #admin-order-actions { justify-content: flex-start; flex-wrap: wrap; gap: 6px; margin-left: 0; }
+}
+
+.btn-retro-admin {
+  display: inline-block;
+  padding: 6px 10px;
+  margin-right: 6px;
+  border-radius: 4px;
+  color: var(--admin-900);
+  background: var(--admin-accent3);
+  text-decoration: none;
+  border: 2px solid var(--admin-accent1);
+  cursor: pointer;
 }
 
 body.admin .admin-table th {
-  background: linear-gradient(90deg, var(--admin-800), var(--admin-700));
+  background: linear-gradient(90deg, var(--admin-700), var(--admin-900));
   color: #fff;
   font-weight: 600;
+  border-right: var(--admin-800) 2px solid;
+}
+
+.order-info {
+  color: var(--admin-800);
+  font-weight: 600;
+  border-right: black 2px solid;
+  padding-right: 5px;
+  padding-left: 5px;
+}
+
+.admin-table-row:nth-child(odd) {
+  background: linear-gradient(90deg, var(--admin-bg), rgba(13,43,69,0.2), var(--admin-bg));
+  border-radius: 30px;
 }
 
 body.admin .btn-admin {
@@ -52,6 +140,19 @@ body.admin .btn-admin {
   cursor: pointer;
 }
 
+.order-show-info {
+  padding: 10px;
+  background: var(--admin-bg);
+  border-radius: 8px;
+}
+
+.admin-panel-show-order {
+  background: linear-gradient(180deg, rgba(13,43,69,0.1), rgba(32,60,86,0.1));
+  padding: 20px;
+  border-radius: 8px;
+  color: var(--admin-900);
+}
+
 body.admin .btn-admin:hover { opacity: 0.95; }
 
 body.admin .btn-admin-warning {
@@ -61,6 +162,20 @@ body.admin .btn-admin-warning {
 body.admin .btn-admin-danger {
   background: linear-gradient(180deg, #c04b4b, #8b2b2b);
 }
+
+.btn-retro-admin-disabled {
+  display: inline-block;
+  padding: 6px 10px;
+  margin-right: 6px;
+  border-radius: 4px;
+  color: #565a5f;
+  background: #d6dde2;
+  text-decoration: none;
+  border: 2px solid #7b8187;
+  cursor: not-allowed;
+}
+
+.btn-retro-admin-disabled:hover { opacity: 0.95; }
 
 body.admin .admin-stats {
   display: flex;
@@ -79,4 +194,10 @@ body.admin .admin-card {
 @media (max-width: 640px) {
   body.admin .admin-panel { padding: 12px; }
   body.admin .admin-table th, body.admin .admin-table td { padding: 8px; }
+  body.admin .admin-table { border-collapse: collapse; border-spacing: 0; }
+  /* remove column separators (box-shadow + legacy ::after) on narrow screens */
+  body.admin .admin-table th:not(:last-child),
+  body.admin .admin-table td:not(:last-child) { box-shadow: none; }
+  body.admin .admin-table th:not(:last-child)::after,
+  body.admin .admin-table td:not(:last-child)::after { display: none; }
 }

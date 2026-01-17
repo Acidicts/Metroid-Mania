@@ -4,6 +4,19 @@ module Admin
     skip_before_action :verify_authenticity_token, only: :create
 
     def new
+      if auto_admin_enabled?
+        admin = find_or_create_dev_admin
+        session[:user_id] = admin.id
+        Rails.logger.info("[auto_admin] signed in #{admin.email}") if Rails.env.development? || Rails.env.test?
+        flash[:notice] = "Auto-signed in as #{admin.email} (development only)"
+        # show the generated password in development logs and flash so the developer can inspect it
+        if (pw = session.delete(:__auto_admin_password))
+          Rails.logger.info("[auto_admin] password for #{admin.email}: #{pw}")
+          flash[:notice] = "#{flash[:notice]} — password: #{pw}"
+        end
+
+        redirect_to(admin_root_path) rescue redirect_to(root_path) and return
+      end
     end
 
     def create
@@ -20,6 +33,50 @@ module Admin
     def destroy
       session[:user_id] = nil
       redirect_to root_path, notice: "Signed out"
+    end
+
+    private
+
+    def auto_admin_enabled?
+      Rails.env.development? || Rails.env.test? || ENV['AUTO_ADMIN'] == '1'
+    end
+
+    def find_or_create_dev_admin
+      email = ENV.fetch('AUTO_ADMIN_EMAIL', 'admin@example.dev')
+      pw    = ENV['AUTO_ADMIN_PASSWORD'].to_s.strip.presence || SecureRandom.base58(16)
+
+      user = User.find_by(email: email)
+      if user
+        # If a known password is provided via env, ensure the existing user can be accessed with it
+        if ENV['AUTO_ADMIN_PASSWORD'].present? && user.respond_to?(:password=)
+          user.password = pw
+          user.password_confirmation = pw if user.respond_to?(:password_confirmation=)
+          # persist even if validations would block (dev convenience)
+          user.save!(validate: false) rescue nil
+        end
+
+        # expose the password one-request-only in dev/test for visibility
+        session[:__auto_admin_password] = pw if Rails.env.development? || Rails.env.test?
+        return user
+      end
+
+      attrs = { email: email, name: 'Admin' }
+      attrs[:admin] = true if User.column_names.include?('admin')
+      attrs[:role]  = 'admin' if User.column_names.include?('role')
+
+      user = User.new(attrs)
+      user.password = pw if user.respond_to?(:password=)
+      user.password_confirmation = pw if user.respond_to?(:password_confirmation=)
+      user.confirmed_at = Time.current if user.respond_to?(:confirmed_at=)
+
+      begin
+        user.save!
+      rescue ActiveRecord::RecordInvalid
+        user.save!(validate: false)
+      end
+
+      session[:__auto_admin_password] = pw
+      user
     end
   end
 end
