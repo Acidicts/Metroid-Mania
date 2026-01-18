@@ -21,7 +21,8 @@
 
 /* Base retro body */
 body {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-family: "Pixelify Sans", sans-serif;
+  font-optical-sizing: auto;
   background-color: var(--bg);
   color: var(--main-900);
   -webkit-font-smoothing: antialiased;
@@ -61,13 +62,12 @@ h1, h2, h3 {
 
 h1 {
   font-size: 2.4rem;
-  background: linear-gradient(90deg, var(--accent1), var(--accent2));
-  -webkit-background-clip: text;
-  color: transparent;
 }
 
-h2 { font-size: 1.6rem; }
-h3 { font-size: 1.2rem; }
+h2 { font-size: 1.8rem; }
+h3 { font-size: 1.4rem; }
+
+a { font-size: 1.2rem;}
 
 /* Navigation */
 .retro-navbar {
@@ -161,8 +161,6 @@ a:hover { color: var(--accent2); text-decoration: underline; }
 
 /* Footer */
 .retro-footer {
-  margin-top: 36px;
-  padding: 18px 20px;
   color: var(--accent3);
   background: var(--main-900);
   box-shadow: 0 -6px 0 var(--main-800);

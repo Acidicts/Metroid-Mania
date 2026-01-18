@@ -1,26 +1,5 @@
 <h2>Edit Profile</h2>
 
-<p><%= @user.slack_id %></p>
+<h3>Nothing is Here</h3>
 
-<%= form_with(model: @user, url: profile_path, local: true) do |form| %>
-  <% if @user.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(@user.errors.count, "error") %> prohibited this user from being saved:</h2>
-      <ul>
-        <% @user.errors.each do |error| %>
-          <li><%= error.full_message %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div>
-    <%= form.label :hackatime_api_key, "Hackatime API Key" %>
-    <%= form.password_field :hackatime_api_key, value: @user.hackatime_api_key, style: "display: block; width: 100%;" %>
-    <p class="help-text">Get your API key from <a href="https://hackatime.hackclub.com/settings" target="_blank">Hackatime Settings</a></p>
-  </div>
-
-  <div style="margin-top: 1em;">
-    <%= form.submit "Update Profile" %>
-  </div>
-<% end %>
+<%= button_to "Go Back", :back %>

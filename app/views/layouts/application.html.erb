@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html>
   <head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+
     <title><%= content_for(:title) || "Metroid Mania" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -42,11 +46,7 @@
             </form>
           </noscript>
         <% else %>
-          <% if Rails.env.development? || Rails.env.test? %>
-            <%= button_to 'Dev sign in', dev_login_path, method: :post, params: { email: 'user@example.com' }, class: 'btn-retro' %>
-          <% else %>
-            <%= link_to 'Sign in', '/auth/slack', class: 'btn-retro' %>
-          <% end %>
+          <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" class="btn-retro">Login with Hack Club</button>
         <% end %>
       </nav>
     </header>
@@ -63,9 +63,10 @@
       <%= yield %>
     </main>
 
-    <footer class="retro-footer">
+    <footer class="retro-footer" style="margin-top:10%; position:absolute; bottom:0; width:100%; overflow:hidden;">
       <div class="retro-container">
-        <div class="kv"><div class="label">Metroid Mania</div><div class="value">Built with ☕️ + retro pixels</div></div>
+        <strong>Metroid Mania</strong>
+        <p>Made by Hackclub, For Hackclub</p>
       </div>
     </footer>
   </body>

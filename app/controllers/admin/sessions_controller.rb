@@ -38,7 +38,12 @@ module Admin
     private
 
     def auto_admin_enabled?
-      Rails.env.development? || Rails.env.test? || ENV['AUTO_ADMIN'] == '1'
+      # If AUTO_ADMIN is explicitly set, honor its boolean value ("1","true","yes" => true; "0","false","no" => false).
+      # Otherwise fall back to enabling in development/test environments by default.
+      val = ENV['AUTO_ADMIN']&.to_s&.strip
+      return ActiveModel::Type::Boolean.new.cast(val) unless val.nil? || val == ''
+
+      Rails.env.development? || Rails.env.test?
     end
 
     def find_or_create_dev_admin

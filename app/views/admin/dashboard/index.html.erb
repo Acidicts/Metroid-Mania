@@ -1,95 +1,86 @@
 <div class="admin-panel">
+  <style>
+    .admin-dash-box {
+      background-color: var(--accent-2);
+      border: 2px dashed var(--main-600);
+      padding: 20px;
+      margin-top: 20px;
+      border-radius: 5px;
+      width: 30%;
+      margin: 0 1%;
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .admin-dash-box:hover {
+      transform: scale(1.02);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+    }
+
+    .admin-dash-box-container {
+      display: flex;
+      flex-direction: row;
+      gap: 20px;
+      width: 95%;
+    }
+
+    /* align label (strong) and value so all values line up vertically */
+    .admin-dash-box p {
+      display: grid;
+      grid-template-columns: 140px auto; /* adjust 140px to fit longest label */
+      column-gap: 12px;
+      align-items: center;
+      margin: 0.5rem 0;
+    }
+
+    /* value badge */
+    .admin-dash-box-info {
+      display: inline-flex;
+      justify-content: flex-end;
+      min-width: 3.5rem; /* ensures numeric values line up */
+      font-size: 16px;
+      font-weight: 700;
+      background-color: var(--main-700);
+      color: var(--accent3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      text-align: right;
+    }
+
+    /* responsive: let label use available space on small screens */
+    @media (max-width: 560px) {
+      .admin-dash-box p {
+        grid-template-columns: 1fr auto;
+      }
+      .admin-dash-box {
+        width: 100%;
+      }
+    }
+  </style>
+
   <h1>Admin Dashboard</h1>
 
-  <div class="admin-stats">
-    <div class="admin-card">Users: <strong><%= @users_count %></strong></div>
-    <div class="admin-card">Orders: <strong><%= @orders_count %></strong></div>
+  <div class="admin-dash-box-container">
+    <div class="admin-dash-box">
+      <h2>Summary</h2>
+      <p><strong>Users:</strong> <%= content_tag :span, @users_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Projects:</strong> <%= content_tag :span, @projects_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Ships:</strong> <%= content_tag :span, @ships_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Orders:</strong> <%= content_tag :span, @orders_count, class: "admin-dash-box-info" %></p>
+    </div>
+
+    <div class="admin-dash-box">
+      <h2>Projects</h2>
+      <p><strong>Projects:</strong> <%= content_tag :span, @projects_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Pending:</strong> <%= content_tag :span, @projects_pending_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Shipped:</strong> <%= content_tag :span, @ships_count, class: "admin-dash-box-info" %></p>
+    </div>
+
+    <div class="admin-dash-box">
+      <h2>Orders</h2>
+      <p><strong>Orders:</strong> <%= content_tag :span, @orders_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Pending:</strong> <%= content_tag :span, @orders_pending_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Denied:</strong> <%= content_tag :span, @orders_denied_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Fufilled:</strong> <%= content_tag :span, @orders_fulfilled_count, class: "admin-dash-box-info" %></p>
+    </div>
   </div>
-
-  <h2>Pending Projects</h2>
-  <table class="admin-table">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Project</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @pending_projects.each do |project| %>
-        <tr>
-          <td><%= project.user.name %></td>
-          <td><%= link_to project.name, project_path(project) %></td>
-          <td>
-            <%= button_to "Approve", approve_admin_project_path(project), method: :post, class: 'btn-admin' %>
-            <%= button_to "Reject", reject_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
-          </td>
-          <td>
-            <%= form_with url: set_status_admin_project_path(project), method: :post, local: true do |f| %>
-              <%= f.select :status, options_for_select(Project::STATUSES, selected: project.status), {}, { style: 'margin-right: 6px;' } %>
-              <%= f.submit 'Set', class: 'btn-admin' %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-
-  <h2>Ship Requests</h2>
-  <table class="admin-table">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Project</th>
-        <th>Requested At</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% Project.where.not(ship_requested_at: nil).each do |project| %>
-        <tr>
-          <td><%= project.user.name %></td>
-          <td><%= link_to project.name, project_path(project) %></td>
-          <td><%= project.ship_requested_at %></td>
-          <td>
-            <%= form_with url: approve_admin_project_path(project), method: :post, local: true do |f| %>
-              <%= number_field_tag :credits_per_hour, project.credits_per_hour, min: 0, placeholder: 'Credits/hr', autocomplete: 'off', style: 'width: 100px; margin-right: 6px;' %>
-              <%= f.submit 'Approve & Ship', class: 'btn-admin' %>
-            <% end %>
-            <%= button_to "Reject", reject_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { confirm: 'Reject this ship request?' } %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
-
-  <h2>Projects</h2>
-  <p><%= link_to 'View all projects', admin_projects_path, class: 'btn-admin' %></p>
-  <table class="admin-table">
-    <thead>
-      <tr>
-        <th>User</th>
-        <th>Project</th>
-        <th>Status</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @shippable_projects.each do |project| %>
-        <tr>
-          <td><%= project.user.name %></td>
-          <td><%= link_to project.name, project_path(project) %></td>
-          <td><%= project.shipped? ? 'Shipped' : 'Unshipped' %></td>
-          <td>
-            <% if project.shipped? %>
-              <%= button_to "Unship", unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning', data: { confirm: 'Unship this project?' } %>
-            <% else %>
-              <%= button_to "Ship", ship_admin_project_path(project), method: :post, class: 'btn-admin', data: { confirm: 'Ship this project?' } %>
-              <%= button_to "Force Ship", force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { confirm: 'Force ship this project? This will bypass devlog requirement.' } %>
-            <% end %>
-          </td>
-        </tr>
-      <% end %>
-    </tbody>
-  </table>
 </div>
