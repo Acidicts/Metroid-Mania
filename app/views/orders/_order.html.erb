@@ -29,7 +29,7 @@
 
       <div>
         <strong>ID:</strong>
-        <%= order.id %>
+        <%= order.public_id || order.id %>
       </div>
 
       <div>
@@ -40,12 +40,14 @@
     <div id="order-status">
       <div>
         <strong>Status:</strong>
-        <% if order.status == "1" %>
+        <% if order.status == "denied" %>
           <span style="color: red;">Denied</span>
-        <% elsif order.status == "0" %>
+        <% elsif order.status == "pending" %>
           <span style="color: orange;">Pending</span>
-        <% elsif order.status == "2" %>
+        <% elsif order.status == "shipped" %>
           <span style="color: green;">Fulfilled</span>
+        <% else %>
+          <span>Unknown - <%= order.status %></span>
         <% end %>
       </div>
 

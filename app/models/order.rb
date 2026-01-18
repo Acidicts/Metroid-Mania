@@ -1,3 +1,5 @@
+require 'securerandom'
+
 class Order < ApplicationRecord
   belongs_to :user
   belongs_to :product
@@ -5,6 +7,22 @@ class Order < ApplicationRecord
   # Ensure cost is set and balance is deducted when creating an Order (status will be set to `pending`).
   # Set cost when creating; only deduct/validate balance when the order will be `pending`.
   before_create :set_cost_and_deduct_balance
+  before_validation :set_public_id, on: :create
+
+  validates :public_id, presence: true, uniqueness: true, allow_nil: false, on: :create
+
+  def set_public_id
+    # Ensure the public identifier is set to a unique value like "!a1B2c3"
+    return if public_id.present?
+
+    loop do
+      candidate = "!#{SecureRandom.alphanumeric(6)}"
+      unless self.class.where(public_id: candidate).exists?
+        self.public_id = candidate
+        break
+      end
+    end
+  end
 
   # Validate balance only when creating an actual pending order (fixtures or manual creates with other statuses should skip)
   # Run balance validation for 'normal' creates (where status isn't explicitly set to a
@@ -168,7 +186,20 @@ class Order < ApplicationRecord
       prev_status.to_s
     end
 
-    Audit.create!(user: audit_user, project: nil, action: 'order_refunded', details: { order_id: id, amount: cost.to_f, previous_status: canonical_prev })
+    Audit.create!(user: audit_user, project: nil, action: 'order_refunded', details: { order_id: id, order_public_id: public_id, amount: cost.to_f, previous_status: canonical_prev })
+  end
+
+  public
+
+  # to_param uses public_id for friendlier public URLs when present
+  def to_param
+    public_id.present? ? public_id : id.to_s
+  end
+
+  # Find an order by either numeric id or the public_id (e.g., '!a1B2c3')
+  def self.find_by_param(param)
+    return find(param) unless param.to_s.start_with?('!')
+    find_by!(public_id: param.to_s)
   end
 
   # Backwards-compatible predicate aliases for previous misspellings / synonyms

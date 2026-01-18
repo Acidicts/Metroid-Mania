@@ -1,26 +1,82 @@
-<h1>Metroid-Mania</h1>
+<% content_for :styles do %>
+  <style>
+    body.home .home-placeholder { display: block; }
 
-<% if logged_in? %>
-  <p>Welcome, <%= current_user.name %>!</p>
-  <p>Your Balance: <%= format_credits(current_user.currency || 0) %></p>
+    .home-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 48px 16px 32px;
+      text-align: center;
+    }
 
-  <nav>
-    <%= link_to "My Projects", projects_path %> |
-    <%= link_to "Store", products_path %> |
-    <%= link_to "My Orders", orders_path %> |
-    <%= link_to "Leaderboard", leaderboards_path %> |
-    <%= link_to "Profile", profile_path %>
-    <% if admin? %>
-     | <%= link_to "Admin Dashboard", admin_dashboard_path %>
-    <% end %>
-    | <%= button_to "Logout", logout_path, method: :delete %>
-  </nav>
+    .home-hero h1 {
+      font-size: 2.25rem;
+      margin: 0;
+      letter-spacing: 0.6px;
+    }
 
-<% else %>
-  <p>Welcome to Metroid-Mania, the Hack Club YSWS where you build Metroidvania games!</p>
+    .home-hero .lead {
+      color: #4b5563;
+      max-width: 700px;
+      margin: 0;
+    }
 
-  <br><br>
-  <!-- Fallback GET link for development/debugging if CSRF fails -->
+    .home-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
 
-  <!-- If you still get InvalidAuthenticityToken, ensure APP_URL matches the host you visit and is registered as the redirect URI in the Hack Club OAuth app -->
+    .home-actions .btn-retro,
+    .home-actions .btn-retro--outline {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .login-btn {
+      font-size: 1rem;
+      color: black;
+      background: #ec3750;
+      border: 2px solid var(--main-800);
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 560px) {
+      .home-hero h1 { font-size: 1.6rem; }
+      .home-actions { gap: 8px; }
+    }
+  </style>
 <% end %>
+
+<div class="home-hero">
+  <h1>Metroid-Mania</h1>
+
+  <% if logged_in? %>
+    <p class="lead">Welcome, <%= current_user.name %>! Your Balance: <%= format_credits(current_user.currency || 0) %></p>
+
+    <div class="home-actions">
+      <%= link_to "My Projects", projects_path, class: 'btn-retro' %>
+      <%= link_to "Store", products_path, class: 'btn-retro' %>
+      <%= link_to "My Orders", orders_path, class: 'btn-retro' %>
+      <%= link_to "Leaderboard", leaderboards_path, class: 'btn-retro' %>
+      <% if admin? %>
+        <%= link_to "Admin Dashboard", admin_dashboard_path, class: 'btn-retro-admin' %>
+      <% end %>
+    </div>
+
+  <% else %>
+    <p class="lead">Welcome to Metroid-Mania, the Hack Club YSWS where you build Metroidvania games!</p>
+
+    <div class="home-actions">
+      <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" class="login-btn">Login with Hack Club</button>
+    </div>
+
+  <% end %>
+</div>

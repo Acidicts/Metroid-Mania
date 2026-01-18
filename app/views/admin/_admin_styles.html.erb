@@ -1,5 +1,23 @@
-/* Styles moved to: app/views/admin/_admin_styles.html.erb */
-/* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */
+<% content_for :styles do %>
+  <style>
+/* Admin panel styles using provided palette */
+:root {
+  --admin-900: #0d2b45;
+  --admin-800: #203c56;
+  --admin-700: #544e68;
+  --admin-600: #8d697a;
+  --admin-accent1: #d08159;
+  --admin-accent2: #ffaa5e;
+  --admin-accent3: #ffd4a3;
+  --admin-bg: #ffecd6;
+}
+
+body.admin .admin-panel {
+  background: linear-gradient(180deg, rgba(13,43,69,0.03), rgba(32,60,86,0.02));
+  padding: 20px;
+  border-radius: 8px;
+  color: var(--admin-900);
+}
 
 body.admin .admin-panel h1 {
   color: var(--admin-900);
@@ -185,3 +203,5 @@ body.admin .admin-card {
   body.admin .admin-table th:not(:last-child)::after,
   body.admin .admin-table td:not(:last-child)::after { display: none; }
 }
+  </style>
+<% end %>

@@ -1,4 +1,2 @@
-/* Styles for Metroidmania views */
-
-/* Add controller/view-specific rules here. */
-body.metroidmania .metroidmania-placeholder { display: block; }
+/* Styles moved to: app/views/metroidmania/index.html.erb */
+/* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */

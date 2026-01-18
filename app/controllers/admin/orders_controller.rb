@@ -9,6 +9,18 @@ module Admin
 
     def index
       @orders = Order.order(created_at: :desc)
+
+      if params[:q].present?
+        q = params[:q].to_s.strip
+        if q.start_with?('!')
+          @orders = Order.where(public_id: q)
+        elsif q =~ /\A\d+\z/
+          @orders = Order.where(id: q.to_i)
+        else
+          term = "%#{q.downcase}%"
+          @orders = Order.joins(:user, :product).where("LOWER(users.email) LIKE ? OR LOWER(products.name) LIKE ? OR LOWER(orders.public_id) LIKE ?", term, term, term)
+        end
+      end
     end
 
     def show
@@ -23,7 +35,7 @@ module Admin
       previous = @order.status
       db_val = normalize_status_for_db('pending').first || (Order.respond_to?(:statuses) ? Order.statuses['pending'] : 'pending')
       @order.update!(status: db_val)
-      Audit.create!(user: current_user, project: nil, action: 'order_pended', details: { order_id: @order.id, previous_status: canonical_status(previous) })
+      Audit.create!(user: current_user, project: nil, action: 'order_pended', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
       redirect_back fallback_location: admin_orders_path, notice: 'Order status reverted to pending.'
     end
 
@@ -46,7 +58,7 @@ module Admin
         raise
       end
 
-      Audit.create!(user: current_user, project: nil, action: 'order_fulfilled', details: { order_id: @order.id, previous_status: canonical_status(previous), new_status: canonical_status(@order.status) })
+      Audit.create!(user: current_user, project: nil, action: 'order_fulfilled', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous), new_status: canonical_status(@order.status) })
       redirect_back fallback_location: admin_orders_path, notice: 'Order marked as fulfilled.'
     end
 
@@ -70,11 +82,11 @@ module Admin
 
           unless refund_exists
             @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           end
         end
 
-        Audit.create!(user: current_user, project: nil, action: 'order_deleted', details: { order_id: @order.id, previous_status: canonical_status(previous) })
+        Audit.create!(user: current_user, project: nil, action: 'order_deleted', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
         @order.destroy!
       end
 
@@ -98,9 +110,9 @@ module Admin
         # Refund user (only if the order had a cost)
         if @order.cost.present? && @order.cost.to_f > 0
           @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
-          Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+          Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
         else
-          Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, previous_status: canonical_status(previous) })
+          Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
         end
       end
 
@@ -110,7 +122,7 @@ module Admin
     private
 
     def set_order
-      @order = Order.find(params[:id])
+      @order = Order.find_by_param(params[:id])
     end
 
     def order_not_found

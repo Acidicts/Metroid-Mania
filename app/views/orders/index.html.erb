@@ -1,5 +1,11 @@
 <p style="color: green"><%= notice %></p>
 
+<% content_for :styles do %>
+  <style>
+    body.orders .orders-placeholder { display: block; }
+  </style>
+<% end %>
+
 <% content_for :title, "Orders" %>
 
 <h1>Orders</h1>

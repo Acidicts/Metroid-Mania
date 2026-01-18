@@ -1,6 +1,12 @@
 <p style="color: green"><%= notice %></p>
 <p style="color: red"><%= alert %></p>
 
+<% content_for :styles do %>
+  <style>
+    body.products .products-placeholder { display: block; }
+  </style>
+<% end %>
+
 <h1>Store</h1>
 
 <% if admin? %>

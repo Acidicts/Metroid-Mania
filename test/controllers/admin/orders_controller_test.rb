@@ -78,4 +78,21 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_orders_url
     assert_match /Order not found/, flash[:alert]
   end
+
+  test "index search by public_id and id works" do
+    prod = Product.create!(name: 'SearchTest', steam_app_id: 77, price_currency: 2.0)
+    u = users(:one)
+    u.update!(currency: 100.0)
+    o1 = u.orders.create!(product: prod)
+
+    # search by public_id
+    get admin_orders_url(q: o1.public_id)
+    assert_response :success
+    assert_match o1.public_id, response.body
+
+    # search by numeric id
+    get admin_orders_url(q: o1.id.to_s)
+    assert_response :success
+    assert_match o1.public_id, response.body
+  end
 end

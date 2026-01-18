@@ -31,8 +31,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     assert response.redirect?
     loc = response.location
-    id = loc.match(%r{/orders/(\d+)})[1].to_i
-    order = Order.find(id)
+    id_param = loc.match(%r{/orders/([^/]+)})[1]
+    order = Order.find_by_param(id_param)
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
 
@@ -79,7 +79,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     admin.update!(role: :admin, email: 'admin-orders@example.com', password: 'password')
     sign_in_as(admin, password: 'password')
     # route helper may not be available in this context in some test setups — POST directly to the admin path
-    post "/admin/orders/#{first.id}/decline", params: {}
+    post "/admin/orders/#{first.to_param}/decline", params: {}
     assert_response :redirect
     first.reload
     assert first.denied?

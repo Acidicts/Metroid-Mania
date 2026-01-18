@@ -1,4 +1,2 @@
-/* Styles for Leaderboards views */
-
-/* Add controller/view-specific rules here. */
-body.leaderboards .leaderboards-placeholder { display: block; }
+/* Styles moved to: app/views/leaderboards/index.html.erb */
+/* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */
