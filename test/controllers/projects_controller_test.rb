@@ -98,4 +98,14 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_select 'span', /Add a devlog to request another ship/ 
     assert_select 'a', 'New Devlog'
   end
+
+  test "owner sees minutes-needed message when not enough devlogged minutes" do
+    @project.devlogs.destroy_all
+    @project.update!(status: 'unshipped', shipped: false, shipped_at: nil)
+
+    get project_url(@project)
+    assert_response :success
+    assert_select 'div', /You need 15 more minutes/ 
+    assert_select 'a', 'Create a devlog'
+  end
 end

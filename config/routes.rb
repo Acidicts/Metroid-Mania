@@ -21,6 +21,7 @@ Rails.application.routes.draw do
   resources :leaderboards, only: [:index]
 
   namespace :admin do
+    root to: 'dashboard#index'
     get 'dashboard', to: 'dashboard#index'
     get 'login', to: 'sessions#new'
     post 'login', to: 'sessions#create'

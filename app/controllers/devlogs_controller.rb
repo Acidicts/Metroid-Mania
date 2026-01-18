@@ -69,9 +69,11 @@ class DevlogsController < ApplicationController
 
     respond_to do |format|
       if @devlog.errors.empty? && @devlog.save
-        format.html { redirect_to project_path(@project), notice: "Devlog was successfully created." }
+        puts "DEBUG DevlogsController#create: saved devlog id=#{@devlog.id} duration=#{@devlog.duration_minutes}"
+        format.html { redirect_to project_path(@project) }
         format.json { render :show, status: :created, location: [@project, @devlog] }
       else
+        puts "DEBUG DevlogsController#create: failed to save; errors=#{@devlog.errors.full_messages.inspect} persisted=#{@devlog.persisted?} duration=#{@devlog.duration_minutes.inspect} undocumented_seconds=#{(@project.total_seconds.to_i - @project.total_devlogged_seconds)}"
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @devlog.errors, status: :unprocessable_entity }
       end

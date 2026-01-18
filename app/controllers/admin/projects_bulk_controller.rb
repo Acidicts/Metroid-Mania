@@ -22,10 +22,9 @@ module Admin
           if per_status == 'approved'
             p.update!(status: 'approved', approved_at: Time.current, shipped: false, credits_per_hour: per_credits)
 
-            # award credits if provided
+            # award credits if provided — record them on a Ship so awarded credits are bound to the ship snapshot
             if per_credits.present?
-              amount = p.award_credits!(per_credits)
-              Audit.create!(user: current_user, project: p, action: 'credit_awarded', details: { amount: amount, rate: per_credits, hours: (p.total_seconds.to_f/3600.0) })
+              p.ship_and_award_credits!(admin_user: current_user, rate: per_credits, devlogged_seconds: p.total_seconds.to_i, shipped_at: Time.current)
             end
           else
             p.update!(status: per_status, approved_at: nil, shipped: false, credits_per_hour: per_credits)
@@ -34,10 +33,9 @@ module Admin
           Audit.create!(user: current_user, project: p, action: 'bulk_set_status', details: { previous_status: previous_status, new_status: per_status, previous_credits: previous_credits, credits_per_hour: per_credits })
         elsif per_credits.present?
           p.update!(credits_per_hour: per_credits)
-          # award immediately if project is already approved
+          # award immediately if project is already approved (record on a Ship)
           if p.status == 'approved'
-            amount = p.award_credits!(per_credits)
-            Audit.create!(user: current_user, project: p, action: 'credit_awarded', details: { amount: amount, rate: per_credits, hours: (p.total_seconds.to_f/3600.0) })
+            p.ship_and_award_credits!(admin_user: current_user, rate: per_credits, devlogged_seconds: p.total_seconds.to_i, shipped_at: Time.current)
           end
           Audit.create!(user: current_user, project: p, action: 'bulk_set_credits', details: { previous_credits: previous_credits, credits_per_hour: per_credits })
         end

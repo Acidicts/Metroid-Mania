@@ -49,7 +49,7 @@ linters:
   # Disable running RuboCop on ERB templates to avoid numerous style cop failures
   # that are better handled by the main RuboCop run on Ruby files.
   Rubocop:
-    enabled: false
+    enabled: true
 
   # Optional: warn about missing script nonces in scripts (disabled by default)
   RequireScriptNonce:

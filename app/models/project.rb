@@ -101,9 +101,18 @@ class Project < ApplicationRecord
     devlogged_minutes_since_baseline >= 15
   end
 
+  # Minutes still required for the owner to be able to request a ship (0 when eligible)
+  def minutes_needed_for_ship_request
+    [15 - devlogged_minutes_since_baseline.to_i, 0].max
+  end
+
   # Can an admin ship (approve) this project? Must be pending and have at least 15 minutes of devlogs since baseline
   def eligible_for_admin_ship?
-    status == 'pending' && devlogged_minutes_since_baseline >= 15
+    # Admins may approve/ship a pending project when either:
+    # - there are >= 15 minutes of devlogs since the baseline (owner-requested work), OR
+    # - the project already has sufficient recorded total_seconds (admin fallback).
+    return false unless status == 'pending'
+    devlogged_minutes_since_baseline >= 15 || total_seconds.to_i >= 15.minutes.to_i
   end
 
   # Award credits to the project owner based on credits_per_hour and either total_seconds or provided seconds
@@ -111,13 +120,62 @@ class Project < ApplicationRecord
   def award_credits!(rate, seconds: nil)
     return nil if rate.blank?
 
-    secs = seconds.present? ? seconds.to_f : total_seconds.to_f
-    hours = secs / 3600.0
+    # Treat an explicit 0 seconds as "absent" so callers that pass 0 will
+    # fall back to the project's stored `total_seconds` (previous bug: 0 was
+    # treated as present and resulted in 0 awarded credits).
+    secs = (seconds.present? && seconds.to_f > 0) ? seconds.to_f : total_seconds.to_f
+
+    # debug info to help diagnose failing tests where unexpected amounts are
+    # being calculated in some test environments
+    Rails.logger.debug("award_credits!: rate=#{rate.inspect} seconds_arg=#{seconds.inspect} total_seconds=#{total_seconds.inspect} using_secs=#{secs.inspect}") if defined?(Rails)
+
+    hours = secs.to_f / 3600.0
     amount = rate.to_f * hours
 
+    Rails.logger.debug("award_credits!: computed amount=#{amount.inspect} user_before=#{user.currency.inspect}") if defined?(Rails)
     user.update!(currency: (user.currency || 0) + amount)
+    Rails.logger.debug("award_credits!: user_after=#{user.currency.inspect}") if defined?(Rails)
 
     amount
+  end
+
+  # Create a Ship record and award credits (if a rate is provided) in a single transaction.
+  # - admin_user: the user performing the ship (stored on the Ship)
+  # - rate: credits_per_hour (may be nil)
+  # - devlogged_seconds: seconds to use for credit calculation and ship record
+  # Returns the created Ship.
+  # This method is idempotent for the same shipped_at timestamp (will raise if a ship with identical
+  # shipped_at and credits_awarded already exists), but will create distinct Ship rows for separate shipments.
+  def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current)
+    transaction do
+      # persist the rate when supplied
+      if rate.present?
+        write_attribute(:credits_per_hour, rate)
+        save! if changed?
+      end
+
+      # normalize devlogged_seconds: treat 0 or non-positive values as absent
+      devlogged_seconds = nil if devlogged_seconds.to_i <= 0
+
+      # Determine the actual seconds used to compute credits: prefer post-baseline
+      # devlogged_seconds when present, otherwise fall back to the project's total_seconds.
+      used_seconds = devlogged_seconds.present? ? devlogged_seconds.to_i : total_seconds.to_i
+
+      amount = nil
+      if rate.present?
+        amount = award_credits!(rate, seconds: used_seconds)
+      end
+
+      # Create the Ship using the used_seconds (so the DB row reflects what was paid)
+      ship = ships.create!(user: admin_user, shipped_at: shipped_at, devlogged_seconds: used_seconds, credits_awarded: amount)
+
+      # Record audit for credit awarding when applicable, reflecting the used hours
+      if amount.present?
+        Audit.create!(user: admin_user, project: self, action: 'credit_awarded', details: { amount: amount, rate: rate, hours: (used_seconds.to_f / 3600.0) })
+      end
+
+      ship
+    end
   end
 
   # Defensive shipped? helper: if the DB column exists, return its truthy value, otherwise false.
@@ -125,5 +183,11 @@ class Project < ApplicationRecord
   def shipped?
     return false unless has_attribute?(:shipped)
     self[:shipped] == true
+  end
+
+  # Predicate for the explicit 'unshipped' status value used throughout the app/tests.
+  def unshipped?
+    return true unless has_attribute?(:status)
+    status.to_s == 'unshipped'
   end
 end

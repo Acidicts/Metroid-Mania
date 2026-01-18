@@ -14,7 +14,7 @@ class SessionsController < ApplicationController
     origin = request.env['omniauth.origin'] || params[:origin] || root_path
     
     flash[:success] = "Signed in successfully!"
-    redirect_to origin, notice: "Signed in successfully! Info: #{auth.info.inspect}"
+    redirect_to origin
   end
 
   def failure

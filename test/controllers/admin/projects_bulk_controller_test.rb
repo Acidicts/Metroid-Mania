@@ -20,8 +20,12 @@ class Admin::ProjectsBulkControllerTest < ActionDispatch::IntegrationTest
     assert_equal 'approved', @p1.status
     assert_equal 5, @p1.credits_per_hour
 
-    # credit awarded to project owner (was 1.5 in fixture)
-    assert users(:one).reload.currency > 1.5
+    # credit awarded to project owner and recorded on a Ship
+    owner = users(:one)
+    owner.reload
+    ship = Ship.where(project: @p1).order(created_at: :desc).first
+    assert_not_nil ship, 'expected a Ship row when awarding credits during bulk approval'
+    assert_in_delta ship.credits_awarded.to_f, owner.currency.to_f, 0.001
 
     # audits recorded
     assert_audit_created(action: 'bulk_set_status', project: @p1, user: @admin)

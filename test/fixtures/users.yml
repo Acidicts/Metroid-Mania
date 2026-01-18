@@ -8,7 +8,7 @@ one:
   slack_id: MyString
   verification_status: MyString
   role: 0
-  currency: 1.5
+  currency: 0.0
 
 two:
   provider: MyString
@@ -18,4 +18,4 @@ two:
   slack_id: MyString
   verification_status: MyString
   role: 0
-  currency: 1.5
+  currency: 0.0

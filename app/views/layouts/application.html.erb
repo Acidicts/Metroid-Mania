@@ -46,7 +46,7 @@
             </form>
           </noscript>
         <% else %>
-          <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" class="btn-retro">Login with Hack Club</button>
+          <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" style="font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login with Hack Club</button>
         <% end %>
       </nav>
     </header>
@@ -63,7 +63,7 @@
       <%= yield %>
     </main>
 
-    <footer class="retro-footer" style="margin-top:10%; position:absolute; bottom:0; width:100%; overflow:hidden;">
+    <footer class="retro-footer" style="margin-top:10%; position:relative; bottom:0; width:100%; overflow:hidden;">
       <div class="retro-container">
         <strong>Metroid Mania</strong>
         <p>Made by Hackclub, For Hackclub</p>

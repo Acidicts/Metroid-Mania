@@ -3,11 +3,11 @@
 one:
   user: one
   product: one
-  status: pending
+  status: 0
   cost: 1.5
 
 two:
   user: two
   product: two
-  status: pending
+  status: 0
   cost: 1.5

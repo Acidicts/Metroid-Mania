@@ -53,7 +53,6 @@ class ApplicationController < ActionController::Base
       app_uri = URI(app_url)
       if app_uri.host != request.host || app_uri.port != request.port
         Rails.logger.warn("APP_URL (#{app_url}) differs from request host (#{request.base_url}). Set APP_URL to #{request.base_url} to avoid OmniAuth CSRF/session issues.")
-        flash.now[:alert] = "Development: APP_URL differs from this host. Set APP_URL to #{request.base_url} to fix OAuth CSRF errors."
       end
     rescue => e
       Rails.logger.warn("Invalid APP_URL: #{e.message}")

@@ -80,7 +80,39 @@
       <p><strong>Orders:</strong> <%= content_tag :span, @orders_count, class: "admin-dash-box-info" %></p>
       <p><strong>Pending:</strong> <%= content_tag :span, @orders_pending_count, class: "admin-dash-box-info" %></p>
       <p><strong>Denied:</strong> <%= content_tag :span, @orders_denied_count, class: "admin-dash-box-info" %></p>
-      <p><strong>Fufilled:</strong> <%= content_tag :span, @orders_fulfilled_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Fulfilled:</strong> <%= content_tag :span, @orders_fulfilled_count, class: "admin-dash-box-info" %></p>
     </div>
   </div>
+
+  <div style="margin-top: 24px;">
+    <h2>Recent Projects</h2>
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Status</th>
+          <th>Credits/hr</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% Project.order(created_at: :desc).limit(20).each do |project| %>
+          <tr>
+            <td><%= project.name %></td>
+            <td><%= project.status %></td>
+            <td><%= project.credits_per_hour %></td>
+            <td>
+              <% if project.shipped? %>
+                <%= button_to 'Unship', unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
+              <% else %>
+                <%= button_to 'Ship', ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-success' %>
+                <%= button_to 'Force Ship', force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+
 </div>

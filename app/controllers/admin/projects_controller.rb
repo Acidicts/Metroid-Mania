@@ -11,7 +11,7 @@ module Admin
     end
 
     def approve
-      credits = params[:credits_per_hour].presence
+      credits = params[:credits_per_hour].presence || @project.credits_per_hour
 
       previous_status = @project.status
 
@@ -23,20 +23,23 @@ module Admin
       # Calculate devlogged seconds since the request (or last ship/creation depending on context)
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
       devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+      # treat zero as absent so model can fall back to `total_seconds`
+      devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
-      # Approve and mark as shipped; store credit amount if provided
-      @project.update!(status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current, credits_per_hour: credits, ship_requested_at: nil)
+      # Approve and mark as shipped. Only persist a new rate when explicitly supplied (don't wipe existing rate).
+      attrs = { status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil }
+      attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
+      @project.update!(attrs)
 
       Audit.create!(user: current_user, project: @project, action: 'approve', details: { previous_status: previous_status, credits_per_hour: credits })
 
-      # If credits were provided, award them to the project owner and record an audit
-      if credits.present?
-        amount = @project.award_credits!(credits, seconds: devlogged_seconds)
-        Audit.create!(user: current_user, project: @project, action: 'credit_awarded', details: { amount: amount, rate: credits, hours: (devlogged_seconds.to_f/3600.0) })
-      end
+      # Log computed values to stdout before awarding credits to help debug award failures
+      puts "DEBUG Admin::ProjectsController#approve: computed credits=#{credits.inspect} params_credits=#{params[:credits_per_hour].inspect} baseline=#{baseline.inspect} devlogged_seconds=#{devlogged_seconds.inspect} project_total_seconds=#{@project.total_seconds.inspect}"
 
-      # Record ship snapshot for historical accounting
-      Ship.create!(project: @project, user: current_user, shipped_at: Time.current, devlogged_seconds: devlogged_seconds, credits_awarded: credits.present? ? amount : nil)
+      # Atomically award credits (when provided) and create the Ship snapshot
+      ship = @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
+
+      puts "DEBUG Admin::ProjectsController#approve: ship created id=#{ship.id} devlogged_seconds=#{ship.devlogged_seconds.inspect} credits_awarded=#{ship.credits_awarded.inspect} owner_currency_after=#{@project.user.reload.currency.inspect}"
 
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project approved and marked as shipped.'
     end
@@ -57,15 +60,20 @@ module Admin
         return
       end
 
-      # Create ship snapshot and mark as shipped
+      # Create ship snapshot and mark as shipped; award credits when the project has a rate.
       # If this ship is in response to an owner's request, calculate devlogs since request; otherwise since last ship/creation
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
       devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+      # treat zero as absent so model can fall back to `total_seconds`
+      devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
-      @project.update!(status: 'shipped', shipped: true, shipped_at: Time.current)
-      Ship.create!(project: @project, user: current_user, shipped_at: Time.current, devlogged_seconds: devlogged_seconds)
+      credits = @project.credits_per_hour
+      @project.update!(status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current)
 
-      Audit.create!(user: current_user, project: @project, action: 'ship', details: { previous_status: @project.status })
+      # Use the model method which atomically creates the Ship row and awards credits (no-ops if rate is nil).
+      @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
+
+      Audit.create!(user: current_user, project: @project, action: 'ship', details: { previous_status: @project.status, credits_per_hour: credits })
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project shipped.'
     end
 
@@ -80,11 +88,27 @@ module Admin
     def force_ship
       baseline = @project.ship_baseline
       devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+      # treat zero as absent so model can fall back to `total_seconds`
+      devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
-      @project.update!(shipped: true, status: 'shipped', shipped_at: Time.current)
-      Ship.create!(project: @project, user: current_user, shipped_at: Time.current, devlogged_seconds: devlogged_seconds, credits_awarded: nil)
+      # Determine credits: prefer explicit param, fall back to existing project rate
+      supplied_credits = params[:credits_per_hour].presence || params["credits_for_#{@project.id}"].presence
+      credits = supplied_credits || @project.credits_per_hour
 
-      Audit.create!(user: current_user, project: @project, action: 'force_ship', details: {})
+      # If admin supplied a new rate, persist it
+      if params[:credits_per_hour].present?
+        previous_credits = @project.credits_per_hour
+        @project.update!(credits_per_hour: params[:credits_per_hour].presence)
+        Audit.create!(user: current_user, project: @project, action: 'set_credits', details: { previous_credits: previous_credits, credits_per_hour: params[:credits_per_hour].presence })
+      end
+
+      # Mark project as shipped and create the Ship snapshot (award credits inside)
+      @project.update!(status: 'shipped', shipped: true, shipped_at: Time.current, credits_per_hour: credits)
+
+      # Atomically create the Ship and award credits when applicable
+      @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
+
+      Audit.create!(user: current_user, project: @project, action: 'force_ship', details: { credits_per_hour: credits })
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project force-shipped by admin.'
     end
 
@@ -100,11 +124,26 @@ module Admin
 
       case new_status
       when 'shipped'
-        @project.update!(status: 'shipped', shipped: true, shipped_at: Time.current, approved_at: Time.current, credits_per_hour: params[:credits_per_hour].presence)
+        credits = params[:credits_per_hour].presence || @project.credits_per_hour
+        attrs = { status: 'shipped', shipped: true, shipped_at: Time.current, approved_at: Time.current }
+        attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
+        @project.update!(attrs)
+
+        # award credits when applicable
+        baseline = @project.ship_baseline
+        devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+        # treat zero as absent so model can fall back to `total_seconds`
+        devlogged_seconds = nil if devlogged_seconds.to_i <= 0
+        @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: @project.shipped_at || Time.current)
+
       when 'pending'
-        @project.update!(status: 'pending', approved_at: nil, shipped: false, credits_per_hour: params[:credits_per_hour].presence)
+        attrs = { status: 'pending', approved_at: nil, shipped: false }
+        attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
+        @project.update!(attrs)
       else
-        @project.update!(status: new_status, approved_at: nil, shipped: false, credits_per_hour: params[:credits_per_hour].presence)
+        attrs = { status: new_status, approved_at: nil, shipped: false }
+        attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
+        @project.update!(attrs)
       end
 
       Audit.create!(user: current_user, project: @project, action: 'set_status', details: { previous_status: previous_status, new_status: new_status, credits_per_hour: params[:credits_per_hour].presence })

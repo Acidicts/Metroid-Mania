@@ -1,6 +1,7 @@
 <p style="color: green"><%= notice %></p>
 
 <div class="retro-container">
+  <button onclick="window.location.href='<%= projects_path %>'" class="btn-retro">Back to Projects</button>
 
   <section class="project-hero" style="margin-top:18px;">
     <div class="hero-left">
@@ -8,9 +9,9 @@
         <% if @project.respond_to?(:image_url) && @project.image_url.present? %>
           <img src="<%= @project.image_url %>" alt="<%= @project.name %>">
         <% elsif @project.respond_to?(:image) && @project.image.respond_to?(:attached?) && @project.image.attached? %>
-          <%= image_tag(@project.image, alt: @project.name) %>
+          <%= image_tag(@project.image, alt: @project.name, style: "width:500px; height:300px; border-radius:5%") %>
         <% else %>
-          <img src="https://placehold.co/300x200" alt="<%= @project.name %>">
+          <img style="width:500px; height:300px; border-radius:5%" src="https://placehold.co/500x300" alt="<%= @project.name %>">
         <% end %>
       </div>
 
@@ -44,10 +45,10 @@
         <% if @project.shipped? %>
           <div class="badge-retro">Shipped ✅</div>
         <% elsif @project.ship_requested_at %>
-          <div class="badge-retro">Ship requested</div>
+          <div class="badge-retro">Ship Pending</div>
         <% end %>
 
-        <div style="margin-top:10px">
+        <div style="margin-top:10px; top:10px; position:relative;">
           <p><strong>Owner:</strong> <%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.email %></p>
           <p><strong>Total time:</strong> <%= format_duration(@project.total_seconds) %></p>
           <p><strong>Devlogged:</strong> <%= format_duration(@project.total_devlogged_seconds) %></p>
@@ -66,6 +67,10 @@
               <% end %>
             <% elsif @project.ship_requested_at %>
               <span style="color:var(--accent2); font-weight:700">Awaiting approval</span>
+            <% elsif !@project.eligible_for_ship_request? %>
+              <% remaining = [15 - @project.devlogged_minutes_since_baseline.to_i, 0].max %>
+              <div>You need <strong><%= remaining %> more minutes</strong></div>
+              <%= link_to 'Create a devlog', new_project_devlog_path(@project), class: 'btn-retro btn-retro--outline' %>
             <% elsif @project.eligible_for_ship_request? %>
               <%= button_to 'Request Ship', ship_project_path(@project), method: :post, data: { confirm: 'Request to ship this project?' }, class: 'btn-retro' %>
             <% end %>

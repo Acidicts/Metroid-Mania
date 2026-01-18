@@ -20,18 +20,18 @@
             <td><%= project.user.name %></td>
             <td><%= link_to project.name, admin_project_path(project) %></td>
             <td>
-              <%= select_tag "status_for_#{project.id}", options_for_select(Project::STATUSES, project.status) %>
+              <%= project.status %>
             </td>
             <td>
-              <%= number_field_tag "credits_for_#{project.id}", project.credits_per_hour, min: 0, autocomplete: 'off', style: 'width: 100px;' %>
+              <%= number_field_tag "credits_for_#{project.id}", project.credits_per_hour, min: 0, autocomplete: 'off', style: 'width: 100px;', id: "credits_for_#{project.id}" %>
             </td>
             <td>
               <% if project.shipped? %>
                 <%= button_to "Unship", unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
               <% else %>
-                <%= button_to "Ship", ship_admin_project_path(project), method: :post, class: 'btn-admin' %>
+                <%= button_to "Force Ship", force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { credits_input_id: "credits_for_#{project.id}" } %>
               <% end %>
-              <%= button_to "Force Ship", force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
+              
             </td>
           </tr>
         <% end %>
@@ -39,7 +39,7 @@
     </table>
 
     <div style="margin-top: 12px;">
-      <%= select_tag 'bulk_status', options_for_select([['Set status...',''], ['pending','pending'], ['approved','approved'], ['rejected','rejected'], ['denied','denied']]), class: 'form-control' %>
+      <%= select_tag 'bulk_status', options_for_select([['Set status...',''], ['pending','pending'], ['unshipped','unshipped'], ['shipped','shipped'], ['denied','denied']]), class: 'form-control' %>
       <%= number_field_tag 'bulk_credits', nil, placeholder: 'Credits/hr (optional)', min: 0, autocomplete: 'off', style: 'width: 180px; margin-left: 8px;' %>
       <%= submit_tag 'Apply to selected', class: 'btn-admin', data: { confirm: 'Apply changes to selected projects?' } %>
     </div>
@@ -51,6 +51,24 @@
       if (!selectAll) return
       selectAll.addEventListener('change', () => {
         document.querySelectorAll("input[name='project_ids[]']").forEach(cb => cb.checked = selectAll.checked)
+      })
+
+      // Copy per-row credits input into the auto-generated button_to form for Force Ship
+      document.querySelectorAll("form[action$='/force_ship']").forEach(form => {
+        form.addEventListener('submit', (ev) => {
+          // If the form already includes credits_per_hour, do nothing
+          if (form.querySelector("input[name='credits_per_hour']")) return
+
+          const dataAttr = form.querySelector("button[data-credits-input-id]")?.dataset?.creditsInputId
+          const input = dataAttr ? document.getElementById(dataAttr) : null
+          if (input && input.value !== '') {
+            const hidden = document.createElement('input')
+            hidden.type = 'hidden'
+            hidden.name = 'credits_per_hour'
+            hidden.value = input.value
+            form.appendChild(hidden)
+          }
+        })
       })
     })
   </script>

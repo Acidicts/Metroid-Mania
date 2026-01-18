@@ -12,13 +12,13 @@ class Order < ApplicationRecord
   # triggering the funds check while ensuring normal creates are validated.
   validate :user_has_enough_currency, on: :create, if: -> { status.blank? || status == 'pending' }
   # Prevent duplicate pending orders at model level (best-effort; DB unique index is authoritative)
-  validates :product_id, uniqueness: { scope: :user_id, message: 'already has a pending order' }, if: -> { status == 'pending' }
+  validates :product_id, uniqueness: { scope: [:user_id, :status], message: 'already has a pending order' }, if: -> { status == 'pending' }
 
   # canonical mapping used by migration/tests/views
   STATUS_VALUE_MAP = {
     'pending'   => 0,
     'denied'    => 1,
-    'fufilled'  => 2
+    'shipped'   => 2
   }.freeze
 
   # Select-friendly array (used by views)
@@ -30,23 +30,59 @@ class Order < ApplicationRecord
     db_has_orders = (ActiveRecord::Base.connection.data_source_exists?('orders') rescue false)
     status_col = (columns_hash['status'] rescue nil)
     if db_has_orders && status_col && status_col.type == :integer
-      enum status: STATUS_VALUE_MAP.invert.transform_values(&:to_i)
+      enum status: STATUS_VALUE_MAP.transform_keys(&:to_sym)
+
+      # Normalize human-friendly enum keys into the DB-backed integer before validation so
+      # callers may pass either a key ('denied') or a numeric/string DB value ('1'/'1').
+      before_validation do
+        if self.status.present? && self.status.to_s =~ /\A[a-z_]+\z/i
+          mapped = self.class.statuses[self.status.to_s]
+          self.status = mapped if mapped
+        end
+      end
     else
       raise "string_status"
     end
   rescue => _ignored
     # string-backed compatibility: provide predicates/scopes/setter/getter expected by app code
+    # Be defensive: the DB column *may* be integer-backed even if the enum couldn't be defined
+    # at class-eval time (test environments, load-order issues). Handle both numeric and
+    # human-friendly representations so predicates and audits remain stable.
     STATUS_VALUE_MAP.keys.each do |s|
-      define_method("#{s}?") { read_attribute(:status).to_s == s }
-      scope s.to_sym, -> { where(status: s) }
+      define_method("#{s}?") do
+        v = read_attribute(:status)
+        # match canonical string or numeric DB value
+        v.to_s == s || (v.to_i.to_s == v.to_s && v.to_i == STATUS_VALUE_MAP[s])
+      end
+
+      scope s.to_sym, -> {
+        where("status = ? OR status = ?", s, STATUS_VALUE_MAP[s])
+      }
     end
 
     def status
-      read_attribute(:status).to_s
+      v = read_attribute(:status)
+      # if stored as numeric, translate to canonical key
+      if v.is_a?(Integer) || v.to_s =~ /\A\d+\z/
+        STATUS_VALUE_MAP.invert[v.to_i].to_s
+      else
+        v.to_s
+      end
     end
 
     def status=(val)
-      write_attribute(:status, val.to_s)
+      # accept either numeric or human key and persist the appropriate representation
+      if val.is_a?(Integer) || val.to_s =~ /\A\d+\z/
+        write_attribute(:status, val.to_i)
+      else
+        # If we know the canonical mapping, store the integer DB value when possible to avoid
+        # writing a human key into an integer column (which some DBs coerce to 0).
+        if self.class.const_defined?(:STATUS_VALUE_MAP) && STATUS_VALUE_MAP[val.to_s]
+          write_attribute(:status, STATUS_VALUE_MAP[val.to_s])
+        else
+          write_attribute(:status, val.to_s)
+        end
+      end
     end
   end
 
@@ -84,6 +120,15 @@ class Order < ApplicationRecord
     end
   end
 
+  # Ensure user has sufficient funds for this order at creation time.
+  def user_has_enough_currency
+    return if product.blank?
+    price = product.price_currency.to_f
+    if (user.currency || 0).to_f < price
+      errors.add(:base, "Insufficient funds")
+    end
+  end
+
   # Refunds the user when an order transitions to `denied` unless a refund was already recorded.
   def refund_if_denied
     prev_status, new_status = saved_change_to_status
@@ -111,12 +156,27 @@ class Order < ApplicationRecord
 
     # Use a real user for the audit entry (prefer an admin if available, otherwise fall back to any user).
     audit_user = User.find_by(role: :admin) || User.first
-    Audit.create!(user: audit_user, project: nil, action: 'order_refunded', details: { order_id: id, amount: cost.to_f, previous_status: prev_status })
+
+    # Store a canonical status string in the audit (handle integer-backed enums or legacy string columns).
+    canonical_prev = if self.class.respond_to?(:statuses)
+      if prev_status.is_a?(Integer) || prev_status.to_s =~ /\A\d+\z/
+        self.class.statuses.key(prev_status.to_i).to_s rescue prev_status.to_s
+      else
+        prev_status.to_s
+      end
+    else
+      prev_status.to_s
+    end
+
+    Audit.create!(user: audit_user, project: nil, action: 'order_refunded', details: { order_id: id, amount: cost.to_f, previous_status: canonical_prev })
   end
 
-  def user_has_enough_currency
-    if user.currency < product.price_currency
-      errors.add(:base, "Insufficient funds")
-    end
+  # Backwards-compatible predicate aliases for previous misspellings / synonyms
+  def fulfilled?
+    respond_to?(:status) ? (status.to_s == 'shipped' || status.to_s == 'fulfilled') : false
+  end
+
+  def fufilled?
+    fulfilled?
   end
 end
