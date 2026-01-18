@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_18_090000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_18_093000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -86,6 +86,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_090000) do
     t.datetime "created_at", null: false
     t.integer "credits_per_hour"
     t.text "description"
+    t.boolean "featured", default: false, null: false
+    t.datetime "featured_at", precision: nil
     t.string "hackatime_id"
     t.text "hackatime_ids"
     t.string "name"
@@ -98,6 +100,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_090000) do
     t.integer "total_seconds"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["featured"], name: "index_projects_on_featured"
+    t.index ["featured_at"], name: "index_projects_on_featured_at"
     t.index ["user_id"], name: "index_projects_on_user_id"
   end
 
