@@ -19,9 +19,9 @@
         <h1 class="project-title"><%= @project.name %></h1>
         <div class="kv" style="margin-bottom:8px">
           <div class="label">By</div>
-          <div class="value"><%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.email %></div>
+          <div class="value"><%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.name %></div>
         </div>
-        <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet.') %></p>
+        <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet. \n Required for Ship') %></p>
 
         <div style="margin-top:12px" class="tech-list">
           <% if @project.hackatime_ids.present? %>
@@ -42,11 +42,6 @@
 
     <aside class="hero-right">
       <div class="featured-project">
-        <% if @project.shipped? %>
-          <div class="badge-retro">Shipped ✅</div>
-        <% elsif @project.ship_requested_at %>
-          <div class="badge-retro">Ship Pending</div>
-        <% end %>
 
         <div style="margin-top:10px; top:10px; position:relative;">
           <p><strong>Owner:</strong> <%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.email %></p>
@@ -57,7 +52,6 @@
 
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
           <% if @project.user == current_user %>
-            <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
 
             <% if @project.shipped? %>
               <% if @project.devlogs.where('created_at >= ?', @project.shipped_at || @project.approved_at || @project.created_at).sum(:duration_minutes) >= 15 %>
@@ -69,14 +63,14 @@
               <span style="color:var(--accent2); font-weight:700">Awaiting approval</span>
             <% elsif !@project.eligible_for_ship_request? %>
               <% remaining = [15 - @project.devlogged_minutes_since_baseline.to_i, 0].max %>
-              <div>You need <strong><%= remaining %> more minutes</strong></div>
-              <%= link_to 'Create a devlog', new_project_devlog_path(@project), class: 'btn-retro btn-retro--outline' %>
+              <span style="font-size:1.2rem">You need <strong style="font-family:monospace;"><%= remaining %></strong> more minutes of devlogs</span>
             <% elsif @project.eligible_for_ship_request? %>
               <%= button_to 'Request Ship', ship_project_path(@project), method: :post, data: { confirm: 'Request to ship this project?' }, class: 'btn-retro' %>
             <% end %>
           <% else %>
             <%= link_to 'Back to projects', projects_path, class: 'btn-retro btn-retro--outline' %>
           <% end %>
+            <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
         </div>
       </div>
     </aside>

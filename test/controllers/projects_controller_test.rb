@@ -24,6 +24,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to project_url(Project.last)
+    assert_equal 'unshipped', Project.last.status
+    assert_equal false, Project.last.shipped
   end
 
   test "should show project" do
@@ -106,6 +108,6 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     get project_url(@project)
     assert_response :success
     assert_select 'div', /You need 15 more minutes/ 
-    assert_select 'a', 'Create a devlog'
+    assert_select 'a', 'New Devlog'
   end
 end

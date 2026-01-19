@@ -22,4 +22,9 @@ module ProjectsHelper
       text
     end
   end
+
+  def ensure_url_scheme(url)
+    return nil if url.blank?
+    url =~ /\Ahttps?:\/\//i ? url : "https://#{url}"
+  end
 end

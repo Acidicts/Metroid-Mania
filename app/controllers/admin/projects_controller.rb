@@ -84,6 +84,12 @@ module Admin
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project marked as unshipped.'
     end
 
+    def delete
+      @project.destroy
+      Audit.create!(user: current_user, project: @project, action: 'delete', details: {})
+      redirect_back fallback_location: admin_dashboard_path, notice: 'Project deleted.'
+    end
+
     # POST /admin/projects/:id/force_ship
     def force_ship
       baseline = @project.ship_baseline

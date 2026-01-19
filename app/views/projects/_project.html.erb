@@ -1,58 +1,78 @@
-<div id="<%= dom_id project %>">
-  <h2><%= project.name %></h2>
+<style>
+  .btn-retro-pos {
+    background-color: var(--main-600);
+    padding: 4px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    text-align: center;
+    border : 2px dashed var(--main-800);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
 
-  <p>
-    <strong>Status:</strong>
-    <%= project.status %>
-  </p>
+  .btn-retro-pos:hover {
+    background-color: var(--main-500);
+    border : 2px solid var(--main-900);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    transform: scale(1.05);
+  }
 
-  <% if project.description.present? %>
-  <p>
-    <strong>Description:</strong>
-    <%= project.description %>
-  </p>
+  .btn-retro-top {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
+  .btn-retro-bottom {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
+</style>
+
+<div id="<%= dom_id project %>" class="project-card project-preview">
+  <% if project.image.attached? %>
+    <div class="project-media project-media--thumb" style="height:120px; max-height:120px; overflow:hidden;">
+      <%= image_tag project.image.variant(resize_to_fill: [320, 180]), alt: project.name, class: 'project-thumb' %>
+    </div>
+  <% else %>
+    <div class="project-media project-media--thumb" style="height:120px; max-height:120px; background: var(--accent-gradient);"></div>
   <% end %>
 
-  <% if project.readme_url.present? %>
-  <p>
-    <strong>Readme:</strong>
-    <%= external_link_to project.readme_url, project.readme_url %>
-  </p>
-  <% end %>
+  <div class="project-content">
+    <!-- status ribbon positioned at top-left of the card -->
+    <span class="ribbon <%= project.shipped? ? 'shipped' : 'unshipped' %>"><%= project.shipped? ? 'Shipped' : 'Unshipped' %></span>
 
-  <p>
-    <strong>GitHub Repo:</strong>
-    <%= external_link_to project.repository_url, project.repository_url %>
-  </p>
+    <h3 class="project-title" style="margin:0 0 6px 0; font-size:1.05rem;"><%= link_to project.name, project_path(project) %></h3>
 
-  <p>
-    <strong>Hackatime Project(s):</strong>
-    <% if defined?(local_assigns) && local_assigns[:@hackatime_breakdown] && @hackatime_breakdown.any? %>
-      <ul>
-        <% @hackatime_breakdown.each do |h| %>
-          <li><%= h[:name] %> — <%= format_duration(h[:seconds]) %></li>
-        <% end %>
-      </ul>
-    <% elsif project.hackatime_ids.present? && project.hackatime_ids.any? %>
-      <%= project.hackatime_ids.join(", ") %>
-    <% else %>
-      <%= project.hackatime_id.presence || "Not Linked" %>
+    <% if project.description.present? %>
+      <p class="project-desc" style="margin:0 0 8px 0; color:var(--main-700); font-size:0.95rem;"><%= truncate(project.description, length: 160, separator: ' ') %></p>
     <% end %>
-  </p>
 
-  <p>
-    <strong>Total Time:</strong>
-    <%= format_duration(project.total_seconds) %>
-  </p>
+    <div style="display:flex; gap:12px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+      <div class="tech" style="font-weight:700; padding:6px 8px; background:var(--accent3); border:2px solid var(--main-700); border-radius:6px;">Total: <span style="font-weight:800;"> <%= format_duration(project.total_devlogged_seconds) %> </span></div>
+      <div class="tech" style="font-weight:700; padding:6px 8px; background:rgba(255,255,255,0.92); border:2px solid var(--main-700); border-radius:6px;"></span>
+        <span style="margin-left:8px; font-weight:600; font-size:0.85rem; color:var(--main-900); opacity:0.9;"><%= pluralize(project.devlogs.count, 'devlog') %></span>
+      </div>
+    </div>
 
-  <p>
-    <strong>Devlogged Time:</strong>
-    <%= format_duration(project.total_devlogged_seconds) %>
-  </p>
+    <div class="cta-row" style="margin-top:12px;">
+      <%= link_to 'View', project_path(project), class: 'btn-retro' %>
+      <div style="display:flex; flex-direction:column; gap:4px; margin-left:8px;">
+        <% if project.repository_url.present? %>
+          <%= link_to 'Repo', ensure_url_scheme(project.repository_url), class: 'btn-retro-top btn-retro-pos', target: '_blank', rel: 'noopener noreferrer', style: 'margin-left:8px;' %>
+        <% end %>
+        <% if project.readme_url.present? %>
+          <%= link_to 'Readme', ensure_url_scheme(project.readme_url), class: 'btn-retro-bottom btn-retro-pos', target: '_blank', rel: 'noopener noreferrer', style: 'margin-left:8px;' %>
+        <% end %>
+      </div>
 
-  <p>
-    <strong>Undocumented Time:</strong>
-    <%= format_duration([project.total_seconds.to_i - project.total_devlogged_seconds, 0].max) %>
-  </p>
-
+      <% if defined?(local_assigns) && local_assigns[:@hackatime_breakdown] && @hackatime_breakdown.any? %>
+        <span class="badge-retro" style="margin-left:8px; font-weight:600;"><%= @hackatime_breakdown.map { |h| "#{h[:name]}: #{format_duration(h[:seconds])}" }.join(" • ") %></span>
+      <% elsif project.hackatime_ids.present? && project.hackatime_ids.any? %>
+        <span class="badge-retro" style="margin-left:8px; font-weight:600;"><%= project.hackatime_ids.join(", ") %></span>
+      <% else %>
+        <span class="badge-retro" style="margin-left:8px; font-weight:600;"><%= project.hackatime_id.presence || "Not Linked" %></span>
+      <% end %>
+    </div>
+  </div>
 </div>

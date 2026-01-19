@@ -72,7 +72,7 @@ class ProjectsController < ApplicationController
     end
 
     @project = current_user.projects.build(project_params)
-    @project.status = 'pending'
+    @project.status = 'unshipped'
 
     respond_to do |format|
       if @project.save

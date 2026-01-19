@@ -39,7 +39,7 @@
           <%= link_to current_user.name || current_user.email, profile_path, class: 'btn-retro btn-retro--outline' %>
 
           <!-- ensure Turbo/JS will send DELETE; also provide a <noscript> fallback -->
-          <%= link_to 'Sign out', logout_path, data: { turbo_method: :delete }, class: 'btn-retro' %>
+          <%= link_to 'Sign out', logout_path, data: { turbo_method: :delete }, id: 'sign_out_btn' %>
           <noscript>
             <form action="<%= logout_path %>" method="post" style="display:inline">
               <input type="hidden" name="_method" value="delete" />
@@ -47,7 +47,7 @@
             </form>
           </noscript>
         <% else %>
-          <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" style="font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login with Hack Club</button>
+          <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" style="font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login</button>
         <% end %>
       </nav>
     </header>
