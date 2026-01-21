@@ -5,12 +5,29 @@
 <h1>Devlogs for <%= @project.name %></h1>
 
 <div id="devlogs">
-  <% ships = @ships.to_a %>
+  <% # Build a single array of markers (both ship requests and ships) sorted by time desc %>
+  <% markers = [] %>
+  <% @ship_requests&.each do |r| %>
+    <% markers << { type: 'request', time: r.requested_at || r.created_at, obj: r } %>
+  <% end %>
+  <% @ships&.each do |s| %>
+    <% markers << { type: 'ship', time: s.shipped_at || s.created_at, obj: s } %>
+  <% end %>
+  <% markers.sort_by! { |m| m[:time] || Time.at(0) }.reverse! %>
+
+  <% markers = markers.to_a %>
+
   <% @devlogs.each do |devlog| %>
-    <%# Insert ship markers that occurred at or after this devlog's created_at %>
-    <% while ships.any? && ships.first.shipped_at >= devlog.created_at %>
-      <div class="ship-marker">Project shipped on <%= ships.first.shipped_at %> (devlogged: <%= format_duration(ships.first.devlogged_seconds.to_i) %>)</div>
-      <% ships.shift %>
+    <%# Insert any markers that occurred at or after this devlog's created_at %>
+    <% while markers.any? && (markers.first[:time] || Time.at(0)) >= devlog.created_at %>
+      <% m = markers.shift %>
+      <% if m[:type] == 'ship' %>
+        <div class="ship-marker">Project shipped on <%= m[:obj].shipped_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)</div>
+      <% else %>
+        <div class="ship-request-marker">Ship requested on <%= m[:obj].requested_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)
+        <% if m[:obj].credits_per_hour.present? %> — rate: <%= m[:obj].credits_per_hour %>/hr <% end %>
+        </div>
+      <% end %>
     <% end %>
 
     <%= render devlog %>
@@ -19,9 +36,15 @@
     </p>
   <% end %>
 
-  <%# Any remaining ships that happened after the last devlog (most recent) %>
-  <% ships.each do |s| %>
-    <div class="ship-marker">Project shipped on <%= s.shipped_at %> (devlogged: <%= format_duration(s.devlogged_seconds.to_i) %>)</div>
+  <%# Any remaining markers that happened after the last devlog (most recent) %>
+  <% markers.each do |m| %>
+    <% if m[:type] == 'ship' %>
+      <div class="ship-marker">Project shipped on <%= m[:obj].shipped_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)</div>
+    <% else %>
+      <div class="ship-request-marker">Ship requested on <%= m[:obj].requested_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)
+        <% if m[:obj].credits_per_hour.present? %> — rate: <%= m[:obj].credits_per_hour %>/hr <% end %>
+      </div>
+    <% end %>
   <% end %>
 </div>
 

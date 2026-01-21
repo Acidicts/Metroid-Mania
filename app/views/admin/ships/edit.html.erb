@@ -1,0 +1,29 @@
+<div class="admin-panel">
+  <h1>Edit Ship ##<%= @ship.id %> for <%= @ship.project.name %></h1>
+
+      <div class="admin-two-col">
+        <div class="admin-two-col-main">
+          <p><strong>Project:</strong> <%= link_to @ship.project.name, admin_project_path(@ship.project) %></p>
+          <p><strong>Shipped at:</strong> <%= @ship.shipped_at %></p>
+          <p><strong>Devlogged:</strong> <%= format_duration(@ship.devlogged_seconds.to_i) %></p>
+        </div>
+
+        <aside class="admin-side-panel open" id="ship-edit-panel">
+          <div class="panel-header">
+            <h3>Edit Ship</h3>
+            <button class="close-panel" aria-label="Close edit panel">✕</button>
+          </div>
+
+          <div class="panel-body">
+            <%= render 'form', ship: @ship %>
+          </div>
+        </aside>
+      </div>
+
+      <script>
+        document.addEventListener('DOMContentLoaded', function () {
+          var panel = document.getElementById('ship-edit-panel')
+          var closeBtn = panel && panel.querySelector('.close-panel')
+          if (closeBtn) closeBtn.addEventListener('click', function () { panel.classList.remove('open') })
+        })
+      </script>

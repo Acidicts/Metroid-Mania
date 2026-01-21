@@ -1,0 +1,41 @@
+<nav class="admin-nav" role="navigation" aria-label="Admin navigation">
+  <button class="admin-nav-toggle" aria-controls="admin-sidebar" aria-expanded="true" aria-label="Toggle admin navigation">☰</button>
+
+  <div class="nav-section" id="admin-sidebar">
+    <div class="nav-header"><strong>Admin</strong></div>
+
+    <ul class="nav-items">
+      <li class="nav-item"><%= link_to admin_dashboard_path, class: (controller.controller_name == 'dashboard' ? 'active' : '') do %><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_users_path, class: (controller.controller_name == 'users' ? 'active' : '') do %><span class="nav-icon">👥</span><span class="nav-label">Users</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_projects_path, class: (controller.controller_name == 'projects' ? 'active' : '') do %><span class="nav-icon">📦</span><span class="nav-label">Projects</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_orders_path, class: (controller.controller_name == 'orders' ? 'active' : '') do %><span class="nav-icon">🧾</span><span class="nav-label">Orders</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_ship_requests_path, class: (controller.controller_name == 'ship_requests' ? 'active' : '') do %><span class="nav-icon">✉️</span><span class="nav-label">Ship Requests</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_ships_path, class: (controller.controller_name == 'ships' ? 'active' : '') do %><span class="nav-icon">🚚</span><span class="nav-label">Ships</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_audits_path, class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">📝</span><span class="nav-label">Audits</span><% end %></li>
+    </ul>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var toggle = document.querySelector('.admin-nav-toggle')
+      var sidebar = document.getElementById('admin-sidebar')
+      if (!toggle || !sidebar) return
+
+      // sync initial state
+      if (sidebar.classList.contains('collapsed') || document.body.classList.contains('admin-sidebar-collapsed')) {
+        toggle.setAttribute('aria-expanded', 'false')
+        document.body.classList.add('admin-sidebar-collapsed')
+      } else {
+        toggle.setAttribute('aria-expanded', 'true')
+        document.body.classList.remove('admin-sidebar-collapsed')
+      }
+
+      toggle.addEventListener('click', function () {
+        var isExpanded = toggle.getAttribute('aria-expanded') === 'true'
+        toggle.setAttribute('aria-expanded', (!isExpanded).toString())
+        sidebar.classList.toggle('collapsed')
+        document.body.classList.toggle('admin-sidebar-collapsed')
+      })
+    })
+  </script>
+</nav>

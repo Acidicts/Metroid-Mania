@@ -33,6 +33,12 @@
     <small style="font-size: 0.8em; color: gray;"><%= devlog.log_date&.strftime("%b %-d, %Y") %></small>
   </h3>
 
+  <% if devlog.ship_request.present? %>
+    <p style="margin:6px 0;">
+      <span style="background:#eef2ff; padding:4px 8px; border-radius:6px; font-weight:600;">Part of ship request: <%= link_to "##{devlog.ship_request.id}", project_ship_request_path(devlog.project, devlog.ship_request) %> (<%= devlog.ship_request.status %>)</span>
+    </p>
+  <% end %>
+
   <div class="devlog-content">
     <%= simple_format devlog.content %>
   </div>

@@ -1,5 +1,5 @@
 module Admin
-  class ProjectsBulkController < ApplicationController
+  class ProjectsBulkController < Admin::ApplicationController
     before_action :require_admin
 
     # POST /admin/projects/bulk_update

@@ -1,5 +1,5 @@
 module Admin
-  class SessionsController < ApplicationController
+  class SessionsController < Admin::ApplicationController
     # Allow admins to sign in via email/password
     skip_before_action :verify_authenticity_token, only: :create
 

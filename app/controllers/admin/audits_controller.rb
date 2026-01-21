@@ -1,5 +1,5 @@
 module Admin
-  class AuditsController < ApplicationController
+  class AuditsController < Admin::ApplicationController
     before_action :require_admin
 
     def index

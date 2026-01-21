@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_18_093000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_21_120001) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -52,9 +52,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_093000) do
     t.integer "duration_minutes"
     t.date "log_date"
     t.integer "project_id", null: false
+    t.integer "ship_request_id"
     t.string "title"
     t.datetime "updated_at", null: false
     t.index ["project_id"], name: "index_devlogs_on_project_id"
+    t.index ["ship_request_id"], name: "index_devlogs_on_ship_request_id"
   end
 
   create_table "orders", force: :cascade do |t|
@@ -105,6 +107,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_093000) do
     t.index ["user_id"], name: "index_projects_on_user_id"
   end
 
+  create_table "ship_requests", force: :cascade do |t|
+    t.datetime "approved_at"
+    t.datetime "created_at", null: false
+    t.float "credits_awarded"
+    t.float "credits_per_hour"
+    t.integer "devlogged_seconds"
+    t.integer "processed_by_id"
+    t.integer "project_id", null: false
+    t.datetime "requested_at"
+    t.string "status", default: "pending"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["processed_by_id"], name: "index_ship_requests_on_processed_by_id"
+    t.index ["project_id"], name: "index_ship_requests_on_project_id"
+    t.index ["user_id"], name: "index_ship_requests_on_user_id"
+  end
+
   create_table "ships", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.float "credits_awarded"
@@ -137,9 +156,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_18_093000) do
   add_foreign_key "audits", "projects"
   add_foreign_key "audits", "users"
   add_foreign_key "devlogs", "projects"
+  add_foreign_key "devlogs", "ship_requests"
   add_foreign_key "orders", "products"
   add_foreign_key "orders", "users"
   add_foreign_key "projects", "users"
+  add_foreign_key "ship_requests", "projects"
+  add_foreign_key "ship_requests", "users"
+  add_foreign_key "ship_requests", "users", column: "processed_by_id"
   add_foreign_key "ships", "projects"
   add_foreign_key "ships", "users"
 end

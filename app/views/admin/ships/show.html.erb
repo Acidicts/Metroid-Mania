@@ -1,0 +1,50 @@
+<div class="admin-panel">
+  <h1>Ship ##<%= @ship.id %> for <%= @ship.project.name %></h1>
+      <p>Shipped at: <%= @ship.shipped_at %></p>
+<p>Devlogged seconds: <%= @ship.devlogged_seconds %> (<%= format_duration(@ship.devlogged_seconds.to_i) %>)</p>
+<p>Credits awarded: <%= @ship.credits_awarded %></p>
+<p>Processed by: <%= @ship.user&.name || @ship.user&.email %></p>
+
+<p style="margin-top:8px">
+  <%= link_to 'Edit Ship', '#', class: 'btn-admin', id: 'open-edit-panel' %>
+</p>
+
+<div class="admin-two-col">
+  <div class="admin-two-col-main">
+    <h3>Related audit entries</h3>
+    <% @ship.project.audits.order(created_at: :desc).each do |a| %>
+      <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
+        <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
+      </div>
+    <% end %>
+  </div>
+
+  <aside class="admin-side-panel" id="ship-edit-panel">
+    <div class="panel-header">
+      <h3>Edit Ship</h3>
+      <button class="close-panel" aria-label="Close edit panel">✕</button>
+    </div>
+
+    <div class="panel-body">
+      <%= render 'form', ship: @ship %>
+    </div>
+  </aside>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var panel = document.getElementById('ship-edit-panel')
+    var open = document.getElementById('open-edit-panel')
+    var closeBtn = panel && panel.querySelector('.close-panel')
+    if (!open || !panel) return
+    open.addEventListener('click', function (e) { e.preventDefault(); panel.classList.add('open'); panel.scrollIntoView({behavior: 'smooth'}); })
+    if (closeBtn) closeBtn.addEventListener('click', function () { panel.classList.remove('open') })
+  })
+</script>
+
+<h3>Related audit entries</h3>
+<% @ship.project.audits.order(created_at: :desc).each do |a| %>
+  <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
+    <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
+  </div>
+<% end %>

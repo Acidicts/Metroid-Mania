@@ -1,0 +1,31 @@
+<%= form_with model: [:admin, ship], url: admin_ship_path(ship), method: :patch, local: true do |f| %>
+  <div>
+    <%= f.label :devlogged_seconds, 'Devlogged seconds' %><br>
+    <%= f.number_field :devlogged_seconds, value: ship.devlogged_seconds, step: 1 %>
+  </div>
+
+  <div>
+    <%= f.label :credits_awarded, 'Credits awarded' %><br>
+    <%= f.text_field :credits_awarded, value: ship.credits_awarded %>
+  </div>
+
+  <div>
+    <%= f.label :shipped_at, 'Shipped at' %><br>
+    <%= f.datetime_select :shipped_at, default: ship.shipped_at || Time.current %>
+  </div>
+
+  <div>
+    <%= label_tag :credits_per_hour, 'Credits per hour (for recalculation)' %><br>
+    <%= text_field_tag 'ship[credits_per_hour]', ship.project.credits_per_hour %>
+  </div>
+
+  <div>
+    <%= check_box_tag 'ship[recalculate]', '1', false %>
+    <%= label_tag 'ship[recalculate]', 'Recalculate credits using credits per hour and devlogged seconds' %>
+  </div>
+
+  <div style="margin-top:12px">
+    <%= f.submit 'Save changes', class: 'btn-admin' %>
+    <%= link_to 'Cancel', admin_ship_path(ship), class: 'btn-admin btn-admin--muted', style: 'margin-left:8px' %>
+  </div>
+<% end %>

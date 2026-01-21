@@ -1,0 +1,15 @@
+<h1>Ship Requests for <%= @project.name %></h1>
+
+<% if @ship_requests.any? %>
+  <ul>
+    <% @ship_requests.each do |r| %>
+      <li>
+        <%= link_to "Request ##{r.id} - #{r.status}", project_ship_request_path(@project, r) %>
+        — requested at <%= r.requested_at %>
+        — devlogged <%= format_duration(r.devlogged_seconds.to_i) %>
+      </li>
+    <% end %>
+  </ul>
+<% else %>
+  <p>No ship requests yet.</p>
+<% end %>

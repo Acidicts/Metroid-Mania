@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Admin - <%= content_for?(:title) ? yield(:title) : 'Admin' %></title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= render 'admin/admin_styles' %>
+    <%= yield :styles %>
+  </head>
+
+  <body class="admin">
+
+    <aside class="admin-sidebar" id="admin-sidebar" role="navigation" aria-label="Admin navigation">
+      <%= render 'admin/nav' %>
+    </aside>
+
+    <div class="admin-layout">
+      <main class="admin-main">
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

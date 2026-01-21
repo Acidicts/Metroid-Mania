@@ -44,7 +44,7 @@
       <div class="featured-project">
 
         <div style="margin-top:10px; top:10px; position:relative;">
-          <p><strong>Owner:</strong> <%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.email %></p>
+          <p><strong>Owner:</strong> <%= link_to @project.user.name, user_path(@project.user) rescue @project.user.email %></p>
           <p><strong>Total time:</strong> <%= format_duration(@project.total_seconds) %></p>
           <p><strong>Devlogged:</strong> <%= format_duration(@project.total_devlogged_seconds) %></p>
           <p><strong>Undocumented:</strong> <%= format_duration([@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max) %></p>
@@ -53,15 +53,18 @@
         <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
           <% if @project.user == current_user %>
 
-            <% if @project.shipped? %>
-              <% if @project.devlogs.where('created_at >= ?', @project.shipped_at || @project.approved_at || @project.created_at).sum(:duration_minutes) >= 15 %>
-                <%= button_to 'Request another ship', ship_project_path(@project), method: :post, data: { confirm: 'Request a new ship?' }, class: 'btn-retro' %>
+            <% if @project.computed_shipped? %>
+              <% if @project.devlogs.where('created_at >= ?', @project.computed_shipped_at || @project.approved_at || @project.created_at).sum(:duration_minutes) >= 15 %>
+                <%= button_to 'Request another ship', project_ship_requests_path(@project), method: :post, data: { confirm: 'Request a new ship?' }, class: 'btn-retro' %>
               <% else %>
                 <span style="color:var(--main-700);">Add a devlog to request another ship.</span>
               <% end %>
-            <% elsif @project.ship_requested_at %>
-              <span style="color:var(--accent2); font-weight:700">Awaiting approval</span>
-            <% elsif !@project.eligible_for_ship_request? %>
+            <% elsif @project.computed_status == 'pending' %>
+              <span style="color:var(--accent2); font-weight:700">Awaiting approval</span>              <%# Link to view the pending ship request if present %>
+              <% if @project.ship_requests.where(status: 'pending').exists? %>
+                <%= link_to 'View request', project_ship_request_path(@project, @project.ship_requests.where(status: 'pending').first), class: 'btn-retro btn-retro--outline' %>
+              <% end %>
+              <%= link_to 'Ship Requests', project_ship_requests_path(@project), class: 'btn-retro btn-retro--outline', style: 'margin-left:8px' %>            <% elsif !@project.eligible_for_ship_request? %>
               <% remaining = [15 - @project.devlogged_minutes_since_baseline.to_i, 0].max %>
               <span style="font-size:1.2rem">You need <strong style="font-family:monospace;"><%= remaining %></strong> more minutes of devlogs</span>
             <% elsif @project.eligible_for_ship_request? %>

@@ -1,5 +1,5 @@
 module Admin
-  class ProjectsController < ApplicationController
+  class ProjectsController < Admin::ApplicationController
     before_action :require_admin
     before_action :set_project, only: [:show, :approve, :reject, :ship, :unship, :set_status, :force_ship]
 
@@ -20,7 +20,18 @@ module Admin
         return
       end
 
-      # Calculate devlogged seconds since the request (or last ship/creation depending on context)
+      # If there is a pending ShipRequest, approve that instead (preserves linked devlogs)
+      pending_request = @project.ship_requests.where(status: 'pending').order(requested_at: :asc).first
+
+      if pending_request
+        ship = pending_request.approve!(admin_user: current_user, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour)
+        @project.update!(status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil)
+        Audit.create!(user: current_user, project: @project, action: 'approve', details: { previous_status: previous_status, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour, ship_request_id: pending_request.id, ship_id: ship.id })
+        redirect_back fallback_location: admin_dashboard_path, notice: 'Ship request approved and marked as shipped.'
+        return
+      end
+
+      # Fallback: no pending ShipRequest found — preserve previous behavior (compute devlogs since baseline)
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
       devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
       # treat zero as absent so model can fall back to `total_seconds`
@@ -79,7 +90,7 @@ module Admin
 
     # POST /admin/projects/:id/unship
     def unship
-      @project.update!(shipped: false)
+      @project.update!(shipped: false, status: 'unshipped', shipped_at: nil)
       Audit.create!(user: current_user, project: @project, action: 'unship', details: {})
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project marked as unshipped.'
     end

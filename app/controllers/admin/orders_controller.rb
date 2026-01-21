@@ -1,5 +1,5 @@
 module Admin
-  class OrdersController < ApplicationController
+  class OrdersController < Admin::ApplicationController
     before_action :require_admin
     # ensure @order is set for any admin actions that operate on a single order
     before_action :set_order, only: [:show, :pend, :fulfill, :decline, :delete]

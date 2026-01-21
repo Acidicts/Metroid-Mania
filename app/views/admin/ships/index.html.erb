@@ -1,0 +1,29 @@
+<div class="admin-panel">
+  <h1>Ships</h1>
+  <table class="admin-table">
+  <thead>
+    <tr>
+      <th>Ship ID</th>
+      <th>Project</th>
+      <th>Owner</th>
+      <th>Shipped At</th>
+      <th>Devlogged</th>
+      <th>Credits Awarded</th>
+      <th>Processed By</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% @ships.each do |s| %>
+      <tr>
+        <td><%= link_to s.id, admin_ship_path(s) %></td>
+        <td><%= link_to s.project.name, admin_project_path(s.project) %></td>
+        <td><%= s.project.user&.name %></td>
+        <td><%= s.shipped_at %></td>
+        <td><%= format_duration(s.devlogged_seconds.to_i) %></td>
+        <td><%= correct_credits(s.credits_awarded) %></td>
+        <td><%= s.user&.name %></td>
+        <td><%= link_to 'Edit', edit_admin_ship_path(s), class: 'btn-admin btn-admin--muted' %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>

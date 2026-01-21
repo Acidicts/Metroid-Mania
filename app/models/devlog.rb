@@ -1,5 +1,6 @@
 class Devlog < ApplicationRecord
   belongs_to :project
+  belongs_to :ship_request, optional: true
 
   # Duration must be an integer and present. The controller enforces a 15-minute minimum
   # for owner-initiated ship requests; the model allows shorter entries (useful for tests/edge-cases).

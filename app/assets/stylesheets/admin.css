@@ -131,7 +131,7 @@ body.admin .btn-admin {
 }
 
 .admin-panel-show-order {
-  background: linear-gradient(180deg, rgba(13,43,69,0.1), rgba(32,60,86,0.1));
+  background: linear-gradient(180deg, rgba(74,122,150,0.06), rgba(41,40,49,0.04));
   padding: 20px;
   border-radius: 8px;
   color: var(--admin-900);
@@ -140,11 +140,13 @@ body.admin .btn-admin {
 body.admin .btn-admin:hover { opacity: 0.95; }
 
 body.admin .btn-admin-warning {
-  background: linear-gradient(180deg, #ffb97a, #ff8b3d);
+  background: linear-gradient(180deg, var(--admin-accent2), color-mix(in srgb, var(--admin-accent2) 82%, var(--admin-900) 8%));
+  color: #fff;
 }
 
 body.admin .btn-admin-danger {
-  background: linear-gradient(180deg, #c04b4b, #8b2b2b);
+  background: linear-gradient(180deg, var(--admin-900), var(--admin-800));
+  color: #fff;
 }
 
 .btn-retro-admin-disabled {

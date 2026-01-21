@@ -32,7 +32,13 @@
 <div id="<%= dom_id project %>" class="project-card project-preview">
   <% if project.image.attached? %>
     <div class="project-media project-media--thumb" style="height:120px; max-height:120px; overflow:hidden;">
-      <%= image_tag project.image.variant(resize_to_fill: [320, 180]), alt: project.name, class: 'project-thumb' %>
+        <% if project.respond_to?(:image_url) && project.image_url.present? %>
+          <img src="<%= project.image_url %>" alt="<%= project.name %>">
+        <% elsif project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached? %>
+          <%= image_tag(project.image, alt: project.name, style: "width:500px; height:300px; border-radius:5%") %>
+        <% else %>
+          <img style="width:500px; height:300px; border-radius:5%" src="https://placehold.co/500x300" alt="<%= project.name %>">
+        <% end %>
     </div>
   <% else %>
     <div class="project-media project-media--thumb" style="height:120px; max-height:120px; background: var(--accent-gradient);"></div>
@@ -40,7 +46,7 @@
 
   <div class="project-content">
     <!-- status ribbon positioned at top-left of the card -->
-    <span class="ribbon <%= project.shipped? ? 'shipped' : 'unshipped' %>"><%= project.shipped? ? 'Shipped' : 'Unshipped' %></span>
+    <span class="ribbon <%= project.computed_status == 'shipped' ? 'shipped' : 'unshipped' %>"><%= project.computed_status == 'shipped' ? 'Shipped' : 'Unshipped' %></span>
 
     <h3 class="project-title" style="margin:0 0 6px 0; font-size:1.05rem;"><%= link_to project.name, project_path(project) %></h3>
 

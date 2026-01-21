@@ -1,0 +1,17 @@
+<div class="admin-panel">
+  <h1>Ship requests</h1>
+
+  <% @ship_requests.each do |r| %>
+    <% if r.status != "approved" %> 
+      <div class="ship-request">
+        <h3><%= link_to "#{r.project.name} - Request ##{r.id}", admin_ship_request_path(r) %></h3>
+        <p>Requested at: <%= r.requested_at %></p>
+        <p>Devlogged: <%= format_duration(r.devlogged_seconds.to_i) %></p>
+        <p>Requester: <%= r.user&.name || r.user&.email %></p>
+        <p>Status: <%= r.status %></p>
+        <%= button_to 'Approve', approve_admin_ship_request_path(r), method: :post, data: { confirm: 'Approve and ship this request?' }, class: 'btn-admin' %>
+        <%= button_to 'Reject', reject_admin_ship_request_path(r), method: :post, data: { confirm: 'Reject this request?' }, class: 'btn-admin btn-admin-warning' %>
+      </div>
+    <% end %>
+  <% end %>
+</div>

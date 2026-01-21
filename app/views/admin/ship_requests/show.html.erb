@@ -1,0 +1,48 @@
+<div class="admin-panel">
+  <h1>Ship Request for <%= @ship_request.project.name %> (#<%= @ship_request.id %>)</h1>
+
+  <p><strong>Requested at:</strong> <%= l(@ship_request.requested_at, format: :short) %></p>
+  <p><strong>Requester:</strong> <%= @ship_request.user&.name || @ship_request.user&.email %></p>
+  <p><strong>Devlogged:</strong> <%= format_duration(@ship_request.devlogged_seconds.to_i) %></p>
+  <p><strong>Credits per hour:</strong> <%= @ship_request.credits_per_hour.presence || 'not set' %></p>
+  <p><strong>Status:</strong> <span class="status-badge <%= @ship_request.pending? ? 'status-pending' : (@ship_request.status == 'rejected' ? 'status-denied' : 'status-fulfilled') %>"><%= @ship_request.status.to_s.humanize %></span></p>
+
+  <p><strong>Credits awarded:</strong>
+    <% if @ship_request.effective_credits_awarded.present? %>
+      <%= correct_credits(@ship_request.effective_credits_awarded) %>
+      <% if (s = @ship_request.associated_ship).present? %>
+        <small style="color:#666; margin-left:8px">(from Ship ##<%= s.id %> at <%= l(s.shipped_at, format: :short) %>)</small>
+      <% end %>
+    <% else %>
+      <em>Not awarded yet</em>
+    <% end %>
+  </p>
+
+  <% if @ship_request.pending? %>
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:flex-start;">
+      <div style="flex:1;">
+        <%= form_with url: approve_admin_ship_request_path(@ship_request), method: :post, local: true do |f| %>
+          <div>
+            <%= f.label :credits_per_hour, 'Credits per hour (optional)' %><br>
+            <%= f.number_field :credits_per_hour, value: @ship_request.credits_per_hour, step: 0.01, min: 0, style: 'width:160px;' %>
+          </div>
+          <div style="margin-top:8px;">
+            <%= f.label :recipient_user_id, 'Award credits to user (optional)' %><br>
+            <%= f.select :recipient_user_id, options_from_collection_for_select(@users, :id, ->(u){ u.name.presence || u.email }, @ship_request.user_id), { include_blank: '(project owner)' }, style: 'width:260px;' %>
+            <div style="font-size:12px;color:#666;margin-top:4px;">If none selected, credits are awarded to the project owner.</div>
+          </div>
+          <div style="margin-top:8px;">
+            <%= f.submit 'Approve and ship', class: 'btn-admin btn-admin-success' %>
+          </div>
+        <% end %>
+      </div>
+
+      <div>
+        <%= button_to 'Reject', reject_admin_ship_request_path(@ship_request), method: :post, data: { confirm: 'Reject this request?' }, class: 'btn-admin btn-admin-warning' %>
+      </div>
+    </div>
+  <% else %>
+    <p><strong>Processed at:</strong> <%= l(@ship_request.approved_at, format: :short) %> by <%= @ship_request.processed_by&.name || @ship_request.processed_by&.email %></p>
+  <% end %>
+
+</div>

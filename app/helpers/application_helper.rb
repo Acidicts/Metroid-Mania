@@ -62,4 +62,16 @@ module ApplicationHelper
       stylesheet_link_tag controller_name, "data-turbo-track": "reload"
     end
   end
+
+  def correct_credits(amount)
+    amount.ceil
+  end
+
+  def get_all_credits(project)
+    total = 0
+    project.ships.each do |ship|
+      total += ship.credits_awarded.to_f
+    end
+    total
+  end
 end

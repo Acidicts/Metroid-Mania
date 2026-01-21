@@ -1,26 +1,27 @@
-<%= render 'admin/admin_styles' %>
-
 <div class="admin-panel-show-order">
   <h1>Order <%= @order.public_id || @order.id %></h1>
+    <div class="order-show-info" style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
+      <div>
+        <div style="font-weight:700; font-size:1.05rem;"><%= @order.product.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
+        <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.email %></div>
+        <div style="margin-top:6px; color:#666; font-size:0.9rem;">Created: <%= l(@order.created_at, format: :short) %></div>
+      </div>
 
-  <div style="display: flex; flex-direction: row; gap: 20px;">
-    <div class="order-show-info" style="display: flex; flex-direction: column; gap: 10px;">
-      <p><strong>Order ID:</strong> <%= @order.public_id || @order.id %></p>
-      <p><strong>User:</strong> <%= @order.user.name %> (<%= @order.user.email %>)</p>
-      <p><strong>Product:</strong> <%= @order.product.name %></p>
-      <p><strong>Cost:</strong> <%= @order.cost %></p>
-
-      <% if @order.status == "0" %>
-        <p style="color: orange"><strong style="color: var(--admin-900)">Status: </strong>Pending</p>
-      <% elsif @order.status == "1" %>
-        <p style="color: red"><strong style="color: var(--admin-900)">Status: </strong>Denied</p>
-      <% elsif @order.status == "2" %>
-        <p style="color: green"><strong style="color: var(--admin-900)">Status: </strong>Fulfilled</p>
-      <% else %>
-        <p><strong>Status: </strong>Unknown - <%= @order.status.to_s.humanize %></p>
-      <% end %>
-
-      <p><strong>Created:</strong> <%= @order.created_at %></p>
+      <div>
+        <div class="status-badge <%= case @order.status.to_s
+          when 'pending' then 'status-pending'
+          when 'denied','declined' then 'status-denied'
+          when 'fulfilled','completed' then 'status-fulfilled'
+          else 'status-pending' end %>" style="font-size:1rem; padding:8px 12px;"></div>
+        <div id="admin-order-actions" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+          <% if @order.status == "pending" %>
+            <%= button_to "Fulfill", fulfill_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
+            <%= button_to "Decline & Refund", decline_admin_order_path(@order), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-admin btn-retro-admin' %>
+          <% elsif @order.status == "denied" %>
+            <%= button_to "Delete", delete_admin_order_path(@order), method: :post, data: { confirm: 'Delete denied order?' }, class: 'btn-retro-admin' %>
+          <% end %>
+        </div>
+      </div>
     </div>
 
     <div>
@@ -37,4 +38,5 @@
   </div>
   <br>
   <%= link_to 'Back', admin_orders_path, class: 'btn-retro-admin' %>
-</div>
+
+    </div> <!-- admin-panel-show-order -->

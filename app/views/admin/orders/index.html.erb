@@ -1,9 +1,5 @@
-<%= render 'admin/admin_styles' %>
-
 <div class="admin-panel">
   <h1>Orders</h1>
-
-  <div style="margin-bottom: 12px; display:flex; gap:12px; align-items:center;">
     <%= form_with url: admin_orders_path, method: :get, local: true do |f| %>
       <%= f.text_field :q, placeholder: 'Order ID or email or product name', value: params[:q], style: 'padding:6px; width:260px' %>
       <%= f.submit 'Search', class: 'btn-retro-admin', style: 'font-size: 1.1rem; font-family: "Pixelify Sans"; margin-left:6px' %>
@@ -15,41 +11,49 @@
     <div style="margin-left:auto; font-size:0.9rem; color: #666;">Showing <%= @orders.count %> orders</div>
   </div>
 
-  <table class="admin-table">
+  <table class="admin-table compact">
     <thead>
       <tr>
-        <th class="order-info-title">User</th>
-        <th class="order-info-title">User</th>
-        <th class="order-info-title">Item</th>
-        <th class="order-info-title">Cost</th>
-        <th class="order-info-title">Status</th>
-        <th class="order-info-title">Created</th>
-        <th class="order-info-title">Public ID</th>
-        <th>Actions</th>
+        <th style="width:24%">User</th>
+        <th class="status-col">Status</th>
       </tr>
     </thead>
     <tbody>
       <% @orders.each do |o| %>
         <tr class="admin-table-row">
-          <td class="order-info"><%= o.user.name %></td>
-          <td class="order-info"><%= o.user.slack_id %></td>
-          <td class="order-info"><%= o.product.name %></td>
-          <td class="order-info"><%= o.cost %></td>
-          <td class="order-info"><%= o.status.to_s.humanize %></td>
-          <td class="order-info"><%= o.created_at %></td>
-          <td class="order-info"><%= o.public_id || o.id %></td>
-          <td id="admin-order-actions">
-            <% if o.status == "pending" %>
-              <%= button_to "Fulfill", fulfill_admin_order_path(o), method: :post, class: 'btn-retro-admin' %>
-              <%= button_to "Decline & Refund", decline_admin_order_path(o), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-retro-admin' %>
-            <% else %>
-              <%= button_to "Fulfill", fulfill_admin_order_path(o), method: :post, class: 'btn-retro-admin-disabled', disabled: true %>
-              <%= button_to "Decline & Refund", decline_admin_order_path(o), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-retro-admin-disabled', disabled: true %>
-            <% end %>
-            <%= link_to 'View', admin_order_path(o), class: 'btn-retro-admin' %>
+          <td class="order-info">
+            <div><%= o.user.name %></div>
+            <div style="font-size:0.85rem; color: var(--admin-700);"><%= o.user.slack_id %></div>
+          </td>
+
+          <td class="order-info">
+            <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
+              <div>
+                <div><%= o.product.name %> <span class="order-item-badge"><%= o.cost %></span></div>
+                <div style="font-size:0.85rem; color: #666;">ID: <%= o.public_id || o.id %></div>
+              </div>
+              <div style="display:flex; align-items:center; gap:12px;">
+                <div class="status-badge <%= case o.status.to_s
+                  when 'pending' then 'status-pending'
+                  when 'denied','declined' then 'status-denied'
+                  when 'fulfilled','completed' then 'status-fulfilled'
+                  else 'status-pending' end %>"><%= o.status.to_s.humanize %></div>
+                <div class="order-actions-box">
+                  <% if o.status == "pending" %>
+                    <%= button_to "Fulfill", fulfill_admin_order_path(o), method: :post, class: 'btn-retro-admin' %>
+                    <%= button_to "Decline & Refund", decline_admin_order_path(o), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-retro-admin' %>
+                  <% else %>
+                    <%= button_to "Fulfill", fulfill_admin_order_path(o), method: :post, class: 'btn-retro-admin-disabled', disabled: true %>
+                    <%= button_to "Decline & Refund", decline_admin_order_path(o), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-retro-admin-disabled', disabled: true %>
+                  <% end %>
+                  <%= link_to 'View', admin_order_path(o), class: 'btn-retro-admin' %>
+                </div>
+              </div>
+            </div>
           </td>
         </tr>
       <% end %>
     </tbody>
   </table>
-</div>
+
+    </div> <!-- admin-panel -->

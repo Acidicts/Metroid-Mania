@@ -1,9 +1,5 @@
-<%= render 'admin/admin_styles' %>
-
 <div class="admin-panel">
   <h1>All Projects</h1>
-
-  <%= form_with url: admin_bulk_update_admin_projects_path, method: :post, local: true do |hf| %>
     <table class="admin-table">
       <thead>
         <tr>
@@ -11,8 +7,7 @@
           <th>User</th>
           <th>Project</th>
           <th>Status</th>
-          <th>Credits/hr</th>
-          <th>Actions</th>
+          <th>Total Credits</th>
         </tr>
       </thead>
       <tbody>
@@ -22,18 +17,10 @@
             <td><%= project.user.name %></td>
             <td><%= link_to project.name, admin_project_path(project) %></td>
             <td>
-              <%= project.status %>
+              <%= project.computed_status %>
             </td>
             <td>
-              <%= number_field_tag "credits_for_#{project.id}", project.credits_per_hour, min: 0, autocomplete: 'off', style: 'width: 100px;', id: "credits_for_#{project.id}" %>
-            </td>
-            <td>
-              <% if project.shipped? %>
-                <%= button_to "Unship", unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
-              <% else %>
-                <%= button_to "Force Ship", force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger', data: { credits_input_id: "credits_for_#{project.id}" } %>
-              <% end %>
-              
+              <%= correct_credits(get_all_credits(project)) %>
             </td>
           </tr>
         <% end %>
@@ -41,11 +28,10 @@
     </table>
 
     <div style="margin-top: 12px;">
-      <%= select_tag 'bulk_status', options_for_select([['Set status...',''], ['pending','pending'], ['unshipped','unshipped'], ['shipped','shipped'], ['denied','denied']]), class: 'form-control' %>
+      <%= select_tag 'bulk_status', options_for_select([['Set status...','']] + Project::STATUSES.map { |s| [s.humanize, s] }), class: 'form-control' %>
       <%= number_field_tag 'bulk_credits', nil, placeholder: 'Credits/hr (optional)', min: 0, autocomplete: 'off', style: 'width: 180px; margin-left: 8px;' %>
       <%= submit_tag 'Apply to selected', class: 'btn-admin', data: { confirm: 'Apply changes to selected projects?' } %>
     </div>
-  <% end %>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {

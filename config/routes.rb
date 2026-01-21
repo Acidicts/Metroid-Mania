@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   resources :products
   resources :projects do
     resources :devlogs
+    resources :ship_requests, only: [:create, :show, :index]
   end
   resources :leaderboards, only: [:index]
 
@@ -50,6 +51,15 @@ Rails.application.routes.draw do
         post :set_status
       end
     end
+
+    resources :ship_requests, only: [:index, :show] do
+      member do
+        post :approve
+        post :reject
+      end
+    end
+
+    resources :ships, only: [:index, :show, :edit, :update]
 
     post 'projects/bulk_update', to: 'projects_bulk#create', as: 'bulk_update_admin_projects'
 

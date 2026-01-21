@@ -7,7 +7,7 @@
 <div id="projects">
   <div class="project-grid">
     <% @projects.each do |project| %>
-      <%= render project %>
+      <%= render project, project: @project %>
     <% end %>
   </div>
 </div>

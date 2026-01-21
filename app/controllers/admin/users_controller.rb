@@ -1,5 +1,5 @@
 module Admin
-  class UsersController < ApplicationController
+  class UsersController < Admin::ApplicationController
     before_action :require_admin
     before_action :set_user, only: %i[ show edit update destroy revert_actions ]
 

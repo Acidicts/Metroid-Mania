@@ -1,21 +1,20 @@
-<%= render 'admin/admin_styles' %>
-
 <div class="admin-panel">
   <style>
     .admin-dash-box {
-      background-color: var(--accent-2);
-      border: 2px dashed var(--main-600);
+      background-color: var(--admin-accent2);
+      border: 2px dashed var(--admin-800);
       padding: 20px;
       margin-top: 20px;
       border-radius: 5px;
-      width: 30%;
+      flex: 1; /* responsive: allow boxes to flex instead of fixed width */
       margin: 0 1%;
       transition: transform 0.3s ease-in-out;
+      color: var(--admin-900);
     }
 
     .admin-dash-box:hover {
       transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.06);
+      box-shadow: 0 6px 18px rgba(41,40,49,0.06);
     }
 
     .admin-dash-box-container {
@@ -41,8 +40,8 @@
       min-width: 3.5rem; /* ensures numeric values line up */
       font-size: 16px;
       font-weight: 700;
-      background-color: var(--main-700);
-      color: var(--accent3);
+      background-color: var(--main-700-dark, color-mix(in srgb, var(--main-700) 85%, var(--admin-900) 8%));
+      color: var(--admin-accent1);
       padding: 2px 8px;
       border-radius: 4px;
       text-align: right;
@@ -61,6 +60,11 @@
 
   <h1>Admin Dashboard</h1>
 
+  <div style="margin-top:8px; margin-bottom:12px;">
+    <%= link_to 'Ship Requests', admin_ship_requests_path, class: 'btn-admin' %>
+    <%= link_to 'Ships', admin_ships_path, class: 'btn-admin btn-admin--muted', style: 'margin-left:8px' %>
+  </div>
+
   <div class="admin-dash-box-container">
     <div class="admin-dash-box">
       <h2>Summary</h2>
@@ -75,6 +79,7 @@
       <p><strong>Projects:</strong> <%= content_tag :span, @projects_count, class: "admin-dash-box-info" %></p>
       <p><strong>Pending:</strong> <%= content_tag :span, @projects_pending_count, class: "admin-dash-box-info" %></p>
       <p><strong>Shipped:</strong> <%= content_tag :span, @ships_count, class: "admin-dash-box-info" %></p>
+      <p><strong>Ship Requests:</strong> <%= content_tag :span, @ship_requests_pending_count, class: "admin-dash-box-info" %></p>
     </div>
 
     <div class="admin-dash-box">
@@ -101,10 +106,13 @@
         <% Project.order(created_at: :desc).limit(20).each do |project| %>
           <tr>
             <td><%= project.name %></td>
-            <td><%= project.status %></td>
+            <td><%= project.computed_status %></td>
             <td><%= project.credits_per_hour %></td>
             <td>
-              <% if project.shipped? %>
+              <% if project.ship_requests.where(status: 'pending').exists? %>
+                <%= link_to 'View Request', admin_ship_request_path(project.ship_requests.where(status: 'pending').first), class: 'btn-admin btn-admin--muted' %>
+              <% end %>
+              <% if project.computed_shipped? %>
                 <%= button_to 'Unship', unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
               <% else %>
                 <%= button_to 'Ship', ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-success' %>
@@ -117,4 +125,4 @@
     </table>
   </div>
 
-</div>
+    </div> <!-- admin-panel -->

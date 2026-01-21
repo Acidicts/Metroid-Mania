@@ -1,0 +1,9 @@
+<h1>Ship request for <%= @project.name %> (#<%= @ship_request.id %>)</h1>
+<p>Requested at: <%= @ship_request.requested_at %></p>
+<p>Devlogged: <%= format_duration(@ship_request.devlogged_seconds.to_i) %></p>
+<p>Status: <%= @ship_request.status %></p>
+
+<h3>Devlogs included</h3>
+<% @ship_request.devlogs.order(log_date: :desc).each do |d| %>
+  <%= render d %>
+<% end %>

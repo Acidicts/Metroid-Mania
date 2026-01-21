@@ -1,107 +1,155 @@
 <% unless content_for?(:styles) %>
   <% content_for :styles do %>
     <style>
-/* Styles for Projects views */
+/* Projects form styles — modernized, responsive, accessible */
 
-/* Add controller/view-specific rules here. */
-body.projects .projects-placeholder { display: block; }
-
-body.projects { background-color: beige; }
-
-body.projects .project-text-input {
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #333333;
-    margin-bottom: 10px;
-    border-radius: 15px;
-    margin: 15px 15px;
+:root {
+  --bg: #fbf9f6;
+  --card: #ffffff;
+  --accent: #1f6feb;
+  --accent-800: #1a56c1;
+  --muted: #6b7280;
+  --border: #e5e7eb;
+  --shadow: 0 6px 18px rgba(31,41,55,0.08);
 }
 
-body.projects #new-project-form {
-    background-color: var(--main-800);
-    padding: 20px;
-    border: 1px solid #dddddd;
-    border-radius: 10px;
-    width: 60%;
-    left: 20%;
-    position: relative;
+body.projects { background-color: var(--bg); color: #111827; }
+
+#new-project-form {
+  max-width: 760px;
+  margin: 32px auto;
+  background: var(--card);
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  border: 1px solid var(--border);
+  box-sizing: border-box;
 }
 
-#project-form-submit {
-    margin-top: 15px;
-    text-align: center;
+.project-text-input {
+  margin-bottom: 16px;
+}
+
+.project-text-input label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #0f172a;
+}
+
+.form-control,
+.form-control[type="file"],
+textarea.form-control,
+select.form-control {
+  display: block;
+  width: 100%;
+  padding: 0.72rem 0.9rem;
+  font-size: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  box-sizing: border-box;
+  transition: box-shadow .12s ease, border-color .12s ease;
+}
+
+.form-control:focus,
+.form-control:focus-visible {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(31,111,235,0.12);
 }
 
 #project-form-actions {
-    margin-top: 20px;
-    display: flex;
-    flex-direction: row;
+  margin-top: 20px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+#project-form-submit {
+  margin-top: 0;
+}
+
+input[type="submit"],
+.button,
+.btn {
+  background: linear-gradient(180deg,var(--accent),var(--accent-800));
+  color: #fff;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+input[type="submit"]:hover,
+.button:hover,
+.btn:hover {
+  filter: brightness(.96);
 }
 
 #project-editing-info {
-    font-size: 14px;
-    right: 10px;
-    position: absolute;
-    margin-top: 15px;
-    color: blue;
+  font-size: 14px;
+  color: var(--accent-800);
 }
 
-/* Ensure form controls fill available width and match spacing used previously */
-body.projects .project-text-input .form-control,
-body.projects .project-text-input select.form-control {
-  width: 100%;
-  padding: 0.5rem;
+#new-project-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 2px solid rgba(31,111,235,0.08);
 }
 
-@media (max-width: 600px) {
-  body.projects {
-    background-color: #fff8e1;
-  }
-  .project-text-input {
-    font-size: 12px;
-    margin-bottom: 6px;
-  }
-  #new-project-form {
-    margin: 2.5%;
-    width: 95%;
-    padding: 10px;
-    border-radius: 5px;
-  }
-}
-
-/* Hackatime selector chips */
 .hackatime-selected {
   margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 10px;
 }
 
 .hackatime-chip {
-  background: #e6f0ff;
-  border: 1px solid #a9c1ff;
-  border-radius: 999px;
-  padding: 6px 10px;
   display: inline-flex;
   align-items: center;
-}
-
-.hackatime-label {
-  margin-right: 8px;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: #eef2ff;
+  border: 1px solid #dbeafe;
+  color: #0f172a;
+  font-weight: 600;
 }
 
 .hackatime-seconds {
-  margin-right: 8px;
-  color: #6b7280;
+  color: var(--muted);
   font-size: 12px;
+  font-weight: 400;
 }
 
 .hackatime-remove {
   background: transparent;
   border: none;
   cursor: pointer;
-  color: #333;
-  font-weight: bold;
+  color: #374151;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.hackatime-remove:focus-visible {
+  outline: 2px solid rgba(31,111,235,0.18);
+  outline-offset: 3px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  #new-project-form {
+    margin: 16px;
+    padding: 16px;
+    border-radius: 8px;
+  }
+
+  .form-control { padding: 0.6rem 0.7rem; font-size: .95rem; }
 }
     </style>
   <% end %>

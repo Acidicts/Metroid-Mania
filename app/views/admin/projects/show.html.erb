@@ -1,0 +1,71 @@
+<div class="admin-panel">
+  <h1><%= @project.name %> <small style="font-weight:600; color: #666;">(##<%= @project.id %>)</small></h1>
+
+  <div style="display:flex; gap:18px; align-items:flex-start;">
+    <div style="flex:1;">
+      <p><strong>Owner:</strong> <%= link_to @project.user&.name || @project.user&.email, admin_user_path(@project.user) if @project.user %></p>
+      <p><strong>Status:</strong> <%= @project.computed_status %></p>
+      <p><strong>Credits/hr:</strong> <%= @project.credits_per_hour.presence || 'not set' %></p>
+      <p><strong>Shipped at:</strong> <%= @project.computed_shipped_at || 'not shipped' %></p>
+      <p><strong>Created:</strong> <%= @project.created_at %></p>
+
+      <% if @project.ship_requests.any? %>
+        <h3>Ship requests</h3>
+        <ul>
+          <% @project.ship_requests.order(requested_at: :desc).each do |r| %>
+            <li><%= link_to "Request ##{r.id} (#{r.status})", admin_ship_request_path(r) %> — requested at <%= r.requested_at %></li>
+          <% end %>
+        </ul>
+      <% end %>
+    </div>
+
+    <aside class="admin-actions-panel admin-side-panel" role="region" aria-label="Admin actions">
+      <div class="admin-card admin-actions">
+        <div class="admin-actions-title">
+          <h3>Admin actions</h3>
+          <small class="admin-actions-meta">##<%= @project.id %></small>
+        </div>
+
+        <div class="admin-actions-group">
+          <% if @project.computed_shipped? %>
+            <%= button_to 'Unship', unship_admin_project_path(@project), method: :post, class: 'btn-admin btn-admin-warning', data: { confirm: 'Mark project as unshipped?' } %>
+          <% else %>
+            <%= button_to 'Ship', ship_admin_project_path(@project), method: :post, class: 'btn-admin btn-admin-success', data: { confirm: 'Ship this project now?' } %>
+            <%= button_to 'Force Ship', force_ship_admin_project_path(@project), method: :post, class: 'btn-admin btn-admin-danger', data: { confirm: 'Force ship and award credits?' } %>
+          <% end %>
+        </div>
+
+        <div class="admin-actions-group" style="margin-top:8px;">
+          <%= button_to 'Approve (mark shipped & award)', approve_admin_project_path(@project), method: :post, class: 'btn-admin btn-admin-success', data: { confirm: 'Approve and ship this project?' } %>
+          <%= button_to 'Reject', reject_admin_project_path(@project), method: :post, class: 'btn-admin btn-admin-warning', data: { confirm: 'Reject this project?' } %>
+        </div>
+
+        <div class="admin-actions-divider" aria-hidden="true"></div>
+
+        <div class="admin-actions-status" style="margin-top:8px;">
+          <%= form_with url: set_status_admin_project_path(@project), method: :post, local: true do |f| %>
+            <div class="admin-actions-form">
+              <%= select_tag 'status', options_for_select(Project::STATUSES, @project.status), class: 'form-control' %>
+              <%= number_field_tag 'credits_per_hour', @project.credits_per_hour, placeholder: 'Credits/hr (optional)', min: 0, class: 'form-control', style: 'margin-top:6px;' %>
+              <%= f.submit 'Set status', class: 'btn-admin', data: { confirm: 'Set status for this project?' } %>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="admin-actions-danger" style="margin-top:12px;">
+          <%= button_to 'Delete project', admin_project_path(@project), method: :delete, class: 'btn-admin btn-admin-danger btn-block', data: { confirm: 'Delete project?' } %>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <hr style="margin:16px 0">
+
+  <h3>Audits</h3>
+  <% @project.audits.order(created_at: :desc).limit(50).each do |a| %>
+    <div style="border-bottom:1px solid rgba(0,0,0,0.06); padding:8px 0;">
+      <strong><%= a.action %></strong> — <%= a.user&.name || a.user&.email %> <small style="color:#666">(<%= a.created_at %>)</small>
+      <div style="font-family:monospace; font-size:0.9rem; color:#333; margin-top:6px; white-space:pre-wrap;"><%= JSON.pretty_generate(a.details || {}) rescue a.details.to_s %></div>
+    </div>
+  <% end %>
+</div>

@@ -28,28 +28,40 @@ class ProjectsController < ApplicationController
     end
 
     @ships = @project.ships.order(shipped_at: :desc)
+    @ship_requests = @project.ship_requests.order(requested_at: :desc)
   end
 
   # POST /projects/:id/ship - owner requests a ship (creates a request for admin)
   def ship
+    # Backwards-compat: `projects#ship` will now create a ShipRequest so older links still work.
     unless @project.user == current_user
       redirect_to project_path(@project), alert: "Not authorized"
       return
     end
 
-    # Only allow requesting a ship when eligible
-    unless @project.eligible_for_ship_request?
-      redirect_to project_path(@project), alert: "You need at least 15 minutes of devlogged work since creation or last ship to request shipping, and you cannot already have a pending request."
-      return
-    end
-
-    if @project.status == 'pending'
+    # Delegate to the new ShipRequests flow
+    baseline = @project.ship_baseline
+    if @project.ship_requests.where(status: 'pending').exists?
       redirect_to project_path(@project), alert: "A ship request is already pending."
       return
     end
 
-    @project.update!(status: 'pending', ship_requested_at: Time.current, shipped: false)
-    Audit.create!(user: current_user, project: @project, action: 'ship_request', details: { requested_at: Time.current })
+    unless @project.eligible_for_ship_request?
+      redirect_to project_path(@project), alert: "You need at least 15 minutes of devlogged work since creation or last ship to request shipping."
+      return
+    end
+
+    devlogs_to_link = @project.devlogs.where('created_at >= ?', baseline).where(ship_request_id: nil)
+    devlogged_seconds = devlogs_to_link.sum(:duration_minutes) * 60
+
+    ActiveRecord::Base.transaction do
+      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: 'pending')
+      devlogs_to_link.update_all(ship_request_id: req.id)
+
+      @project.update!(status: 'pending', ship_requested_at: Time.current, shipped: false)
+      Audit.create!(user: current_user, project: @project, action: 'ship_request', details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
+    end
+
     redirect_to project_path(@project), notice: "Ship request submitted and awaiting admin approval"
   end
 
