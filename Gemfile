@@ -55,7 +55,7 @@ end
 gem "omniauth", "~> 2.1"
 gem "omniauth-oauth2", "~> 1.9"
 gem "omniauth-rails_csrf_protection", "~> 2.0"
-gem "httparty", "~> 0.24.0"
+gem "httparty", "~> 0.24.2"
 gem "dotenv-rails", "~> 3.2"
 
 gem "faraday", "~> 2.14"

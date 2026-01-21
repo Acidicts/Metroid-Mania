@@ -179,7 +179,7 @@ GEM
     hashie (5.1.0)
       logger
     http_parser.rb (0.8.1)
-    httparty (0.24.0)
+    httparty (0.24.2)
       csv
       mini_mime (>= 1.0.0)
       multi_xml (>= 0.5.2)
@@ -510,7 +510,7 @@ DEPENDENCIES
   faraday (~> 2.14)
   guard
   guard-livereload
-  httparty (~> 0.24.0)
+  httparty (~> 0.24.2)
   image_processing (~> 1.2)
   importmap-rails
   jbuilder
