@@ -10,20 +10,27 @@
 <h1>Store</h1>
 
 <% if admin? %>
-  <%= link_to "New product (Admin)", new_product_path %>
+  <%= link_to "New product (Admin)", new_product_path, class: 'btn-retro btn-retro--small' %>
 <% end %>
 
-<div id="products" style="display: flex; flex-wrap: wrap; gap: 20px;">
+<div id="products" class="products-grid">
   <% @products.each do |product| %>
-    <div style="border: 1px solid #ccc; padding: 10px; width: 250px;">
+    <div class="product-card">
       <h3><%= product.name %></h3>
-      <p>Cost: <%= format_credits product.price_currency %></p>
+      <p>Cost (Credits): <% if product.cost_in_credits %><%= sprintf('%.2f', product.cost_in_credits) %><% else %><em>from price × ratio</em><% end %></p>
 
-      <% if product.steam_price_cents %>
-        <p><small>Steam Price: $<%= (product.steam_price_cents / 100.0).round(2) %></small></p>
+      <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro' %>
+      <% if admin? %>
+        <div style="margin-top:8px;">
+          <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro btn-retro--outline' %>
+          <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro btn-retro--danger', style: 'margin-left:6px' %>
+        </div>
       <% end %>
-
-      <%= button_to "Buy Now", orders_path(product_id: product.id), method: :post, data: { turbo: false, disable_with: 'Processing...' } %>
+      <% if product.variable_grant? %>
+        <div style="font-size: 0.9em; margin-top: 6px;"><em>Grant: $<%= sprintf('%.2f', product.grant_min_dollars) %>–$<%= sprintf('%.2f', product.grant_max_dollars) %></em></div>
+      <% else %>
+        <div style="font-size: 0.9em; margin-top: 6px;"><em>Fixed Item</em></div>
+      <% end %>
     </div>
   <% end %>
 </div>

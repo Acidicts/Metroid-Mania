@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_21_120001) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -62,6 +62,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_120001) do
   create_table "orders", force: :cascade do |t|
     t.float "cost"
     t.datetime "created_at", null: false
+    t.integer "grant_amount_cents"
+    t.float "price_usd"
     t.integer "product_id", null: false
     t.string "public_id"
     t.integer "status", default: 0, null: false
@@ -70,17 +72,25 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_21_120001) do
     t.index ["product_id"], name: "index_orders_on_product_id"
     t.index ["public_id"], name: "index_orders_on_public_id", unique: true
     t.index ["status"], name: "index_orders_on_status"
-    t.index ["user_id", "product_id", "status"], name: "index_orders_on_user_product_status", unique: true
+    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending_unique", unique: true, where: "status = 0"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
   create_table "products", force: :cascade do |t|
+    t.float "cost_credits"
     t.datetime "created_at", null: false
+    t.float "credits_per_dollar"
+    t.integer "grant_amount_cents"
+    t.boolean "grant_enabled", default: false, null: false
+    t.integer "grant_max_cents"
+    t.integer "grant_min_cents"
+    t.string "link"
     t.string "name"
     t.float "price_currency"
     t.integer "steam_app_id"
     t.integer "steam_price_cents"
     t.datetime "updated_at", null: false
+    t.boolean "variable_grant", default: false, null: false
   end
 
   create_table "projects", force: :cascade do |t|

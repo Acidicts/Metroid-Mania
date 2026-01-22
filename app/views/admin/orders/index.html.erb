@@ -29,7 +29,7 @@
           <td class="order-info">
             <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
               <div>
-                <div><%= o.product.name %> <span class="order-item-badge"><%= o.cost %></span></div>
+                <div><%= o.name %> <span class="order-item-badge"><%= o.cost %></span></div>
                 <div style="font-size:0.85rem; color: #666;">ID: <%= o.public_id || o.id %></div>
               </div>
               <div style="display:flex; align-items:center; gap:12px;">
@@ -39,7 +39,7 @@
                   when 'fulfilled','completed' then 'status-fulfilled'
                   else 'status-pending' end %>"><%= o.status.to_s.humanize %></div>
                 <div class="order-actions-box">
-                  <% if o.status == "pending" %>
+                  <% if o.status == "pending" || o.status == "shipped" %>
                     <%= button_to "Fulfill", fulfill_admin_order_path(o), method: :post, class: 'btn-retro-admin' %>
                     <%= button_to "Decline & Refund", decline_admin_order_path(o), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-retro-admin' %>
                   <% else %>

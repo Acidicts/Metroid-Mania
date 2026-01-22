@@ -65,6 +65,28 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_audit_created(action: 'order_deleted', project: nil, user: @admin)
   end
 
+  test "decline can refund a previously fulfilled order" do
+    prod = Product.create!(name: 'PostFulfillRefund', steam_app_id: 99, price_currency: 5.0, cost_credits: 50.0)
+    u = users(:one)
+    # Seed user with funds so they can make and hold the order; it will be deducted on create
+    u.update!(currency: 100.0)
+
+    o = u.orders.create!(product: prod)
+
+    # Mark it fulfilled (shipped)
+    post fulfill_admin_order_url(o)
+    assert_equal 'shipped', o.reload.status
+
+    user_before = o.user.currency || 0
+
+    # Now decline and refund
+    post decline_admin_order_url(o)
+
+    assert_equal 'denied', o.reload.status
+    assert_equal user_before + o.cost.to_f, o.user.reload.currency
+    assert_audit_created(action: 'order_refunded', project: nil, user: @admin)
+  end
+
   test "missing order redirects with alert" do
     non_existent = Order.maximum(:id).to_i + 100
 

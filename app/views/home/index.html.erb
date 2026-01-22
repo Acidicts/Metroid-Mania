@@ -112,7 +112,7 @@
   <h1>Metroid-Mania</h1>
 
   <% if logged_in? %>
-    <p class="lead">Welcome, <%= current_user.name %>! Your Balance: <%= format_credits(current_user.currency || 0) %></p>
+    <p class="lead">Welcome, <%= current_user.name %>! Your Balance: <span style="font-family: Comfortaa, monospace;"><%= format_credits(current_user.currency || 0) %></span></p>
 
     <div class="home-actions">
       <%= link_to "My Projects", projects_path, class: 'btn-retro' %>
@@ -120,7 +120,7 @@
       <%= link_to "My Orders", orders_path, class: 'btn-retro' %>
       <%= link_to "Leaderboard", leaderboards_path, class: 'btn-retro' %>
       <% if admin? %>
-        <%= link_to "Admin Dashboard", admin_dashboard_path, class: 'btn-retro-admin' %>
+        <%= link_to "Admin Dashboard", admin_dashboard_path, class: 'btn-retro' %>
       <% end %>
     </div>
 

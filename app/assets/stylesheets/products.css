@@ -1,2 +1,61 @@
-/* Styles moved to: app/views/products/index.html.erb */
-/* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */
+/* Product store styles */
+
+.products-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.product-card {
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  width: 300px;
+  background: linear-gradient(180deg, #fff, #fbfbfb);
+  border-radius: 6px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+
+.product-card h3 { margin-top: 0; margin-bottom: 6px; font-size: 1.1rem; }
+.product-card p { margin: 6px 0; color: #333; }
+
+.buy-menu {
+  display: none; /* toggled via inline style or JS */
+  margin-top: 10px;
+  border-top: 1px dashed #ddd;
+  padding-top: 10px;
+  background: #fff;
+  border-radius: 4px;
+}
+
+.buy-menu-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.buy-input {
+  width: 72px;
+  padding: 6px 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}
+
+.buy-range {
+  flex: 1 1 auto;
+}
+
+.buy-menu-footer {
+  margin-top: 8px;
+  font-size: 0.9rem;
+  color: #555;
+}
+
+.btn-retro--small { padding: 6px 10px; font-size: 0.9rem; }
+.btn-retro--primary { background: #4a90e2; color: white; border: none; padding: 8px 12px; border-radius: 4px; }
+
+@media (max-width: 540px) {
+  .product-card { width: 100%; }
+  .buy-menu-controls { flex-direction: column; align-items: stretch; }
+  .buy-input { width: 100%; }
+}

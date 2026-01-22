@@ -68,6 +68,22 @@ class ProductsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def product_params
-      params.require(:product).permit(:name, :steam_app_id, :price_currency)
+      params.require(:product).permit(
+        :name,
+        :steam_app_id,
+        :price_currency,
+        :steam_price_cents,    # allow editing steam price explicitly
+        :grant_enabled,        # legacy flag (backwards compatible)
+        :link,
+        :cost_credits,
+        :credits_per_dollar,
+        :variable_grant,
+        :grant_min_cents,
+        :grant_max_cents,
+        :grant_min_dollars,    # more intuitive admin input (virtual setter)
+        :grant_max_dollars,    # virtual setter
+        :grant_amount_cents,
+        :grant_amount_dollars
+      )
     end
 end

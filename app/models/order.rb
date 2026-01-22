@@ -127,23 +127,65 @@ class Order < ApplicationRecord
   private
 
   def set_cost_and_deduct_balance
-    # Always set cost from product. Only set status/deduct balance for normal creates where
-    # status wasn't explicitly provided by the caller (fixtures/tests sometimes create non-pending rows).
-    self.cost = product.price_currency
+    # Determine price in USD and cost (in credits).
+    if product.variable_grant? && grant_amount_cents.present?
+      dollars = grant_amount_cents.to_f / 100.0
+      # Preserve explicitly provided price_usd/cost when present (tests and fixtures sometimes set cost manually)
+      self.price_usd ||= dollars
+      self.cost ||= product.credits_for_dollars(dollars)
+    else
+      # Fixed product: prefer explicit cost_credits; otherwise compute from price * ratio
+      self.price_usd ||= product.price_currency.to_f
+      self.cost ||= product.cost_in_credits
+    end
+
+    # Normalize nil costs to 0.0 so arithmetic and deductions are safe
+    self.cost = (self.cost || 0).to_f
+
     self.status ||= 'pending'
 
     # Only deduct balance when creating a real pending order
     if status == 'pending'
-      user.update!(currency: user.currency - self.cost)
+      # Ensure user.currency is numeric and not nil
+      user.update!(currency: (user.currency || 0).to_f - self.cost)
     end
   end
 
   # Ensure user has sufficient funds for this order at creation time.
   def user_has_enough_currency
     return if product.blank?
-    price = product.price_currency.to_f
-    if (user.currency || 0).to_f < price
+
+    required = if product.variable_grant?
+      if grant_amount_cents.present?
+        product.credits_for_dollars(grant_amount_cents.to_f / 100.0).to_f
+      else
+        # If no grant amount provided, assume min allowed
+        product.credits_for_dollars((product.grant_min_cents || Product::DEFAULT_MIN_GRANT_CENTS) / 100.0).to_f
+      end
+    else
+      product.cost_in_credits.to_f
+    end
+
+    if (user.currency || 0).to_f < required
       errors.add(:base, "Insufficient funds")
+    end
+  end
+
+  validate :grant_amount_valid_for_product
+
+  def grant_amount_valid_for_product
+    return if product.blank? || !product.variable_grant?
+
+    if grant_amount_cents.nil?
+      errors.add(:grant_amount_cents, "must be provided for variable products")
+      return
+    end
+
+    min = product.grant_min_cents || Product::DEFAULT_MIN_GRANT_CENTS
+    max = product.grant_max_cents || Product::DEFAULT_MAX_GRANT_CENTS
+
+    unless grant_amount_cents >= min && grant_amount_cents <= max
+      errors.add(:grant_amount_cents, "must be between $#{'%.2f' % (min / 100.0)} and $#{'%.2f' % (max / 100.0)}")
     end
   end
 
@@ -209,5 +251,24 @@ class Order < ApplicationRecord
 
   def fufilled?
     fulfilled?
+  end
+
+  # Human-readable name for display (e.g., "Product Name - $ 12.34")
+  def name
+    usd = if price_usd.present?
+      price_usd.to_f
+    elsif product && product.variable_grant?
+      if grant_amount_cents.present?
+        grant_amount_cents.to_f / 100.0
+      elsif product.grant_amount_cents.present?
+        product.grant_amount_cents.to_f / 100.0
+      else
+        (product.grant_min_cents || Product::DEFAULT_MIN_GRANT_CENTS).to_f / 100.0
+      end
+    else
+      product&.price_currency.to_f
+    end
+
+    "#{product&.name} - $ #{'%.2f' % usd}"
   end
 end

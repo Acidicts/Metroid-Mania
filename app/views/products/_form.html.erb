@@ -22,16 +22,103 @@
   </div>
 
   <div>
-    <%= form.label :price_currency, style: "display: block" %>
+    <%= form.label :price_currency, "Price (USD)", style: "display: block" %>
     <%= form.text_field :price_currency %>
   </div>
 
   <div>
-    <%= form.label :steam_price_cents, style: "display: block" %>
-    <%= form.number_field :steam_price_cents %>
+    <%= form.label :cost_credits, "Cost (Credits) — leave blank to compute from Price * Credits/ $", style: "display: block" %>
+    <%= form.number_field :cost_credits, step: 0.01 %>
   </div>
 
   <div>
+    <%= form.label :credits_per_dollar, "Credits per $ (conversion ratio)", style: "display: block" %>
+    <%= form.number_field :credits_per_dollar, step: 0.01 %>
+  </div>
+
+  <div>
+    <%= form.label :link, "Link (optional)", style: "display: block" %>
+    <%= form.text_field :link %>
+  </div>
+
+  <hr />
+
+  <div>
+    <%= form.check_box :variable_grant, { id: "variable_grant_checkbox" }, "1", "0" %>
+    <%= form.label :variable_grant, "Variable grant (allow user to select $ amount when ordering)" %>
+  </div>
+
+  <div id="variable_grant_container" style="margin-top: 8px;">
+    <%= form.label :grant_min_dollars, "Minimum grant ($)", style: "display: block" %>
+    <%= form.number_field :grant_min_dollars, value: (@product.grant_min_dollars || (Product::DEFAULT_MIN_GRANT_CENTS / 100.0)), step: 0.01, min: 0, id: "grant_min_dollars_field" %>
+
+    <%= form.label :grant_max_dollars, "Maximum grant ($)", style: "display: block; margin-top: 4px;" %>
+    <%= form.number_field :grant_max_dollars, value: (@product.grant_max_dollars || (Product::DEFAULT_MAX_GRANT_CENTS / 100.0)), step: 0.01, min: 0, id: "grant_max_dollars_field" %>
+  </div>
+
+  <div style="margin-top: 10px;">
     <%= form.submit %>
   </div>
+
+  <script>
+    // Toggle variable grant settings visibility and sync price/credits fields
+    document.addEventListener("DOMContentLoaded", function() {
+      var checkbox = document.getElementById('variable_grant_checkbox');
+      var container = document.getElementById('variable_grant_container');
+
+      function setState() {
+        container.style.display = checkbox.checked ? 'block' : 'none';
+      }
+
+      checkbox.addEventListener('change', setState);
+      setState();
+
+      // Syncing between Price (USD) and Cost (Credits) on the admin product form
+      var priceInput = document.getElementById('product_price_currency');
+      var costInput = document.getElementById('product_cost_credits');
+      var ratioInput = document.getElementById('product_credits_per_dollar');
+
+      function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
+
+      function syncPriceToCost(){
+        if (!priceInput || !ratioInput || !costInput) return;
+        var price = toNumber(priceInput.value);
+        var ratio = toNumber(ratioInput.value);
+        if (ratio > 0) {
+          costInput.value = (price * ratio).toFixed(2);
+        }
+      }
+
+      function syncCostToPrice(){
+        if (!priceInput || !ratioInput || !costInput) return;
+        var cost = toNumber(costInput.value);
+        var ratio = toNumber(ratioInput.value);
+        if (ratio > 0) {
+          priceInput.value = (cost / ratio).toFixed(2);
+        }
+      }
+
+      if (priceInput && ratioInput) {
+        priceInput.addEventListener('input', syncPriceToCost);
+        priceInput.addEventListener('change', syncPriceToCost);
+        ratioInput.addEventListener('input', syncPriceToCost);
+        ratioInput.addEventListener('change', syncPriceToCost);
+      }
+
+      if (costInput && ratioInput) {
+        costInput.addEventListener('input', syncCostToPrice);
+        costInput.addEventListener('change', syncCostToPrice);
+      }
+
+      // Initialize
+      if (priceInput && ratioInput && costInput) {
+        // If cost is empty but price and ratio present, compute cost; otherwise derive price from cost if price blank
+        if (toNumber(costInput.value) === 0 && toNumber(priceInput.value) > 0 && toNumber(ratioInput.value) > 0) {
+          syncPriceToCost();
+        } else if (toNumber(priceInput.value) === 0 && toNumber(costInput.value) > 0 && toNumber(ratioInput.value) > 0) {
+          syncCostToPrice();
+        }
+      }
+    });
+  </script>
 <% end %>

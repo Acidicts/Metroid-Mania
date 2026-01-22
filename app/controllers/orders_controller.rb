@@ -7,6 +7,16 @@ class OrdersController < ApplicationController
     @orders = current_user.orders.order(created_at: :desc)
   end
 
+  # GET /orders/new?product_id=1
+  def new
+    @product = Product.find_by(id: params[:product_id])
+    if @product
+      @order = current_user.orders.build(product: @product)
+    else
+      @order = current_user.orders.build
+    end
+  end
+
   # GET /orders/1 or /orders/1.json
   def show
     unless @order.user == current_user
@@ -47,7 +57,15 @@ class OrdersController < ApplicationController
       @order = nil
       begin
         puts "DEBUG OrdersController#create: about to create order (user_id=#{current_user.id} product_id=#{@product.id} status=#{pending_db_val.inspect})"
-        @order = current_user.orders.create!(product: @product, status: pending_db_val)
+
+        order_attrs = { product: @product, status: pending_db_val }
+        # Accept a user-selected grant amount (dollars) for variable products
+        if @product.variable_grant? && params[:grant_amount_dollars].present?
+          # store cents on the order model
+          order_attrs[:grant_amount_cents] = (params[:grant_amount_dollars].to_f * 100).round
+        end
+
+        @order = current_user.orders.create!(order_attrs)
         puts "DEBUG OrdersController#create: create! returned; order_id=#{@order&.id.inspect} persisted=#{@order&.persisted?.inspect} errors=#{@order&.errors&.full_messages.inspect}"
       rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
         Rails.logger.warn "OrdersController#create: caught #{e.class} - #{e.message.inspect}; attempting to locate existing pending order"
@@ -95,7 +113,11 @@ class OrdersController < ApplicationController
       # Save failed due to validation (e.g. insufficient funds). Inspect the invalid record from the exception.
       invalid_order = e.record
 
-      if invalid_order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses['denied'] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP['denied'] : 'denied')))
+      if invalid_order.product_id == @product.id
+        # re-render the checkout page with the invalid order so users can fix the input
+        @order = invalid_order
+        render :new, status: :unprocessable_entity
+      elsif invalid_order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses['denied'] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP['denied'] : 'denied')))
         redirect_to products_path, alert: "Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored."
       else
         redirect_to products_path, alert: invalid_order.errors.full_messages.to_sentence

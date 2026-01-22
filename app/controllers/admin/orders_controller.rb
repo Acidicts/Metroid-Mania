@@ -99,24 +99,40 @@ module Admin
         return
       end
 
-      # Ensure the status change, refund and audit happen in one transaction so model-level
-      # after_update_commit safety-net can observe the audit and avoid double-refunds.
-      previous = nil
-      Order.transaction do
-        previous = @order.status
-        db_val = normalize_status_for_db('denied').first || (Order.respond_to?(:statuses) ? Order.statuses['denied'] : 'denied')
-        @order.update!(status: db_val)
+      previous = @order.status
 
-        # Refund user (only if the order had a cost)
-        if @order.cost.present? && @order.cost.to_f > 0
-          @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
-          Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
-        else
-          Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+      begin
+        Order.transaction do
+          db_val = normalize_status_for_db('denied').first || (Order.respond_to?(:statuses) ? Order.statuses['denied'] : 'denied')
+
+          # Set order to denied
+          @order.update!(status: db_val)
+
+          # Refund user (only if the order had a cost)
+          if @order.cost.present? && @order.cost.to_f > 0
+            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
+            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+          else
+            Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+          end
         end
-      end
 
-      redirect_back fallback_location: admin_orders_path, notice: 'Order declined and user refunded.'
+        redirect_back fallback_location: admin_orders_path, notice: 'Order declined and user refunded.'
+      rescue ActiveRecord::RecordNotUnique => e
+        # Defensive fallback in case of an unexpected uniqueness race — log and perform refund/audit without deleting
+        Rails.logger.warn "Admin::OrdersController#decline: uniqueness race - #{e.class}: #{e.message}"
+
+        Order.transaction do
+          if @order.cost.present? && @order.cost.to_f > 0
+            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
+            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+          else
+            Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+          end
+        end
+
+        redirect_back fallback_location: admin_orders_path, notice: 'Order declined and user refunded.'
+      end
     end
 
     private

@@ -1,11 +1,118 @@
-<% content_for :title, "New order" %>
+<% if @product.present? %>
+  <% content_for :title, "Purchase - #{@product.name}" %>
 
-<h1>New order</h1>
+  <h1>Purchase: <%= @product.name %></h1>
 
-<%= render "form", order: @order %>
+  <% if @order && @order.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(@order.errors.count, "error") %> prevented this purchase:</h3>
+      <ul>
+        <% @order.errors.full_messages.each do |m| %>
+          <li><%= m %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
 
-<br>
+  
+    <% if @product.variable_grant? %>
+      <p>Price (USD): $<span id="price_usd_display"><%= sprintf('%.2f', @product.price_currency || 0) %></span></p>
+      <p>Price (Credits): <span id="price_credits_display"><%= sprintf('%.2f', (@product.price_currency || 0) * (@product.credits_per_dollar || 0)) %></span></p>
+    <% else %>
+      <p>Cost (Credits):
+      <strong><%= sprintf('%.2f', @product.cost_in_credits || 0) %></strong>
+    <% end %>
+  </p>
 
-<div>
-  <%= link_to "Back to orders", orders_path %>
-</div>
+  <% if @product.variable_grant? %>
+    <%= form_with url: orders_path, method: :post, local: true do |f| %>
+      <%= hidden_field_tag :product_id, @product.id %>
+
+      <div>
+        <%= label_tag :grant_amount_display, "Grant amount ($)" %>
+        <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+          <%= number_field_tag :grant_amount_display, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_display" %>
+          <%= range_field_tag :grant_amount_range, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_range", style: "flex:1;" %>
+          <%= hidden_field_tag :grant_amount_dollars, (@product.grant_min_dollars), id: "grant_amount_dollars" %>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        Estimated Credits: <span id="estimated_credits"><%= sprintf('%.2f', @product.credits_for_dollars(@product.grant_min_dollars) || 0) %></span>
+      </div>
+
+      <div style="margin-top: 12px;">
+        <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
+        <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+      </div>
+    <% end %>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function(){
+        var r = document.getElementById('grant_amount_range');
+        var d = document.getElementById('grant_amount_display');
+        var h = document.getElementById('grant_amount_dollars');
+        var est = document.getElementById('price_credits_display');
+        var ratio = <%= (@product.credits_per_dollar || 0).to_f %>;
+
+        function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
+
+        function update(val){
+          var n = toNumber(val);
+          if (d && d.value != n) d.value = n;
+          if (r && r.value != n) r.value = n;
+          if (h) h.value = n;
+          if (ratio && est) est.innerText = (n * ratio).toFixed(2);
+          var priceDisplay = document.getElementById('price_usd_display');
+          if (priceDisplay) priceDisplay.innerText = n.toFixed(2);
+        }
+
+        if (r){
+          r.addEventListener('input', function(e){ update(e.target.value); });
+          r.addEventListener('change', function(e){ update(e.target.value); });
+        }
+        if (d){
+          d.addEventListener('input', function(e){ update(e.target.value); });
+          d.addEventListener('change', function(e){ update(e.target.value); });
+        }
+
+        // Initialize values on load
+        var initial = (d && d.value) || (r && r.value) || (h && h.value) || 0;
+        update(initial);
+
+        // Ensure hidden field is set on submit
+        var form = document.querySelector('form');
+        if (form){
+          form.addEventListener('submit', function(){
+            var val = (d && d.value) || (r && r.value) || (h && h.value) || 0;
+            if (h) h.value = val;
+          });
+        }
+      });
+    </script>
+
+  <% else %>
+    <%= form_with url: orders_path, method: :post, local: true do |f| %>
+      <%= hidden_field_tag :product_id, @product.id %>
+      <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong><%= sprintf('%.2f', @product.cost_in_credits || 0) %></strong> credits.</p>
+
+      <div style="margin-top: 12px;">
+        <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
+        <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+      </div>
+    <% end %>
+  <% end %>
+
+<% else %>
+  <% content_for :title, "New order" %>
+
+  <h1>New order</h1>
+
+  <%= render "form", order: @order %>
+
+  <br>
+
+  <div>
+    <%= link_to "Back to orders", orders_path %>
+  </div>
+<% end %>

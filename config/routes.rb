@@ -8,7 +8,7 @@ Rails.application.routes.draw do
   get 'profile', to: 'users#edit'
   patch 'profile', to: 'users#update'
 
-  resources :orders, only: [:index, :create, :show]
+  resources :orders, only: [:index, :new, :create, :show]
 
   # Dev-only sign-in to ease testing and local dev (available only in dev & test)
   if Rails.env.development? || Rails.env.test?

@@ -4,19 +4,33 @@
     <%= product.name %>
   </div>
 
+  <% if product.link.present? %>
+    <div>
+      <strong>Link:</strong>
+      <%= link_to product.link, product.link, target: "_blank", rel: "noopener" %>
+    </div>
+  <% end %>
+
   <div>
-    <strong>Steam app:</strong>
-    <%= product.steam_app_id %>
+    <strong>Price (USD):</strong>
+    $<%= sprintf('%.2f', product.price_currency || 0) %>
   </div>
 
   <div>
-    <strong>Price currency:</strong>
-    <%= product.price_currency %>
+    <strong>Cost (Credits):</strong>
+    <% if product.cost_in_credits %>
+      <%= sprintf('%.2f', product.cost_in_credits) %>
+    <% else %>
+      <em>Computed from price * credits-per-$</em>
+    <% end %>
   </div>
 
-  <div>
-    <strong>Steam price cents:</strong>
-    <%= product.steam_price_cents %>
-  </div>
+  <% if product.variable_grant? %>
+    <div>
+      <strong>Variable grant:</strong>
+      Yes — Allowed: $<%= sprintf('%.2f', product.grant_min_dollars) %> – $<%= sprintf('%.2f', product.grant_max_dollars) %>
+      <% if product.credits_per_dollar %> (Ratio: <%= sprintf('%.2f', product.credits_per_dollar) %> credits / $)<% end %>
+    </div>
+  <% end %>
 
 </div>

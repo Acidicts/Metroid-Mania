@@ -2,7 +2,7 @@
   <h1>Order <%= @order.public_id || @order.id %></h1>
     <div class="order-show-info" style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
       <div>
-        <div style="font-weight:700; font-size:1.05rem;"><%= @order.product.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
+        <div style="font-weight:700; font-size:1.05rem;"><%= @order.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
         <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.email %></div>
         <div style="margin-top:6px; color:#666; font-size:0.9rem;">Created: <%= l(@order.created_at, format: :short) %></div>
       </div>
@@ -14,7 +14,7 @@
           when 'fulfilled','completed' then 'status-fulfilled'
           else 'status-pending' end %>" style="font-size:1rem; padding:8px 12px;"></div>
         <div id="admin-order-actions" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
-          <% if @order.status == "pending" %>
+          <% if @order.status == "pending" || @order.status == "shipped" %>
             <%= button_to "Fulfill", fulfill_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
             <%= button_to "Decline & Refund", decline_admin_order_path(@order), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-admin btn-retro-admin' %>
           <% elsif @order.status == "denied" %>
@@ -26,7 +26,7 @@
 
     <div>
       <div id="admin-order-actions" style="display: flex; flex-direction: column; gap: 10px; margin-left: auto; margin-top: 20px; margin-bottom: 50px;">
-        <% if @order.status == "0" %>
+        <% if @order.status == "0" || @order.status == "2" %>
           <%= button_to "Fulfill", fulfill_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
           <%= button_to "Decline & Refund", decline_admin_order_path(@order), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-admin btn-retro-admin' %>
         <% elsif @order.status == "1" %>
