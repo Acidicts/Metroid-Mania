@@ -1,22 +1,83 @@
-<h1>Admin Login</h1>
+<style>
+  /* Admin-themed login styles (aligned with dashboard) */
+  .admin-login-wrap { max-width: 520px; margin: 16px auto 0; }
 
-<p style="color: red;"><%= flash[:alert] %></p>
+  .admin-login-box {
+    background: linear-gradient(180deg, var(--palette-3-light, rgba(74,122,150,0.06)), rgba(41,40,49,0.02));
+    border: 2px dashed var(--admin-800);
+    padding: 20px;
+    border-radius: 8px;
+    color: var(--admin-900);
+    box-shadow: 0 8px 24px rgba(41,40,49,0.04);
+    margin-top: 4rem;
+  }
 
-<%= form_with url: admin_login_path, local: true do |f| %>
-  <div>
-    <%= label_tag :email %><br>
-    <%= text_field_tag :email, nil, autocomplete: "email" %>
+  .admin-login-box h1 {
+    font-size: 22px;
+    margin-top: 0;
+    margin-bottom: 12px;
+    font-family: "Pixelify Sans", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .admin-login-form { display: flex; flex-direction: column; gap: 12px; font-family: "DynaPuff", cursive; }
+  .admin-login-form label { color: var(--admin-700); font-weight: 600; display:block; margin-bottom:6px; }
+
+  .admin-login-form input[type=text],
+  .admin-login-form input[type=password] {
+    width: 90%;
+    padding: 8px 10px;
+    margin-right: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(13,43,69,0.4);
+    background: #fff;
+    box-shadow: none;
+  }
+
+  .admin-flash {
+    display: inline-block;
+    padding: 8px 10px;
+    border-radius: 6px;
+    font-weight: 700;
+    color: #fff;
+    background: linear-gradient(180deg, var(--palette-2-dark), var(--palette-2));
+    margin-bottom: 8px;
+  }
+
+  .admin-login-actions { margin-top: 8px; }
+</style>
+
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+
+
+<div class="admin-login-wrap">
+  <div class="admin-login-box">
+    <h1>Admin Login</h1>
+
+    <% if flash[:alert].present? %>
+      <div class="admin-flash"><%= flash[:alert] %></div>
+    <% end %>
+
+    <%= form_with url: admin_login_path, class: "admin-login-form", local: true do |f| %>
+      <div>
+        <%= label_tag :email, "Email" %>
+        <%= text_field_tag :email, nil, autocomplete: "email", placeholder: "you@example.com" %>
+      </div>
+
+      <div>
+        <%= label_tag :password, "Password" %>
+        <%= password_field_tag :password, nil, autocomplete: "current-password" %>
+      </div>
+
+      <div class="admin-login-actions">
+        <%= submit_tag "Sign in", class: "btn-admin" %>
+      </div>
+    <% end %>
   </div>
-
-  <div>
-    <%= label_tag :password %><br>
-    <%= password_field_tag :password, nil, autocomplete: "current-password" %>
-  </div>
-
-  <div style="margin-top: 8px;">
-    <%= submit_tag "Sign in", class: "btn btn-primary" %>
-  </div>
-<% end %>
+</div>
 
     </div> <!-- admin-panel -->
   </main>
