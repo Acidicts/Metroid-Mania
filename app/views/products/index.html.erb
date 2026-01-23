@@ -22,8 +22,8 @@
       <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro' %>
       <% if admin? %>
         <div style="margin-top:8px;">
-          <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro btn-retro--outline' %>
-          <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro btn-retro--danger', style: 'margin-left:6px' %>
+          <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
+          <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin', style: 'margin-left:6px' %>
         </div>
       <% end %>
       <% if product.variable_grant? %>

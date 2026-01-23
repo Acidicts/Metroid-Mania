@@ -25,15 +25,26 @@
   </p>
 
   <% if @product.variable_grant? %>
-    <%= form_with url: orders_path, method: :post, local: true do |f| %>
+    <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
       <%= hidden_field_tag :product_id, @product.id %>
 
-      <div>
-        <%= label_tag :grant_amount_display, "Grant amount ($)" %>
-        <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
-          <%= number_field_tag :grant_amount_display, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_display" %>
-          <%= range_field_tag :grant_amount_range, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_range", style: "flex:1;" %>
-          <%= hidden_field_tag :grant_amount_dollars, (@product.grant_min_dollars), id: "grant_amount_dollars" %>
+      <div class="grant-box">
+        <div class="grant-header"><%= label_tag :grant_amount_display, "Grant amount ($)" %></div>
+        <div class="grant-slider-wrapper" style="margin-top:6px;">
+          <div class="grant-inputs">
+            <%= number_field_tag :grant_amount_display, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_display", class: 'grant-number', aria: { label: 'Grant amount dollars' } %>
+
+            <div class="grant-slider" style="flex:1;">
+              <div class="min-max-labels"><span class="min">$<%= sprintf('%.0f', @product.grant_min_dollars) %></span><span class="max">$<%= sprintf('%.0f', @product.grant_max_dollars) %></span></div>
+
+              <%= range_field_tag :grant_amount_range, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_range", class: 'grant-range', aria: { valuemin: @product.grant_min_dollars, valuemax: @product.grant_max_dollars, label: 'Grant slider' } %>
+
+              <div class="ticks" aria-hidden="true"></div>
+              <div class="bubble" aria-hidden="true"><span class="bubble-val"></span></div>
+            </div>
+
+            <%= hidden_field_tag :grant_amount_dollars, (@product.grant_min_dollars), id: "grant_amount_dollars" %>
+          </div>
         </div>
       </div>
 
@@ -48,51 +59,167 @@
     <% end %>
 
     <script>
-      document.addEventListener('DOMContentLoaded', function(){
-        var r = document.getElementById('grant_amount_range');
-        var d = document.getElementById('grant_amount_display');
-        var h = document.getElementById('grant_amount_dollars');
-        var est = document.getElementById('price_credits_display');
-        var ratio = <%= (@product.credits_per_dollar || 0).to_f %>;
+      (function(){
+        function initOrderSlider(){
+          var form = document.querySelector('form');
+          if (!form) return;
+          // avoid double-initializing on turbo:load or DOMContentLoaded multiple times
+          if (form.dataset.orderSliderInitialized) return;
+          form.dataset.orderSliderInitialized = '1';
 
-        function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
+          var r = document.getElementById('grant_amount_range');
+          var d = document.getElementById('grant_amount_display');
+          var h = document.getElementById('grant_amount_dollars');
+          var est = document.getElementById('price_credits_display');
+          var ratio = <%= (@product.credits_per_dollar || 0).to_f %>;
+          var minVal = <%= @product.grant_min_dollars %>;
+          var maxVal = <%= @product.grant_max_dollars %>;
 
-        function update(val){
-          var n = toNumber(val);
-          if (d && d.value != n) d.value = n;
-          if (r && r.value != n) r.value = n;
-          if (h) h.value = n;
-          if (ratio && est) est.innerText = (n * ratio).toFixed(2);
-          var priceDisplay = document.getElementById('price_usd_display');
-          if (priceDisplay) priceDisplay.innerText = n.toFixed(2);
-        }
+          function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
 
-        if (r){
-          r.addEventListener('input', function(e){ update(e.target.value); });
-          r.addEventListener('change', function(e){ update(e.target.value); });
-        }
-        if (d){
-          d.addEventListener('input', function(e){ update(e.target.value); });
-          d.addEventListener('change', function(e){ update(e.target.value); });
-        }
+          function update(val){
+            var n = toNumber(val);
+            // Clamp to min/max
+            if (n < minVal) n = minVal;
+            if (n > maxVal) n = maxVal;
 
-        // Initialize values on load
-        var initial = (d && d.value) || (r && r.value) || (h && h.value) || 0;
-        update(initial);
+            if (d && d.value != n) d.value = n;
+            if (r && r.value != n) r.value = n;
+            if (h) h.value = n;
+            if (ratio && est) est.innerText = (n * ratio).toFixed(2);
+            var priceDisplay = document.getElementById('price_usd_display');
+            if (priceDisplay) priceDisplay.innerText = n.toFixed(2);
 
-        // Ensure hidden field is set on submit
-        var form = document.querySelector('form');
-        if (form){
-          form.addEventListener('submit', function(){
-            var val = (d && d.value) || (r && r.value) || (h && h.value) || 0;
+            // Update bubble and ARIA
+            positionBubble(n);
+            if (r) r.setAttribute('aria-valuenow', n);
+          }
+
+          // Update hidden field immediately when inputs change
+          function updateHidden(val){
             if (h) h.value = val;
-          });
+          }
+
+          function createTicks(){
+            var ticksEl = form.querySelector('.ticks');
+            if (!ticksEl || !r) return;
+            ticksEl.innerHTML = '';
+            var range = maxVal - minVal;
+            var step = Math.max(1, Number(r.step) || 1);
+            // Show up to 10 ticks (including endpoints)
+            var segments = 10;
+            for (var i = 0; i <= segments; i++){
+              var val = minVal + (range * (i / segments));
+              var percent = ((val - minVal) / range) * 100;
+              var tick = document.createElement('div');
+              tick.className = 'tick';
+              tick.style.left = percent + '%';
+              ticksEl.appendChild(tick);
+            }
+          }
+
+          function positionBubble(value){
+            var bubble = form.querySelector('.bubble');
+            var rangeEl = r;
+            if (!bubble || !rangeEl) return;
+            var pct = 0;
+            var range = maxVal - minVal;
+            if (range > 0) pct = (value - minVal) / range;
+            // compute left based on thumb center. Need bounding client rect of range.
+            var rect = rangeEl.getBoundingClientRect();
+            var thumbX = rect.left + pct * rect.width;
+            var relLeft = thumbX - rect.left; // px
+            bubble.style.left = (relLeft) + 'px';
+            var valSpan = bubble.querySelector('.bubble-val');
+            if (valSpan) valSpan.textContent = '$' + Number(value).toFixed(0);
+          }
+
+          if (r){
+            // Show bubble when pointer is down (dragging) and hide on release
+            r.addEventListener('pointerdown', function(e){
+              var sliderWrap = form.querySelector('.grant-slider');
+              if (sliderWrap) sliderWrap.classList.add('bubble-visible');
+            });
+
+            // Ensure we hide the bubble on pointerup anywhere
+            window.addEventListener('pointerup', function(e){
+              var sliderWrap = form.querySelector('.grant-slider');
+              if (sliderWrap) sliderWrap.classList.remove('bubble-visible');
+            });
+
+            r.addEventListener('input', function(e){ 
+              update(e.target.value); 
+              updateHidden(e.target.value);
+            });
+            r.addEventListener('change', function(e){ 
+              update(e.target.value); 
+              updateHidden(e.target.value);
+              // in case of keyboard change, briefly show bubble for feedback then hide
+              var sliderWrap = form.querySelector('.grant-slider');
+              if (sliderWrap) {
+                sliderWrap.classList.add('bubble-visible');
+                setTimeout(function(){ sliderWrap.classList.remove('bubble-visible'); }, 600);
+              }
+            });
+          }
+          if (d){
+            d.addEventListener('input', function(e){ 
+              update(e.target.value); 
+              updateHidden(e.target.value);
+            });
+            d.addEventListener('change', function(e){ 
+              update(e.target.value); 
+              updateHidden(e.target.value);
+            });
+          }
+
+          // Initialize values on load - ensure proper synchronization
+          // Start with the minimum value as default
+          var initial = minVal;
+
+          // Check if fields have existing values (from form reload or other)
+          if (d && d.value && toNumber(d.value) >= minVal && toNumber(d.value) <= maxVal) {
+            initial = toNumber(d.value);
+          } else if (r && r.value && toNumber(r.value) >= minVal && toNumber(r.value) <= maxVal) {
+            initial = toNumber(r.value);
+          } else if (h && h.value && toNumber(h.value) >= minVal && toNumber(h.value) <= maxVal) {
+            initial = toNumber(h.value);
+          }
+
+          // Force set all fields to the initial value
+          if (d) d.value = initial;
+          if (r) r.value = initial;
+          if (h) h.value = initial;
+
+          // Update displays
+          update(initial);
+
+          // create ticks and ensure bubble positioned, and reposition on resize
+          createTicks();
+          positionBubble(initial);
+          window.addEventListener('resize', function(){ positionBubble((d&&d.value) || (r&&r.value) || minVal); });
+
+          // Ensure hidden field is set on submit - use capture phase to ensure it runs before form submission
+          if (form){
+            form.addEventListener('submit', function(e){
+              // Update the hidden field with current values from either input
+              var val = (d && d.value) || (r && r.value) || (h && h.value) || minVal;
+              if (h) h.value = val;
+
+              // Also ensure the number field has the correct value for submission
+              if (d) d.value = val;
+            }, true); // Use capture phase to ensure this runs before other handlers
+          }
         }
-      });
+
+        // Initialize on full page loads and Turbo visits
+        document.addEventListener('DOMContentLoaded', initOrderSlider);
+        document.addEventListener('turbo:load', initOrderSlider);
+      })();
     </script>
 
   <% else %>
-    <%= form_with url: orders_path, method: :post, local: true do |f| %>
+    <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
       <%= hidden_field_tag :product_id, @product.id %>
       <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong><%= sprintf('%.2f', @product.cost_in_credits || 0) %></strong> credits.</p>
 

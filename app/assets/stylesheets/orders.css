@@ -1,2 +1,51 @@
-/* Styles moved to: app/views/orders/index.html.erb */
-/* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */
+/* Orders slider styling — Bold (polished) restyle */
+
+/* Box container for the slider */
+.grant-box {
+  background: linear-gradient(180deg, #ffffff, #fbfdff);
+  border: 1px solid #e6f0ff;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(16,24,40,0.04);
+  margin: 12px 0;
+}
+
+.grant-header { font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+
+.grant-slider-wrapper { width: 100%; }
+.grant-inputs { display:flex; gap:12px; align-items:center; }
+.grant-number { width:90px; padding:8px; border-radius:6px; border:1px solid #e5e7eb; font-weight:600; text-align:center; }
+
+.grant-slider { position:relative; width:100%; }
+.grant-slider .min-max-labels { display:flex; justify-content:space-between; font-size:0.85rem; color:#6b7280; margin-bottom:6px; }
+
+.grant-range { -webkit-appearance:none; appearance:none; width:100%; height:10px; border-radius:999px; background: linear-gradient(90deg, #e6f0ff 0%, #e6f0ff 100%); outline:none; }
+
+/* Track styling for WebKit */
+.grant-range::-webkit-slider-runnable-track { height:10px; border-radius:999px; background: linear-gradient(90deg, #e6f0ff 0%, #c7ddff 100%); }
+.grant-range::-webkit-slider-thumb { -webkit-appearance:none; width:22px; height:22px; border-radius:50%; background:#0076ff; border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.15); margin-top:-6px; cursor:pointer; }
+
+/* Track styling for Firefox */
+.grant-range::-moz-range-track { height:10px; border-radius:999px; background: linear-gradient(90deg, #e6f0ff 0%, #c7ddff 100%); }
+.grant-range::-moz-range-thumb { width:22px; height:22px; border-radius:50%; background:#0076ff; border:3px solid white; box-shadow:0 2px 6px rgba(0,0,0,0.15); cursor:pointer; }
+
+/* Ticks */
+.grant-slider .ticks { position:absolute; left:0; right:0; top:50%; transform:translateY(-50%); height:4px; pointer-events:none; }
+.grant-slider .ticks .tick { position:absolute; top:50%; width:2px; height:8px; background:rgba(0,0,0,0.12); transform:translateY(-50%); }
+
+/* Value bubble */
+.grant-slider .bubble { position:absolute; top:-36px; left:0; transform:translateX(-50%) translateY(-8px) scale(0.96); background:#0076ff; color:white; padding:6px 8px; border-radius:6px; font-weight:700; font-size:0.85rem; white-space:nowrap; box-shadow:0 6px 16px rgba(0,0,0,0.12); opacity:0; pointer-events:none; transition: opacity 160ms ease, transform 160ms ease; }
+.grant-slider .bubble::after { content:''; position:absolute; left:50%; bottom:-6px; transform:translateX(-50%); border-left:6px solid transparent; border-right:6px solid transparent; border-top:6px solid #0076ff; }
+
+/* Visible state applied while dragging */
+.grant-slider.bubble-visible .bubble { opacity:1; transform:translateX(-50%) translateY(0) scale(1); }
+
+/* Focus styles */
+.grant-range:focus { box-shadow:0 0 0 4px rgba(0,118,255,0.12); }
+.grant-number:focus { outline: 2px solid rgba(0,118,255,0.12); }
+
+@media (max-width: 560px) {
+  .grant-number { width:72px; }
+  .grant-slider .bubble { font-size:0.8rem; }
+}
+

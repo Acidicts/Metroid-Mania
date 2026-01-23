@@ -99,7 +99,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "denied order without refund should show helpful message and not silently block" do
-    product = Product.create!(name: 'TempProduct2', steam_app_id: 9997, price_currency: 12.0)
+    product = Product.create!(name: 'TempProduct2', steam_app_id: 9997, price_currency: 12.0, credits_per_dollar: 10.0)
 
     # Create an order that is already denied but (simulating buggy code) the user wasn't refunded
     denied = @user.orders.create!(product: product, status: 'denied', cost: product.price_currency)
@@ -112,6 +112,43 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     puts "DEBUG: response.status=#{response.status}, flash=#{flash.to_hash.inspect}"
     assert_includes flash[:alert].to_s, "denied order"
+  end
+
+  test "should create order with variable grant amount" do
+    # Create a variable grant product
+    product = Product.create!(
+      name: 'Variable Grant Product',
+      steam_app_id: 9996,
+      price_currency: 10.0,
+      credits_per_dollar: 100.0,
+      variable_grant: true,
+      grant_min_cents: 1000,  # $10.00
+      grant_max_cents: 50000  # $500.00
+    )
+
+    # Ensure no pending order exists for this user/product before we start
+    @user.orders.where(product: product, status: 'pending').destroy_all
+
+    # Give user enough currency for the test
+    @user.update!(currency: 5000.0)  # 5000 credits
+
+    # Test creating an order with a specific grant amount
+    grant_amount = 25.0  # $25.00
+    assert_difference 'Order.count', 1 do
+      post orders_url, params: { 
+        product_id: product.id, 
+        grant_amount_dollars: grant_amount 
+      }
+    end
+
+    assert response.redirect?
+    loc = response.location
+    id_param = loc.match(%r{/orders/([^/]+)})[1]
+    order = Order.find_by_param(id_param)
+    assert_equal product.id, order.product_id
+    assert_equal @user.id, order.user_id
+    assert_equal (grant_amount * 100).round, order.grant_amount_cents
+    assert_equal (grant_amount * product.credits_per_dollar), order.cost
   end
 
   test "should show order" do
