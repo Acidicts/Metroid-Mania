@@ -9,6 +9,20 @@
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
 ARG RUBY_VERSION=3.4.7
+
+# Declare build-time args for external configuration; DO NOT set defaults here (secrets must not be embedded)
+ARG APP_URL
+ARG AUTO_ADMIN
+ARG AUTO_ADMIN_EMAIL
+ARG AUTO_ADMIN_PASSWORD
+ARG HACKATIME_API_KEY
+ARG HACKCLUB_CLIENT_ID
+ARG HACKCLUB_CLIENT_SECRET
+ARG COOLIFY_URL
+ARG COOLIFY_FQDN
+ARG COOLIFY_BRANCH
+ARG COOLIFY_RESOURCE_UUID
+
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
 # Rails app lives here
