@@ -2,9 +2,10 @@
   <h1>Ship requests</h1>
 
   <% @ship_requests.each do |r| %>
-    <% if r.status != "approved" %> 
+    <% if r.status != "approved" && r.user&.name != "Deleted User" %> 
       <div class="ship-request">
-        <h3><%= link_to "#{r.project.name} - Request ##{r.id}", admin_ship_request_path(r) %></h3>
+        <% project_name = r.project&.name || "Project ##{r.project_id || 'unknown'}" %>
+        <h3><%= link_to "#{project_name} - Request ##{r.id}", admin_ship_request_path(r) %></h3>
         <p>Requested at: <%= r.requested_at %></p>
         <p>Devlogged: <%= format_duration(r.devlogged_seconds.to_i) %></p>
         <p>Requester: <%= r.user&.name || r.user&.email %></p>

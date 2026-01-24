@@ -79,7 +79,14 @@ module Admin
     def user_params
       permitted = {}
       if params[:user] && (current_user&.superadmin? || current_user&.admin?)
+        # Allow admins to adjust contact and identity fields
+        permitted[:name] = params[:user][:name] if params[:user].key?(:name)
+        permitted[:email] = params[:user][:email] if params[:user].key?(:email)
+        permitted[:slack_id] = params[:user][:slack_id] if params[:user].key?(:slack_id)
+
+        # Allow role changes only when role param present
         permitted[:role] = params[:user][:role] if params[:user][:role].present?
+
         # Allow admins to adjust user credits safely
         permitted[:currency] = params[:user][:currency] if params[:user].key?(:currency)
       end

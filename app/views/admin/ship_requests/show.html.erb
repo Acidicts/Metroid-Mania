@@ -1,5 +1,6 @@
 <div class="admin-panel">
-  <h1>Ship Request for <%= @ship_request.project.name %> (#<%= @ship_request.id %>)</h1>
+  <% project_name = @ship_request.project&.name || "Project ##{@ship_request.project_id || 'unknown'}" %>
+  <h1>Ship Request for <%= project_name %> (#<%= @ship_request.id %>)</h1>
 
   <p><strong>Requested at:</strong> <%= l(@ship_request.requested_at, format: :short) %></p>
   <p><strong>Requester:</strong> <%= @ship_request.user&.name || @ship_request.user&.email %></p>

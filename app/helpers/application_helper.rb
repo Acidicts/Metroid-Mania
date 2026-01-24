@@ -64,6 +64,7 @@ module ApplicationHelper
   end
 
   def correct_credits(amount)
+    return 0 if amount.nil?
     amount.ceil
   end
 

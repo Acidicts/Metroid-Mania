@@ -5,23 +5,78 @@
 
 <%= form_with model: [:admin, @user], local: true do |f| %>
   <% if @user.superadmin? %>
-    <p><em>This is the superadmin and their role cannot be changed.</em></p>
+    <p class="admin-hint"><em>This is the superadmin and their role cannot be changed.</em></p>
   <% end %>
 
-  <div>
-    <%= f.label :role %><br>
-    <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, disabled: @user.superadmin? %>
-  </div>
-
-    </div> <!-- admin-panel -->
-  <% if current_user&.admin? || current_user&.superadmin? %>
-    <div style="margin-top:8px;">
-      <%= f.label :currency, "Total Credits" %><br>
-      <%= f.number_field :currency, step: 0.01, value: @user.currency || 0.0 %>
+  <% if @user.errors.any? %>
+    <div class="admin-form-errors">
+      <h3>We couldn't save because of the following errors:</h3>
+      <ul>
+        <% @user.errors.full_messages.each do |m| %>
+          <li><%= m %></li>
+        <% end %>
+      </ul>
     </div>
   <% end %>
 
-  <div style="margin-top: 8px;">
-    <%= f.submit "Save", class: "btn btn-primary" %>
+  <div id="admin-user-form" class="admin-card admin-user-card">
+    <div class="admin-form">
+      <div class="admin-form-row">
+        <%= f.label :name, class: "admin-form-label" %>
+        <div class="admin-form-control">
+          <%= f.text_field :name, value: @user.name, autofocus: true, class: "admin-input #{'field-error' if f.object.errors[:name].any?}" %>
+          <% if f.object.errors[:name].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:name).join(', ') %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="admin-form-row">
+        <%= f.label :email, class: "admin-form-label" %>
+        <div class="admin-form-control">
+          <%= f.email_field :email, value: @user.email, class: "admin-input #{'field-error' if f.object.errors[:email].any?}" %>
+          <% if f.object.errors[:email].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:email).join(', ') %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="admin-form-row">
+        <%= f.label :slack_id, "Slack ID", class: "admin-form-label" %>
+        <div class="admin-form-control">
+          <%= f.text_field :slack_id, value: @user.slack_id, class: "admin-input #{'field-error' if f.object.errors[:slack_id].any?}" %>
+          <% if f.object.errors[:slack_id].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:slack_id).join(', ') %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="admin-form-row">
+        <%= f.label :role, class: "admin-form-label" %>
+        <div class="admin-form-control">
+          <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, disabled: @user.superadmin?, class: "admin-input #{'field-error' if f.object.errors[:role].any?}" %>
+          <% if f.object.errors[:role].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:role).join(', ') %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <% if current_user&.admin? || current_user&.superadmin? %>
+        <div class="admin-form-row">
+          <%= f.label :currency, "Total Credits", class: "admin-form-label" %>
+          <div class="admin-form-control">
+            <%= f.number_field :currency, step: 0.01, value: @user.currency || 0.0, class: "admin-input #{'field-error' if f.object.errors[:currency].any?}" %>
+            <% if f.object.errors[:currency].any? %>
+              <div class="field-error-text"><%= f.object.errors.full_messages_for(:currency).join(', ') %></div>
+            <% end %>
+          </div>
+        </div>
+      <% end %>
+
+      <div class="admin-form-actions">
+        <%= link_to 'Cancel', admin_users_path, class: 'btn-admin btn-admin--muted' %>
+        <%= f.submit "Save", class: "btn btn-primary btn-admin--save" %>
+      </div>
+    </div>
   </div>
-<% end %>
+<% end %> 

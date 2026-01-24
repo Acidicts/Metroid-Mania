@@ -5,7 +5,8 @@ module Admin
     before_action :ensure_ship_has_project, only: [:show, :edit, :update]
 
     def index
-      @ships = Ship.includes(:project, :user).order(shipped_at: :desc).limit(100)
+      # Exclude ships whose project was removed/deleted by joining projects
+      @ships = Ship.joins(:project).includes(:project, :user).order(shipped_at: :desc).limit(100)
     end
 
     def show

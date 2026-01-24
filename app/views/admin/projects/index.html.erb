@@ -12,17 +12,19 @@
       </thead>
       <tbody>
         <% @projects.each do |project| %>
-          <tr>
-            <td><%= check_box_tag 'project_ids[]', project.id %></td>
-            <td><%= project.user.name %></td>
-            <td><%= link_to project.name, admin_project_path(project) %></td>
-            <td>
-              <%= project.computed_status %>
-            </td>
-            <td>
-              <%= correct_credits(get_all_credits(project)) %>
-            </td>
-          </tr>
+        <% if project.user.name != "Deleted User" %>
+            <tr>
+              <td><%= check_box_tag 'project_ids[]', project.id %></td>
+              <td><%= project.user.name %></td>
+              <td><%= link_to project.name, admin_project_path(project) %></td>
+              <td>
+                <%= project.computed_status %>
+              </td>
+              <td>
+                <%= correct_credits(get_all_credits(project)) %>
+              </td>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>

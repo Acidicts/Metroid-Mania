@@ -104,22 +104,24 @@
       </thead>
       <tbody>
         <% Project.order(created_at: :desc).limit(20).each do |project| %>
-          <tr>
-            <td><%= project.name %></td>
-            <td><%= project.computed_status %></td>
-            <td><%= project.credits_per_hour %></td>
-            <td>
-              <% if project.ship_requests.where(status: 'pending').exists? %>
-                <%= link_to 'View Request', admin_ship_request_path(project.ship_requests.where(status: 'pending').first), class: 'btn-admin btn-admin--muted' %>
-              <% end %>
-              <% if project.computed_shipped? %>
-                <%= button_to 'Unship', unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
-              <% else %>
-                <%= button_to 'Ship', ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-success' %>
-                <%= button_to 'Force Ship', force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
-              <% end %>
-            </td>
-          </tr>
+          <% if project.name != "Deleted Project" %>
+            <tr>
+              <td><%= project.name %></td>
+              <td><%= project.computed_status %></td>
+              <td><%= project.credits_per_hour %></td>
+              <td>
+                <% if project.ship_requests.where(status: 'pending').exists? %>
+                  <%= link_to 'View Request', admin_ship_request_path(project.ship_requests.where(status: 'pending').first), class: 'btn-admin btn-admin--muted' %>
+                <% end %>
+                <% if project.computed_shipped? %>
+                  <%= button_to 'Unship', unship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-warning' %>
+                <% else %>
+                  <%= button_to 'Ship', ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-success' %>
+                  <%= button_to 'Force Ship', force_ship_admin_project_path(project), method: :post, class: 'btn-admin btn-admin-danger' %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>

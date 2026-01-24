@@ -1,34 +1,35 @@
 <div class="admin-panel">
   <h1>Users</h1>
-    <thead>
-      <tr>
-        <th>Email</th>
-        <th>Role</th>
-        <th>Actions</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% @users.each do |u| %>
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <thead>
         <tr>
-          <td><%= u.email %></td>
-          <td>
-            <% if u.superadmin? %>
-              <strong>Superadmin</strong>
-            <% else %>
-              <%= u.role %>
-            <% end %>
-          </td>
-          <td>
-            <%= link_to 'Edit', edit_admin_user_path(u), class: 'btn-admin' %>
-            <%= button_to 'Revert Actions', revert_actions_admin_user_path(u), method: :post, data: { confirm: 'Are you sure? This will remove orders and devlogs and unship projects.' }, class: 'btn-admin btn-admin-warning' %>
-            <% unless u.superadmin? %>
-              <%= button_to 'Delete', admin_user_path(u), method: :delete, data: { confirm: 'Delete user?' }, class: 'btn-admin btn-admin-danger' %>
-            <% end %>
-          </td>
+          <th class="col-role col-shrink">Name</th>
+          <th class="col-email">Email</th>
+          <th class="col-slack-id col-shrink">Slack ID</th>
+          <th class="col-id col-shrink">ID</th>
+          <th class="col-role col-shrink">Role</th>
         </tr>
-      <% end %>
-    </tbody>
-  </table>
+      </thead>
+      <tbody>
+        <% @users.each do |u| %>
+          <tr>
+            <td><%= link_to (u.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %></td>
+            <td class="col-email"><%= u.email %></td>
+            <td class="col-slack-id col-shrink"><%= u.slack_id.presence || '-' %></td>
+            <td class="col-id col-shrink"><%= u.id %></td>
+            <td class="col-role col-shrink">
+              <% if u.superadmin? %>
+                <strong>Superadmin</strong>
+              <% else %>
+                <%= u.role.humanize %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div> <!-- admin-table-wrapper -->
 
     </div> <!-- admin-panel -->
   </main>

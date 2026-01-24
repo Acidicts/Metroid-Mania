@@ -353,7 +353,7 @@
             <div class="devlog-info">
               <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
               <span class="devlog-meta">
-                Project: <%= devlog.project.name %>
+                Project: <%= devlog.project&.name || 'Project removed' %>
                 • <%= devlog.log_date.strftime("%b %d, %Y") %>
                 <% if devlog.ship_request_id %>
                   • Linked to Ship Request
