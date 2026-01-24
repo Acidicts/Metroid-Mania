@@ -1,9 +1,15 @@
 <div class="admin-panel">
-  <h1>Edit Ship ##<%= @ship.id %> for <%= @ship.project.name %></h1>
+  <h1>Edit Ship ##<%= @ship.id %> for <%= @ship.project&.name || 'Project removed' %></h1>
 
       <div class="admin-two-col">
         <div class="admin-two-col-main">
-          <p><strong>Project:</strong> <%= link_to @ship.project.name, admin_project_path(@ship.project) %></p>
+          <p><strong>Project:</strong>
+            <% if @ship.project %>
+              <%= link_to @ship.project.name, admin_project_path(@ship.project) %>
+            <% else %>
+              <em>Project removed</em>
+            <% end %>
+          </p>
           <p><strong>Shipped at:</strong> <%= @ship.shipped_at %></p>
           <p><strong>Devlogged:</strong> <%= format_duration(@ship.devlogged_seconds.to_i) %></p>
         </div>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_24_103000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -39,7 +39,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
     t.json "details", default: {}
     t.integer "project_id"
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.index ["action"], name: "index_audits_on_action"
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["project_id"], name: "index_audits_on_project_id"
@@ -51,7 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
     t.datetime "created_at", null: false
     t.integer "duration_minutes"
     t.date "log_date"
-    t.integer "project_id", null: false
+    t.integer "project_id"
     t.integer "ship_request_id"
     t.string "title"
     t.datetime "updated_at", null: false
@@ -68,7 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
     t.string "public_id"
     t.integer "status", default: 0, null: false
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.index ["product_id"], name: "index_orders_on_product_id"
     t.index ["public_id"], name: "index_orders_on_public_id", unique: true
     t.index ["status"], name: "index_orders_on_status"
@@ -111,7 +111,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
     t.string "status"
     t.integer "total_seconds"
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.index ["featured"], name: "index_projects_on_featured"
     t.index ["featured_at"], name: "index_projects_on_featured_at"
     t.index ["user_id"], name: "index_projects_on_user_id"
@@ -124,11 +124,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
     t.float "credits_per_hour"
     t.integer "devlogged_seconds"
     t.integer "processed_by_id"
-    t.integer "project_id", null: false
+    t.integer "project_id"
     t.datetime "requested_at"
     t.string "status", default: "pending"
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.index ["processed_by_id"], name: "index_ship_requests_on_processed_by_id"
     t.index ["project_id"], name: "index_ship_requests_on_project_id"
     t.index ["user_id"], name: "index_ship_requests_on_user_id"
@@ -138,10 +138,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_22_003000) do
     t.datetime "created_at", null: false
     t.float "credits_awarded"
     t.integer "devlogged_seconds"
-    t.integer "project_id", null: false
+    t.integer "project_id"
     t.datetime "shipped_at"
     t.datetime "updated_at", null: false
-    t.integer "user_id", null: false
+    t.integer "user_id"
     t.index ["project_id"], name: "index_ships_on_project_id"
     t.index ["user_id"], name: "index_ships_on_user_id"
   end

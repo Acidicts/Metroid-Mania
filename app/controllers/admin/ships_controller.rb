@@ -1,22 +1,20 @@
 module Admin
   class ShipsController < Admin::ApplicationController
     before_action :require_admin
+    before_action :set_ship, only: [:show, :edit, :update]
+    before_action :ensure_ship_has_project, only: [:show, :edit, :update]
 
     def index
       @ships = Ship.includes(:project, :user).order(shipped_at: :desc).limit(100)
     end
 
     def show
-      @ship = Ship.find(params[:id])
     end
 
     def edit
-      @ship = Ship.find(params[:id])
     end
 
     def update
-      @ship = Ship.find(params[:id])
-
       # permit editing these fields
       permitted = params.require(:ship).permit(:devlogged_seconds, :credits_awarded, :shipped_at, :credits_per_hour, :recalculate)
 
@@ -58,6 +56,18 @@ module Admin
     rescue ActiveRecord::RecordInvalid => e
       flash.now[:alert] = e.message
       render :edit, status: :unprocessable_entity
+    end
+
+    private
+
+    def set_ship
+      @ship = Ship.find(params[:id])
+    end
+
+    def ensure_ship_has_project
+      return if @ship&.project.present?
+
+      redirect_to admin_ships_path, alert: "Related project not found for Ship ##{@ship.id}"
     end
   end
 end

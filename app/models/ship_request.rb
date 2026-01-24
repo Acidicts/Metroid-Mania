@@ -68,6 +68,9 @@ class ShipRequest < ApplicationRecord
   private
 
   def recalculate_project_status
-    project.recalculate_status! if project.present?
+    # Skip recalculation if the associated project is being destroyed or is not persisted
+    return unless project.present? && project.persisted?
+
+    project.recalculate_status!
   end
 end

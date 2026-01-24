@@ -4,7 +4,7 @@ module Admin
     before_action :set_user, only: %i[ show edit update destroy revert_actions ]
 
     def index
-      @users = User.order(:email)
+      @users = User.not_system.order(:email)
     end
 
     def show
@@ -35,6 +35,11 @@ module Admin
     def destroy
       if @user.superadmin?
         redirect_to admin_users_path, alert: "Cannot remove the superadmin"
+        return
+      end
+
+      if @user.system_user?
+        redirect_to admin_users_path, alert: "Cannot remove the system placeholder user"
         return
       end
 

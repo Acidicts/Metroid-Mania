@@ -49,4 +49,26 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   ensure
     ENV.delete('SUPERADMIN_EMAIL')
   end
+
+  test "cannot delete the system placeholder user" do
+    sys = User.system_user
+
+    sign_in_as(@admin, password: 'password')
+    assert_no_difference 'User.count' do
+      delete admin_user_url(sys)
+    end
+
+    assert_redirected_to admin_users_url
+    assert User.exists?(sys.id)
+  end
+
+  test "system user is excluded from admin users list" do
+    sys = User.system_user
+
+    sign_in_as(@admin, password: 'password')
+    get admin_users_url
+
+    assert_response :success
+    assert_not_includes response.body, sys.email
+  end
 end

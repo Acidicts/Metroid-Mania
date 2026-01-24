@@ -241,28 +241,29 @@
 <div class="user-profile-container">
   <div class="user-profile-header">
     <h1>👤 <%= @user.name %></h1>
-    <div class="user-info">
-      <div class="info-item">
-        <span class="info-label">Email</span>
-        <span class="info-value"><%= @user.email || "Not provided" %></span>
+    <% if @user.name != "Deleted User" %>
+      <div class="user-info">
+        <div class="info-item">
+          <span class="info-label">Email</span>
+          <span class="info-value"><%= @user.email || "Not provided" %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Member Since</span>
+          <span class="info-value"><%= @user.created_at.strftime("%B %d, %Y") %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Total Projects</span>
+          <span class="info-value"><%= @projects.count %></span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Total Ships</span>
+          <span class="info-value"><%= user_total_ships(@user) %></span>
+        </div>
       </div>
-      <div class="info-item">
-        <span class="info-label">Member Since</span>
-        <span class="info-value"><%= @user.created_at.strftime("%B %d, %Y") %></span>
+      <div class="profile-actions">
+        <%= link_to "Edit Profile", profile_path, class: "btn-profile" %>
+        <%= link_to "Back to Leaderboard", leaderboard_path, class: "btn-profile" %>
       </div>
-      <div class="info-item">
-        <span class="info-label">Total Projects</span>
-        <span class="info-value"><%= @projects.count %></span>
-      </div>
-      <div class="info-item">
-        <span class="info-label">Total Ships</span>
-        <span class="info-value"><%= user_total_ships(@user) %></span>
-      </div>
-    </div>
-    <div class="profile-actions">
-      <%= link_to "Edit Profile", profile_path, class: "btn-profile" %>
-      <%= link_to "Back to Leaderboard", leaderboard_path, class: "btn-profile" %>
-    </div>
   </div>
 
   <!-- Projects Section -->
@@ -313,7 +314,13 @@
         <% @ships.each do |ship| %>
           <div class="ship-item">
             <div class="ship-info">
-              <span class="ship-title"><%= ship.project.name %></span>
+              <span class="ship-title">
+                <% if ship.project %>
+                  <%= link_to ship.project.name, project_path(ship.project) %>
+                <% else %>
+                  <em>Project removed</em>
+                <% end %>
+              </span>
               <span class="ship-meta">
                 Shipped: <%= ship.shipped_at.strftime("%b %d, %Y at %I:%M %p") %>
                 <% if ship.devlogged_seconds %>
@@ -361,4 +368,5 @@
       </div>
     <% end %>
   </div>
+  <% end %>
 </div>

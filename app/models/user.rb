@@ -1,9 +1,14 @@
 class User < ApplicationRecord
-  has_many :projects
-  has_many :orders
-  has_many :ships
+  # When a user is deleted we nullify references and reassign them to the system user
+  has_many :projects, dependent: :nullify
+  has_many :orders, dependent: :nullify
+  has_many :ships, dependent: :nullify
+  has_many :ship_requests, dependent: :nullify
 
   enum :role, { user: 0, admin: 1 }
+
+  # Scope to exclude the system placeholder user
+  scope :not_system, -> { where.not(provider: 'system', uid: 'deleted_user') }
 
   # Allow optional password for OAuth users. Use has_secure_password without validations
   # and manage presence checks if needed elsewhere.
@@ -37,4 +42,43 @@ class User < ApplicationRecord
   def display_name
     name.presence || email.presence || "User #{id}"
   end
+
+  # System placeholder user used to own records of deleted users. Created lazily.
+  def self.system_user
+    find_or_create_by!(provider: 'system', uid: 'deleted_user') do |u|
+      u.email = 'deleted@example.com'
+      u.name = 'Deleted User'
+      u.password = SecureRandom.hex(16)
+      u.role = :user
+    end
+  end
+
+  def system_user?
+    provider == 'system' && uid == 'deleted_user'
+  end
+
+  before_destroy do
+    if system_user?
+      # Prevent accidental removal of the placeholder
+      throw(:abort)
+    end
+  end
+
+  # Reassign direct children to the system user before destruction so they are not destroyed
+  # by dependent callbacks or left NULL. This ensures records always have an owner.
+  def destroy
+    return false if system_user?
+
+    sys = User.system_user
+    Project.where(user_id: id).update_all(user_id: sys.id)
+    Order.where(user_id: id).update_all(user_id: sys.id)
+    Ship.where(user_id: id).update_all(user_id: sys.id)
+    ShipRequest.where(user_id: id).update_all(user_id: sys.id)
+    ShipRequest.where(processed_by_id: id).update_all(processed_by_id: sys.id)
+    Audit.where(user_id: id).update_all(user_id: sys.id)
+
+    super
+  end
+
+  private
 end

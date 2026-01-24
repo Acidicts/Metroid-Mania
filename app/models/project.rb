@@ -2,7 +2,7 @@ class Project < ApplicationRecord
   belongs_to :user
   has_many :devlogs, dependent: :destroy
   has_many :ships, dependent: :destroy
-  has_many :ship_requests, dependent: :nullify
+  has_many :ship_requests, dependent: :destroy
   has_many :audits, dependent: :nullify
 
   # Attach a representative image for the project (Active Storage)

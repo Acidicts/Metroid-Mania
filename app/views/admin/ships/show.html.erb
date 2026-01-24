@@ -1,5 +1,5 @@
 <div class="admin-panel">
-  <h1>Ship ##<%= @ship.id %> for <%= @ship.project.name %></h1>
+  <h1>Ship ##<%= @ship.id %> for <%= @ship.project&.name || 'Project removed' %></h1>
       <p>Shipped at: <%= @ship.shipped_at %></p>
 <p>Devlogged seconds: <%= @ship.devlogged_seconds %> (<%= format_duration(@ship.devlogged_seconds.to_i) %>)</p>
 <p>Credits awarded: <%= @ship.credits_awarded %></p>
@@ -12,10 +12,14 @@
 <div class="admin-two-col">
   <div class="admin-two-col-main">
     <h3>Related audit entries</h3>
-    <% @ship.project.audits.order(created_at: :desc).each do |a| %>
-      <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
-        <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
-      </div>
+    <% if @ship.project %>
+      <% @ship.project.audits.order(created_at: :desc).each do |a| %>
+        <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
+          <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
+        </div>
+      <% end %>
+    <% else %>
+      <p><em>Related project removed; no audits available.</em></p>
     <% end %>
   </div>
 
