@@ -17,7 +17,9 @@ class Admin::ProjectsBulkControllerTest < ActionDispatch::IntegrationTest
 
     @p1.reload
 
-    assert_equal 'approved', @p1.status
+    # When approving with credits, a Ship is created which triggers recalculate_status!
+    # This sets the status to 'shipped' because ships.exists? becomes true
+    assert_equal 'shipped', @p1.status
     assert_equal 5, @p1.credits_per_hour
 
     # credit awarded to project owner and recorded on a Ship

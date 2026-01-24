@@ -93,6 +93,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   test "owner sees explanation when missing post-approval devlog" do
     # Project is shipped, but there's no post-ship devlog
     @project.update!(status: 'shipped', shipped: true, shipped_at: Time.current)
+    # Create a ship record so computed_status returns 'shipped'
+    @project.ships.create!(user: @project.user, shipped_at: Time.current, devlogged_seconds: 1, credits_awarded: 1.0)
 
     get project_url(@project)
     assert_response :success
@@ -104,6 +106,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   test "owner sees minutes-needed message when not enough devlogged minutes" do
     @project.devlogs.destroy_all
     @project.update!(status: 'unshipped', shipped: false, shipped_at: nil)
+    # Remove any existing ships so computed_status returns 'unshipped'
+    @project.ships.destroy_all
 
     get project_url(@project)
     assert_response :success
