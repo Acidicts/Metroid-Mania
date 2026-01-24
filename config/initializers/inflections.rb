@@ -14,3 +14,8 @@
 # ActiveSupport::Inflector.inflections(:en) do |inflect|
 #   inflect.acronym "RESTful"
 # end
+
+# Ensure OmniAuth constantization works correctly (maps "omniauth" -> "OmniAuth")
+ActiveSupport::Inflector.inflections(:en) do |inflect|
+  inflect.acronym 'OmniAuth'
+end
