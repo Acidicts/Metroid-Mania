@@ -162,6 +162,35 @@ a { font-size: 1.2rem;}
   border-width: 4px;
 }
 
+/* Disabled button variant */
+.btn-retro-disabled {
+  font: "Pixelify Sans", sans-serif;
+  display: inline-block;
+  background: linear-gradient(180deg, #8d697a, #544e68);
+  color: #cccccc;
+  font-weight: 700;
+  padding: 10px 16px;
+  border: 3px solid var(--main-700);
+  border-radius: 8px;
+  box-shadow: 6px 8px 0 var(--main-800);
+  text-decoration: none;
+  cursor: not-allowed;
+  opacity: 0.6;
+  transition: all 120ms ease-in-out;
+}
+
+.btn-retro-disabled:hover {
+  transform: none;
+  box-shadow: 6px 8px 0 var(--main-800);
+  color: #cccccc;
+  animation: none;
+}
+
+.btn-retro-disabled:active {
+  transform: none;
+  box-shadow: 6px 8px 0 var(--main-800);
+}
+
 .btn-retro--outline {
   background: transparent;
   color: var(--main-900);
