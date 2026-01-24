@@ -150,11 +150,13 @@
       </thead>
       <tbody>
         <% @users.each_with_index do |user, index| %>
-          <tr>
-            <td><%= index + 1 %></td>
-            <td><%= link_to user.name, user_profile_path(user), style: "color: var(--accent1); text-decoration: none; font-weight: 700;" %></td>
-            <td><%= user.total_credits.to_i %></td>
-          </tr>
+        <% if user.name != "Deleted User" %>
+            <tr>
+              <td><%= index + 1 %></td>
+              <td><%= link_to user.name, user_profile_path(user), style: "color: var(--accent1); text-decoration: none; font-weight: 700;" %></td>
+              <td><%= user.total_credits.to_i %></td>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>
