@@ -11,6 +11,17 @@ class UsersController < ApplicationController
     
     # Load user's devlogs (through their projects)
     @devlogs = Devlog.joins(:project).where(projects: { user_id: @user.id }).includes(:project).order(created_at: :desc)
+
+    # Fetch Slack profile image (if user has slack_id and token is configured)
+    if @user.slack_id.present?
+      begin
+        profile = SlackService.new.users_info([@user.slack_id]).first
+        @slack_profile = profile if profile.present?
+      rescue => e
+        Rails.logger.error("UsersController#show Slack fetch error for #{@user.id}: #{e.message}")
+        @slack_profile = nil
+      end
+    end
   end
 
   def edit

@@ -240,13 +240,16 @@
 
 <div class="user-profile-container">
   <div class="user-profile-header">
-    <h1>👤 <%= @user.name %></h1>
+    <h1>
+      <% if @slack_profile && @slack_profile[:image].present? %>
+        <%= image_tag @slack_profile[:image], alt: "#{@user.name} avatar", width: 48, height: 48, style: "border-radius:999px; vertical-align:middle; margin-right:8px;" %>
+      <% else %>
+        👤
+      <% end %>
+      <%= @user.name %>
+    </h1>
     <% if @user.name != "Deleted User" %>
       <div class="user-info">
-        <div class="info-item">
-          <span class="info-label">Email</span>
-          <span class="info-value"><%= @user.email || "Not provided" %></span>
-        </div>
         <div class="info-item">
           <span class="info-label">Member Since</span>
           <span class="info-value"><%= @user.created_at.strftime("%B %d, %Y") %></span>

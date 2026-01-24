@@ -127,7 +127,7 @@ a { font-size: 1.2rem;}
 #sign_out_btn:hover {
   color: #ffffff;
   animation: btn-bob 2.3s infinite ease-in;
-  cursor:pointer;
+  cursor: pointer;
   animation: btn-bob 2.3s infinite ease-in;
   text-decoration: none;
 }
@@ -149,6 +149,14 @@ a { font-size: 1.2rem;}
 @keyframes btn-bob {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
+}
+
+
+.org-card:hover {
+  box-shadow: 0 6px 18px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
+  transition: all 0.2s ease-in-out;
+  animation: btn-bob 2s infinite;
 }
 
 .btn-retro:active { transform: translateY(0); box-shadow: 4px 6px 0 var(--main-800); }
