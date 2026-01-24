@@ -127,7 +127,7 @@ This project is a Ruby on Rails based system for managing the You Ship We Ship (
 
 2. **Run the container**
    ```bash
-   docker run -d -p 80:80 \
+   docker run -d -p 80:3000 \
      -e RAILS_MASTER_KEY=<your-master-key> \
      -e HACKCLUB_CLIENT_ID=<your-client-id> \
      -e HACKCLUB_CLIENT_SECRET=<your-client-secret> \
