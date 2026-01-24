@@ -271,7 +271,7 @@ input[type="submit"]:hover,
 
   <div class="project-text-input" id="new-project-image">
     <%= form.label :image, "Project image (optional)", style: "display: block" %>
-    <% if project.respond_to?(:image) && project.image.attached? %>
+    <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
       <div style="margin-bottom:8px">
         <%= image_tag project.image.variant(resize_to_limit: [600, 360]), alt: project.name, style: "max-width:100%; height:auto; border: 3px solid var(--main-700); border-radius:6px;" %>
       </div>

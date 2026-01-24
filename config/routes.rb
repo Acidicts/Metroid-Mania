@@ -3,10 +3,14 @@ Rails.application.routes.draw do
   get "shared/_retro_sample"
   get '/auth/:provider/callback', to: 'sessions#create'
   get '/auth/failure', to: 'sessions#failure'
+
+  get "/leaderboard", to: "leaderboards#index"
+
   delete '/logout', to: 'sessions#destroy'
   
   get 'profile', to: 'users#edit'
   patch 'profile', to: 'users#update'
+  get 'users/:id', to: 'users#show', as: 'user_profile'
 
   resources :orders, only: [:index, :new, :create, :show]
 

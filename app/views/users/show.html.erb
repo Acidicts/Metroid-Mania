@@ -1,0 +1,364 @@
+<% content_for :styles do %>
+  <style>
+    body.users .users-placeholder { display: block; }
+    
+    .user-profile-container {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    
+    .user-profile-header {
+      background: rgba(255,255,255,0.96);
+      border: 3px solid var(--main-700);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 10px 12px 0 var(--main-800);
+    }
+    
+    .user-profile-header h1 {
+      font-size: 2rem;
+      color: var(--main-900);
+      margin-bottom: 0.5rem;
+      text-shadow: 3px 3px 0 var(--accent3), 6px 6px 0 rgba(0,0,0,0.08);
+    }
+    
+    .user-profile-header .user-info {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    
+    .user-profile-header .info-item {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .user-profile-header .info-label {
+      font-weight: 700;
+      color: var(--main-700);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .user-profile-header .info-value {
+      font-size: 1.1rem;
+      color: var(--main-900);
+      font-weight: 600;
+    }
+    
+    .profile-section {
+      background: rgba(255,255,255,0.96);
+      border: 3px solid var(--main-700);
+      border-radius: 8px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 10px 12px 0 var(--main-800);
+    }
+    
+    .profile-section h2 {
+      font-size: 1.5rem;
+      color: var(--main-900);
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--accent1);
+      padding-bottom: 0.5rem;
+    }
+    
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+    
+    .project-card {
+      background: linear-gradient(180deg, #fff, rgba(255,255,255,0.94));
+      border: 2px solid var(--main-700);
+      border-radius: 6px;
+      padding: 1rem;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .project-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 6px 8px 0 var(--main-800);
+    }
+    
+    .project-card h3 {
+      font-size: 1.1rem;
+      color: var(--main-900);
+      margin: 0 0 0.5rem 0;
+    }
+    
+    .project-card .project-meta {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.85rem;
+      color: var(--main-700);
+      margin-bottom: 0.5rem;
+    }
+    
+    .project-card .project-stats {
+      display: flex;
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    
+    .project-card .stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0.5rem;
+      background: var(--accent3);
+      border: 1px solid var(--main-700);
+      border-radius: 4px;
+      min-width: 60px;
+    }
+    
+    .project-card .stat-value {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--main-900);
+    }
+    
+    .project-card .stat-label {
+      font-size: 0.7rem;
+      color: var(--main-700);
+      text-transform: uppercase;
+    }
+    
+    .ships-list, .devlogs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+    
+    .ship-item, .devlog-item {
+      background: linear-gradient(180deg, #fff, rgba(255,255,255,0.94));
+      border: 2px solid var(--main-700);
+      border-radius: 6px;
+      padding: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .ship-item .ship-info, .devlog-item .devlog-info {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+    
+    .ship-item .ship-title, .devlog-item .devlog-title {
+      font-weight: 700;
+      color: var(--main-900);
+    }
+    
+    .ship-item .ship-meta, .devlog-item .devlog-meta {
+      font-size: 0.85rem;
+      color: var(--main-700);
+    }
+    
+    .ship-item .ship-credits, .devlog-item .devlog-duration {
+      font-weight: 700;
+      color: var(--accent1);
+      font-size: 1.1rem;
+    }
+    
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--main-700);
+      font-style: italic;
+    }
+    
+    .empty-state h3 {
+      color: var(--main-900);
+      margin-bottom: 0.5rem;
+    }
+    
+    .profile-actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    
+    .btn-profile {
+      display: inline-block;
+      background: linear-gradient(180deg, var(--accent1), var(--accent2));
+      color: var(--main-900);
+      font-weight: 700;
+      padding: 0.75rem 1.25rem;
+      border: 3px solid var(--main-700);
+      border-radius: 6px;
+      box-shadow: 6px 8px 0 var(--main-800);
+      text-decoration: none;
+      transition: all 120ms ease-in-out;
+    }
+    
+    .btn-profile:hover {
+      transform: translateY(-2px);
+      box-shadow: 8px 10px 0 var(--main-800);
+      color: #ffffff;
+    }
+    
+    .btn-profile:active {
+      transform: translateY(0);
+      box-shadow: 4px 6px 0 var(--main-800);
+    }
+    
+    .status-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+    
+    .status-shipped {
+      background: rgba(34,197,94,0.2);
+      color: #064e3b;
+      border: 1px solid rgba(34,197,94,0.4);
+    }
+    
+    .status-unshipped {
+      background: rgba(255,170,94,0.2);
+      color: #92400e;
+      border: 1px solid rgba(255,170,94,0.4);
+    }
+    
+    .status-pending {
+      background: rgba(251,191,36,0.2);
+      color: #92400e;
+      border: 1px solid rgba(251,191,36,0.4);
+    }
+  </style>
+<% end %>
+
+<div class="user-profile-container">
+  <div class="user-profile-header">
+    <h1>👤 <%= @user.name %></h1>
+    <div class="user-info">
+      <div class="info-item">
+        <span class="info-label">Email</span>
+        <span class="info-value"><%= @user.email || "Not provided" %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Member Since</span>
+        <span class="info-value"><%= @user.created_at.strftime("%B %d, %Y") %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Total Projects</span>
+        <span class="info-value"><%= @projects.count %></span>
+      </div>
+      <div class="info-item">
+        <span class="info-label">Total Ships</span>
+        <span class="info-value"><%= user_total_ships(@user) %></span>
+      </div>
+    </div>
+    <div class="profile-actions">
+      <%= link_to "Edit Profile", profile_path, class: "btn-profile" %>
+      <%= link_to "Back to Leaderboard", leaderboard_path, class: "btn-profile" %>
+    </div>
+  </div>
+
+  <!-- Projects Section -->
+  <div class="profile-section">
+    <h2>🚀 Projects</h2>
+    <% if @projects.any? %>
+      <div class="projects-grid">
+        <% @projects.each do |project| %>
+          <div class="project-card">
+            <h3><%= project.name %></h3>
+            <div class="project-meta">
+              <span>Status: <span class="status-badge <%= project.shipped? ? 'status-shipped' : 'status-unshipped' %>"><%= project.shipped? ? 'Shipped' : 'Unshipped' %></span></span>
+              <span>Created: <%= project.created_at.strftime("%b %d, %Y") %></span>
+            </div>
+            <div class="project-stats">
+              <div class="stat">
+                <span class="stat-value"><%= total_ships(project) %></span>
+                <span class="stat-label">Ships</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value"><%= project.devlogs.count %></span>
+                <span class="stat-label">Devlogs</span>
+              </div>
+              <div class="stat">
+                <span class="stat-value"><%= average_credits_per_hour(project) %></span>
+                <span class="stat-label">Avg Credits/Hr</span>
+              </div>
+            </div>
+            <div style="margin-top: 0.75rem;">
+              <%= link_to "View Project", project_path(project), class: "btn-profile", style: "padding: 0.5rem 0.75rem; font-size: 0.9rem;" %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <h3>No projects yet</h3>
+        <p><%= @user.name %> hasn't created any projects yet.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Ships Section -->
+  <div class="profile-section">
+    <h2>📦 Ships</h2>
+    <% if @ships.any? %>
+      <div class="ships-list">
+        <% @ships.each do |ship| %>
+          <div class="ship-item">
+            <div class="ship-info">
+              <span class="ship-title"><%= ship.project.name %></span>
+              <span class="ship-meta">
+                Shipped: <%= ship.shipped_at.strftime("%b %d, %Y at %I:%M %p") %>
+                <% if ship.devlogged_seconds %>
+                  • <%= (ship.devlogged_seconds / 3600.0).round(2) %> hours
+                <% end %>
+              </span>
+            </div>
+            <span class="ship-credits"><%= ship.credits_awarded&.to_i || 0 %> credits</span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <h3>No ships yet</h3>
+        <p><%= @user.name %> hasn't shipped any projects yet.</p>
+      </div>
+    <% end %>
+  </div>
+
+  <!-- Devlogs Section -->
+  <div class="profile-section">
+    <h2>📝 Devlogs</h2>
+    <% if @devlogs.any? %>
+      <div class="devlogs-list">
+        <% @devlogs.each do |devlog| %>
+          <div class="devlog-item">
+            <div class="devlog-info">
+              <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
+              <span class="devlog-meta">
+                Project: <%= devlog.project.name %>
+                • <%= devlog.log_date.strftime("%b %d, %Y") %>
+                <% if devlog.ship_request_id %>
+                  • Linked to Ship Request
+                <% end %>
+              </span>
+            </div>
+            <span class="devlog-duration"><%= devlog.duration_minutes %> min</span>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="empty-state">
+        <h3>No devlogs yet</h3>
+        <p><%= @user.name %> hasn't logged any development time yet.</p>
+      </div>
+    <% end %>
+  </div>
+</div>

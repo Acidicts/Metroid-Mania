@@ -1,26 +1,167 @@
 <% content_for :styles do %>
   <style>
     body.leaderboards .leaderboards-placeholder { display: block; }
+    
+    .leaderboard-container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    
+    .leaderboard-header {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    
+    .leaderboard-header h1 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--main-900);
+      margin-bottom: 0.5rem;
+      text-shadow: 3px 3px 0 var(--accent3), 6px 6px 0 rgba(0,0,0,0.08);
+    }
+    
+    .leaderboard-header p {
+      color: var(--main-700);
+      font-size: 1rem;
+    }
+    
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: rgba(255,255,255,0.96);
+      border: 3px solid var(--main-700);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 10px 12px 0 var(--main-800);
+    }
+    
+    .leaderboard-table thead {
+      background: linear-gradient(90deg, var(--accent1), var(--accent2));
+      color: var(--main-900);
+    }
+    
+    .leaderboard-table th {
+      padding: 1rem;
+      text-align: left;
+      font-weight: 700;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
+    .leaderboard-table th:first-child {
+      text-align: center;
+      width: 80px;
+    }
+    
+    .leaderboard-table th:last-child {
+      text-align: right;
+      width: 120px;
+    }
+    
+    .leaderboard-table tbody tr {
+      border-bottom: 1px solid var(--main-700);
+      transition: background-color 0.2s ease;
+    }
+    
+    .leaderboard-table tbody tr:hover {
+      background-color: rgba(255,170,94,0.08);
+    }
+    
+    .leaderboard-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    
+    .leaderboard-table td {
+      padding: 1rem;
+      font-size: 1rem;
+      color: var(--main-900);
+    }
+    
+    .leaderboard-table td:first-child {
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.2rem;
+    }
+    
+    .leaderboard-table td:last-child {
+      text-align: right;
+      font-weight: 700;
+      color: var(--accent1);
+    }
+    
+    /* Medal styling for top 3 */
+    .leaderboard-table tbody tr:nth-child(1) td:first-child {
+      color: #ffd700;
+      font-size: 1.5rem;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+    
+    .leaderboard-table tbody tr:nth-child(2) td:first-child {
+      color: #c0c0c0;
+      font-size: 1.3rem;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+    
+    .leaderboard-table tbody tr:nth-child(3) td:first-child {
+      color: #cd7f32;
+      font-size: 1.2rem;
+      text-shadow: 2px 2px 0 rgba(0,0,0,0.1);
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 3rem;
+      background: rgba(255,255,255,0.96);
+      border: 3px solid var(--main-700);
+      border-radius: 8px;
+      box-shadow: 10px 12px 0 var(--main-800);
+    }
+    
+    .empty-state h2 {
+      color: var(--main-900);
+      margin-bottom: 0.5rem;
+    }
+    
+    .empty-state p {
+      color: var(--main-700);
+      font-size: 1.1rem;
+      margin-top: 1rem;
+    }
   </style>
 <% end %>
 
-<h1>Leaderboard</h1>
+<div class="leaderboard-container">
+  <div class="leaderboard-header">
+    <h1>🏆 Leaderboard</h1>
+    <p>Ranking users by total credits earned</p>
+  </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Rank</th>
-      <th>User</th>
-      <th>Total Time (Hours)</th>
-    </tr>
-  </thead>
-  <tbody>
-    <% @users.each_with_index do |user, index| %>
-      <tr>
-        <td><%= index + 1 %></td>
-        <td><%= user.name %></td>
-        <td><%= (user.total_time / 3600.0).round(2) %></td>
-      </tr>
-    <% end %>
-  </tbody>
-</table>
+  <% if @users.any? %>
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>User</th>
+          <th>Total Credits</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @users.each_with_index do |user, index| %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= link_to user.name, user_profile_path(user), style: "color: var(--accent1); text-decoration: none; font-weight: 700;" %></td>
+            <td><%= user.total_credits.to_i %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="empty-state">
+      <h2>No users found</h2>
+      <p>There are no users with credits yet.</p>
+    </div>
+  <% end %>
+</div>

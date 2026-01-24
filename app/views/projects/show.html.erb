@@ -19,7 +19,7 @@
         <h1 class="project-title"><%= @project.name %></h1>
         <div class="kv" style="margin-bottom:8px">
           <div class="label">By</div>
-          <div class="value"><%= link_to @project.user.display_name, user_path(@project.user) rescue @project.user.name %></div>
+          <div class="value"><%= link_to @project.user.display_name, user_profile_path(@project.user) %></div>
         </div>
         <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet. \n Required for Ship') %></p>
 
@@ -43,8 +43,8 @@
     <aside class="hero-right">
       <div class="featured-project">
 
-        <div style="margin-top:10px; top:10px; position:relative;">
-          <p><strong>Owner:</strong> <%= link_to @project.user.name, user_path(@project.user) rescue @project.user.email %></p>
+        <div style="margin-top:10px; top:10px; position:relative; box-shadow: 0px 0px 0 rgb(0,0,0,0);">
+          <p><strong>Owner:</strong> <%= link_to @project.user.display_name, user_profile_path(@project.user) %></p>
           <p><strong>Total time:</strong> <%= format_duration(@project.total_seconds) %></p>
           <p><strong>Devlogged:</strong> <%= format_duration(@project.total_devlogged_seconds) %></p>
           <p><strong>Undocumented:</strong> <%= format_duration([@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max) %></p>

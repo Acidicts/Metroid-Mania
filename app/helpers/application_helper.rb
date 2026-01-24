@@ -74,4 +74,34 @@ module ApplicationHelper
     end
     total
   end
+
+  # Calculate average credits per hour across all ships for a project
+  def average_credits_per_hour(project)
+    return 0 if project.ships.empty?
+
+    total_credits = 0
+    total_hours = 0
+
+    project.ships.each do |ship|
+      total_credits += ship.credits_awarded.to_f
+      total_hours += ship.devlogged_seconds.to_f / 3600.0 if ship.devlogged_seconds.present?
+    end
+
+    return 0 if total_hours == 0
+
+    (total_credits / total_hours).round(2)
+  end
+
+  def user_total_ships(user)
+    ships = 0
+    for project in user.projects
+      ships += total_ships(project)
+    end
+    ships
+  end
+
+  # Calculate total ships for a project
+  def total_ships(project)
+    project.ships.count
+  end
 end

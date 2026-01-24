@@ -1,6 +1,7 @@
 class User < ApplicationRecord
   has_many :projects
   has_many :orders
+  has_many :ships
 
   enum :role, { user: 0, admin: 1 }
 
@@ -30,5 +31,10 @@ class User < ApplicationRecord
     env_uid = ENV['SUPERADMIN_UID']
     env_email = ENV['SUPERADMIN_EMAIL']&.downcase
     (env_uid.present? && uid == env_uid) || (env_email.present? && email&.downcase == env_email)
+  end
+
+  # Display name for the user (falls back to email or name)
+  def display_name
+    name.presence || email.presence || "User #{id}"
   end
 end
