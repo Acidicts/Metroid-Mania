@@ -1,235 +1,228 @@
 <% unless content_for?(:styles) %>
   <% content_for :styles do %>
     <style>
-/* Projects form styles — modernized, responsive, accessible */
+      /* Projects form styles — modernized, responsive, accessible */
 
-:root {
-  --card: #ffffff;
-  --accent: #1f6feb;
-  --accent-800: #1a56c1;
-  --muted: #6b7280;
-  --border: #e5e7eb;
-  --shadow: 0 6px 18px rgba(31,41,55,0.08);
-}
+      :root {
+        --card: #ffffff;
+        --accent: #1f6feb;
+        --accent-800: #1a56c1;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --shadow: 0 6px 18px rgba(31,41,55,0.08);
+      }
 
-body.projects { background-color: var(--bg); color: #111827; }
+      body.projects { background-color: var(--bg); color: #111827; }
 
-#new-project-form {
-  max-width: 760px;
-  margin: 32px auto;
-  background: var(--card);
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: var(--shadow);
-  border: 3px dashed rgba(0,0,0,0.2);
-  box-sizing: border-box;
-}
+      #new-project-form {
+        max-width: 760px;
+        margin: 32px auto;
+        background: var(--card);
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: var(--shadow);
+        border: 3px dashed rgba(0,0,0,0.2);
+        box-sizing: border-box;
+      }
 
-.project-text-input {
-  margin-bottom: 16px;
-}
+      .project-text-input {
+        margin-bottom: 16px;
+      }
 
-.project-text-input label {
-  display: block;
-  font-weight: 600;
-  margin-bottom: 8px;
-  color: #0f172a;
-}
+      .project-text-input label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 8px;
+        color: #0f172a;
+      }
 
-.form-control,
-.form-control[type="file"],
-textarea.form-control,
-select.form-control {
-  display: block;
-  width: 100%;
-  padding: 0.72rem 0.9rem;
-  font-size: 1rem;
-  border: 3px solid var(--main-700);
-  border-radius: 6px;
-  background: linear-gradient(180deg, #fff, var(--accent3));
-  color: var(--main-900);
-  box-sizing: border-box;
-  transition: box-shadow .12s ease, border-color .12s ease;
-}
+      .form-control,
+      .form-control[type="file"],
+      textarea.form-control,
+      select.form-control {
+        display: block;
+        width: 100%;
+        padding: 0.72rem 0.9rem;
+        font-size: 1rem;
+        border: 3px solid var(--main-700);
+        border-radius: 6px;
+        background: linear-gradient(180deg, #fff, var(--accent3));
+        color: var(--main-900);
+        box-sizing: border-box;
+        transition: box-shadow .12s ease, border-color .12s ease;
+      }
 
-textarea.form-control {
-  min-height: 140px;
-  line-height: 1.5;
-  resize: vertical;
-  background: linear-gradient(180deg, #fff, var(--accent3));
-  color: var(--main-900);
-}
+      textarea.form-control {
+        min-height: 140px;
+        line-height: 1.5;
+        resize: vertical;
+        background: linear-gradient(180deg, #fff, var(--accent3));
+        color: var(--main-900);
+      }
 
-textarea.form-control::placeholder {
-  color: var(--muted);
-  opacity: 1;
-}
+      textarea.form-control::placeholder {
+        color: var(--muted);
+        opacity: 1;
+      }
 
-.form-control:focus,
-.form-control:focus-visible {
-  outline: none;
-  border-color: var(--main-700);
-  box-shadow: 0 0 0 4px rgba(255,170,94,0.12);
-}
+      .form-control:focus,
+      .form-control:focus-visible {
+        outline: none;
+        border-color: var(--main-700);
+        box-shadow: 0 0 0 4px rgba(255,170,94,0.12);
+      }
 
-#project-form-submit {
-  margin-top: 0;
-}
+      /* Wrapper to center the button */
+      #project-form-actions {
+        text-align: center;
+        margin-top: 24px;
+        width: 100%;
+      }
 
-input[type="submit"],
-.button,
-.btn {
-  background: linear-gradient(180deg,var(--accent),var(--accent-800));
-  color: #fff;
-  font-family: inherit;
-  padding: 10px 18px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  font-size: 1.4rem
-}
+      #project-form-submit {
+        display: block;
+        margin-bottom: 12px;
+      }
 
-input[type="submit"]:hover,
-.button:hover,
-.btn:hover {
-  filter: brightness(.96);
-}
+      /* Primary submit button */
+      .project-submit {
+        display: inline-block;
+        width: auto;
+        min-width: 200px; /* Ensures button isn't too tiny with short text */
+        max-width: 100%;
+        background: linear-gradient(180deg, var(--accent), var(--accent-800));
+        color: #ffffff;
+        font-family: inherit;
+        font-weight: 600;
+        font-size: 1.15rem;
+        padding: 14px 32px; /* Even padding on all sides */
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+        box-sizing: border-box;
+        box-shadow: 0 6px 0 rgba(13,30,84,0.18);
+        transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
+        line-height: 1.2;
+        appearance: none;
+        -webkit-appearance: none;
+      }
 
-#project-editing-info {
-  font-size: 14px;
-  color: var(--accent-800);
-}
+      .project-submit:hover {
+        filter: brightness(.96);
+      }
 
-#new-project-image img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 8px;
-  border: 2px solid rgba(31,111,235,0.08);
-}
+      .project-submit:active {
+        transform: translateY(2px);
+        box-shadow: 0 3px 0 rgba(13,30,84,0.18);
+      }
 
-.hackatime-selected {
-  margin-top: 10px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-}
+      .project-submit:focus-visible {
+        outline: 3px solid rgba(255,170,94,0.18);
+        outline-offset: 3px;
+      }
 
-.hackatime-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #eef2ff;
-  border: 1px solid #dbeafe;
-  color: #0f172a;
-  font-weight: 600;
-}
+      #project-editing-info {
+        font-size: 14px;
+        color: var(--accent-800);
+        margin-top: 8px;
+      }
 
-.hackatime-seconds {
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 400;
-}
+      #new-project-image img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 8px;
+        border: 2px solid rgba(31,111,235,0.08);
+      }
 
-.hackatime-remove {
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  color: #374151;
-  padding: 2px 6px;
-  border-radius: 6px;
-  font-weight: 700;
-}
+      .hackatime-selected {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
 
-.hackatime-remove:focus-visible {
-  outline: 2px solid rgba(31,111,235,0.18);
-  outline-offset: 3px;
-}
+      .hackatime-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        background: #eef2ff;
+        border: 1px solid #dbeafe;
+        color: #0f172a;
+        font-weight: 600;
+      }
 
-/* File input custom styles */
-.file-input-wrapper {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  margin-top: 8px;
-  flex-wrap: wrap;
-}
-.file-input-button, .project-text-input label.file-input-button {
-  display: inline-block;
-  background: linear-gradient(180deg,var(--accent),var(--accent-800));
-  color: #ffffff !important;
-  padding: 8px 14px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 600;
-  border: 1px solid rgba(255,255,255,0.12);
-  text-decoration: none;
-  transition: transform .06s ease, box-shadow .12s ease, filter .06s ease;
-  box-shadow: 0 3px 8px rgba(31,41,55,0.08);
-}
-.file-input-button:hover { filter: brightness(.96); transform: translateY(-1px); }
-.file-input-button:active { transform: translateY(0); }
-.file-input-button:focus-visible {
-  outline: 3px solid rgba(31,111,235,0.16);
-  outline-offset: 3px;
-  color: #ffffff;
-}
-.file-input-filename {
-  color: var(--muted);
-  font-size: 0.95rem;
-  background: #f9fafb;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  max-width: calc(100% - 180px);
-  display: inline-block;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.file-input-preview {
-  max-width: 150px;
-  max-height: 90px;
-  border-radius: 6px;
-  border: 1px solid var(--border);
-  display: block;
-  object-fit: cover;
-  margin-left: 8px;
-}
-.file-input-clear {
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 6px 8px;
-  border-radius: 6px;
-}
-.file-input-clear:hover { color: var(--accent-800); }
-.visually-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0 0 0 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
-}
+      .hackatime-seconds {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 400;
+      }
 
-/* Responsive adjustments */
-@media (max-width: 600px) {
-  #new-project-form {
-    margin: 16px;
-    padding: 16px;
-    border-radius: 8px;
-  }
+      .hackatime-remove {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        color: #374151;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-weight: 700;
+      }
 
-  .form-control { padding: 0.6rem 0.7rem; font-size: .95rem; }
-  .file-input-wrapper { gap: 8px; }
-}
+      /* File input custom styles */
+      .file-input-wrapper {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+
+      .file-input-button, .project-text-input label.file-input-button {
+        display: inline-block;
+        background: linear-gradient(180deg,var(--accent),var(--accent-800));
+        color: #ffffff !important;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: 600;
+        border: 1px solid rgba(255,255,255,0.12);
+        text-decoration: none;
+        transition: transform .06s ease, box-shadow .12s ease, filter .06s ease;
+        box-shadow: 0 3px 8px rgba(31,41,55,0.08);
+        margin-bottom: 0; /* Reset label margin */
+      }
+
+      .visually-hidden {
+        position: absolute !important;
+        width: 1px !important;
+        height: 1px !important;
+        padding: 0 !important;
+        margin: -1px !important;
+        overflow: hidden !important;
+        clip: rect(0 0 0 0) !important;
+        white-space: nowrap !important;
+        border: 0 !important;
+      }
+
+      /* Responsive adjustments */
+      @media (max-width: 600px) {
+        #new-project-form {
+          margin: 16px;
+          padding: 16px;
+        }
+
+        .project-submit {
+          width: 100%;
+          padding: 16px;
+        }
+
+        #file-input-wrapper-form {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+      }
     </style>
   <% end %>
 <% end %>
@@ -238,7 +231,6 @@ input[type="submit"]:hover,
   <% if project.errors.any? %>
     <div style="color: red">
       <h2><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</h2>
-
       <ul>
         <% project.errors.each do |error| %>
           <li><%= error.full_message %></li>
@@ -247,10 +239,8 @@ input[type="submit"]:hover,
     </div>
   <% end %>
 
-  <!-- User ID is handled automatically by controller -->
-
   <div class="project-text-input" id="new-project-name">
-    <%= form.label :name, "Project Title/Name", style: "display: block" %>
+    <%= form.label :name, "Project Title/Name" %>
     <%= form.text_field :name, class: "form-control" %>
   </div>
 
@@ -260,17 +250,17 @@ input[type="submit"]:hover,
   </div>
 
   <div class="project-text-input" id="new-project-repository-url">
-    <%= form.label :repository_url, "GitHub Repo URL", style: "display: block" %>
+    <%= form.label :repository_url, "GitHub Repo URL" %>
     <%= form.text_field :repository_url, class: "form-control" %>
   </div>
 
   <div class="project-text-input" id="new-project-readme-url">
-    <%= form.label :readme_url, "Readme Address", style: "display: block" %>
+    <%= form.label :readme_url, "Readme Address" %>
     <%= form.text_field :readme_url, class: "form-control" %>
   </div>
 
   <div class="project-text-input" id="new-project-image">
-    <%= form.label :image, "Project image (optional)", style: "display: block" %>
+    <%= form.label :image, "Project image (optional)" %>
     <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
       <div style="margin-bottom:8px">
         <%= image_tag project.image.variant(resize_to_limit: [600, 360]), alt: project.name, style: "max-width:100%; height:auto; border: 3px solid var(--main-700); border-radius:6px;" %>
@@ -280,17 +270,17 @@ input[type="submit"]:hover,
       </div>
     <% end %>
 
-    <div class="file-input-wrapper" data-controller="file-input">
+    <div class="file-input-wrapper" id="file-input-wrapper-form" data-controller="file-input">
       <%= form.file_field :image, accept: "image/*", class: "visually-hidden file-input-input", data: { action: "change->file-input#update", file_input_target: "input" } %>
       <label class="file-input-button" for="<%= form.object_name %>_image">Choose file</label>
       <img class="file-input-preview visually-hidden" data-file-input-target="preview" alt="Selected image preview">
-      <span class="file-input-filename" data-file-input-target="filename">No file selected</span>
+      <span class="file-input-filename" style="padding:3px; border: 3px dashed rgba(0, 0, 0, 0.2); border-radius:6px;" id="no-file-selected-form" data-file-input-target="filename">No file selected</span>
       <button type="button" class="file-input-clear visually-hidden" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
     </div>
   </div>
 
   <div class="project-text-input" id="new-project-hackatime-id" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
-    <%= form.label :hackatime_ids, "Link Hackatime Projects", style: "display: block", id: "new-project-hackatime-id-label" %>
+    <%= form.label :hackatime_ids, "Link Hackatime Projects", id: "new-project-hackatime-id-label" %>
     <% if @hackatime_projects.present? %>
       <div>
         <select id="hackatime-dropdown" class="form-control" data-action="change->hackatime-selector#add">
@@ -302,8 +292,7 @@ input[type="submit"]:hover,
       </div>
     <% else %>
        <p>
-         <em>No Hackatime Projects</em>
-         <em>Start <a href="https://hackatime.hackclub.com/">here</a></em>
+         <em>No Hackatime Projects. Start <a href="https://hackatime.hackclub.com/">here</a></em>
        </p>
     <% end %>
 
@@ -321,9 +310,10 @@ input[type="submit"]:hover,
       <% end %>
     </div>
   </div>
+
   <div id="project-form-actions">
     <div id="project-form-submit">
-      <%= form.submit %>
+      <%= form.submit "Submit Project", class: 'project-submit' %>
     </div>
     <% if project.persisted? %>
       <div id="project-editing-info">

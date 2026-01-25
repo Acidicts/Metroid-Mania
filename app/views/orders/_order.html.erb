@@ -1,27 +1,6 @@
-<div id="<%= dom_id order %>">
-  <style>
-    #order-card {
-      border: 2px solid var(--main-700);
-      border-radius: 8px;
-      padding: 16px;
-      margin-bottom: 12px;
-      background-color: var(--main-100);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-family: Arial, sans-serif;
-    }
-
-    #order-details div, #order-status div {
-      margin-bottom: 8px;
-    }
-
-    #order-details strong, #order-status strong {
-      color: var(--main-900);
-    }
-  </style>
-  <div id="order-card">
-    <div id="order-details">
+<div id="<%= dom_id order %>" class="order-wrap">
+  <div class="order-card">
+    <div class="order-details">
       <div>
         <strong>Order:</strong>
         <%= order.name %>
@@ -37,7 +16,7 @@
         <%= order.cost %>
       </div>
     </div>
-    <div id="order-status">
+    <div class="order-status">
       <div>
         <strong>Status:</strong>
         <% if order.status == "denied" %>
@@ -56,7 +35,7 @@
         <%= order.created_at.strftime("%B %d, %Y %I:%M %p") %>
       </div>
       
-      <div style="margin-top:8px">
+      <div class="order-actions">
         <% unless current_page?(order_path(order)) %>
           <%= link_to "Show this order", order, class: 'btn-retro btn-retro--outline' %>
         <% end %>

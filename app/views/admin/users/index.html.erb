@@ -13,19 +13,21 @@
       </thead>
       <tbody>
         <% @users.each do |u| %>
-          <tr>
-            <td><%= link_to (u.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %></td>
-            <td class="col-email"><%= u.email %></td>
-            <td class="col-slack-id col-shrink"><%= u.slack_id.presence || '-' %></td>
-            <td class="col-id col-shrink"><%= u.id %></td>
-            <td class="col-role col-shrink">
-              <% if u.superadmin? %>
-                <strong>Superadmin</strong>
-              <% else %>
-                <%= u.role.humanize %>
-              <% end %>
-            </td>
-          </tr>
+          <% if u.name != "Deleted User" %>
+            <tr>
+              <td><%= link_to (u.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %></td>
+              <td class="col-email"><%= u.email %></td>
+              <td class="col-slack-id col-shrink"><%= u.slack_id.presence || '-' %></td>
+              <td class="col-id col-shrink"><%= u.id %></td>
+              <td class="col-role col-shrink">
+                <% if u.superadmin? %>
+                  <strong>Superadmin</strong>
+                <% else %>
+                  <%= u.role.humanize %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
         <% end %>
       </tbody>
     </table>

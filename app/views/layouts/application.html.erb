@@ -1,3 +1,130 @@
+<style>
+  /* Prevent horizontal overflow across the viewport */
+  html, body { overflow-x: hidden; }
+
+  /* Mobile menu icon (hidden on wide screens) */
+  .menu-icon {
+    display: none;
+    cursor: pointer;
+    margin: 10px;
+    -webkit-tap-highlight-color: transparent;
+    background: transparent;
+    border: none;
+  }
+
+  /* bars */
+  .menu-icon span {
+    display: block;
+    width: 28px;
+    height: 5px;
+    background-color: black;
+    margin: 6px 0;
+    border-radius: 3px;
+    transition: transform 250ms ease, opacity 250ms ease;
+  }
+
+  /* transform into an X when open */
+  .menu-icon.open span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
+  .menu-icon.open span:nth-child(2) { opacity: 0; }
+  .menu-icon.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
+
+  @media (max-width: 600px) {
+    /* allow the menu button to sit above the header so it isn't clipped */
+    header { position: relative; overflow: visible; }
+    .retro-navbar a, .retro-navbar button, #sign_out_btn {
+      font-size: 0.9rem;
+      padding: 6px 10px;
+    }
+
+    /* ensure items not covered by the absolute top-left icon */
+    .retro-navbar {
+      display: flex;
+      flex-direction: column;
+      max-height: 0;
+      overflow: hidden;
+      background: var(--bg);
+      transition: max-height 320ms cubic-bezier(.2,.8,.2,1), padding-top 320ms ease, visibility 0ms linear 320ms;
+      padding-top: 12px;
+      padding-right: 56px;
+    }
+
+    /* center links in the dropdown and keep them away from the hamburger */
+    .retro-navbar a,
+    .retro-navbar button:not(.menu-icon),
+    .retro-navbar .btn-retro,
+    .retro-navbar #sign_out_btn {
+      display: block;
+      width: calc(100% - 72px);
+      max-width: 440px;
+      margin: 6px auto;
+      text-align: center;
+    }
+
+    /* when expanded show nav items - cap to viewport height so content stays on screen */
+    .retro-navbar.expanded {
+      /* leave room for header and some padding */
+      max-height: calc(100vh - 64px);
+      padding-top: 18px;
+      padding-right: 56px;
+      background: var(--main-900);
+      visibility: visible;
+      transition-delay: 0s;
+      overflow-y: auto; /* allow the menu itself to scroll if content exceeds available space */
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* smooth color transitions for nav items */
+    .retro-navbar a, .retro-navbar button, .retro-navbar .btn-retro, .retro-navbar #sign_out_btn {
+      transition: color 220ms ease, opacity 220ms ease;
+    }
+
+    /* when collapsed: muted links to signal inactive state */
+    .retro-navbar:not(.expanded) a,
+    .retro-navbar:not(.expanded) button,
+    .retro-navbar:not(.expanded) .btn-retro,
+    .retro-navbar:not(.expanded) #sign_out_btn {
+      color: rgba(0,0,0,0.78);
+      opacity: 0.95;
+    }
+
+    /* when expanded: ensure links are light to contrast with dark background */
+    .retro-navbar.expanded a,
+    .retro-navbar.expanded button,
+    .retro-navbar.expanded .btn-retro,
+    .retro-navbar.expanded #sign_out_btn {
+      color: var(--accent3);
+      opacity: 1;
+    }
+
+    /* show the menu icon on small screens and lock to top-left */
+    .menu-icon {
+      display: block;
+      position: absolute;
+      top: 24px;
+      right: 4px;
+      z-index: 60;
+      padding: 6px;
+      background: rgba(255,255,255,0.92); /* visible on dark headers */
+      border-radius: 8px;
+      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    }
+
+    /* when the nav is open, prevent the page body from scrolling */
+    body.nav-open {
+      position: fixed;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    /* focus styles for accessibility */
+    .menu-icon:focus {
+      outline: 3px solid rgba(0,0,0,0.12);
+      outline-offset: 2px;
+      border-radius: 6px;
+    }
+  }
+</style>
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -32,6 +159,11 @@
   <body class="<%= controller.controller_name %> <%= controller.action_name %>">
     <header>
       <nav class="retro-navbar">
+        <button type="button" class="menu-icon" aria-label="Toggle navigation" aria-expanded="false">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         <%= link_to 'Home', root_path %>
         <%= link_to 'Projects', projects_path %>
         <%= link_to 'Leaderboard', leaderboard_path %>
@@ -71,5 +203,84 @@
         <p>Made by Hackclub, For Hackclub</p>
       </div>
     </footer>
+
+    <script>
+      // Mobile menu toggle: accessible + robust across Turbo navigation
+      (function() {
+        function initMobileMenu() {
+          var menu = document.querySelector('.menu-icon');
+          var nav = document.querySelector('.retro-navbar');
+          if (!menu || !nav) return;
+
+          // If it's not a native button, add accessibility attributes
+          if (menu.tagName !== 'BUTTON') {
+            menu.setAttribute('role','button');
+            menu.setAttribute('tabindex','0');
+          }
+          if (!menu.hasAttribute('aria-expanded')) menu.setAttribute('aria-expanded','false');
+
+          // helpers
+          function setOpen(open) {
+            if (open) {
+              nav.classList.add('expanded');
+              menu.classList.add('open');
+              menu.setAttribute('aria-expanded','true');
+            } else {
+              nav.classList.remove('expanded');
+              menu.classList.remove('open');
+              menu.setAttribute('aria-expanded','false');
+            }
+            // prevent body scrolling when the mobile nav is open
+            document.body.classList.toggle('nav-open', !!open);
+          }
+
+          function toggle() { setOpen(!nav.classList.contains('expanded')); }
+
+          // Remove any prior handlers to avoid duplicates when re-initializing
+          if (menu._mobileMenuClick) menu.removeEventListener('click', menu._mobileMenuClick);
+          if (menu._mobileMenuKeydown) menu.removeEventListener('keydown', menu._mobileMenuKeydown);
+          if (document._mobileMenuDocClick) document.removeEventListener('click', document._mobileMenuDocClick);
+          if (window._mobileMenuResize) window.removeEventListener('resize', window._mobileMenuResize);
+
+          // assign handlers as properties for later removal
+          menu._mobileMenuClick = function(e) { e.preventDefault(); toggle(); };
+          menu._mobileMenuKeydown = function(e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); } };
+          document._mobileMenuDocClick = function(e) {
+            if (window.innerWidth <= 600 && nav.classList.contains('expanded')) {
+              if (!nav.contains(e.target) && !menu.contains(e.target)) { setOpen(false); }
+            }
+          };
+          window._mobileMenuResize = function() { if (window.innerWidth > 600 && nav.classList.contains('expanded')) setOpen(false); };
+
+          menu.addEventListener('click', menu._mobileMenuClick);
+          menu.addEventListener('keydown', menu._mobileMenuKeydown);
+          document.addEventListener('click', document._mobileMenuDocClick);
+          window.addEventListener('resize', window._mobileMenuResize);
+
+          // close the menu when a nav link is clicked (ensures clean state before navigation)
+          if (!nav._navLinkClickBound) {
+            nav._navLinkClickBound = true;
+            nav.addEventListener('click', function(e) {
+              var a = e.target.closest('a');
+              if (a && window.innerWidth <= 600) {
+                setOpen(false);
+              }
+            });
+          }
+
+          // Ensure menu is closed before Turbo caches the page
+          if (!document._turboBeforeCacheBound) {
+            document._turboBeforeCacheBound = true;
+            document.addEventListener('turbo:before-cache', function() { setOpen(false); });
+            // turbolinks fallback
+            document.addEventListener('turbolinks:before-cache', function() { setOpen(false); });
+          }
+        }
+
+        document.addEventListener('DOMContentLoaded', initMobileMenu);
+        document.addEventListener('turbo:load', initMobileMenu);
+        document.addEventListener('turbolinks:load', initMobileMenu);
+      })();
+    </script>
   </body>
 </html>

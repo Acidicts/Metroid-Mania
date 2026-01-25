@@ -264,5 +264,6 @@ body.admin .admin-card {
   .admin-form-row { grid-template-columns: 1fr; }
   .admin-form-label { margin-bottom: 6px; }
   .admin-form-actions { justify-content: stretch; }
-  .admin-form-actions .btn { width: 100%; }
+  .admin-form-actions .btn,
+  .admin-form-actions .btn-admin { width: 100%; }
 }

@@ -80,5 +80,36 @@ class User < ApplicationRecord
     super
   end
 
+  # Anonymize this user and their projects instead of destructive deletion.
+  # This replaces personal data with generic placeholders and reassigns ownership
+  # of dependent records to the system user. Returns true when successful.
+  def anonymize!
+    return false if system_user? || superadmin?
+
+    sys = User.system_user
+
+    transaction do
+      # Anonymize projects owned by this user and transfer ownership to system user.
+      # Use `save(validate: false)` to avoid model validations (e.g. required repo URL) that would block anonymization.
+      projects.find_each do |p|
+        p.assign_attributes(name: "Deleted Project", description: nil, repository_url: nil, readme_url: nil, user_id: sys.id)
+        p.save!(validate: false)
+      end
+
+      # Reassign other dependent records to system user (orders, ships, ship_requests, audits)
+      Order.where(user_id: id).update_all(user_id: sys.id)
+      Ship.where(user_id: id).update_all(user_id: sys.id)
+      ShipRequest.where(user_id: id).update_all(user_id: sys.id)
+      ShipRequest.where(processed_by_id: id).update_all(processed_by_id: sys.id)
+      Audit.where(user_id: id).update_all(user_id: sys.id)
+
+      # Overwrite personal fields on this user with anonymized values
+      anonymized_email = "deleted_user_#{id}@example.invalid"
+      update!(name: 'Deleted User', email: anonymized_email, slack_id: nil, uid: "deleted_user_#{id}_#{SecureRandom.hex(6)}", provider: 'deleted', password: SecureRandom.hex(16))
+    end
+
+    true
+  end
+
   private
 end

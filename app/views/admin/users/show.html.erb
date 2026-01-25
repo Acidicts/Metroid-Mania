@@ -1,0 +1,47 @@
+<div class="admin-panel">
+  <div class="admin-page-header">
+    <h1>User Details</h1>
+  </div>
+
+  <div class="admin-card admin-user-card">
+    <div class="admin-form">
+      <div class="admin-form-row">
+        <label class="admin-form-label">Name</label>
+        <div class="admin-form-control"><%= @user.name %></div>
+      </div>
+
+      <div class="admin-form-row">
+        <label class="admin-form-label">Email</label>
+        <div class="admin-form-control"><%= @user.email %></div>
+      </div>
+
+      <div class="admin-form-row">
+        <label class="admin-form-label">Slack ID</label>
+        <div class="admin-form-control"><%= @user.slack_id.presence || "—" %></div>
+      </div>
+
+      <div class="admin-form-row">
+        <label class="admin-form-label">Role</label>
+        <div class="admin-form-control"><%= @user.role %></div>
+      </div>
+
+      <% if current_user&.admin? || current_user&.superadmin? %>
+        <div class="admin-form-row">
+          <label class="admin-form-label">Total Credits</label>
+          <div class="admin-form-control"><%= number_with_precision(@user.currency.to_f, precision: 2) %></div>
+        </div>
+      <% end %>
+
+      <div class="admin-form-actions">
+        <%= link_to 'Back', admin_users_path, class: 'btn-admin btn-admin--muted' %>
+        <%= link_to 'Edit', edit_admin_user_path(@user), class: 'btn-admin' %>
+
+        <% unless @user.superadmin? || @user.system_user? %>
+          <%= button_to 'Delete', admin_user_path(@user), method: :delete, data: { confirm: 'Are you sure you want to delete this user? This will remove their orders and devlogs.' }, class: 'btn-admin btn-admin-danger' %>
+        <% else %>
+          <%= link_to 'Delete', '#', class: 'btn-retro-admin-disabled', title: 'Cannot delete this user', aria: { disabled: true } %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+</div>

@@ -43,8 +43,11 @@ module Admin
         return
       end
 
-      @user.destroy!
-      redirect_to admin_users_path, notice: "User deleted"
+      if @user.anonymize!
+        redirect_to admin_users_path, notice: "User anonymized (personal data replaced)."
+      else
+        redirect_to admin_users_path, alert: "Unable to anonymize user."
+      end
     end
 
     # POST /admin/users/:id/revert_actions

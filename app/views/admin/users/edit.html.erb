@@ -75,6 +75,15 @@
 
       <div class="admin-form-actions">
         <%= link_to 'Cancel', admin_users_path, class: 'btn-admin btn-admin--muted' %>
+
+        <div class="admin-delete-wrap">
+          <% unless @user.superadmin? || @user.system_user? %>
+            <%= button_to 'Delete', admin_user_path(@user), method: :delete, data: { confirm: 'Are you sure you want to delete this user? This will remove their orders and devlogs.' }, class: 'btn-admin btn-admin-danger' %>
+          <% else %>
+            <%= link_to 'Delete', '#', class: 'btn-retro-admin-disabled', title: 'Cannot delete this user', aria: { disabled: true } %>
+          <% end %>
+        </div>
+
         <%= f.submit "Save", class: "btn btn-primary btn-admin--save" %>
       </div>
     </div>
