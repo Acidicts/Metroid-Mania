@@ -48,7 +48,7 @@
             </form>
           </noscript>
         <% else %>
-          <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" style="font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login</button>
+          <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" style="font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login</button>
         <% end %>
       </nav>
     </header>

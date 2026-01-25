@@ -165,7 +165,7 @@
     <p class="lead">Welcome to Metroid-Mania, the Hack Club YSWS where you build Metroidvania games!</p>
 
     <div class="home-actions">
-      <button onclick="window.location.href='/auth/hackclub'" data-turbo="false" style="font-size:2rem; font-weight:600; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login with Hack Club</button>
+      <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" style="font-size:2rem; font-weight:600; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login with Hack Club</button>
     </div>
 
     <div class="features" role="region" aria-label="Why join">
