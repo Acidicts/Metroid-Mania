@@ -8,8 +8,8 @@
       <% end %>
     <% end %>
 
-    <div style="margin-left:auto; font-size:0.9rem; color: #666;">Showing <%= @orders.count %> orders</div>
-  </div>
+    <div style="margin-left:auto; font-size:0.9rem; color: #666;">Showing <%= @orders.joins(:user).where.not(users: { name: "Deleted User" }).count %> orders</div>
+  </div> 
 
   <table class="admin-table compact">
     <thead>
@@ -20,7 +20,7 @@
     </thead>
     <tbody>
       <% @orders.each do |o| %>
-        <%if o.user.name != "Deleted User" %>
+        <% if o.user&.name != "Deleted User" %>
           <tr class="admin-table-row">
             <td class="order-info">
               <div><%= o.user.name %></div>
