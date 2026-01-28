@@ -35,6 +35,37 @@ body {
     repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0 1px, transparent 1px 6px);
 }
 
+/* When a user has enabled custom fonts, switch the site to Pixelify/DynaPuff */
+body.fonts-enabled {
+  font-family: "Pixelify Sans", sans-serif;
+}
+
+/* Use DynaPuff for headings when fonts are enabled for extra flair */
+body.fonts-enabled h1,
+body.fonts-enabled h2,
+body.fonts-enabled h3 {
+  font-family: "Pixelify Sans", "DynaPuff", sans-serif;
+}
+
+/* Dyslexic mode: use OpenDyslexic when the user disables custom fonts */
+body.dyslexic {
+  font-family: 'Open-Dyslexic', Arial, sans-serif;
+}
+
+/* Ensure headings and elements that force Pixelify also switch in dyslexic mode */
+body.dyslexic h1,
+body.dyslexic h2,
+body.dyslexic h3 {
+  font-family: 'Open-Dyslexic', Arial, sans-serif;
+  font-weight: 700;
+}
+
+/* Override utility class that forces Pixelify to respect dyslexic preference */
+body.dyslexic .pixelify-sans {
+  font-family: 'Open-Dyslexic', Arial, sans-serif;
+  font-weight: 700;
+}
+
 /* Utility: base class for Pixelify Sans — use modifier classes for weights (examples below) */
 .pixelify-sans {
   font-family: "Pixelify Sans", sans-serif;
@@ -500,3 +531,10 @@ body > header + .retro-container { margin-top: 12px; }
 /* Small site title style */
 .site-title { font-weight: 900; font-size: 1.05rem; color: var(--accent3); }
 
+.spacer_cross {
+  display: block;
+  width: 90%;
+  height: 10px;
+  left: 5%;
+  border-bottom: 2px solid rgba(0,0,0,0.5);
+}

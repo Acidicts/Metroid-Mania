@@ -38,10 +38,15 @@ class UsersController < ApplicationController
   private
 
   def set_user
-    @user = User.find(params[:id])
+    # Use explicit id when provided (public profiles or admin), otherwise fall back to the signed-in user
+    if params[:id].present?
+      @user = User.find(params[:id])
+    else
+      @user = current_user || (raise ActiveRecord::RecordNotFound, "Couldn't find User without an ID")
+    end
   end
 
   def user_params
-    params.require(:user).permit(:hackatime_api_key)
+    params.require(:user).permit(:hackatime_api_key, :font_on)
   end
 end

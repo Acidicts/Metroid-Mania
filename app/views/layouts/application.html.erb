@@ -128,9 +128,14 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <% if current_user&.font_on? %>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <% elsif current_user&.font_on == false %>
+      <!-- OpenDyslexic for users who prefer dyslexia-friendly fonts -->
+      <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+    <% end %>
 
     <title><%= content_for(:title) || "Metroid Mania" %></title>
     <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -156,7 +161,7 @@
     <%= javascript_importmap_tags %>
   </head>
 
-  <body class="<%= controller.controller_name %> <%= controller.action_name %>">
+  <body class="<%= controller.controller_name %> <%= controller.action_name %> <%= 'fonts-enabled' if current_user&.font_on? %> <%= 'dyslexic' if current_user&.font_on == false %>">
     <header>
       <nav class="retro-navbar">
         <button type="button" class="menu-icon" aria-label="Toggle navigation" aria-expanded="false">
@@ -200,7 +205,7 @@
     <footer class="retro-footer" style="margin-top:10%; position:relative; bottom:0; width:100%; overflow:hidden;">
       <div class="retro-container">
         <strong>Metroid Mania</strong>
-        <p>Made by Hackclub, For Hackclub</p>
+        <p>Made for Hackclub</p>
       </div>
     </footer>
 

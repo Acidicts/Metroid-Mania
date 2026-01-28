@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_24_103000) do
+ActiveRecord::Schema[8.1].define(version: 2026_01_28_000000) do
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -150,6 +150,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_24_103000) do
     t.datetime "created_at", null: false
     t.float "currency"
     t.string "email"
+    t.boolean "font_on", default: true, null: false
     t.string "hackatime_api_key"
     t.string "name"
     t.string "password_digest"

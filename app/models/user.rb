@@ -5,6 +5,9 @@ class User < ApplicationRecord
   has_many :ships, dependent: :nullify
   has_many :ship_requests, dependent: :nullify
 
+  # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
+  attribute :font_on, :boolean, default: true
+
   enum :role, { user: 0, admin: 1 }
 
   # Scope to exclude the system placeholder user

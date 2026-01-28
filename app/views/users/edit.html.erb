@@ -4,8 +4,37 @@
   </style>
 <% end %>
 
+<style>
+  #font_on_toggle_label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.5rem;
+  }
+  #font_on_toggle {
+    width: 20px;
+    height: 20px;
+  }
+  #actions_profile_edit {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+  }
+</style>
+
 <h2>Edit Profile</h2>
 
-<h3>Nothing is Here</h3>
+<p class="spacer_cross">
 
-<%= button_to "Go Back", :back %>
+<%= form_with model: @user, url: profile_path, method: :patch do |f| %>
+  <div class="field">
+    <%= f.label :font_on, "Enable Custom Fonts", id: "font_on_toggle_label" %>
+    <%= f.check_box :font_on, id: "font_on_toggle" %>
+  </div>
+  <div id="actions_profile_edit">
+    <%= f.submit "Update Profile", class:"btn-retro" %>
+    <%= button_to "Go Home", (ENV['APP_URL'].presence || root_path), method: :get, class:"btn-retro" %>
+  </div>
+<% end %>
+
+
