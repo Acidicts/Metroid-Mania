@@ -70,7 +70,10 @@
           var r = document.getElementById('grant_amount_range');
           var d = document.getElementById('grant_amount_display');
           var h = document.getElementById('grant_amount_dollars');
-          var est = document.getElementById('price_credits_display');
+          // Estimated credits shown beneath the slider
+          var est = document.getElementById('estimated_credits');
+          // Top-of-page credits display (Price (Credits))
+          var topCredits = document.getElementById('price_credits_display');
           var ratio = <%= (@product.credits_per_dollar || 0).to_f %>;
           var minVal = <%= @product.grant_min_dollars %>;
           var maxVal = <%= @product.grant_max_dollars %>;
@@ -86,7 +89,11 @@
             if (d && d.value != n) d.value = n;
             if (r && r.value != n) r.value = n;
             if (h) h.value = n;
-            if (ratio && est) est.innerText = (n * ratio).toFixed(2);
+            // Update both the estimated credits under the slider and the top credits display
+            if (ratio) {
+              if (est) est.innerText = (n * ratio).toFixed(2);
+              if (topCredits) topCredits.innerText = (n * ratio).toFixed(2);
+            }
             var priceDisplay = document.getElementById('price_usd_display');
             if (priceDisplay) priceDisplay.innerText = n.toFixed(2);
 
