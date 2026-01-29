@@ -1,7 +1,7 @@
 class HackatimeService
   BASE_URL = "https://hackatime.hackclub.com"
   #             YYYY-MM-DD
-  START_DATE = "2025-12-15"
+  START_DATE = ENV["HACKATIME_START_DATE"] || "2025-12-15"
 
   def initialize(slack_id: nil)
     @slack_id = slack_id
