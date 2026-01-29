@@ -112,4 +112,13 @@ module ApplicationHelper
   def total_ships(project)
     project.ships.count
   end
+
+  # app/helpers/application_helper.rb
+  def safe_url(url)
+    if url =~ /\Ahttps?:\/\//
+      url
+    else
+      "#" # Or a safe fallback URL
+    end
+  end
 end

@@ -7,7 +7,7 @@
   <% if product.link.present? %>
     <div>
       <strong>Link:</strong>
-      <%= link_to product.link, product.link, target: "_blank", rel: "noopener" %>
+      <%= link_to safe_url(product.link), safe_url(product.link), target: "_blank", rel: "noopener" %>
     </div>
   <% end %>
 

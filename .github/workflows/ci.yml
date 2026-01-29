@@ -28,6 +28,9 @@ jobs:
           # Allow updating Gemfile.lock in CI when Gemfile changes (avoids frozen failure)
           bundle config set frozen false || true
           bundle install --jobs 4
+        
+      - name: Update Brakeman
+        run: bundle update brakeman
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager --no-exit-on-warn

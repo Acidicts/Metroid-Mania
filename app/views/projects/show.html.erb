@@ -35,9 +35,9 @@
         </div>
 
         <div class="cta-row">
-          <%= link_to 'View Repo', @project.repository_url, class: 'btn-retro', target: '_blank', rel: 'noopener' %>
+          <%= link_to 'View Repo', safe_url(@project.repository_url), class: 'btn-retro', target: '_blank', rel: 'noopener' %>
           <% if @project.readme_url.present? %>
-            <%= link_to 'Readme', @project.readme_url, class: 'btn-retro btn-retro--outline', target: '_blank', rel: 'noopener' %>
+            <%= link_to 'Readme', safe_url(@project.readme_url), class: 'btn-retro btn-retro--outline', target: '_blank', rel: 'noopener' %>
           <% end %>
         </div>
       </div>
