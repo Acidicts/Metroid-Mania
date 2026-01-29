@@ -47,23 +47,30 @@ body.fonts-enabled h3 {
   font-family: "Pixelify Sans", "DynaPuff", sans-serif;
 }
 
-/* Dyslexic mode: use OpenDyslexic when the user disables custom fonts */
+/* Dyslexic mode: use clear font when the user disables custom fonts */
 body.dyslexic {
-  font-family: 'Open-Dyslexic', Arial, sans-serif;
+  font-family: "Atkinson Hyperlegible Next", Arial, sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
 }
 
 /* Ensure headings and elements that force Pixelify also switch in dyslexic mode */
 body.dyslexic h1,
 body.dyslexic h2,
 body.dyslexic h3 {
-  font-family: 'Open-Dyslexic', Arial, sans-serif;
+  font-family: "Atkinson Hyperlegible Next", Arial, sans-serif;
+  font-optical-sizing: auto;
   font-weight: 700;
+  font-style: normal;
 }
 
 /* Override utility class that forces Pixelify to respect dyslexic preference */
 body.dyslexic .pixelify-sans {
-  font-family: 'Open-Dyslexic', Arial, sans-serif;
+  font-family: "Atkinson Hyperlegible Next", Arial, sans-serif;
+  font-optical-sizing: auto;
   font-weight: 700;
+  font-style: normal;
 }
 
 /* Utility: base class for Pixelify Sans — use modifier classes for weights (examples below) */
