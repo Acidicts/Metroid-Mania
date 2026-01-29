@@ -24,7 +24,7 @@ module Admin
         rate = permitted[:credits_per_hour].presence || @ship.project.credits_per_hour
         if rate.present?
           secs = (permitted[:devlogged_seconds].presence || @ship.devlogged_seconds).to_f
-          computed = rate.to_f * (secs / 3600.0)
+          computed = format_credits(rate.to_f * (secs / 3600.0))
           # compute float and round to 2 decimal places for currency
           permitted[:credits_awarded] = computed.round(6)
         end

@@ -65,7 +65,7 @@
         <div class="admin-form-row">
           <%= f.label :currency, "Total Credits", class: "admin-form-label" %>
           <div class="admin-form-control">
-            <%= f.number_field :currency, step: 0.01, value: @user.currency || 0.0, class: "admin-input #{'field-error' if f.object.errors[:currency].any?}" %>
+            <%= f.number_field :currency, step: 0.01, value: user_total_credits(@user) || 0.0, class: "admin-input #{'field-error' if f.object.errors[:currency].any?}" %>
             <% if f.object.errors[:currency].any? %>
               <div class="field-error-text"><%= f.object.errors.full_messages_for(:currency).join(', ') %></div>
             <% end %>
@@ -76,16 +76,16 @@
       <div class="admin-form-actions">
         <%= link_to 'Cancel', admin_users_path, class: 'btn-admin btn-admin--muted' %>
 
-        <div class="admin-delete-wrap">
-          <% unless @user.superadmin? || @user.system_user? %>
-            <%= button_to 'Delete', admin_user_path(@user), method: :delete, data: { confirm: 'Are you sure you want to delete this user? This will remove their orders and devlogs.' }, class: 'btn-admin btn-admin-danger' %>
-          <% else %>
-            <%= link_to 'Delete', '#', class: 'btn-retro-admin-disabled', title: 'Cannot delete this user', aria: { disabled: true } %>
-          <% end %>
-        </div>
-
         <%= f.submit "Save", class: "btn btn-primary btn-admin--save" %>
       </div>
     </div>
   </div>
-<% end %> 
+<% end %>
+
+<div class="admin-delete-wrap" style="margin-top:10px">
+  <% unless @user.superadmin? || @user.system_user? %>
+    <%= button_to 'Delete', admin_user_path(@user), method: :delete, data: { confirm: 'Are you sure you want to delete this user? This will remove their orders and devlogs.' }, class: 'btn-admin btn-admin-danger' %>
+  <% else %>
+    <%= link_to 'Delete', '#', class: 'btn-retro-admin-disabled', title: 'Cannot delete this user', aria: { disabled: true } %>
+  <% end %>
+</div> 

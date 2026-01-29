@@ -101,6 +101,13 @@ module ApplicationHelper
     ships
   end
 
+  # Calculate total credits across all ships for a user
+  def user_total_credits(user)
+    return 0 if user.nil?
+    # Use DB aggregation for efficiency and handle nil credits gracefully
+    user.ships.sum(:credits_awarded).to_f
+  end
+
   # Calculate total ships for a project
   def total_ships(project)
     project.ships.count

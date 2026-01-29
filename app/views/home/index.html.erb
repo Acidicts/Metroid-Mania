@@ -139,7 +139,7 @@
   <h1>Metroid-Mania</h1>
 
   <% if logged_in? %>
-    <p class="lead">Welcome, <%= current_user.name %>! Your Balance: <span style="font-family: Comfortaa, monospace;"><%= format_credits(current_user.currency || 0) %></span></p>
+    <p class="lead">Welcome, <%= current_user.name %>! Your Balance: <span style="font-family: Comfortaa, monospace;"><%= format_credits(user_total_credits(current_user) || 0) %></span></p>
 
     <div class="home-actions">
       <%= link_to "My Projects", projects_path, class: 'btn-retro' %>
