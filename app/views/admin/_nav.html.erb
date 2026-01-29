@@ -12,6 +12,7 @@
       <li class="nav-item"><%= link_to admin_ship_requests_path, class: (controller.controller_name == 'ship_requests' ? 'active' : '') do %><span class="nav-icon">✉️</span><span class="nav-label">Ship Requests</span><% end %></li>
       <li class="nav-item"><%= link_to admin_ships_path, class: (controller.controller_name == 'ships' ? 'active' : '') do %><span class="nav-icon">🚚</span><span class="nav-label">Ships</span><% end %></li>
       <li class="nav-item"><%= link_to admin_audits_path, class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">📝</span><span class="nav-label">Audits</span><% end %></li>
+      <li class="nav-item"><%= link_to ENV['APP_URL'], class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">🔙</span><span class="nav-label">Main Page</span><% end %></li>
     </ul>
   </div>
 
