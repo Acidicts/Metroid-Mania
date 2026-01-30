@@ -1,0 +1,39 @@
+name: Coolify Deployment
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify deploy via curl
+        env:
+          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+        run: |
+          if [ -z "$COOLIFY_API_URL" ]; then
+            echo "ERROR: COOLIFY_API_URL secret is not set"
+            exit 1
+          fi
+
+          if [ -z "$COOLIFY_TOKEN" ]; then
+            echo "ERROR: COOLIFY_TOKEN secret is not set"
+            exit 1
+          fi
+
+          # Send POST request to Coolify deploy endpoint (adjust -X/ -d as needed)
+          http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$COOLIFY_API_URL" \
+            -H "Authorization: Token $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+
+          echo "Coolify API returned HTTP status: $http_code"
+
+          if [ "$http_code" -ge 400 ]; then
+            echo "Deploy request failed"
+            exit 1
+          fi
