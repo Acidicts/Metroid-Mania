@@ -26,7 +26,7 @@ jobs:
           fi
 
           # Send POST request to Coolify deploy endpoint (adjust -X/ -d as needed)
-          http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$COOLIFY_API_URL" \
+          http_code=$(curl -s -o /dev/null -w "%{http_code}" -X GET "$COOLIFY_API_URL" \
             -H "Authorization: Token $COOLIFY_TOKEN" \
             -H "Content-Type: application/json" \
             -d '{}')
