@@ -10,50 +10,36 @@ jobs:
   trigger-deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger Coolify deploy via curl
+      - name: Trigger Coolify deploy via API
         env:
-          COOLIFY_API_URL: ${{ secrets.COOLIFY_API_URL }}
+          # Your specific deploy URL
+          COOLIFY_DEPLOY_URL: "https://coolify.bing-bong.uk/api/v1/deploy?uuid=fk8g0gk000gokko4g8kc8c8s&force=false"
+          # The API Token generated in Coolify (Keys & Tokens)
           COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
         run: |
           set -euo pipefail
 
-          # reference: curl https://app.coolify.io/api/v1/deploy --header 'Authorization: Token'
-          if [ -z "${COOLIFY_API_URL:-}" ]; then
-            echo "ERROR: COOLIFY_API_URL secret is not set"
+          if [ -z "$COOLIFY_TOKEN" ]; then
+            echo "ERROR: COOLIFY_TOKEN secret is not set in GitHub"
             exit 1
           fi
 
-          if [ -z "${COOLIFY_TOKEN:-}" ]; then
-            echo "ERROR: COOLIFY_TOKEN secret is not set"
-            exit 1
-          fi
+          echo "🚀 Triggering deployment at coolify.bing-bong.uk..."
 
-          # Normalize token in case the secret already contains a "Token " prefix
-          token="${COOLIFY_TOKEN#Token }"
-          token="${token#token }"
-
-          echo "Using COOLIFY_API_URL: ${COOLIFY_API_URL}"
-          echo "Token length: ${#token} characters"
-
-          method="POST"
-          payload='{}' # adjust payload if Coolify requires fields (project id, branch, etc.)
-
-          # Send POST request and capture body + HTTP status
-          response=$(curl -s -w "\n%{http_code}" -X "$method" "$COOLIFY_API_URL" \
-            -H "Authorization: Token $token" \
-            -H "Content-Type: application/json" \
-            -d "$payload")
+          # Coolify API uses GET for this endpoint with the Bearer token
+          response=$(curl -s -w "\n%{http_code}" -X GET "$COOLIFY_DEPLOY_URL" \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            -H "Content-Type: application/json")
 
           http_code=$(echo "$response" | tail -n1)
           body=$(echo "$response" | sed '$d')
 
-          echo "Coolify API returned HTTP status: $http_code"
-          echo "Response body:"
-          echo "$body"
+          echo "Coolify Status: $http_code"
+          echo "Response Body: $body"
 
           if [ "$http_code" -ge 400 ]; then
-            echo "Deploy request failed (HTTP $http_code)"
+            echo "❌ Deployment failed to trigger."
             exit 1
           fi
 
-          echo "Deploy request succeeded (HTTP $http_code)"
+          echo "✅ Deployment successfully queued!"
