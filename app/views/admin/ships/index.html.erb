@@ -14,16 +14,18 @@
   </thead>
   <tbody>
     <% @ships.each do |s| %>
-      <tr>
-        <td><%= link_to s.id, admin_ship_path(s) %></td>
-        <td><%= s.project ? link_to(s.project.name, admin_project_path(s.project)) : "Project ##{s.project_id || 'unknown'}" %></td>
-        <td><%= s.project&.user&.name || s.project&.user&.email || '-' %></td>
-        <td><%= s.shipped_at %></td>
-        <td><%= format_duration(s.devlogged_seconds.to_i) %></td>
-        <td><%= correct_credits(s.credits_awarded) %></td>
-        <td><%= s.user&.name %></td>
-        <td><%= link_to 'Edit', edit_admin_ship_path(s), class: 'btn-admin btn-admin--muted' %></td>
-      </tr>
+      <% if s.project.user.name == "Deleted Project" %>
+        <tr>
+          <td><%= link_to s.id, admin_ship_path(s) %></td>
+          <td><%= s.project ? link_to(s.project.name, admin_project_path(s.project)) : "Project ##{s.project_id || 'unknown'}" %></td>
+          <td><%= s.project&.user&.name || s.project&.user&.email || '-' %></td>
+          <td><%= s.shipped_at %></td>
+          <td><%= format_duration(s.devlogged_seconds.to_i) %></td>
+          <td><%= correct_credits(s.credits_awarded) %></td>
+          <td><%= s.user&.name %></td>
+          <td><%= link_to 'Edit', edit_admin_ship_path(s), class: 'btn-admin btn-admin--muted' %></td>
+        </tr>
+      <% end %>
     <% end %>
   </tbody>
 </table>

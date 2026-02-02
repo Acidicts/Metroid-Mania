@@ -132,6 +132,18 @@
     .org-card{
       cursor: pointer;
     }
+
+    .btn-discreet {
+      margin-top: 8px;
+      padding-top: 10px;
+      background: none;
+      border: none;
+      color: #8f8f8f;
+      text-decoration: underline;
+      padding: 0;
+      font-size: 1rem;
+      cursor: pointer;
+    }
   </style>
 <% end %>
 
@@ -155,10 +167,12 @@
       <div class="feature">
         <h3>Build Games</h3>
         <p>Create game projects, track and link Hackatime projects.</p>
+        <%= link_to "Start Building", new_project_path, class: 'btn-discreet' %>
       </div>
       <div class="feature">
         <h3>Buy Stuff</h3>
         <p>Visit the store to purchase assets, and games</p>
+        <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
       </div>
     </div>
 
