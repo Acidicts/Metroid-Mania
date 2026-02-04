@@ -114,5 +114,35 @@ class User < ApplicationRecord
     true
   end
 
+  # Sync Hackatime trust status for this user and persist it to the DB.
+  # Returns the humanized status string (or nil) and updates `hackatime_synced_at`.
+  def sync_hackatime_status!
+    return unless slack_id.present?
+
+    service_result = HackatimeService.new(slack_id: slack_id).get_trusted_status
+
+    # Service may return a Hash { trust_level:, trust_value: } or a scalar. Normalize accordingly.
+    raw = if service_result.is_a?(Hash)
+      # Prefer numeric trust_value when present, otherwise trust_level string
+      service_result[:trust_value] || service_result["trust_value"] || service_result[:trust_level] || service_result["trust_level"]
+    else
+      service_result
+    end
+
+    # Store canonical (machine-friendly) status strings in DB: "verified", "needs_submission", "unverified"
+    canonical = case raw
+    when "verified", :verified, 2
+      "verified"
+    when "needs_submission", "needs submission", :needs_submission, 1
+      "needs_submission"
+    when "unverified", "blue", :unverified, 0
+      "unverified"
+    else
+      raw.nil? ? nil : raw.to_s.downcase.tr(" ", "_")
+    end
+
+    update!(hackatime_trust_status: canonical, hackatime_synced_at: Time.current)
+  end
+
   private
 end

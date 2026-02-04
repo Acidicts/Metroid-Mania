@@ -10,7 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_01_28_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_04_202749) do
+  create_table "action_mailbox_inbound_emails", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "message_checksum", null: false
+    t.string "message_id", null: false
+    t.integer "status", default: 0, null: false
+    t.datetime "updated_at", null: false
+    t.index ["message_id", "message_checksum"], name: "index_action_mailbox_inbound_emails_uniqueness", unique: true
+  end
+
+  create_table "action_text_rich_texts", force: :cascade do |t|
+    t.text "body"
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.bigint "record_id", null: false
+    t.string "record_type", null: false
+    t.datetime "updated_at", null: false
+    t.index ["record_type", "record_id", "name"], name: "index_action_text_rich_texts_uniqueness", unique: true
+  end
+
   create_table "active_storage_attachments", force: :cascade do |t|
     t.integer "blob_id", null: false
     t.datetime "created_at", precision: nil, null: false
@@ -152,6 +171,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_28_000000) do
     t.string "email"
     t.boolean "font_on", default: true, null: false
     t.string "hackatime_api_key"
+    t.datetime "hackatime_synced_at"
+    t.string "hackatime_trust_status"
     t.string "name"
     t.string "password_digest"
     t.string "provider"
@@ -160,6 +181,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_01_28_000000) do
     t.string "uid"
     t.datetime "updated_at", null: false
     t.string "verification_status"
+    t.index ["hackatime_trust_status"], name: "index_users_on_hackatime_trust_status"
     t.index ["uid"], name: "index_users_on_uid"
   end
 

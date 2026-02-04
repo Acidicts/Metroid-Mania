@@ -6,6 +6,8 @@
         <tr>
           <th class="col-role col-shrink">Name</th>
           <th class="col-email">Email</th>
+          <th class="col-role col-shrink">Hackatime</th>
+          <th class="col-id col-shrink">Auth</th>
           <th class="col-slack-id col-shrink">Slack ID</th>
           <th class="col-id col-shrink">ID</th>
           <th class="col-role col-shrink">Role</th>
@@ -17,6 +19,26 @@
             <tr>
               <td><%= link_to (u.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %></td>
               <td class="col-email"><%= u.email %></td>
+              <% trusted = get_trusted_status(slack_id: u.slack_id) %>
+              <% if trusted == "blue" %>
+                <td class="col-role col-shrink">🔵</td>
+              <% elsif trusted == "green" %>
+                <td class="col-role col-shrink">🟢</td>
+              <% elsif trusted == "yellow" %>
+                <td class="col-role col-shrink">🟡</td>
+              <% elsif trusted == "red" %>
+                <td class="col-role col-shrink">🔴</td>
+              <% else %>
+                <td class="col-role col-shrink">-</td>
+              <% end %>
+
+              <% if u.verification_status == "verified" %>
+                <td class="col-id col-shrink">✅</td>
+              <% elsif u.verification_status.humanize == "Needs submission" %>
+                <td class="col-id col-shrink">⌛</td>
+              <% else %>
+                <td class="col-id col-shrink">❌</td>
+              <% end %>
               <td class="col-slack-id col-shrink"><%= u.slack_id.presence || '-' %></td>
               <td class="col-id col-shrink"><%= u.id %></td>
               <td class="col-role col-shrink">

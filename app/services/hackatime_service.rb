@@ -7,6 +7,37 @@ class HackatimeService
     @slack_id = slack_id
   end
 
+  def get_trusted_status(slack_id: nil)
+    uid = slack_id || @slack_id
+    Rails.logger.info "HackatimeService: Resolving trust factor. slack_id: #{uid}"
+    return nil unless uid
+
+    response = self.class.connection.get("users/#{uid}/trust_factor") do |req|
+      req.headers["Authorization"] = "Bearer #{ENV["HACKATIME_API_KEY"]}" if ENV["HACKATIME_API_KEY"].present?
+    end
+
+    if response.success?
+      data = JSON.parse(response.body)
+      Rails.logger.info "HackatimeService trust_factor response (truncated): #{response.body[0..200]}"
+
+      # Return a structured result matching the API docs so callers can inspect either field
+      {
+        trust_level: data["trust_level"],
+        trust_value: data["trust_value"]
+      }
+    elsif response.status == 404
+      # 404 is expected for users not yet tracked in Hackatime
+      Rails.logger.debug "HackatimeService: User not found (404) for slack_id=#{uid}"
+      nil
+    else
+      Rails.logger.error "HackatimeService trust_factor error: #{response.status} - #{response.body}"
+      nil
+    end
+  rescue => e
+    Rails.logger.error "HackatimeService trust_factor exception: #{e.message}"
+    nil
+  end
+
   # Instance method interface for Controllers
   def get_all_projects
     Rails.logger.info "HackatimeService: Resolving UID. slack_id: #{@slack_id}"
