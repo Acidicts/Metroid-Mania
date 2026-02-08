@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_08_233000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -65,6 +65,18 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.index ["user_id"], name: "index_audits_on_user_id"
   end
 
+  create_table "devlog_versions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "devlog_id", null: false
+    t.text "reverse_diff", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.integer "version_number", null: false
+    t.index ["devlog_id", "version_number"], name: "index_devlog_versions_on_devlog_id_and_version_number", unique: true
+    t.index ["devlog_id"], name: "index_devlog_versions_on_devlog_id"
+    t.index ["user_id"], name: "index_devlog_versions_on_user_id"
+  end
+
   create_table "devlogs", force: :cascade do |t|
     t.text "content"
     t.datetime "created_at", null: false
@@ -97,6 +109,63 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
+  create_table "post_devlogs", force: :cascade do |t|
+    t.string "body"
+    t.integer "comments_count", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "deleted_at"
+    t.integer "duration_seconds"
+    t.text "hackatime_projects_key_snapshot"
+    t.datetime "hackatime_pulled_at"
+    t.integer "likes_count", default: 0, null: false
+    t.string "scrapbook_url"
+    t.datetime "synced_at"
+    t.boolean "tutorial", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["deleted_at"], name: "index_post_devlogs_on_deleted_at"
+    t.index ["scrapbook_url"], name: "index_post_devlogs_on_scrapbook_url", unique: true, where: "scrapbook_url IS NOT NULL"
+  end
+
+  create_table "post_ship_events", force: :cascade do |t|
+    t.float "admin_multiplier"
+    t.string "body", null: false
+    t.string "certification_status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.text "feedback_reason"
+    t.string "feedback_video_url"
+    t.float "hours"
+    t.float "multiplier"
+    t.decimal "originality_median", precision: 5, scale: 2
+    t.decimal "originality_percentile", precision: 5, scale: 2
+    t.decimal "overall_percentile", precision: 5, scale: 2
+    t.decimal "overall_score", precision: 5, scale: 2
+    t.float "payout"
+    t.datetime "reviewed_at"
+    t.integer "reviewed_by_id"
+    t.decimal "storytelling_median", precision: 5, scale: 2
+    t.decimal "storytelling_percentile", precision: 5, scale: 2
+    t.datetime "synced_at"
+    t.decimal "technical_median", precision: 5, scale: 2
+    t.decimal "technical_percentile", precision: 5, scale: 2
+    t.datetime "updated_at", null: false
+    t.decimal "usability_median", precision: 5, scale: 2
+    t.decimal "usability_percentile", precision: 5, scale: 2
+    t.integer "votes_count", default: 0, null: false
+    t.index ["certification_status"], name: "index_post_ship_events_on_certification_status"
+  end
+
+  create_table "posts", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "postable_id", null: false
+    t.string "postable_type", null: false
+    t.integer "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["postable_type", "postable_id"], name: "index_posts_on_postable_type_and_postable_id", unique: true
+    t.index ["project_id"], name: "index_posts_on_project_id"
+    t.index ["user_id"], name: "index_posts_on_user_id"
+  end
+
   create_table "products", force: :cascade do |t|
     t.float "cost_credits"
     t.datetime "created_at", null: false
@@ -117,10 +186,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
 
   create_table "projects", force: :cascade do |t|
     t.datetime "approved_at"
+    t.text "banner_description"
     t.datetime "created_at", null: false
     t.integer "credits_per_hour"
     t.datetime "deleted_at"
+    t.string "demo_url"
     t.text "description"
+    t.integer "devlogs_count", default: 0, null: false
+    t.integer "duration_seconds", default: 0, null: false
     t.boolean "featured", default: false, null: false
     t.datetime "featured_at", precision: nil
     t.string "hackatime_id"
@@ -129,8 +202,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.string "readme_url"
     t.string "repository_url"
     t.datetime "ship_requested_at"
+    t.string "ship_status", default: "draft", null: false
     t.boolean "shipped", default: false, null: false
     t.datetime "shipped_at"
+    t.integer "shipped_devlogged_seconds", default: 0, null: false
     t.string "status"
     t.integer "total_seconds"
     t.datetime "updated_at", null: false
@@ -138,6 +213,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.index ["deleted_at"], name: "index_projects_on_deleted_at"
     t.index ["featured"], name: "index_projects_on_featured"
     t.index ["featured_at"], name: "index_projects_on_featured_at"
+    t.index ["ship_status"], name: "index_projects_on_ship_status"
     t.index ["user_id"], name: "index_projects_on_user_id"
   end
 
@@ -147,14 +223,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.float "credits_awarded"
     t.float "credits_per_hour"
     t.integer "devlogged_seconds"
+    t.float "multiplier"
     t.integer "processed_by_id"
     t.integer "project_id"
     t.datetime "requested_at"
+    t.integer "ship_id"
     t.string "status", default: "pending"
     t.datetime "updated_at", null: false
     t.integer "user_id"
     t.index ["processed_by_id"], name: "index_ship_requests_on_processed_by_id"
     t.index ["project_id"], name: "index_ship_requests_on_project_id"
+    t.index ["ship_id"], name: "index_ship_requests_on_ship_id"
     t.index ["user_id"], name: "index_ship_requests_on_user_id"
   end
 
@@ -162,6 +241,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.datetime "created_at", null: false
     t.float "credits_awarded"
     t.integer "devlogged_seconds"
+    t.float "multiplier"
     t.integer "project_id"
     t.datetime "shipped_at"
     t.datetime "updated_at", null: false
@@ -292,6 +372,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
   end
 
   create_table "users", force: :cascade do |t|
+    t.float "amount_spent", default: 0.0, null: false
     t.datetime "created_at", null: false
     t.float "currency"
     t.string "email"
@@ -308,11 +389,59 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
     t.string "uid"
     t.datetime "updated_at", null: false
     t.string "verification_status"
+    t.integer "vote_balance", default: 0, null: false
+    t.integer "votes_count", default: 0, null: false
     t.index ["hackatime_trust_status"], name: "index_users_on_hackatime_trust_status"
     t.index ["uid"], name: "index_users_on_uid"
   end
 
+  create_table "versions", force: :cascade do |t|
+    t.datetime "created_at"
+    t.string "event", null: false
+    t.bigint "item_id", null: false
+    t.string "item_type", null: false
+    t.text "object", limit: 1073741823
+    t.string "whodunnit"
+    t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
+  end
+
+  create_table "vote_suggestion_tokens", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "ship_event_id", null: false
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["ship_event_id"], name: "index_vote_suggestion_tokens_on_ship_event_id"
+    t.index ["token"], name: "index_vote_suggestion_tokens_on_token", unique: true
+    t.index ["user_id", "ship_event_id"], name: "index_vote_suggestion_tokens_on_user_id_and_ship_event_id", unique: true
+    t.index ["user_id"], name: "index_vote_suggestion_tokens_on_user_id"
+  end
+
+  create_table "votes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.boolean "demo_url_clicked", default: false, null: false
+    t.integer "originality_score", null: false
+    t.integer "project_id", null: false
+    t.text "reason"
+    t.boolean "repo_url_clicked", default: false, null: false
+    t.integer "ship_event_id", null: false
+    t.integer "storytelling_score", null: false
+    t.boolean "suspicious", default: false, null: false
+    t.integer "technical_score", null: false
+    t.datetime "updated_at", null: false
+    t.integer "usability_score", null: false
+    t.integer "user_id", null: false
+    t.index ["project_id"], name: "index_votes_on_project_id"
+    t.index ["ship_event_id"], name: "index_votes_on_ship_event_id"
+    t.index ["user_id", "ship_event_id"], name: "index_votes_on_user_id_and_ship_event_id", unique: true
+    t.index ["user_id"], name: "index_votes_on_user_id"
+  end
+
+  add_foreign_key "devlog_versions", "post_devlogs", column: "devlog_id"
+  add_foreign_key "devlog_versions", "users"
   add_foreign_key "devlogs", "users"
+  add_foreign_key "posts", "projects"
+  add_foreign_key "posts", "users"
   add_foreign_key "projects", "users"
   add_foreign_key "ship_requests", "projects"
   add_foreign_key "ship_requests", "users"
@@ -325,4 +454,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_08_190000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "vote_suggestion_tokens", "post_ship_events", column: "ship_event_id"
+  add_foreign_key "vote_suggestion_tokens", "users"
+  add_foreign_key "votes", "post_ship_events", column: "ship_event_id"
+  add_foreign_key "votes", "projects"
+  add_foreign_key "votes", "users"
 end

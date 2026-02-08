@@ -6,9 +6,9 @@ class ProjectsController < ApplicationController
   # GET /projects or /projects.json
   def index
     if logged_in?
-      @projects = current_user.projects
+      @projects = current_user.active_projects
     else
-      @projects = Project.where(status: 'approved')
+      @projects = Project.active.where(status: 'approved')
     end
   end
 
@@ -129,10 +129,26 @@ class ProjectsController < ApplicationController
   end
 
   def destroy
-    @project.destroy!
+    # Soft-delete ownership deletion: reclaim awarded credits and zero out ships similar to admin deletion behavior
+    Project.transaction do
+      owner = @project.user
+      total_awarded = @project.ships.sum(:credits_awarded).to_f
+
+      @project.ships.find_each do |s|
+        s.update!(credits_awarded: 0, devlogged_seconds: 0)
+      end
+
+      if total_awarded > 0 && owner.present?
+        owner.update!(currency: (owner.currency || 0) - total_awarded)
+      end
+
+      @project.update!(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: [])
+
+      Audit.create!(user: current_user, project: @project, action: 'delete', details: { reclaimed_credits: total_awarded })
+    end
 
     respond_to do |format|
-      format.html { redirect_to projects_path, notice: "Project was successfully destroyed.", status: :see_other }
+      format.html { redirect_to projects_path, notice: "Project was successfully deleted." }
       format.json { head :no_content }
     end
   end
@@ -141,6 +157,11 @@ class ProjectsController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def set_project
       @project = Project.find(params[:id])
+
+      # If the project is soft-deleted, block access unless admin or the owner
+      if @project.deleted? && !(admin? || (current_user && current_user == @project.user))
+        redirect_to projects_path, alert: 'Project not found.'
+      end
     end
     
     def authorize_owner!

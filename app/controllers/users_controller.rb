@@ -3,14 +3,15 @@ class UsersController < ApplicationController
   before_action :set_user, only: [:show, :edit, :update]
 
   def show
-    # Load user's projects with their ships and devlogs
-    @projects = @user.projects.includes(:ships, :devlogs).order(created_at: :desc)
-    
-    # Load user's ships (including those from other users' projects if they're the recipient)
-    @ships = @user.ships.includes(:project).order(shipped_at: :desc)
-    
-    # Load user's devlogs (through their projects)
-    @devlogs = Devlog.joins(:project).where(projects: { user_id: @user.id }).includes(:project).order(created_at: :desc)
+    # Load user's projects (exclude deleted) with their ships and devlogs
+    @projects = @user.active_projects.includes(:ships, :devlogs).order(created_at: :desc)
+
+    # Load user's ships including ships with no project (so we can render 'Project removed'), but
+    # exclude ships that belong to deleted projects
+    @ships = @user.ships.left_joins(:project).where('projects.deleted_at IS NULL OR ships.project_id IS NULL').includes(:project).order(shipped_at: :desc)
+
+    # Load user's devlogs (through their active projects)
+    @devlogs = Devlog.joins(:project).where(projects: { user_id: @user.id, deleted_at: nil }).includes(:project).order(created_at: :desc)
 
     # Fetch Slack profile image (if user has slack_id and token is configured)
     if @user.slack_id.present?

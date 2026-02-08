@@ -1,8 +1,15 @@
-<p style="color: green"><%= notice %></p>
+<% if notice.present? %>
+  <div class="nb-card" style="border-left: 8px solid var(--nb-green); margin-bottom: 24px; padding: 14px 20px;">
+    <strong style="font-family: var(--nb-font); color: var(--nb-green);">✓</strong>
+    <span style="font-family: var(--nb-font);"><%= notice %></span>
+  </div>
+<% end %>
 
-<%= render @devlog %>
+<div style="max-width: 860px; margin: 0 auto;">
+  <%= render @devlog %>
 
-<div>
-  <%= link_to "Edit this devlog", edit_project_devlog_path(@project, @devlog) %> |
-  <%= link_to "Back to project", project_path(@project) %>
+  <div class="nb-linkbar" style="margin-top: 24px;">
+    <%= link_to "Edit this devlog", edit_project_devlog_path(@project, @devlog), class: "nb-btn nb-btn-secondary nb-btn-sm" %>
+    <%= link_to "← Back to project", project_path(@project), class: "nb-link" %>
+  </div>
 </div>

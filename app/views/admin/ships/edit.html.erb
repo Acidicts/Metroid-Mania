@@ -1,35 +1,22 @@
 <div class="admin-panel">
-  <h1>Edit Ship ##<%= @ship.id %> for <%= @ship.project&.name || 'Project removed' %></h1>
+  <h1>Edit Ship #<%= @ship.id %> for <%= @ship.project&.name || 'Project removed' %></h1>
 
-      <div class="admin-two-col">
-        <div class="admin-two-col-main">
-          <p><strong>Project:</strong>
-            <% if @ship.project %>
-              <%= link_to @ship.project.name, admin_project_path(@ship.project) %>
-            <% else %>
-              <em>Project removed</em>
-            <% end %>
-          </p>
-          <p><strong>Shipped at:</strong> <%= @ship.shipped_at %></p>
-          <p><strong>Devlogged:</strong> <%= format_duration(@ship.devlogged_seconds.to_i) %></p>
-        </div>
+  <div style="margin-bottom:16px;">
+    <p><strong>Project:</strong>
+      <% if @ship.project %>
+        <%= link_to @ship.project.name, admin_project_path(@ship.project) %>
+      <% else %>
+        <em>Project removed</em>
+      <% end %>
+    </p>
+    <p><strong>Shipped at:</strong> <%= @ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></p>
+    <p><strong>Devlogged:</strong> <%= format_duration(@ship.devlogged_seconds.to_i) %></p>
+    <p><strong>Current Multiplier:</strong> <%= @ship.multiplier.present? ? @ship.multiplier : '-' %></p>
+  </div>
 
-        <aside class="admin-side-panel open" id="ship-edit-panel">
-          <div class="panel-header">
-            <h3>Edit Ship</h3>
-            <button class="close-panel" aria-label="Close edit panel">✕</button>
-          </div>
+  <%= render 'form', ship: @ship %>
 
-          <div class="panel-body">
-            <%= render 'form', ship: @ship %>
-          </div>
-        </aside>
-      </div>
-
-      <script>
-        document.addEventListener('DOMContentLoaded', function () {
-          var panel = document.getElementById('ship-edit-panel')
-          var closeBtn = panel && panel.querySelector('.close-panel')
-          if (closeBtn) closeBtn.addEventListener('click', function () { panel.classList.remove('open') })
-        })
-      </script>
+  <p style="margin-top:12px;">
+    <%= link_to '← Back to Ship', admin_ship_path(@ship), class: 'btn-admin btn-admin--muted' %>
+  </p>
+</div>

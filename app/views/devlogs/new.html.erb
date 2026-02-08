@@ -1,10 +1,14 @@
 <% content_for :title, "New devlog" %>
 
-<h1>New devlog for <%= @project.name %></h1>
-<p>For Time <%= @project.time %></p>
+<div style="max-width: 680px; margin: 0 auto;">
+  <h1 class="nb-page-title">New devlog for <%= @project.name %></h1>
+  <span class="nb-chip" style="margin-bottom: 20px;">⏱ Time: <%= @project.time %></span>
 
-<%= render "form", devlog: @devlog %>
+  <div class="nb-card" style="margin-top: 20px;">
+    <%= render "form", devlog: @devlog %>
+  </div>
 
-<div>
-  <%= link_to "Back to project", project_path(@project) %>
+  <div class="nb-linkbar" style="margin-top: 24px;">
+    <%= link_to "← Back to project", project_path(@project), class: "nb-link" %>
+  </div>
 </div>

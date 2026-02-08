@@ -146,8 +146,8 @@ class Order < ApplicationRecord
 
     # Only deduct balance when creating a real pending order
     if status == 'pending'
-      # Ensure user.currency is numeric and not nil
-      user.update!(currency: (user.currency || 0).to_f - self.cost)
+      # Ensure user.currency is numeric and not nil, and track amount_spent
+      user.update!(currency: (user.currency || 0).to_f - self.cost, amount_spent: (user.amount_spent || 0).to_f + self.cost)
     end
   end
 
@@ -212,7 +212,7 @@ class Order < ApplicationRecord
 
     return if refund_exists
 
-    user.update!(currency: (user.currency || 0) + cost.to_f)
+    user.update!(currency: (user.currency || 0) + cost.to_f, amount_spent: (user.amount_spent || 0).to_f - cost.to_f)
 
     # Use a real user for the audit entry (prefer an admin if available, otherwise fall back to any user).
     audit_user = User.find_by(role: :admin) || User.first

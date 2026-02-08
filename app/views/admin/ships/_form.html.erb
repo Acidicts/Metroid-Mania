@@ -15,6 +15,11 @@
   </div>
 
   <div>
+    <%= f.label :multiplier, 'Multiplier' %><br>
+    <%= f.number_field :multiplier, value: ship.multiplier, step: 0.01, placeholder: '1.0' %>
+  </div>
+
+  <div>
     <%= label_tag :credits_per_hour, 'Credits per hour (for recalculation)' %><br>
     <%= text_field_tag 'ship[credits_per_hour]', ship.project.credits_per_hour %>
   </div>

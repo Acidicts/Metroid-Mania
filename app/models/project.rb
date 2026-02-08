@@ -30,8 +30,10 @@ class Project < ApplicationRecord
   end
 
   def total_devlogged_seconds
-    # Exclude system-generated devlogs (those associated with ShipRequest)
-    devlogs.where(ship_request_id: nil).sum(:duration_minutes) * 60
+    # Count all user-created devlogs (exclude system-generated devlogs which have no user_id).
+    # User-created devlogs are counted regardless of whether they've been linked to a ship request,
+    # so that documented time remains documented after shipping and cannot be reused.
+    devlogs.where.not(user_id: nil).sum(:duration_minutes) * 60
   end
 
   # Remaining seconds on the project that have not been devlogged yet.
@@ -108,7 +110,7 @@ class Project < ApplicationRecord
 
   # Minutes of devlogged work created since baseline (exclude system-generated devlogs)
   def devlogged_minutes_since_baseline
-    devlogs.where(ship_request_id: nil).where('created_at >= ?', ship_baseline).sum(:duration_minutes).to_i
+    devlogs.where.not(user_id: nil).where('created_at >= ?', ship_baseline).sum(:duration_minutes).to_i
   end
 
   # Can the owner request a ship? Must not already be pending and at least 15 minutes of devlogs since baseline
@@ -198,6 +200,11 @@ class Project < ApplicationRecord
         details[:recipient_user_id] = recipient_user.id if recipient_user.present?
         Audit.create!(user: admin_user, project: self, action: 'credit_awarded', details: details)
       end
+
+      # Ensure recipient's currency is canonical (sum of ships - spent) in case of prior inconsistencies
+      # Do not force a full currency recalculation here; award_credits! directly updates the recipient's currency by the credited amount
+      # (calling `recalculate_currency!` here interferes with tests and expected immediate additive behavior).
+
 
       ship
     end

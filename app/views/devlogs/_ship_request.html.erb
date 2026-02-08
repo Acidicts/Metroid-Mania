@@ -1,34 +1,50 @@
-<div class="timeline-item">
-  <div class="timeline-card" style="margin-left:72px">
-    <div id="<%= dom_id ship_request %>" class="devlog ship-request">
+<div class="nb-timeline-item">
+  <div class="nb-timeline-dot dot-request"></div>
+  <div id="<%= dom_id ship_request %>" class="nb-card card-ship-request">
+    <div class="nb-meta">
       <% if (ship = ship_request.associated_ship) %>
         <% ship_number = ship.project.ships.where('shipped_at <= ?', ship.shipped_at).count %>
-        <div class="meta"><div class="who">Ship <%= ship_number %></div><div class="when"><small><%= ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") || (ship_request.requested_at || ship_request.created_at)&.strftime("%b %-d, %Y %l:%M %p") %></small></div></div>
+        <span class="nb-badge badge-request">Ship <%= ship_number %></span>
+        <span class="nb-timestamp"><%= ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") || (ship_request.requested_at || ship_request.created_at)&.strftime("%b %-d, %Y %l:%M %p") %></span>
       <% else %>
-        <div class="meta"><div class="who">Ship request: #<%= ship_request.id %></div><div class="when"><small><%= (ship_request.requested_at || ship_request.created_at)&.strftime("%b %-d, %Y %l:%M %p") %></small></div></div>
+        <span class="nb-badge badge-request">Request #<%= ship_request.id %></span>
+        <span class="nb-timestamp"><%= (ship_request.requested_at || ship_request.created_at)&.strftime("%b %-d, %Y %l:%M %p") %></span>
       <% end %>
+    </div>
 
-      <div class="devlog-content">
-        <div style="display:flex; gap:18px;">
-          <div><strong>Hours:</strong> <span style="font-family:monospace;"><%= (ship_request.devlogged_seconds.to_i / 3600.0).round(2) %></span></div>
-          <div><strong>Credits:</strong> <%= (ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)).present? ? format_credits(ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)) : "-" %></div>
-          <div><strong>Multiplier:</strong> <%= ship_request.respond_to?(:multiplier) && ship_request.multiplier.present? ? ship_request.multiplier : "-" %></div>
-          <div><strong>Devlogs:</strong> <%= ship_request.devlogs.where.not(user_id: nil).count %></div>
-        </div>
-
-        <% if ship_request.devlogs.any? %>
-          <div style="margin-top:6px;">
-            <% ship_request.devlogs.order(log_date: :desc).each do |d| %>
-              <% next if d.user.nil? %>
-              <div style="margin-top:6px"><%= link_to(d.title.presence || "Devlog ##{d.id}", project_devlog_path(project, d)) %> — <%= d.log_date || d.created_at %> (<%= format_duration(d.duration_minutes * 60) %>)</div>
-            <% end %>
-          </div>
-        <% end %>
-
-        <div style="margin-top:8px;">
-          <%= link_to "View request", project_ship_request_path(project, ship_request), class: "btn btn-sm" %>
-        </div>
+    <div class="nb-stats">
+      <div class="nb-stat">
+        <span class="nb-stat-label">Hours</span>
+        <span class="nb-stat-value"><%= (ship_request.devlogged_seconds.to_i / 3600.0).round(2) %></span>
       </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Credits</span>
+        <span class="nb-stat-value"><%= (ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)).present? ? format_credits(ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)) : "-" %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Multiplier</span>
+        <span class="nb-stat-value"><%= ship_request.respond_to?(:multiplier) && ship_request.multiplier.present? ? ship_request.multiplier : "-" %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Devlogs</span>
+        <span class="nb-stat-value"><%= ship_request.devlogs.where.not(user_id: nil).count %></span>
+      </div>
+    </div>
+
+    <% if ship_request.devlogs.any? %>
+      <ul class="nb-devlog-list">
+        <% ship_request.devlogs.order(log_date: :desc).each do |d| %>
+          <% next if d.user.nil? %>
+          <li>
+            <%= link_to(d.title.presence || "Devlog ##{d.id}", project_devlog_path(project, d)) %>
+            <span class="nb-timestamp"><%= d.log_date || d.created_at %> · <%= format_duration(d.duration_minutes * 60) %></span>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+
+    <div class="nb-linkbar">
+      <%= link_to "View Request →", project_ship_request_path(project, ship_request), class: "nb-btn nb-btn-primary nb-btn-sm" %>
     </div>
   </div>
 </div>

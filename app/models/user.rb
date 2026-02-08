@@ -1,6 +1,8 @@
 class User < ApplicationRecord
   # When a user is deleted we nullify references and reassign them to the system user
   has_many :projects, dependent: :nullify
+  # Active (non-deleted) projects owned by this user
+  has_many :active_projects, -> { where(deleted_at: nil) }, class_name: 'Project'
   has_many :orders, dependent: :nullify
   has_many :ships, dependent: :nullify
   has_many :ship_requests, dependent: :nullify
@@ -128,6 +130,29 @@ class User < ApplicationRecord
     end
 
     true
+  end
+
+  # Recalculate the amount the user has spent on Orders (sum of non-denied orders) and persist it.
+  # Returns the computed amount (float).
+  def recalculate_amount_spent!
+    total = orders.where.not(status: 'denied').sum(:cost).to_f
+    update!(amount_spent: total)
+    total
+  end
+
+  # Recalculate and persist the user's currency to be the total awarded via Ships (for their projects)
+  # minus the recorded `amount_spent` (so currency always reflects "earned - spent").
+  # Returns the computed currency value (float).
+  def recalculate_currency!
+    # Sum credits awarded on Ships for projects owned by this user
+    # Only count ships that belong to active (non-deleted) projects
+    total_shipped = Ship.joins(:project).where(projects: { user_id: id, deleted_at: nil }).sum(:credits_awarded).to_f
+
+    amt_spent = (amount_spent || 0.0).to_f
+    new_currency = total_shipped - amt_spent
+
+    update!(currency: new_currency)
+    new_currency
   end
 
   # Sync Hackatime trust status for this user and persist it to the DB.

@@ -1,12 +1,14 @@
 <% content_for :title, "Editing devlog" %>
 
-<h1>Editing devlog</h1>
+<div style="max-width: 680px; margin: 0 auto;">
+  <h1 class="nb-page-title">Editing devlog</h1>
 
-<%= render "form", devlog: @devlog %>
+  <div class="nb-card" style="margin-top: 20px;">
+    <%= render "form", devlog: @devlog %>
+  </div>
 
-<br>
-
-<div>
-  <%= link_to "Show this devlog", [@project, @devlog] %> |
-  <%= link_to "Back to project", project_path(@project) %>
+  <div class="nb-linkbar" style="margin-top: 24px;">
+    <%= link_to "Show this devlog →", [@project, @devlog], class: "nb-btn nb-btn-ghost nb-btn-sm" %>
+    <%= link_to "← Back to project", project_path(@project), class: "nb-link" %>
+  </div>
 </div>

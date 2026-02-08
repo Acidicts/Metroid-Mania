@@ -7,7 +7,9 @@
 <div id="projects">
   <div class="project-grid">
     <% @projects.each do |project| %>
-      <%= render project, project: @project %>
+      <% if project.name != "Deleted Project" %>
+        <%= render project, project: @project %>
+      <% end %>
     <% end %>
   </div>
 </div>

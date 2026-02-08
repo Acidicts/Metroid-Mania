@@ -37,10 +37,10 @@ class ProjectTest < ActiveSupport::TestCase
 
     assert_equal 15, p.minutes_needed_for_ship_request
 
-    p.devlogs.create!(title: 'Short work', content: 'x', duration_minutes: 5, log_date: Date.today)
+    p.devlogs.create!(title: 'Short work', content: 'x', duration_minutes: 5, log_date: Date.today, user: p.user)
     assert_equal 10, p.minutes_needed_for_ship_request
 
-    p.devlogs.create!(title: 'More work', content: 'y', duration_minutes: 10, log_date: Date.today)
+    p.devlogs.create!(title: 'More work', content: 'y', duration_minutes: 10, log_date: Date.today, user: p.user)
     assert_equal 0, p.minutes_needed_for_ship_request
   end
 

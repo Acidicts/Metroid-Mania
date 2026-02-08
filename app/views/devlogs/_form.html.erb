@@ -1,6 +1,6 @@
 <%= form_with(model: [@project, devlog]) do |form| %>
   <% if devlog.errors.any? %>
-    <div style="color: red">
+    <div class="nb-errors">
       <h2><%= pluralize(devlog.errors.count, "error") %> prohibited this devlog from being saved:</h2>
 
       <ul>
@@ -13,27 +13,27 @@
 
   <%# Project ID is set via nesting %>
 
-  <div>
-    <%= form.label :title, style: "display: block" %>
-    <%= form.text_field :title %>
+  <div class="nb-form-group">
+    <%= form.label :title, class: "nb-label" %>
+    <%= form.text_field :title, class: "nb-input" %>
   </div>
 
-  <div>
-    <%= form.label :content, style: "display: block" %>
-    <%= form.text_area :content, rows: 5, style: "width: 100%" %>
+  <div class="nb-form-group">
+    <%= form.label :content, class: "nb-label" %>
+    <%= form.text_area :content, rows: 5, class: "nb-textarea" %>
   </div>
 
-  <div>
-    <strong>Duration (minutes):</strong>
+  <div class="nb-form-group">
+    <span class="nb-label">Duration</span>
     <% if devlog.duration_minutes.present? %>
-      <%= format_duration(devlog.duration_minutes * 60) %>
+      <span class="nb-chip">⏱ <%= format_duration(devlog.duration_minutes * 60) %></span>
     <% else %>
-      <em>Not available</em>
+      <p class="nb-empty">Not available</p>
     <% end %>
-    <p><em>Duration is automatically calculated from remaining undocumented time and cannot be edited.</em></p>
+    <p style="font-family: var(--nb-font); font-size: 0.82rem; color: #6b7280; margin-top: 6px;">Duration is automatically calculated from remaining undocumented time and cannot be edited.</p>
   </div>
 
-  <div>
-    <%= form.submit class: "btn-retro", style: "font-family: 'Pixelify Sans', sans-serif;" %>
+  <div class="nb-form-group">
+    <%= form.submit class: "nb-btn nb-btn-primary" %>
   </div>
 <% end %>

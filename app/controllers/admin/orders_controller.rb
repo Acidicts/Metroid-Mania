@@ -81,7 +81,7 @@ module Admin
           end
 
           unless refund_exists
-            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
+            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
             Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           end
         end
@@ -110,7 +110,7 @@ module Admin
 
           # Refund user (only if the order had a cost)
           if @order.cost.present? && @order.cost.to_f > 0
-            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
+            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
             Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           else
             Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
@@ -124,7 +124,7 @@ module Admin
 
         Order.transaction do
           if @order.cost.present? && @order.cost.to_f > 0
-            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f)
+            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
             Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           else
             Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })

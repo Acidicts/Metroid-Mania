@@ -101,17 +101,27 @@ module ApplicationHelper
 
   def user_total_ships(user)
     ships = 0
-    for project in user.projects
+    return 0 if user.nil?
+
+    for project in user.active_projects
       ships += total_ships(project)
     end
     ships
   end
 
-  # Calculate total credits across all ships for a user
+  # Calculate total credits across all ships for a user (exclude deleted projects)
   def user_total_credits(user)
     return 0 if user.nil?
     # Use DB aggregation for efficiency and handle nil credits gracefully
-    user.ships.sum(:credits_awarded).to_f
+    Ship.joins(:project).where(projects: { user_id: user.id, deleted_at: nil }).sum(:credits_awarded).to_f
+  end
+
+  # Return available balance for a user: total shipped credits minus amount spent
+  def user_balance(user)
+    return 0 if user.nil?
+    # Sum credits across all ships that belong to the user's projects (avoid N+1)
+    ships_sum = Ship.joins(:project).where(projects: { user_id: user.id, deleted_at: nil }).sum(:credits_awarded).to_f
+    ships_sum - (user.amount_spent || 0.0)
   end
 
   # Calculate total ships for a project

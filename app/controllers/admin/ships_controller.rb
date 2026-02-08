@@ -6,10 +6,17 @@ module Admin
 
     def index
       # Exclude ships whose project was removed/deleted by joining projects
-      @ships = Ship.joins(:project).includes(:project, :user).order(shipped_at: :desc).limit(100)
+      # Exclude ships that belong to deleted projects
+      @ships = Ship.joins(:project).where(projects: { deleted_at: nil }).includes(:project, :user).order(shipped_at: :desc).limit(100)
     end
 
     def show
+      # Sync multiplier to/from related request on page load so admin UI reflects authoritative values
+      begin
+        @ship.sync_multiplier_with_request
+      rescue => e
+        Rails.logger.error("Failed to sync multiplier on Ship show ##{@ship.id}: #{e.message}")
+      end
     end
 
     def edit
@@ -17,15 +24,16 @@ module Admin
 
     def update
       # permit editing these fields
-      permitted = params.require(:ship).permit(:devlogged_seconds, :credits_awarded, :shipped_at, :credits_per_hour, :recalculate)
+      permitted = params.require(:ship).permit(:devlogged_seconds, :credits_awarded, :shipped_at, :credits_per_hour, :recalculate, :multiplier)
 
       # optionally recalculate credits based on credits_per_hour param or project's rate
       if permitted[:recalculate].present? && permitted[:recalculate].to_s != '0'
         rate = permitted[:credits_per_hour].presence || @ship.project.credits_per_hour
         if rate.present?
           secs = (permitted[:devlogged_seconds].presence || @ship.devlogged_seconds).to_f
-          computed = format_credits(rate.to_f * (secs / 3600.0))
-          # compute float and round to 2 decimal places for currency
+          # compute numeric credits (don't call view helpers from controllers)
+          computed = rate.to_f * (secs / 3600.0)
+          # compute float and round to 6 decimal places for currency
           permitted[:credits_awarded] = computed.round(6)
         end
       end
@@ -40,13 +48,20 @@ module Admin
       attrs[:devlogged_seconds] = permitted[:devlogged_seconds] if permitted[:devlogged_seconds].present?
       attrs[:credits_awarded] = new_credits if permitted[:credits_awarded].present?
       attrs[:shipped_at] = permitted[:shipped_at] if permitted[:shipped_at].present?
+      attrs[:multiplier] = permitted[:multiplier] if permitted.key?(:multiplier)
 
       ActiveRecord::Base.transaction do
         @ship.update!(attrs)
 
         if credits_delta != 0.0
           owner = @ship.project.user
-          owner.update!(currency: (owner.currency || 0) + credits_delta)
+          # Recalculate user's currency from canonical sources (ships total - spent)
+          begin
+            owner.recalculate_currency!
+          rescue => e
+            Rails.logger.error("Failed to recalculate currency for User ##{owner&.id}: #{e.message}")
+          end
+
           Audit.create!(user: current_user, project: @ship.project, action: 'adjust_ship_credits', details: { ship_id: @ship.id, delta: credits_delta, new_credits: new_credits })
         end
 

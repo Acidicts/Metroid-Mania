@@ -97,14 +97,6 @@
     <% # Build timeline like the devlogs index: show ship markers and user devlogs (grouped) %>
     <% devlogs = @project.devlogs.where.not(user_id: nil).order(log_date: :desc, created_at: :desc).to_a %>
     <% markers = [] %>
-    <% @project.ship_requests.order(requested_at: :desc).each do |r| %>
-      <% unless r.devlogs.where.not(user_id: nil).exists? %>
-        <% markers << { type: 'request', time: r.requested_at || r.created_at, obj: r } %>
-      <% else %>
-        <%# There are user devlogs linked to this request; still include the marker so we can show the grouped devlogs below it. %>
-        <% markers << { type: 'request', time: r.requested_at || r.created_at, obj: r } %>
-      <% end %>
-    <% end %>
     <% @project.ships.order(shipped_at: :desc).each do |s| %>
       <% markers << { type: 'ship', time: s.shipped_at || s.created_at, obj: s } %>
     <% end %>
@@ -123,24 +115,7 @@
 
         <% if next_marker && (next_devlog.nil? || (next_marker_time && next_devlog_time && next_marker_time > next_devlog_time) || (next_marker_time && next_devlog_time.nil?)) %>
           <% m = markers.shift %>
-          <% if m[:type] == 'ship' %>
-            <%= render partial: 'devlogs/ship', locals: { ship: m[:obj] } %>
-          <% else %>
-            <% sr = m[:obj] %>
-            <%= render partial: 'devlogs/ship_request', locals: { ship_request: sr, project: @project } %>
-
-            <% sr.devlogs.order(log_date: :desc, created_at: :desc).each do |linked| %>
-              <% next if linked.user.nil? %>
-              <% if (idx = devlogs.index { |d| d.id == linked.id }) %>
-                <% devlogs.delete_at(idx) %>
-              <% end %>
-
-              <%= render linked %>
-              <p>
-                <%= link_to "Show this devlog", project_devlog_path(@project, linked) %>
-              </p>
-            <% end %>
-          <% end %>
+          <%= render partial: 'devlogs/ship', locals: { ship: m[:obj] } %>
         <% else %>
           <% d = devlogs.shift %>
           <%= render d %>

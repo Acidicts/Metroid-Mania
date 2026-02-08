@@ -52,12 +52,14 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_empty p.reload.hackatime_ids
   end
 
-  test "should destroy project" do
-    assert_difference("Project.count", -1) do
-      delete project_url(@project)
-    end
+  test "should destroy project (soft-delete)" do
+    delete project_url(@project)
 
     assert_redirected_to projects_url
+
+    @project.reload
+    assert_not_nil @project.deleted_at
+    assert_equal 'Deleted Project', @project.name
   end
 
   test "owner can request ship and admin approves to ship" do

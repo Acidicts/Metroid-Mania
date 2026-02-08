@@ -28,7 +28,7 @@ class DevlogsControllerTest < ActionDispatch::IntegrationTest
 
     # Give this project a limited total_seconds and make existing devlogs fill most of it
     project.update!(total_seconds: 60 * 60)
-    project.devlogs.create!(title: 'filler', content: 'fill', log_date: Date.current, duration_minutes: 55)
+    project.devlogs.create!(title: 'filler', content: 'fill', log_date: Date.current, duration_minutes: 55, user: project.user)
 
     assert_no_difference("Devlog.count") do
       post project_devlogs_url(project), params: { devlog: { title: 'Too short', content: 'Not enough time' } }

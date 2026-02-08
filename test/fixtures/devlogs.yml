@@ -2,6 +2,7 @@
 
 one:
   project: one
+  user: one
   title: MyString
   content: MyText
   log_date: 2026-01-14
@@ -9,6 +10,7 @@ one:
 
 two:
   project: two
+  user: two
   title: MyString
   content: MyText
   log_date: 2026-01-14

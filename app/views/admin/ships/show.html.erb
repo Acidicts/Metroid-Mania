@@ -1,54 +1,25 @@
 <div class="admin-panel">
-  <h1>Ship ##<%= @ship.id %> for <%= @ship.project&.name || 'Project removed' %></h1>
-      <p>Shipped at: <%= @ship.shipped_at %></p>
-<p>Devlogged seconds: <%= @ship.devlogged_seconds %> (<%= format_duration(@ship.devlogged_seconds.to_i) %>)</p>
-<p>Credits awarded: <%= @ship.credits_awarded %></p>
-<p>Processed by: <%= @ship.user&.name || @ship.user&.email %></p>
+  <h1>Ship #<%= @ship.id %> for <%= @ship.project&.name || 'Project removed' %></h1>
 
-<p style="margin-top:8px">
-  <%= link_to 'Edit Ship', '#', class: 'btn-admin', id: 'open-edit-panel' %>
-</p>
+  <p><strong>Shipped at:</strong> <%= @ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></p>
+  <p><strong>Devlogged seconds:</strong> <%= @ship.devlogged_seconds %> (<%= format_duration(@ship.devlogged_seconds.to_i) %>)</p>
+  <p><strong>Credits awarded:</strong> <%= @ship.credits_awarded %></p>
+  <p><strong>Multiplier:</strong> <%= @ship.multiplier.present? ? @ship.multiplier : '-' %></p>
+  <p><strong>Processed by:</strong> <%= @ship.user&.name || @ship.user&.email %></p>
 
-<div class="admin-two-col">
-  <div class="admin-two-col-main">
-    <h3>Related audit entries</h3>
-    <% if @ship.project %>
-      <% @ship.project.audits.order(created_at: :desc).each do |a| %>
-        <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
-          <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
-        </div>
-      <% end %>
-    <% else %>
-      <p><em>Related project removed; no audits available.</em></p>
+  <p style="margin-top:8px">
+    <%= link_to 'Edit Ship', edit_admin_ship_path(@ship), class: 'btn-admin' %>
+    <%= link_to '← Back to Ships', admin_ships_path, class: 'btn-admin btn-admin--muted', style: 'margin-left:8px' %>
+  </p>
+
+  <h3 style="margin-top:24px">Related audit entries</h3>
+  <% if @ship.project %>
+    <% @ship.project.audits.order(created_at: :desc).each do |a| %>
+      <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
+        <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
+      </div>
     <% end %>
-  </div>
-
-  <aside class="admin-side-panel" id="ship-edit-panel">
-    <div class="panel-header">
-      <h3>Edit Ship</h3>
-      <button class="close-panel" aria-label="Close edit panel">✕</button>
-    </div>
-
-    <div class="panel-body">
-      <%= render 'form', ship: @ship %>
-    </div>
-  </aside>
+  <% else %>
+    <p><em>Related project removed; no audits available.</em></p>
+  <% end %>
 </div>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    var panel = document.getElementById('ship-edit-panel')
-    var open = document.getElementById('open-edit-panel')
-    var closeBtn = panel && panel.querySelector('.close-panel')
-    if (!open || !panel) return
-    open.addEventListener('click', function (e) { e.preventDefault(); panel.classList.add('open'); panel.scrollIntoView({behavior: 'smooth'}); })
-    if (closeBtn) closeBtn.addEventListener('click', function () { panel.classList.remove('open') })
-  })
-</script>
-
-<h3>Related audit entries</h3>
-<% @ship.project.audits.order(created_at: :desc).each do |a| %>
-  <div style="border:1px solid #ddd; padding:8px; margin-bottom:6px;">
-    <strong><%= a.action %></strong> — <%= a.details %> <small><%= a.created_at %></small>
-  </div>
-<% end %>

@@ -1,0 +1,94 @@
+<div class="nb-timeline-item">
+  <div class="nb-timeline-dot dot-ship"></div>
+  <% 
+    # Determine styling based on request status
+    card_class = case ship_request.status
+                 when 'pending'
+                   'nb-card card-ship'
+                 when 'approved'
+                   'nb-card card-ship'
+                 when 'rejected'
+                   'nb-card'
+                 else
+                   'nb-card card-ship'
+                 end
+    
+    # Apply additional styling for rejected
+    extra_style = ship_request.status == 'rejected' ? 'border-left: 8px solid var(--nb-red); background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);' : ''
+  %>
+  <div id="ship_<%= ship.id %>" class="<%= card_class %>" style="<%= extra_style %>">
+    <div class="nb-meta">
+      <span class="nb-badge badge-ship">🚀 Ship <%= ship.project.ships.where('shipped_at <= ?', ship.shipped_at).count %></span>
+      <% if ship_request.status == 'pending' %>
+        <span class="nb-badge badge-request" style="margin-left:8px; background: var(--nb-yellow); border-color: var(--nb-border);">⏳ Pending Approval</span>
+      <% elsif ship_request.status == 'rejected' %>
+        <span class="nb-badge" style="margin-left:8px; background: var(--nb-red); color: #fff; border-color: var(--nb-border);">✕ Rejected</span>
+      <% elsif ship_request.status == 'approved' %>
+        <span class="nb-badge" style="margin-left:8px; background: var(--nb-green); color: var(--nb-text); border-color: var(--nb-border);">✓ Approved</span>
+      <% end %>
+      <span class="nb-timestamp" style="margin-left:auto"><%= ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></span>
+    </div>
+
+    <% hours = (ship.devlogged_seconds.to_i / 3600.0).round(2) %>
+    <% credits_display = ship.credits_awarded.to_f > 0 ? format_credits(ship.credits_awarded) : (ship_request.credits_awarded.present? ? format_credits(ship_request.credits_awarded) : "-") %>
+    <% multiplier_display = ship_request.respond_to?(:multiplier) && ship_request.multiplier.present? ? ship_request.multiplier : (ship.multiplier.present? ? ship.multiplier : "-") %>
+    <% devlogs_count = ship_request.devlogs.where.not(user_id: nil).count %>
+
+    <div class="nb-stats">
+      <div class="nb-stat">
+        <span class="nb-stat-label">Hours</span>
+        <span class="nb-stat-value"><%= hours %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Credits</span>
+        <span class="nb-stat-value"><%= credits_display %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Multiplier</span>
+        <span class="nb-stat-value"><%= multiplier_display %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Devlogs</span>
+        <span class="nb-stat-value"><%= devlogs_count %></span>
+      </div>
+    </div>
+
+    <% if ship_request.status == 'rejected' %>
+      <div class="nb-content" style="background: #fef2f2; border-color: var(--nb-red);">
+        <p style="margin:0; color: var(--nb-red); font-weight: 600;">This ship was rejected</p>
+        <p style="margin-top:8px; margin-bottom:0">
+          <strong>Request:</strong> <%= link_to "Request ##{ship_request.id}", project_ship_request_path(project, ship_request) %><br>
+          <% if ship_request.processed_by %>
+            <strong>Rejected by:</strong> <%= ship_request.processed_by&.name || ship_request.processed_by&.email %><br>
+          <% end %>
+          <strong>Processed:</strong> <%= ship_request.approved_at&.strftime("%b %-d, %Y %l:%M %p") %>
+        </p>
+      </div>
+    <% else %>
+      <% if ship_request.status == 'pending' %>
+        <div class="nb-content" style="background: #fefce8; border-color: var(--nb-yellow);">
+          <p style="margin:0; color: #854d0e; font-weight: 600;">⏳ Awaiting admin approval</p>
+          <p style="margin-top:8px; margin-bottom:0">
+            <strong>Request:</strong> <%= link_to "Request ##{ship_request.id}", project_ship_request_path(project, ship_request) %>
+          </p>
+        </div>
+      <% end %>
+
+      <% if ship_request.devlogs.any? %>
+        <ul class="nb-devlog-list">
+          <% ship_request.devlogs.order(log_date: :desc).each do |d| %>
+            <% next if d.user.nil? %>
+            <li>
+              <%= link_to(d.title.presence || "Devlog ##{d.id}", project_devlog_path(ship.project, d)) %>
+              <span class="nb-timestamp"><%= d.log_date || d.created_at %> · <%= format_duration(d.duration_minutes * 60) %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+
+    <div class="nb-linkbar" style="margin-top:12px">
+      <%= link_to "View Request →", project_ship_request_path(project, ship_request), class: "nb-btn nb-btn-primary nb-btn-sm" %>
+    </div>
+  </div>
+</div>
