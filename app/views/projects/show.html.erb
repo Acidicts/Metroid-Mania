@@ -67,7 +67,7 @@
               <% if @project.ship_requests.where(status: 'pending').exists? %>
                 <%= link_to 'View request', project_ship_request_path(@project, @project.ship_requests.where(status: 'pending').first), class: 'btn-retro btn-retro--outline' %>
               <% end %>
-              <%= link_to 'Ship Requests', project_ship_requests_path(@project), class: 'btn-retro btn-retro--outline', style: 'margin-left:8px' %>            <% elsif !@project.eligible_for_ship_request? %>
+              <% elsif !@project.eligible_for_ship_request? %>
               <% remaining = [15 - @project.devlogged_minutes_since_baseline.to_i, 0].max %>
               <span style="font-size:1.2rem">You need <strong style="font-family:monospace;"><%= remaining %></strong> more minutes of devlogs</span>
             <% elsif @project.eligible_for_ship_request? %>
@@ -82,16 +82,74 @@
     </aside>
   </section>
 
-  <hr style="margin:24px 0">
+  <hr style="margin-top: 64px; margin:24px 0">
 
   <div class="devlogs-section">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
       <h2>Devlogs</h2>
-      <%= link_to "New Devlog", new_project_devlog_path(@project), class: "btn-retro" %>
+      <% if (@project.total_seconds.to_i - @project.total_devlogged_seconds) > 900 %>
+        <%= link_to "New Devlog", new_project_devlog_path(@project), class: "btn-retro" %>
+      <% else %>
+        <button class="btn-retro-disabled" disabled>New Devlog</button>
+      <% end %>
     </div>
 
-    <% if @project.devlogs.any? %>
-      <%= render @project.devlogs.order(log_date: :desc) %>
+    <% # Build timeline like the devlogs index: show ship markers and user devlogs (grouped) %>
+    <% devlogs = @project.devlogs.where.not(user_id: nil).order(log_date: :desc, created_at: :desc).to_a %>
+    <% markers = [] %>
+    <% @project.ship_requests.order(requested_at: :desc).each do |r| %>
+      <% unless r.devlogs.where.not(user_id: nil).exists? %>
+        <% markers << { type: 'request', time: r.requested_at || r.created_at, obj: r } %>
+      <% else %>
+        <%# There are user devlogs linked to this request; still include the marker so we can show the grouped devlogs below it. %>
+        <% markers << { type: 'request', time: r.requested_at || r.created_at, obj: r } %>
+      <% end %>
+    <% end %>
+    <% @project.ships.order(shipped_at: :desc).each do |s| %>
+      <% markers << { type: 'ship', time: s.shipped_at || s.created_at, obj: s } %>
+    <% end %>
+    <% markers.sort_by! { |m| m[:time] || Time.at(0) }.reverse! %>
+
+    <% if devlogs.any? || markers.any? %>
+      <%# Merge loop %>
+      <div id="devlogs" class="timeline">
+      <% while devlogs.any? || markers.any? %>
+        <% next_devlog = devlogs.first %>
+        <% next_marker = markers.first %>
+
+        <%# Compare full timestamps (created_at) for accurate ordering %>
+        <% next_devlog_time = next_devlog ? next_devlog.created_at : nil %>
+        <% next_marker_time = next_marker ? next_marker[:time] : nil %>
+
+        <% if next_marker && (next_devlog.nil? || (next_marker_time && next_devlog_time && next_marker_time > next_devlog_time) || (next_marker_time && next_devlog_time.nil?)) %>
+          <% m = markers.shift %>
+          <% if m[:type] == 'ship' %>
+            <%= render partial: 'devlogs/ship', locals: { ship: m[:obj] } %>
+          <% else %>
+            <% sr = m[:obj] %>
+            <%= render partial: 'devlogs/ship_request', locals: { ship_request: sr, project: @project } %>
+
+            <% sr.devlogs.order(log_date: :desc, created_at: :desc).each do |linked| %>
+              <% next if linked.user.nil? %>
+              <% if (idx = devlogs.index { |d| d.id == linked.id }) %>
+                <% devlogs.delete_at(idx) %>
+              <% end %>
+
+              <%= render linked %>
+              <p>
+                <%= link_to "Show this devlog", project_devlog_path(@project, linked) %>
+              </p>
+            <% end %>
+          <% end %>
+        <% else %>
+          <% d = devlogs.shift %>
+          <%= render d %>
+          <p>
+            <%= link_to "Show this devlog", project_devlog_path(@project, d) %>
+          </p>
+        <% end %>
+      <% end %>
+      </div>
     <% else %>
       <p>No devlogs yet. Document your progress!</p>
     <% end %>

@@ -214,4 +214,49 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_dashboard_url
     assert_equal 'shipped', project.reload.status
   end
+
+  test "destroy soft-deletes project and hides from admin lists" do
+    sign_in_as(@admin, password: 'password')
+
+    owner = @project.user
+    owner.update!(currency: 100.0)
+
+    # measure existing awarded credits, then add another Ship with awarded credits to ensure they get reclaimed
+    pre_awarded = Ship.where(project: @project).sum(:credits_awarded).to_f
+    ship = Ship.create!(project: @project, user: @admin, shipped_at: Time.current, devlogged_seconds: 3600, credits_awarded: 50.0)
+    total_awarded = pre_awarded + 50.0
+
+    assert_no_difference 'Project.count' do
+      post delete_admin_project_url(@project)
+    end
+
+    @project.reload
+    owner.reload
+
+    assert_not_nil @project.deleted_at
+    assert_equal 'deleted', @project.status
+    assert_equal 'Deleted Project', @project.name
+    assert_equal [], @project.hackatime_ids
+
+    # ship should have been zeroed
+    ship.reload
+    assert_equal 0.0, ship.credits_awarded.to_f
+    assert_equal 0, ship.devlogged_seconds.to_i
+
+    # owner's currency should have been reduced by reclaimed amount
+    assert_in_delta total_awarded, 100.0 - owner.currency.to_f, 0.001
+
+    assert_redirected_to admin_dashboard_url
+    assert_audit_created(action: 'delete', project: @project, user: @admin)
+
+    # Deleted project should not appear in the admin index (link to the specific project must be absent)
+    get admin_projects_url
+    assert_response :success
+    assert_select "a[href='#{admin_project_path(@project)}']", count: 0
+
+    # Nor should it appear on the dashboard recent projects list
+    get admin_dashboard_url
+    assert_response :success
+    assert_select "a[href='#{admin_project_path(@project)}']", count: 0
+  end
 end

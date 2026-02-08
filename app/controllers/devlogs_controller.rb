@@ -1,11 +1,14 @@
 class DevlogsController < ApplicationController
   before_action :set_project
   before_action :set_devlog, only: %i[ show edit update destroy ]
+  before_action :ensure_editable, only: %i[ edit update destroy ]
 
   # GET /projects/:project_id/devlogs
   def index
-    @devlogs = @project.devlogs.order(created_at: :desc)
+    # Show only user-created devlogs in the main listing (system-generated devlogs are represented by ship/ship-request markers).
+    @devlogs = @project.devlogs.where.not(user_id: nil).order(log_date: :desc, created_at: :desc)
     @ships = @project.ships.order(shipped_at: :desc)
+    @ship_requests = @project.ship_requests.order(requested_at: :desc)
   end
 
   # GET /projects/:project_id/devlogs/1
@@ -40,6 +43,9 @@ class DevlogsController < ApplicationController
   # POST /projects/:project_id/devlogs
   def create
     @devlog = @project.devlogs.build(devlog_params)
+
+    # Record the creator
+    @devlog.user = current_user if defined?(current_user)
 
     # Set log date to today (server-side)
     @devlog.log_date = Date.current
@@ -110,6 +116,15 @@ class DevlogsController < ApplicationController
 
     def set_devlog
       @devlog = @project.devlogs.find(params[:id])
+    end
+
+    def ensure_editable
+      unless @devlog.editable_by?(current_user)
+        respond_to do |format|
+          format.html { redirect_to project_path(@project), alert: "You are not permitted to edit this devlog." }
+          format.json { render json: { error: "You are not permitted to edit this devlog." }, status: :forbidden }
+        end
+      end
     end
 
     def devlog_params

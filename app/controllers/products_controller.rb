@@ -23,6 +23,18 @@ class ProductsController < ApplicationController
   # POST /products or /products.json
   def create
     @product = Product.new(product_params)
+
+    # Handle image file upload if provided (best-effort)
+    if params.dig(:product, :image_file).present?
+      begin
+        uploaded = CdnService.upload(params[:product][:image_file])
+        @product.image_url = uploaded['url'] if uploaded && uploaded['url']
+      rescue => e
+        Rails.logger.warn "Image upload failed during product create: #{e.message}"
+        @product.errors.add(:image_url, "upload failed")
+      end
+    end
+
     @product.update_price_from_steam!
 
     respond_to do |format|
@@ -38,6 +50,17 @@ class ProductsController < ApplicationController
 
   # PATCH/PUT /products/1 or /products/1.json
   def update
+    # Handle image file upload if provided (best-effort)
+    if params.dig(:product, :image_file).present?
+      begin
+        uploaded = CdnService.upload(params[:product][:image_file])
+        @product.image_url = uploaded['url'] if uploaded && uploaded['url']
+      rescue => e
+        Rails.logger.warn "Image upload failed during product update: #{e.message}"
+        @product.errors.add(:image_url, "upload failed")
+      end
+    end
+
     respond_to do |format|
       if @product.update(product_params)
         @product.update_price_from_steam!
@@ -83,7 +106,8 @@ class ProductsController < ApplicationController
         :grant_min_dollars,    # more intuitive admin input (virtual setter)
         :grant_max_dollars,    # virtual setter
         :grant_amount_cents,
-        :grant_amount_dollars
+        :grant_amount_dollars,
+        :image_url
       )
     end
 end

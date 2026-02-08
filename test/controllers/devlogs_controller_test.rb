@@ -53,6 +53,10 @@ class DevlogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should get edit" do
+    admin = users(:one)
+    admin.update!(role: :admin, email: 'admin@example.com', password: 'password', uid: "admin-#{SecureRandom.uuid}")
+    sign_in_as(admin, password: 'password')
+
     get edit_project_devlog_url(@devlog.project, @devlog)
     assert_response :success
   end
@@ -63,6 +67,10 @@ class DevlogsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should destroy devlog" do
+    admin = users(:one)
+    admin.update!(role: :admin, email: 'admin2@example.com', password: 'password', uid: "admin-#{SecureRandom.uuid}")
+    sign_in_as(admin, password: 'password')
+
     assert_difference("Devlog.count", -1) do
       delete project_devlog_url(@devlog.project, @devlog)
     end

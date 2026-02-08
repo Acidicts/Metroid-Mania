@@ -30,7 +30,14 @@ class Project < ApplicationRecord
   end
 
   def total_devlogged_seconds
-    devlogs.sum(:duration_minutes) * 60
+    # Exclude system-generated devlogs (those associated with ShipRequest)
+    devlogs.where(ship_request_id: nil).sum(:duration_minutes) * 60
+  end
+
+  # Remaining seconds on the project that have not been devlogged yet.
+  # Used by views/controllers to determine if a user can create a devlog.
+  def undocumented_seconds
+    [total_seconds.to_i - total_devlogged_seconds, 0].max
   end
 
   # Return array of target names to query in Hackatime. Backwards compatible with `hackatime_id`.
@@ -77,7 +84,15 @@ class Project < ApplicationRecord
   public
 
   # Allowed statuses for projects
-  STATUSES = %w[unshipped pending shipped rejected].freeze
+  STATUSES = %w[unshipped pending shipped rejected deleted].freeze
+
+  # Scope for non-deleted projects
+  scope :active, -> { where(deleted_at: nil) }
+
+  # Soft-delete predicate
+  def deleted?
+    deleted_at.present?
+  end
 
   # Set default status for new projects
   before_create do
@@ -91,9 +106,9 @@ class Project < ApplicationRecord
     shipped_at || created_at
   end
 
-  # Minutes of devlogged work created since baseline
+  # Minutes of devlogged work created since baseline (exclude system-generated devlogs)
   def devlogged_minutes_since_baseline
-    devlogs.where('created_at >= ?', ship_baseline).sum(:duration_minutes).to_i
+    devlogs.where(ship_request_id: nil).where('created_at >= ?', ship_baseline).sum(:duration_minutes).to_i
   end
 
   # Can the owner request a ship? Must not already be pending and at least 15 minutes of devlogs since baseline

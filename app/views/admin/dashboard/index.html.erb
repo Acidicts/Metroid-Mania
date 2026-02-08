@@ -103,8 +103,7 @@
         </tr>
       </thead>
       <tbody>
-        <% Project.order(created_at: :desc).limit(20).each do |project| %>
-          <% if project.name != "Deleted Project" %>
+        <% Project.active.order(created_at: :desc).limit(20).each do |project| %>
             <tr>
               <td><%= project.name %></td>
               <td><%= project.computed_status %></td>
@@ -121,7 +120,6 @@
                 <% end %>
               </td>
             </tr>
-          <% end %>
         <% end %>
       </tbody>
     </table>

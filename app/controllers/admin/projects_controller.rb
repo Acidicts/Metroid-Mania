@@ -1,10 +1,12 @@
 module Admin
   class ProjectsController < Admin::ApplicationController
     before_action :require_admin
-    before_action :set_project, only: [:show, :approve, :reject, :ship, :unship, :set_status, :force_ship]
+    before_action :set_project, only: [:show, :approve, :reject, :ship, :unship, :set_status, :force_ship, :destroy]
+    # Prevent acting on projects that have been soft-deleted
+    before_action :ensure_not_deleted, only: [:show, :approve, :reject, :ship, :unship, :set_status, :force_ship]
 
     def index
-      @projects = Project.all
+      @projects = Project.active.where.not(name: "Deleted Project").order(created_at: :desc)
     end
 
     def show
@@ -95,10 +97,37 @@ module Admin
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project marked as unshipped.'
     end
 
-    def delete
-      @project.destroy
-      Audit.create!(user: current_user, project: @project, action: 'delete', details: {})
+    def destroy
+      # Soft-delete: set deleted_at, mark status, and anonymize name/hackatime ids.
+      # Also zero out ship records (devlogged_seconds and credits_awarded) and refund any
+      # awarded credits from the project owner so accounting remains consistent.
+      Project.transaction do
+        owner = @project.user
+
+        total_awarded = @project.ships.sum(:credits_awarded).to_f
+
+        # Zero out ships related to this project
+        @project.ships.find_each do |s|
+          s.update!(credits_awarded: 0, devlogged_seconds: 0)
+        end
+
+        # Refund owner's currency by subtracting previously awarded amount
+        if total_awarded > 0 && owner.present?
+          owner.update!(currency: (owner.currency || 0) - total_awarded)
+        end
+
+        # Anonymize and clear hackatime linkage so others can use those ids
+        @project.update!(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: [])
+
+        Audit.create!(user: current_user, project: @project, action: 'delete', details: { reclaimed_credits: total_awarded })
+      end
+
       redirect_back fallback_location: admin_dashboard_path, notice: 'Project deleted.'
+    end
+
+    def ensure_not_deleted
+      return unless @project.deleted?
+      redirect_back fallback_location: admin_projects_path, alert: 'Project has been deleted.'
     end
 
     # POST /admin/projects/:id/force_ship

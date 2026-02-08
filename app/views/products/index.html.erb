@@ -3,6 +3,14 @@
 
 <% content_for :styles do %>
   <style>
+    /* Product grid and cards */
+    .products-grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
+    .product-card { display: flex; gap: 12px; align-items: stretch; border-radius: 8px; padding: 8px; border: 1px solid rgba(0,0,0,0.06); background: #fff; position: relative; min-height: 170px; }
+    .product-image { max-width: 150px; max-height: 150px; object-fit: cover; border-radius: 4px; }
+    .product-content { flex: 1 1 auto; position: relative; padding: 6px 8px; }
+    .product-content h3 { margin-top: 0; margin-bottom: 6px; }
+    .buy-button { position: absolute; right: 8px; bottom: 8px; }
+
     body.products .products-placeholder { display: block; }
   </style>
 <% end %>
@@ -17,21 +25,19 @@
 <div id="products" class="products-grid">
   <% @products.each do |product| %>
     <div class="product-card">
-      <h3><%= product.name %></h3>
-      <p>Cost (Credits): <% if product.cost_in_credits %><%= sprintf('%.2f', product.cost_in_credits) %><% else %><em>from price × ratio</em><% end %></p>
+      <img src="<%= product.image_url %>" alt="<%= product.name %> image" class="product-image" loading="lazy">
+      <div class="product-content">
+        <h3><%= product.name %></h3>
+        <p><%= credit_label %>: <% if product.cost_in_credits.present? %><%= sprintf('%.2f', product.cost_in_credits) %><% else %><em>from price × ratio</em><% end %></p>
 
-      <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro' %>
-      <% if admin? %>
-        <div style="margin-top:8px;">
-          <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
-          <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin', style: 'margin-left:6px' %>
-        </div>
-      <% end %>
-      <% if product.variable_grant? %>
-        <div style="font-size: 0.9em; margin-top: 6px;"><em>Grant: $<%= sprintf('%.2f', product.grant_min_dollars) %>–$<%= sprintf('%.2f', product.grant_max_dollars) %></em></div>
-      <% else %>
-        <div style="font-size: 0.9em; margin-top: 6px;"><em>Fixed Item</em></div>
-      <% end %>
+        <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro buy-button' %>
+        <% if admin? %>
+          <div style="margin-top:8px;">
+            <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
+            <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin', style: 'margin-left:6px' %>
+          </div>
+        <% end %>
+      </div>
     </div>
   <% end %>
 </div>

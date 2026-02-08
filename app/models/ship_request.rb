@@ -10,10 +10,85 @@ class ShipRequest < ApplicationRecord
   validates :status, inclusion: { in: STATUSES }
 
   after_commit :recalculate_project_status, on: [:create, :update, :destroy]
+  after_create_commit :create_ship_request_devlog
+  after_update_commit :sync_ship_request_devlog
 
   def pending?
     status == 'pending'
   end
+
+  private
+
+  # Create a non-editable devlog representing this ship request.
+  def create_ship_request_devlog
+    begin
+      # Human-friendly duration. Use helper when possible.
+      formatted_time = if devlogged_seconds.present? && devlogged_seconds.to_i > 0
+                         ApplicationController.helpers.format_duration(devlogged_seconds.to_i)
+                       else
+                         "-"
+                       end
+
+      credits = credits_awarded.present? ? credits_awarded : "-"
+      multiplier = respond_to?(:multiplier) && multiplier.present? ? multiplier : "-"
+
+      content = <<~TEXT
+        Time in ship: #{formatted_time}
+        Requested at: #{requested_at || created_at}
+        Credits earned: #{credits}
+        Multiplier: #{multiplier}
+      TEXT
+
+      # Use the recorded devlogged seconds to compute minutes; allow 0 minutes for system entries
+      duration_min = (devlogged_seconds.to_i / 60).to_i
+
+      project.devlogs.create!(title: "Ship request ##{id}", content: content.strip, duration_minutes: duration_min, log_date: (requested_at || created_at).to_date, ship_request: self)
+    rescue => e
+      Rails.logger.error "Failed to create ship request devlog for ShipRequest ##{id}: #{e.message}"
+    end
+  end
+
+  # Update the system devlog when the ship request is updated (e.g. credits awarded)
+  def sync_ship_request_devlog
+    d = devlogs.find_by(title: "Ship request ##{id}") || devlogs.where(ship_request: self).order(:created_at).first
+    return unless d
+
+    begin
+      formatted_time = if devlogged_seconds.present? && devlogged_seconds.to_i > 0
+                         ApplicationController.helpers.format_duration(devlogged_seconds.to_i)
+                       else
+                         "-"
+                       end
+
+      credits = credits_awarded.present? ? credits_awarded : "-"
+      multiplier = respond_to?(:multiplier) && multiplier.present? ? multiplier : "-"
+
+      # If a Ship has been created for this request, show Ship # and awarded credits
+      ship = associated_ship
+      if ship
+        ship_number = project.ships.where('shipped_at <= ?', ship.shipped_at).count
+        title = "Ship ##{ship_number}"
+        awarded_credits = ship.credits_awarded.present? ? ApplicationController.helpers.format_credits(ship.credits_awarded) : "-"
+        credits_line = "Credits awarded to owner: #{awarded_credits}"
+      else
+        title = "Ship request ##{id}"
+        credits_line = "Credits earned: #{credits}"
+      end
+
+      new_content = <<~TEXT
+        Time in ship: #{formatted_time}
+        Requested at: #{requested_at || created_at}
+        #{credits_line}
+        Multiplier: #{multiplier}
+      TEXT
+
+      d.update_columns(title: title, content: new_content.strip, duration_minutes: (devlogged_seconds.to_i / 60).to_i)
+    rescue => e
+      Rails.logger.error "Failed to sync ship request devlog for ShipRequest ##{id}: #{e.message}"
+    end
+  end
+
+  public
 
   # Find a Ship that corresponds to this request. Prefer a ship recorded at the
   # same time as the request's approved_at (when present), otherwise the first
@@ -35,6 +110,8 @@ class ShipRequest < ApplicationRecord
     return credits_awarded if credits_awarded.present?
     associated_ship&.credits_awarded
   end
+
+  public
 
   # Approve this request: create the Ship (via project helper which awards credits)
   # Returns the created Ship record

@@ -26,6 +26,24 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to product_url(Product.last)
   end
 
+  test "should create product with uploaded image" do
+    tmp = create_sample_image('product_upload.png')
+    fake = { 'url' => 'https://cdn.hackclub.com/abcd/product_upload.png' }
+
+    orig = CdnService.method(:upload)
+    CdnService.define_singleton_method(:upload) { |_f| fake }
+    begin
+      assert_difference("Product.count") do
+        post products_url, params: { product: { name: 'WithImage', price_currency: 1.23, image_file: fixture_file_upload(tmp, 'image/png') } }
+      end
+
+      p = Product.last
+      assert_equal 'https://cdn.hackclub.com/abcd/product_upload.png', p.image_url
+    ensure
+      CdnService.define_singleton_method(:upload) { |*a, &b| orig.call(*a, &b) }
+    end
+  end
+
   test "should show product" do
     get product_url(@product)
     assert_response :success

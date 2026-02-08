@@ -3,8 +3,8 @@ module Admin
     before_action :require_admin
 
     def index
-      @projects_count = Project.where.not(name: "Deleted Project").count
-      @projects_pending_count = Project.where(status: 'pending').where.not(name: "Deleted Project").count
+      @projects_count = Project.active.count
+      @projects_pending_count = Project.where(status: 'pending').where(deleted_at: nil).count
       @orders_count = Order.count
       @users_count = User.where.not(name: "Deleted User").count
       @ships_count = Ship.where.not(user: User.where(name: "Deleted User")).count
@@ -12,8 +12,8 @@ module Admin
       @orders_denied_count = Order.where(status: '1').count
       @orders_fulfilled_count = Order.where(status: '2').count
 
-      # pending ship requests for quick admin access
-      @ship_requests_pending_count = ShipRequest.where(status: 'pending').where.not(project: Project.where(name: "Deleted Project")).count
+      # pending ship requests for quick admin access (exclude those for deleted projects)
+      @ship_requests_pending_count = ShipRequest.joins(:project).where(status: 'pending').where(projects: { deleted_at: nil }).count
     end
   end
 end

@@ -6,6 +6,14 @@ module Admin
     def new
       if auto_admin_enabled?
         admin = find_or_create_dev_admin
+
+        # Attempt to set region for auto-created dev admin (development/test convenience)
+        begin
+          admin.set_region_from_ip(request.remote_ip)
+        rescue => e
+          Rails.logger.warn("Failed to set region for auto-admin #{admin.email}: #{e.message}")
+        end
+
         session[:user_id] = admin.id
         Rails.logger.info("[auto_admin] signed in #{admin.email}") if Rails.env.development? || Rails.env.test?
         flash[:notice] = "Auto-signed in as #{admin.email} (development only)"
@@ -22,6 +30,13 @@ module Admin
     def create
       user = User.find_by(email: params[:email])
       if user&.authenticate(params[:password]) && user.admin?
+        # Set region on admin sign-in too
+        begin
+          user.set_region_from_ip(request.remote_ip)
+        rescue => e
+          Rails.logger.warn("Failed to set region for admin user #{user.id}: #{e.message}")
+        end
+
         session[:user_id] = user.id
         redirect_to admin_dashboard_path, notice: "Signed in as admin"
       else

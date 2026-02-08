@@ -6,6 +6,13 @@ class DevSessionsController < ApplicationController
     email = params[:email]
     user = User.find_by(email: email)
     if user
+      # Set region on dev sign-in as well
+      begin
+        user.set_region_from_ip(request.remote_ip)
+      rescue => e
+        Rails.logger.warn("Failed to set region for dev user #{user.id}: #{e.message}")
+      end
+
       session[:user_id] = user.id
       render plain: "Signed in", status: :ok
     else

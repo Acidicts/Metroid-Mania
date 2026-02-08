@@ -1,59 +1,75 @@
 <% unless content_for?(:styles) %>
   <% content_for :styles do %>
     <style>
-/* Styles for devlog content box */
-.devlog-content {
-  white-space: pre-wrap;
-  margin: 10px 0;
-  padding: 12px 14px;
-  background-color: #f8fafc; /* subtle light background */
-  border-left: 4px solid #007bff; /* accent color */
-  border-radius: 6px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-  color: #111827;
-}
+/* Styles for timeline and devlog content */
+.timeline { position: relative; padding-left: 72px; }
+.timeline::before { content: ""; position: absolute; left: 36px; top: 0; bottom: 0; width: 4px; background: #e6eef8; border-radius: 4px; }
+.timeline-item { position: relative; margin-bottom: 18px; }
+.timeline-icon { position: absolute; left: 0; top: 6px; width: 56px; height: 56px; border-radius: 50%; display:flex; align-items:center; justify-content:center; background: #0ea5e9; color: white; box-shadow: 0 2px 6px rgba(0,0,0,0.08); }
+.timeline-icon.ship { background: #f59e0b; }
+.timeline-icon.dev { background: #3b82f6; }
+.timeline-avatar { width: 40px; height: 40px; border-radius: 50%; display:flex; align-items:center; justify-content:center; background: #111827; color: #fff; font-weight:700; }
 
-/* Variant for longer entries */
-.devlog-content.long {
-  background-color: #fff7ed;
-  border-left-color: #f59e0b; /* amber accent */
-}
+.devlog-content { white-space: pre-wrap; margin: 4px 0; padding: 8px 10px; background-color: #f8fafc; border-left: 4px solid #007bff; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); color: #111827; line-height: 1.25; }
+.devlog-content p { margin: 0; }
+.devlog-content.long { background-color: #fff7ed; border-left-color: #f59e0b; }
 
-/* Small mobile tweak */
-@media (max-width: 480px) {
-  .devlog-content { padding: 10px; font-size: 0.95rem; }
-}
+/* Container for devlogs and marker entries */
+.devlog { border: 1px solid #e5e7eb; padding: 12px; margin-bottom: 12px; border-radius: 8px; background: #ffffff; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+
+.devlog.ship-request { background-color: #eef2ff; border-left: 4px solid #3b82f6; }
+.devlog.ship { background-color: #fff7ed; border-left: 4px solid #f59e0b; }
+
+/* Header and small tweaks */
+.devlog h3 { margin-top: 0; display: flex; justify-content: space-between; align-items: baseline; }
+.devlog .btn { margin-right: 6px; }
+
+/* Compact card header line */
+.devlog .meta { display:flex; gap:8px; align-items:center; color:#6b7280; font-size:0.95rem; margin-bottom:6px; }
+.devlog .meta .who { font-weight:700; color:#111827 }
+
+@media (max-width: 480px) { .devlog-content { padding: 10px; font-size: 0.95rem; } }
     </style>
   <% end %>
 <% end %>
 
-<div id="<%= dom_id devlog %>" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-  <h3 style="margin-top: 0; display: flex; justify-content: space-between; align-items: baseline;">
-    <strong style=""><%= devlog.title %></strong>
-    <small style="font-size: 0.8em; color: gray;"><%= devlog.log_date&.strftime("%b %-d, %Y") %></small>
-  </h3>
-
-  <% if devlog.ship_request.present? %>
-    <p style="margin:6px 0;">
-      <span style="background:#eef2ff; padding:4px 8px; border-radius:6px; font-weight:600;">Part of ship request: <%= link_to "##{devlog.ship_request.id}", project_ship_request_path(devlog.project, devlog.ship_request) %> (<%= devlog.ship_request.status %>)</span>
-    </p>
+<div class="timeline-item">
+  <%# Only show the dev icon for user-created devlogs; ship markers won't display an icon to keep the left rail clean %>
+  <% if devlog.user.present? %>
+    <div class="timeline-icon dev">📝</div>
   <% end %>
 
-  <div class="devlog-content">
-    <%= simple_format devlog.content %>
+  <div class="timeline-card" style="margin-left:72px">
+    <div id="<%= dom_id devlog %>" class="devlog">
+      <div class="meta">
+        <% if devlog.user.present? %>
+          <div class="who"><%= devlog.user.display_name %></div>
+        <% else %>
+          <div class="who"><%= devlog.project.user.display_name %></div>
+        <% end %>
+        <div class="when"><small><%= devlog.log_date&.strftime("%b %-d, %Y") %></small></div>
+      </div>
+
+      <h3 style="margin-top:0"><strong style=""><%= devlog.title %></strong></h3>
+
+      <div class="devlog-content">
+        <%= simple_format devlog.content %>
+      </div>
+
+      <% if devlog.duration_minutes && devlog.duration_minutes > 0 %>
+        <p style="margin:6px 0 0 0"><strong>Time logged:</strong> <%= format_duration(devlog.duration_minutes * 60) %></p>
+      <% end %>
+
+      <p style="margin-top: 8px;">
+        <% if devlog.ship_request.present? %>
+          <span style="background:#f3f4f6; padding:4px 8px; border-radius:6px; font-weight:600; color:#374151; margin-right:8px;">Auto-generated</span>
+        <% end %>
+
+        <% if defined?(current_user) && current_user && devlog.editable_by?(current_user) %>
+          <%= link_to "Edit", edit_project_devlog_path(devlog.project, devlog), class: "btn btn-sm" %>
+          <%= button_to "Delete", [devlog.project, devlog], method: :delete, data: { confirm: "Are you sure you want to delete this devlog?" }, form: { style: "display: inline" }, class: "btn btn-sm btn-danger" %>
+        <% end %>
+      </p>
+    </div>
   </div>
-
-  <% if devlog.duration_minutes && devlog.duration_minutes > 0 %>
-    <p>
-      <strong>Time logged:</strong> <%= format_duration(devlog.duration_minutes * 60) %>
-    </p>
-  <% end %>
-
-  <p style="margin-top: 8px;">
-    <% if defined?(current_user) && current_user && current_user == devlog.project.user %>
-      <%= link_to "Edit", edit_project_devlog_path(devlog.project, devlog), class: "btn btn-sm" %>
-      <%= button_to "Delete", [devlog.project, devlog], method: :delete, data: { confirm: "Are you sure you want to delete this devlog?" }, form: { style: "display: inline" }, class: "btn btn-sm btn-danger" %>
-    <% end %>
-  </p>
-
 </div>

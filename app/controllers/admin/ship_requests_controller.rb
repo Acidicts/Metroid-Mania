@@ -4,7 +4,8 @@ module Admin
     before_action :set_ship_request, only: [:show, :approve, :reject]
 
     def index
-      @ship_requests = ShipRequest.order(requested_at: :desc)
+      # Exclude ship requests that belong to deleted projects
+      @ship_requests = ShipRequest.joins(:project).where(projects: { deleted_at: nil }).order(requested_at: :desc)
     end
 
     def show
@@ -39,6 +40,9 @@ module Admin
 
     def set_ship_request
       @ship_request = ShipRequest.find(params[:id])
+      if @ship_request.project.deleted?
+        redirect_back fallback_location: admin_ship_requests_path, alert: 'Ship request belongs to a deleted project.'
+      end
     end
   end
 end

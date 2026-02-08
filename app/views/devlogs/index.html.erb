@@ -4,7 +4,7 @@
 
 <h1>Devlogs for <%= @project.name %></h1>
 
-<div id="devlogs">
+<div id="devlogs" class="timeline">
   <% # Build a single array of markers (both ship requests and ships) sorted by time desc %>
   <% markers = [] %>
   <% @ship_requests&.each do |r| %>
@@ -17,35 +17,56 @@
 
   <% markers = markers.to_a %>
 
-  <% @devlogs.each do |devlog| %>
-    <%# Insert any markers that occurred at or after this devlog's created_at %>
-    <% while markers.any? && (markers.first[:time] || Time.at(0)) >= devlog.created_at %>
-      <% m = markers.shift %>
-      <% if m[:type] == 'ship' %>
-        <div class="ship-marker">Project shipped on <%= m[:obj].shipped_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)</div>
+  <% # Merge markers and devlogs into a single timeline ordered by date (latest first)
+    devlogs = @devlogs.to_a
+    markers = markers.to_a
+
+    while devlogs.any? || markers.any? %>
+
+      <%# Compute next devlog time (date) and next marker time (date) for comparison %>
+        <% next_devlog = devlogs.first %>
+      <% next_marker = markers.first %>
+
+      <%# Use precise timestamps for ordering so recently created devlogs appear above markers when appropriate %>
+      <% next_devlog_time = next_devlog ? next_devlog.created_at : nil %>
+      <% next_marker_time = next_marker ? next_marker[:time] : nil %>
+
+      <% if next_marker && (next_devlog.nil? || (next_marker_time && next_devlog_time && next_marker_time > next_devlog_time) || (next_marker_time && next_devlog_time.nil?)) %>
+        <% m = markers.shift %>
+        <% if m[:type] == 'ship' %>
+          <%= render partial: 'devlogs/ship', locals: { ship: m[:obj] } %>
+        <% else %>
+          <%# Render ship request marker and then its linked user-created devlogs (in order)
+             sr = m[:obj]
+          %>
+          <%= render partial: 'devlogs/ship_request', locals: { ship_request: sr, project: @project } %>
+
+          <%# Render linked user devlogs (and remove them from main list) %>
+          <% sr.devlogs.order(log_date: :desc, created_at: :desc).each do |linked| %>
+            <% next if linked.user.nil? %>
+            <%# Remove the linked devlog from the devlogs list if present so we don't render it twice %>
+            <% if (idx = devlogs.index { |d| d.id == linked.id }) %>
+              <% devlogs.delete_at(idx) %>
+            <% end %>
+            <%= render linked %>
+            <p>
+              <%= link_to "Show this devlog", project_devlog_path(@project, linked) %>
+            </p>
+          <% end %>
+        <% end %>
+
       <% else %>
-        <div class="ship-request-marker">Ship requested on <%= m[:obj].requested_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)
-        <% if m[:obj].credits_per_hour.present? %> — rate: <%= m[:obj].credits_per_hour %>/hr <% end %>
-        </div>
+        <%# Render the next devlog normally %>
+        <% d = devlogs.shift %>
+        <%= render d %>
+        <p>
+          <%= link_to "Show this devlog", project_devlog_path(@project, d) %>
+        </p>
       <% end %>
+
     <% end %>
 
-    <%= render devlog %>
-    <p>
-      <%= link_to "Show this devlog", project_devlog_path(@project, devlog) %>
-    </p>
-  <% end %>
-
-  <%# Any remaining markers that happened after the last devlog (most recent) %>
-  <% markers.each do |m| %>
-    <% if m[:type] == 'ship' %>
-      <div class="ship-marker">Project shipped on <%= m[:obj].shipped_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)</div>
-    <% else %>
-      <div class="ship-request-marker">Ship requested on <%= m[:obj].requested_at %> (devlogged: <%= format_duration(m[:obj].devlogged_seconds.to_i) %>)
-        <% if m[:obj].credits_per_hour.present? %> — rate: <%= m[:obj].credits_per_hour %>/hr <% end %>
-      </div>
-    <% end %>
-  <% end %>
+  <%# Any remaining markers that happened after the last devlog (most recent) - already handled in loop %>
 </div>
 
 <%= link_to "New devlog", new_project_devlog_path(@project) %>

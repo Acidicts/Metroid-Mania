@@ -53,6 +53,8 @@ Rails.application.routes.draw do
         post :unship
         post :force_ship
         post :set_status
+        # Allow admins to delete via POST to avoid relying on method-override/javascript
+        post :delete, action: :destroy
       end
     end
 

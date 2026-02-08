@@ -11,6 +11,13 @@ class Product < ApplicationRecord
   validates :grant_max_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validate :grant_range_consistency
 
+  attribute :image_url, :string, default: 'https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg'
+
+  def set_image_from_url(url)
+    self.image_url = url
+    save
+  end
+
   # Returns the dollar value (float) for stored grant_amount_cents when used as an admin-configured default
   def grant_amount_dollars
     return nil unless grant_amount_cents

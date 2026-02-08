@@ -7,6 +7,8 @@ class User < ApplicationRecord
 
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
+  attribute :hackatime_trust_status, :string
+  attribute :region, :string
 
   enum :role, { user: 0, admin: 1 }
 
@@ -32,6 +34,20 @@ class User < ApplicationRecord
       # user.role = :admin if auth.info.admin
       user.role ||= :user # Default role
     end
+  end
+
+  def set_region_from_ip(ip)
+    return nil unless ip.present?
+
+    region = HackclubIpService.new(ip: ip).get_region_by_ip
+    return nil if region.nil?
+
+    # Persist the region immediately without running validations so login isn't blocked
+    if region != self.region
+      update_column(:region, region)
+    end
+
+    region
   end
 
   # Is this user the superadmin defined by environment?

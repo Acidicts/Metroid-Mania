@@ -76,6 +76,12 @@ module ApplicationHelper
     total
   end
 
+  # Human-friendly label for site-specific credits (configured by ENV['CREDIT_NAME']).
+  # Falls back to 'Credits' when not set.
+  def credit_label
+    ENV['CREDIT_NAME'].presence || 'Credits'
+  end
+
   # Calculate average credits per hour across all ships for a project
   def average_credits_per_hour(project)
     return 0 if project.ships.empty?

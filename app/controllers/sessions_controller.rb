@@ -9,6 +9,14 @@ class SessionsController < ApplicationController
     Rails.logger.info "OmniAuth Extra: #{auth.extra.inspect}"
 
     user = User.from_omniauth(auth)
+
+    # Update user's region based on request IP on every sign-in (don't break login if the lookup fails)
+    begin
+      user.set_region_from_ip(request.remote_ip)
+    rescue => e
+      Rails.logger.warn("Failed to set region for user #{user.id}: #{e.message}")
+    end
+
     session[:user_id] = user.id
 
     origin = request.env['omniauth.origin'] || params[:origin] || root_path
