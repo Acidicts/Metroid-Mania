@@ -13,18 +13,18 @@ class ShipRequestsController < ApplicationController
   # POST /projects/:project_id/ship_requests
   def create
     unless @project.user == current_user
-      redirect_to project_path(@project), alert: "Not authorized"
-      return
+      flash_warn("Not authorized")
+      redirect_to project_path(@project) and return
     end
 
     if @project.ship_requests.where(status: 'pending').exists?
-      redirect_to project_path(@project), alert: "A ship request is already pending for this project."
-      return
+      flash_info("A ship request is already pending for this project.")
+      redirect_to project_path(@project) and return
     end
 
     unless @project.eligible_for_ship_request?
-      redirect_to project_path(@project), alert: "You need at least 15 minutes of devlogged work since creation or last ship to request shipping."
-      return
+      flash_info("You need at least 15 minutes of devlogged work since creation or last ship to request shipping.")
+      redirect_to project_path(@project) and return
     end
 
     baseline = @project.ship_baseline
@@ -39,7 +39,8 @@ class ShipRequestsController < ApplicationController
       Audit.create!(user: current_user, project: @project, action: 'ship_request', details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
     end
 
-    redirect_to project_path(@project), notice: "Ship request submitted and awaiting admin approval"
+    flash_pass("Ship request submitted and awaiting admin approval")
+    redirect_to project_path(@project)
   end
 
   private

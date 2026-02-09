@@ -12,6 +12,7 @@ class Product < ApplicationRecord
   validate :grant_range_consistency
 
   attribute :image_url, :string, default: 'https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg'
+  attribute :description, :string, default: ''
 
   def set_image_from_url(url)
     self.image_url = url

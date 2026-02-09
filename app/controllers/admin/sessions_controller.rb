@@ -16,11 +16,11 @@ module Admin
 
         session[:user_id] = admin.id
         Rails.logger.info("[auto_admin] signed in #{admin.email}") if Rails.env.development? || Rails.env.test?
-        flash[:notice] = "Auto-signed in as #{admin.email} (development only)"
+        flash_pass("Auto-signed in as #{admin.email} (development only)")
         # show the generated password in development logs and flash so the developer can inspect it
         if (pw = session.delete(:__auto_admin_password))
           Rails.logger.info("[auto_admin] password for #{admin.email}: #{pw}")
-          flash[:notice] = "#{flash[:notice]} — password: #{pw}"
+          flash_pass("Auto-signed in as #{admin.email} (development only) — password: #{pw}")
         end
 
         redirect_to(admin_root_path) rescue redirect_to(root_path) and return
@@ -38,16 +38,18 @@ module Admin
         end
 
         session[:user_id] = user.id
-        redirect_to admin_dashboard_path, notice: "Signed in as admin"
+        flash_pass("Signed in as admin")
+        redirect_to admin_dashboard_path
       else
-        flash.now[:alert] = "Invalid credentials or not an admin"
+        flash.now[:warn] = "Invalid credentials or not an admin"
         render :new, status: :unprocessable_entity
       end
     end
 
     def destroy
       session[:user_id] = nil
-      redirect_to root_path, notice: "Signed out"
+      flash_pass("Signed out")
+      redirect_to root_path
     end
 
     private

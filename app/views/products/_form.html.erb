@@ -17,17 +17,22 @@
   </div>
 
   <div>
-    <%= form.label :price_currency, "Price (USD)", style: "display: block" %>
+    <%= form.label :description, style: "display: block" %>
+    <%= form.text_area :description, rows: 4 %>
+  </div>
+
+  <div>
+    <%= form.label :price_currency, "Price (USD)", style: "display: block; font-family: Arial, sans-serif;" %>
     <%= form.text_field :price_currency %>
   </div>
 
   <div>
-    <%= form.label :cost_credits, "Cost (Credits) — leave blank to compute from Price * Credits/ $", style: "display: block" %>
+    <%= form.label :cost_credits, "Cost (Credits) — leave blank to compute from Price * Credits/ $", style: "display: block; font-family: Arial, sans-serif;" %>
     <%= form.number_field :cost_credits, step: 0.01 %>
   </div>
 
   <div>
-    <%= form.label :credits_per_dollar, "Credits per $ (conversion ratio)", style: "display: block" %>
+    <%= form.label :credits_per_dollar, "Credits per $ (conversion ratio)", style: "display: block; font-family: Arial, sans-serif;" %>
     <%= form.number_field :credits_per_dollar, step: 0.01 %>
   </div>
 

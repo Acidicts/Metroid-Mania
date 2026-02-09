@@ -35,14 +35,39 @@ class ApplicationController < ActionController::Base
 
   def require_login
     unless logged_in?
-      redirect_to root_path, alert: "You must be logged in to access this section"
+      flash_warn("You must be logged in to access this section")
+      redirect_to root_path and return
     end
   end
 
   def require_admin
     unless admin?
-      redirect_to root_path, alert: "Not authorized"
+      flash_warn("Not authorized")
+      redirect_to root_path and return
     end
+  end
+
+  # Flash helper methods to standardize tiers: pass/info/warn/error
+  def flash_pass(msg)
+    flash[:pass] = msg
+    flash[:notice] = msg
+    flash[:success] = msg
+  end
+
+  def flash_info(msg)
+    flash[:info] = msg
+  end
+
+  def flash_warn(msg)
+    flash[:warn] = msg
+    flash[:warning] = msg
+    flash[:alert] = msg
+  end
+
+  def flash_error(msg)
+    flash[:error] = msg
+    flash[:alert] = msg
+    flash[:danger] = msg
   end
 
   private
@@ -67,8 +92,8 @@ class ApplicationController < ActionController::Base
       if prod_id.present? && current_user
         existing = current_user.orders.find_by(product_id: prod_id, status: 'pending')
         if existing
-          redirect_to existing, notice: "Order already placed"
-          return
+          flash_pass("Order already placed")
+          redirect_to existing and return
         end
       end
     end

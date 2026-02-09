@@ -68,9 +68,10 @@ module Admin
         Audit.create!(user: current_user, project: @ship.project, action: 'update_ship', details: { ship_id: @ship.id, changes: attrs })
       end
 
-      redirect_to admin_ship_path(@ship), notice: 'Ship updated.'
+      flash_pass('Ship updated.')
+      redirect_to admin_ship_path(@ship)
     rescue ActiveRecord::RecordInvalid => e
-      flash.now[:alert] = e.message
+      flash.now[:error] = e.message
       render :edit, status: :unprocessable_entity
     end
 

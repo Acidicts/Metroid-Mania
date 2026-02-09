@@ -20,18 +20,20 @@ class SessionsController < ApplicationController
     session[:user_id] = user.id
 
     origin = request.env['omniauth.origin'] || params[:origin] || root_path
-    
-    flash[:success] = "Signed in successfully!"
+
+    flash_pass("Signed in successfully!")
     redirect_to origin
   end
 
   def failure
     Rails.logger.warn("OmniAuth failure: #{params[:message]}")
-    redirect_to root_path, alert: "Authentication failed: #{params[:message] || 'Unknown error'}"
+    flash_warn("Authentication failed: #{params[:message] || 'Unknown error'}")
+    redirect_to root_path
   end
 
   def destroy
     session[:user_id] = nil
-    redirect_to root_path, notice: "Signed out!"
+    flash_pass("Signed out!")
+    redirect_to root_path
   end
 end
