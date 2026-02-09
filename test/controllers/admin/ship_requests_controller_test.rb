@@ -20,7 +20,6 @@ class Admin::ShipRequestsControllerTest < ActionDispatch::IntegrationTest
     existing_ship_ids = Ship.where(project: @project).pluck(:id)
 
     post approve_admin_ship_request_url(req), params: { credits_per_hour: 10, recipient_user_id: recipient.id }
-    assert_redirected_to admin_ship_requests_url
 
     @project.reload
 
@@ -30,6 +29,7 @@ class Admin::ShipRequestsControllerTest < ActionDispatch::IntegrationTest
 
     ship = Ship.where(project: @project).where.not(id: existing_ship_ids).first
     assert_not_nil ship, "expected a Ship created for project"
+    assert_redirected_to admin_ship_path(ship)
 
     expected_amount = ( ( req.devlogged_seconds.to_f / 3600.0 ) * 10 )
     assert_in_delta expected_amount, ship.credits_awarded.to_f, 0.001

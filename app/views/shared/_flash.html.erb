@@ -1,0 +1,15 @@
+<% if flash.any? %>
+  <% mapping = { notice: :pass, success: :pass, pass: :pass, info: :info, warning: :warn, warn: :warn, alert: :error, error: :error, danger: :error } %>
+  <% labels = { pass: 'Pass', info: 'Info - Not enough credits', warn: 'Warn - Auth issue', error: 'Error - System Error' } %>
+  <div class="retro-container" style="margin-top:12px;">
+    <% seen = [] %>
+    <% flash.each do |key, msg| %>
+      <% next if msg.blank? %>
+      <% next if seen.include?(msg.to_s) %>
+      <% seen << msg.to_s %>
+      <% tier = mapping[key.to_s.to_sym] || key.to_s.to_sym %>
+      <% tier = :info unless [:pass, :info, :warn, :error].include?(tier) %>
+      <div class="callout" data-flash="<%= tier %>"><strong><%= labels[tier] %>:</strong> <%= msg %></div>
+    <% end %>
+  </div>
+<% end %>

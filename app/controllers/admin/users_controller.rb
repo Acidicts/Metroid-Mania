@@ -26,7 +26,8 @@ module Admin
           Audit.create!(user: current_user, action: 'update_currency', details: { user_id: @user.id, before: previous_currency.to_f, after: @user.currency.to_f })
         end
 
-        redirect_to admin_users_path, notice: "User updated"
+        flash_pass("User updated")
+        redirect_to admin_users_path
       else
         render :edit, status: :unprocessable_entity
       end
@@ -44,7 +45,8 @@ module Admin
       end
 
       if @user.anonymize!
-        redirect_to admin_users_path, notice: "User anonymized (personal data replaced)."
+        flash_pass("User anonymized (personal data replaced).")
+        redirect_to admin_users_path
       else
         redirect_to admin_users_path, alert: "Unable to anonymize user."
       end
@@ -68,7 +70,8 @@ module Admin
         end
       end
 
-      redirect_to admin_users_path, notice: "User actions reverted: orders removed, projects unshipped, devlogs deleted."
+      flash_pass("User actions reverted: orders removed, projects unshipped, devlogs deleted.")
+      redirect_to admin_users_path
     end
 
     private

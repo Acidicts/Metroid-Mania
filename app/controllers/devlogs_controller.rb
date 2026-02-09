@@ -22,15 +22,15 @@ class DevlogsController < ApplicationController
 
     # Always use remaining undocumented time for duration; project must have total_seconds set
     if @project.total_seconds.blank?
-      redirect_to project_path(@project), alert: "Cannot create a devlog: project time is not set. Link Hackatime or set total time first."
-      return
+      flash_info("Cannot create a devlog: project time is not set. Link Hackatime or set total time first.")
+      redirect_to project_path(@project) and return
     end
 
     undocumented_seconds = [@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max
     min_seconds = 15 * 60
     if undocumented_seconds < min_seconds
-      redirect_to project_path(@project), alert: "Not enough undocumented time left (minimum 15 minutes required)"
-      return
+      flash_info("Not enough undocumented time left (minimum 15 minutes required)")
+      redirect_to project_path(@project) and return
     end
 
     @devlog.duration_minutes = undocumented_seconds / 60
@@ -76,7 +76,7 @@ class DevlogsController < ApplicationController
     respond_to do |format|
       if @devlog.errors.empty? && @devlog.save
         puts "DEBUG DevlogsController#create: saved devlog id=#{@devlog.id} duration=#{@devlog.duration_minutes}"
-        format.html { redirect_to project_path(@project) }
+        format.html { flash_pass("Devlog created"); redirect_to project_path(@project) }
         format.json { render :show, status: :created, location: [@project, @devlog] }
       else
         puts "DEBUG DevlogsController#create: failed to save; errors=#{@devlog.errors.full_messages.inspect} persisted=#{@devlog.persisted?} duration=#{@devlog.duration_minutes.inspect} undocumented_seconds=#{(@project.total_seconds.to_i - @project.total_devlogged_seconds)}"
@@ -90,7 +90,7 @@ class DevlogsController < ApplicationController
   def update
     respond_to do |format|
       if @devlog.update(devlog_params)
-        format.html { redirect_to project_path(@project), notice: "Devlog was successfully updated.", status: :see_other }
+        format.html { flash_pass("Devlog was successfully updated."); redirect_to project_path(@project), status: :see_other }
         format.json { render :show, status: :ok, location: [@project, @devlog] }
       else
         format.html { render :edit, status: :unprocessable_entity }
@@ -104,7 +104,7 @@ class DevlogsController < ApplicationController
     @devlog.destroy!
 
     respond_to do |format|
-      format.html { redirect_to project_path(@project), notice: "Devlog was successfully destroyed.", status: :see_other }
+      format.html { flash_pass("Devlog was successfully destroyed."); redirect_to project_path(@project), status: :see_other }
       format.json { head :no_content }
     end
   end

@@ -443,9 +443,10 @@ code, pre { font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mo
 }
 
 /* Flash / notice styles */
-.callout[data-flash="notice"] { border-color: rgba(34,197,94,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: var(--main-900); border-style: solid; border-width: 2px; }
-.callout[data-flash="alert"] { border-color: rgba(220,38,38,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: #b45309; border-style: solid; border-width: 2px; }
-.callout[data-flash="success"] { border-color: rgba(34,197,94,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: #064e3b; border-style: solid; border-width: 2px; }
+.callout[data-flash="pass"], .callout[data-flash="notice"], .callout[data-flash="success"] { border-color: rgba(34,197,94,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: #064e3b; border-style: solid; border-width: 2px; }
+.callout[data-flash="info"] { border-color: rgba(107,114,128,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: #374151; border-style: solid; border-width: 2px; }
+.callout[data-flash="warn"], .callout[data-flash="warning"] { border-color: rgba(245,158,11,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: #92400e; border-style: solid; border-width: 2px; }
+.callout[data-flash="error"], .callout[data-flash="alert"], .callout[data-flash="danger"] { border-color: rgba(220,38,38,0.12); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); color: #991b1b; border-style: solid; border-width: 2px; }
 
 /* Improve spacing of main area and keep footer attached */
 main.retro-container { padding-top: 22px; padding-bottom: 22px; }

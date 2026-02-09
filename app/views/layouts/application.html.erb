@@ -190,13 +190,7 @@
       </nav>
     </header>
 
-    <% if flash.any? %>
-      <div class="retro-container" style="margin-top:12px;">
-        <% flash.each do |key, msg| %>
-          <div class="callout" data-flash="<%= key %>"><strong><%= key.to_s.titleize %>:</strong> <%= msg %></div>
-        <% end %>
-      </div>
-    <% end %>
+    <%= render 'shared/flash' %>
 
     <main class="retro-container" role="main" style="padding-top:18px; padding-bottom:18px;">
       <%= yield %>

@@ -35,20 +35,20 @@ class ProjectsController < ApplicationController
   def ship
     # Backwards-compat: `projects#ship` will now create a ShipRequest so older links still work.
     unless @project.user == current_user
-      redirect_to project_path(@project), alert: "Not authorized"
-      return
+      flash_warn("Not authorized")
+      redirect_to project_path(@project) and return
     end
 
     # Delegate to the new ShipRequests flow
     baseline = @project.ship_baseline
     if @project.ship_requests.where(status: 'pending').exists?
-      redirect_to project_path(@project), alert: "A ship request is already pending."
-      return
+      flash_info("A ship request is already pending.")
+      redirect_to project_path(@project) and return
     end
 
     unless @project.eligible_for_ship_request?
-      redirect_to project_path(@project), alert: "You need at least 15 minutes of devlogged work since creation or last ship to request shipping."
-      return
+      flash_info("You need at least 15 minutes of devlogged work since creation or last ship to request shipping.")
+      redirect_to project_path(@project) and return
     end
 
     devlogs_to_link = @project.devlogs.where('created_at >= ?', baseline).where(ship_request_id: nil)
@@ -62,7 +62,8 @@ class ProjectsController < ApplicationController
       Audit.create!(user: current_user, project: @project, action: 'ship_request', details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
     end
 
-    redirect_to project_path(@project), notice: "Ship request submitted and awaiting admin approval"
+    flash_pass("Ship request submitted and awaiting admin approval")
+    redirect_to project_path(@project)
   end
 
   # GET /projects/new
@@ -91,7 +92,7 @@ class ProjectsController < ApplicationController
         # If user linked Hackatime projects, fetch and sum their times immediately
         @project.update_time_from_hackatime! if @project.hackatime_ids.present?
 
-        format.html { redirect_to @project, notice: "Project was successfully created." }
+        format.html { flash_pass("Project was successfully created."); redirect_to @project }
         format.json { render :show, status: :created, location: @project }
       else
         load_hackatime_projects
@@ -118,7 +119,7 @@ class ProjectsController < ApplicationController
           @project.image.detach
         end
 
-        format.html { redirect_to @project, notice: "Project was successfully updated.", status: :see_other }
+        format.html { flash_pass("Project was successfully updated."); redirect_to @project, status: :see_other }
         format.json { render :show, status: :ok, location: @project }
       else
         load_hackatime_projects
@@ -148,7 +149,7 @@ class ProjectsController < ApplicationController
     end
 
     respond_to do |format|
-      format.html { redirect_to projects_path, notice: "Project was successfully deleted." }
+      format.html { flash_pass("Project was successfully deleted."); redirect_to projects_path }
       format.json { head :no_content }
     end
   end
@@ -160,7 +161,8 @@ class ProjectsController < ApplicationController
 
       # If the project is soft-deleted, block access unless admin or the owner
       if @project.deleted? && !(admin? || (current_user && current_user == @project.user))
-        redirect_to projects_path, alert: 'Project not found.'
+        flash_warn('Project not found.')
+      redirect_to projects_path and return
       end
     end
     
@@ -206,7 +208,7 @@ class ProjectsController < ApplicationController
       else
         @hackatime_projects = []
         @taken_hackatime_names = []
-        flash.now[:alert] = "Please link your Hackatime API key in your profile to select projects."
+        flash.now[:info] = "Please link your Hackatime API key in your profile to select projects."
       end
     end
 

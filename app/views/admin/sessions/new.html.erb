@@ -57,9 +57,7 @@
   <div class="admin-login-box">
     <h1>Admin Login</h1>
 
-    <% if flash[:alert].present? %>
-      <div class="admin-flash"><%= flash[:alert] %></div>
-    <% end %>
+    <%= render 'shared/flash' %>
 
     <%= form_with url: admin_login_path, class: "admin-login-form", local: true do |f| %>
       <div>
