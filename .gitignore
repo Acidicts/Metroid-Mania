@@ -10,6 +10,7 @@ vendor/bundle
 
 # Ignore all environment files.
 .env
+.env.prod
 .env.development
 /node_modules
 
