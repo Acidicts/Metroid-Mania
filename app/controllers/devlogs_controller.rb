@@ -33,7 +33,8 @@ class DevlogsController < ApplicationController
       redirect_to project_path(@project) and return
     end
 
-    @devlog.duration_minutes = undocumented_seconds / 60
+    # Store the computed seconds directly
+    @devlog.duration_seconds = undocumented_seconds
   end
 
   # GET /projects/:project_id/devlogs/1/edit
@@ -60,26 +61,33 @@ class DevlogsController < ApplicationController
         @devlog.errors.add(:base, "Not enough undocumented time left (minimum 15 minutes required)")
       else
         # Allow optional requested duration (e.g., tests or API clients). Cap to remaining undocumented time.
-        requested = params.dig(:devlog, :duration_minutes)&.to_i
-        if requested.present?
-          if requested < 15
+        requested_seconds = params.dig(:devlog, :duration_seconds)&.to_i
+        requested_minutes = params.dig(:devlog, :duration_minutes)&.to_i
+
+        if requested_seconds.present?
+          if requested_seconds < 15 * 60
+            @devlog.errors.add(:duration_seconds, "must be at least 15 minutes")
+          end
+          @devlog.duration_seconds = [requested_seconds, undocumented_seconds].min
+        elsif requested_minutes.present?
+          if requested_minutes < 15
             @devlog.errors.add(:duration_minutes, "must be at least 15 minutes")
           end
           cap_minutes = (undocumented_seconds / 60).to_i
-          @devlog.duration_minutes = [requested, cap_minutes].min
+          @devlog.duration_seconds = [requested_minutes, cap_minutes].min * 60
         else
-          @devlog.duration_minutes = undocumented_seconds / 60
+          @devlog.duration_seconds = undocumented_seconds
         end
       end
     end
 
     respond_to do |format|
       if @devlog.errors.empty? && @devlog.save
-        puts "DEBUG DevlogsController#create: saved devlog id=#{@devlog.id} duration=#{@devlog.duration_minutes}"
+        puts "DEBUG DevlogsController#create: saved devlog id=#{@devlog.id} duration_seconds=#{@devlog.duration_seconds}"
         format.html { flash_pass("Devlog created"); redirect_to project_path(@project) }
         format.json { render :show, status: :created, location: [@project, @devlog] }
       else
-        puts "DEBUG DevlogsController#create: failed to save; errors=#{@devlog.errors.full_messages.inspect} persisted=#{@devlog.persisted?} duration=#{@devlog.duration_minutes.inspect} undocumented_seconds=#{(@project.total_seconds.to_i - @project.total_devlogged_seconds)}"
+        puts "DEBUG DevlogsController#create: failed to save; errors=#{@devlog.errors.full_messages.inspect} persisted=#{@devlog.persisted?} duration_seconds=#{@devlog.duration_seconds.inspect} undocumented_seconds=#{(@project.total_seconds.to_i - @project.total_devlogged_seconds)}"
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @devlog.errors, status: :unprocessable_entity }
       end
@@ -128,6 +136,6 @@ class DevlogsController < ApplicationController
     end
 
     def devlog_params
-      params.require(:devlog).permit(:title, :content, :duration_minutes)
+      params.require(:devlog).permit(:title, :content, :duration_minutes, :duration_seconds)
     end
 end

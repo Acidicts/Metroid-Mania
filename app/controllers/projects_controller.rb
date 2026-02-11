@@ -52,7 +52,7 @@ class ProjectsController < ApplicationController
     end
 
     devlogs_to_link = @project.devlogs.where('created_at >= ?', baseline).where(ship_request_id: nil)
-    devlogged_seconds = devlogs_to_link.sum(:duration_minutes) * 60
+    devlogged_seconds = devlogs_to_link.sum(:duration_seconds)
 
     ActiveRecord::Base.transaction do
       req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: 'pending')

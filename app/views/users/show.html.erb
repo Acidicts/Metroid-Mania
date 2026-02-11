@@ -201,7 +201,7 @@
     .btn-profile:hover {
       transform: translateY(-2px);
       box-shadow: 8px 10px 0 var(--main-800);
-      color: #ffffff;
+      color: #ffffff;`
     }
     
     .btn-profile:active {
@@ -312,27 +312,21 @@
   <!-- Ships Section -->
   <div class="profile-section">
     <h2>📦 Ships</h2>
-    <% if @ships.any? %>
-      <div class="ships-list">
-        <% @ships.each do |ship| %>
-          <div class="ship-item">
-            <div class="ship-info">
-              <span class="ship-title">
-                <% if ship.project %>
-                  <%= link_to ship.project.name, project_path(ship.project) %>
-                <% else %>
-                  <em>Project removed</em>
-                <% end %>
-              </span>
-              <span class="ship-meta">
-                Shipped: <%= ship.shipped_at.strftime("%b %d, %Y at %I:%M %p") %>
-                <% if ship.devlogged_seconds %>
-                  • <%= (ship.devlogged_seconds / 3600.0).round(2) %> hours
-                <% end %>
-              </span>
+    <% if @devlogs.any? %>
+      <div class="devlogs-list">
+        <% @devlogs.each do |devlog| %>
+        <% if devlog.title&.include?("Ship") %>
+            <div class="devlog-item">
+              <div class="devlog-info">
+                <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
+                <span class="devlog-meta">
+                  Project: <%= devlog.project&.name || 'Project removed' %>
+                  • <%= devlog.log_date.strftime("%b %d, %Y") %>
+                </span>
+              </div>
+              <span class="devlog-duration"><%= format_duration(devlog.duration_seconds_total.to_i) %></span>
             </div>
-            <span class="ship-credits"><%= ship.credits_awarded&.to_i || 0 %> credits</span>
-          </div>
+          <% end %>
         <% end %>
       </div>
     <% else %>
@@ -349,19 +343,21 @@
     <% if @devlogs.any? %>
       <div class="devlogs-list">
         <% @devlogs.each do |devlog| %>
-          <div class="devlog-item">
-            <div class="devlog-info">
-              <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
-              <span class="devlog-meta">
-                Project: <%= devlog.project&.name || 'Project removed' %>
-                • <%= devlog.log_date.strftime("%b %d, %Y") %>
-                <% if devlog.ship_request_id %>
-                  • Linked to Ship Request
-                <% end %>
-              </span>
+        <% if !devlog.title&.include?("Ship") %>
+            <div class="devlog-item">
+              <div class="devlog-info">
+                <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
+                <span class="devlog-meta">
+                  Project: <%= devlog.project&.name || 'Project removed' %>
+                  • <%= devlog.log_date.strftime("%b %d, %Y") %>
+                  <% if devlog.ship_request_id %>
+                    • Linked to Ship Request <%= devlog.ship_request_id %>
+                  <% end %>
+                </span>
+              </div>
+              <span class="devlog-duration"><%= format_duration(devlog.duration_seconds_total.to_i) %></span>
             </div>
-            <span class="devlog-duration"><%= devlog.duration_minutes %> min</span>
-          </div>
+          <% end %>
         <% end %>
       </div>
     <% else %>
