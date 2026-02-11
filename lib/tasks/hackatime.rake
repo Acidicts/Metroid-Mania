@@ -7,8 +7,9 @@ namespace :hackatime do
 
     users.find_each do |u|
       HackatimeSyncJob.perform_later(u.id)
+      HackatimeProjectSyncJob.perform_later(u.id)
     end
 
-    puts "Enqueued HackatimeSyncJob for #{users.count} users"
+    puts "Enqueued HackatimeSyncJob and HackatimeProjectSyncJob for #{users.count} users"
   end
 end

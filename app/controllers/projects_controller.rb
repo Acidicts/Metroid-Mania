@@ -14,15 +14,17 @@ class ProjectsController < ApplicationController
 
   # GET /projects/1 or /projects/1.json
   def show
-    # Fetch Hackatime stats now so we display up-to-date time
-    @project.update_time_from_hackatime!
-
     # If the project is linked to Hackatime, gather per-project breakdown for display
     if @project.hackatime_targets.present? && @project.user&.slack_id.present?
       service = HackatimeService.new(slack_id: @project.user.slack_id)
+      stats = service.get_projects
       @hackatime_breakdown = @project.hackatime_targets.map do |t|
-        { name: t, seconds: service.get_project_stats(t).to_i }
+        { name: t, seconds: stats[t].to_i }
       end
+
+      # Persist a fresh total_seconds only if it changed (avoids unnecessary updates)
+      total = @hackatime_breakdown.sum { |p| p[:seconds].to_i }
+      @project.update(total_seconds: total) if total > 0 && @project.total_seconds.to_i != total
     else
       @hackatime_breakdown = []
     end
@@ -195,14 +197,10 @@ class ProjectsController < ApplicationController
 
         # Ensure we also query any already-selected names that might not be listed in @hackatime_projects
         if @project && @project.hackatime_ids.present?
+          stats = service.get_projects
           (@project.hackatime_ids || []).each do |name|
             next if @hackatime_seconds.key?(name)
-            begin
-              @hackatime_seconds[name] = service.get_project_stats(name).to_i
-            rescue => e
-              Rails.logger.debug "Hackatime fetch failed for #{name}: #{e.message}"
-              @hackatime_seconds[name] = 0
-            end
+            @hackatime_seconds[name] = stats[name].to_i
           end
         end
       else

@@ -57,7 +57,8 @@ class Project < ApplicationRecord
     return unless user.slack_id.present?
 
     service = HackatimeService.new(slack_id: user.slack_id)
-    total = hackatime_targets.sum { |t| service.get_project_stats(t).to_i }
+    stats = service.get_projects
+    total = hackatime_targets.sum { |t| stats[t].to_i }
     update(total_seconds: total) if total > 0
   end
 
