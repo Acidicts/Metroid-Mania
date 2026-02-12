@@ -89,7 +89,7 @@ class OrdersController < ApplicationController
         # If creation failed due to insufficient funds and there's a denied order for the same product,
         # surface a clearer message so users know a refund may be missing.
         if @order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses['denied'] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP['denied'] : 'denied')))
-            flash_info("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
+            flash_warn("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
             redirect_to products_path and return
           else
             flash_error(@order.errors.full_messages.to_sentence)
@@ -118,7 +118,7 @@ class OrdersController < ApplicationController
 
       # Check for denied order condition first, regardless of product match
       if invalid_order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses['denied'] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP['denied'] : 'denied')))
-        flash_info("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
+        flash_warn("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
         redirect_to products_path and return
       elsif invalid_order.product_id == @product.id
         # re-render the checkout page with the invalid order so users can fix the input
