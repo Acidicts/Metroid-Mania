@@ -6,9 +6,9 @@ class ProjectsController < ApplicationController
   # GET /projects or /projects.json
   def index
     if logged_in?
-      @projects = current_user.active_projects
+      @projects = current_user.active_projects.includes(:user)
     else
-      @projects = Project.active.where(status: 'approved')
+      @projects = Project.active.where(status: 'approved').includes(:user)
     end
   end
 
@@ -29,8 +29,9 @@ class ProjectsController < ApplicationController
       @hackatime_breakdown = []
     end
 
-    @ships = @project.ships.order(shipped_at: :desc)
-    @ship_requests = @project.ship_requests.order(requested_at: :desc)
+    # Eager load associations to prevent N+1 queries
+    @ships = @project.ships.includes(:user).order(shipped_at: :desc)
+    @ship_requests = @project.ship_requests.includes(:user, :processed_by).order(requested_at: :desc)
   end
 
   # POST /projects/:id/ship - owner requests a ship (creates a request for admin)

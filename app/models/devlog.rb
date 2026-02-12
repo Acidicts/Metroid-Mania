@@ -1,5 +1,5 @@
 class Devlog < ApplicationRecord
-  belongs_to :project
+  belongs_to :project, counter_cache: true
   belongs_to :ship_request, optional: true
   belongs_to :user, optional: true
 
