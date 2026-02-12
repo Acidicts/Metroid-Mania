@@ -35,7 +35,7 @@ module Admin
 
       # Fallback: no pending ShipRequest found — preserve previous behavior (compute devlogs since baseline)
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
-      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
       # treat zero as absent so model can fall back to `total_seconds`
       devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
@@ -76,7 +76,7 @@ module Admin
       # Create ship snapshot and mark as shipped; award credits when the project has a rate.
       # If this ship is in response to an owner's request, calculate devlogs since request; otherwise since last ship/creation
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
-      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
       # treat zero as absent so model can fall back to `total_seconds`
       devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
@@ -133,7 +133,7 @@ module Admin
     # POST /admin/projects/:id/force_ship
     def force_ship
       baseline = @project.ship_baseline
-      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
       # treat zero as absent so model can fall back to `total_seconds`
       devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
@@ -177,7 +177,7 @@ module Admin
 
         # award credits when applicable
         baseline = @project.ship_baseline
-        devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_minutes) * 60
+        devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
         # treat zero as absent so model can fall back to `total_seconds`
         devlogged_seconds = nil if devlogged_seconds.to_i <= 0
         @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: @project.shipped_at || Time.current)

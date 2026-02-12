@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_09_220532) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_12_221737) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -81,12 +81,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_220532) do
     t.text "content"
     t.datetime "created_at", null: false
     t.integer "duration_minutes"
+    t.integer "duration_seconds"
     t.date "log_date"
     t.integer "project_id"
     t.integer "ship_request_id"
     t.string "title"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["project_id", "created_at"], name: "index_devlogs_on_project_id_and_created_at"
     t.index ["project_id"], name: "index_devlogs_on_project_id"
     t.index ["ship_request_id"], name: "index_devlogs_on_ship_request_id"
     t.index ["user_id"], name: "index_devlogs_on_user_id"
@@ -207,6 +209,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_220532) do
     t.boolean "shipped", default: false, null: false
     t.datetime "shipped_at"
     t.integer "shipped_devlogged_seconds", default: 0, null: false
+    t.integer "ships_count", default: 0, null: false
     t.string "status"
     t.integer "total_seconds"
     t.datetime "updated_at", null: false
@@ -215,6 +218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_220532) do
     t.index ["featured"], name: "index_projects_on_featured"
     t.index ["featured_at"], name: "index_projects_on_featured_at"
     t.index ["ship_status"], name: "index_projects_on_ship_status"
+    t.index ["user_id", "deleted_at"], name: "index_projects_on_user_id_and_deleted_at"
     t.index ["user_id"], name: "index_projects_on_user_id"
   end
 
@@ -247,6 +251,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_220532) do
     t.datetime "shipped_at"
     t.datetime "updated_at", null: false
     t.integer "user_id"
+    t.index ["project_id", "shipped_at"], name: "index_ships_on_project_id_and_shipped_at"
     t.index ["project_id"], name: "index_ships_on_project_id"
     t.index ["user_id"], name: "index_ships_on_user_id"
   end
@@ -393,6 +398,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_09_220532) do
     t.integer "vote_balance", default: 0, null: false
     t.integer "votes_count", default: 0, null: false
     t.index ["hackatime_trust_status"], name: "index_users_on_hackatime_trust_status"
+    t.index ["slack_id"], name: "index_users_on_slack_id"
     t.index ["uid"], name: "index_users_on_uid"
   end
 

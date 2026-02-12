@@ -45,7 +45,7 @@
           <% next if d.user.nil? %>
           <li>
             <%= link_to(d.title.presence || "Devlog ##{d.id}", project_devlog_path(ship.project, d)) %>
-            <span class="nb-timestamp"><%= d.log_date || d.created_at %> · <%= format_duration(d.duration_minutes * 60) %></span>
+            <span class="nb-timestamp"><%= d.log_date || d.created_at %> · <%= format_duration(d.duration_seconds_total.to_i) %></span>
           </li>
         <% end %>
       </ul>

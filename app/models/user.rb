@@ -185,5 +185,25 @@ class User < ApplicationRecord
     update!(hackatime_trust_status: canonical, hackatime_synced_at: Time.current)
   end
 
+  # Sync Hackatime project totals for this user's projects.
+  # Fetches stats once and updates owned projects that have hackatime_ids.
+  def sync_hackatime_projects!
+    return unless slack_id.present?
+
+    service = HackatimeService.new(slack_id: slack_id)
+    stats = service.get_projects
+    return unless stats && stats.any?
+
+    owned_projects = projects.where.not(hackatime_ids: [nil, '']).where(deleted_at: nil)
+    owned_projects.find_each do |proj|
+      total = proj.hackatime_targets.sum { |t| stats[t].to_i }
+      prior = proj.total_seconds.to_i
+      if prior != total
+        proj.update!(total_seconds: total)
+        Rails.logger.info "sync_hackatime_projects!: updated project_id=#{proj.id} for user_id=#{id} from #{prior} to #{total}"
+      end
+    end
+  end
+
   private
 end

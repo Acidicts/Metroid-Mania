@@ -6,29 +6,32 @@ class ProjectsController < ApplicationController
   # GET /projects or /projects.json
   def index
     if logged_in?
-      @projects = current_user.active_projects
+      @projects = current_user.active_projects.includes(:user)
     else
-      @projects = Project.active.where(status: 'approved')
+      @projects = Project.active.where(status: 'approved').includes(:user)
     end
   end
 
   # GET /projects/1 or /projects/1.json
   def show
-    # Fetch Hackatime stats now so we display up-to-date time
-    @project.update_time_from_hackatime!
-
     # If the project is linked to Hackatime, gather per-project breakdown for display
     if @project.hackatime_targets.present? && @project.user&.slack_id.present?
       service = HackatimeService.new(slack_id: @project.user.slack_id)
+      stats = service.get_projects
       @hackatime_breakdown = @project.hackatime_targets.map do |t|
-        { name: t, seconds: service.get_project_stats(t).to_i }
+        { name: t, seconds: stats[t].to_i }
       end
+
+      # Persist a fresh total_seconds only if it changed (avoids unnecessary updates)
+      total = @hackatime_breakdown.sum { |p| p[:seconds].to_i }
+      @project.update(total_seconds: total) if total > 0 && @project.total_seconds.to_i != total
     else
       @hackatime_breakdown = []
     end
 
-    @ships = @project.ships.order(shipped_at: :desc)
-    @ship_requests = @project.ship_requests.order(requested_at: :desc)
+    # Eager load associations to prevent N+1 queries
+    @ships = @project.ships.includes(:user).order(shipped_at: :desc)
+    @ship_requests = @project.ship_requests.includes(:user, :processed_by).order(requested_at: :desc)
   end
 
   # POST /projects/:id/ship - owner requests a ship (creates a request for admin)
@@ -52,7 +55,7 @@ class ProjectsController < ApplicationController
     end
 
     devlogs_to_link = @project.devlogs.where('created_at >= ?', baseline).where(ship_request_id: nil)
-    devlogged_seconds = devlogs_to_link.sum(:duration_minutes) * 60
+    devlogged_seconds = devlogs_to_link.sum(:duration_seconds)
 
     ActiveRecord::Base.transaction do
       req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: 'pending')
@@ -195,14 +198,10 @@ class ProjectsController < ApplicationController
 
         # Ensure we also query any already-selected names that might not be listed in @hackatime_projects
         if @project && @project.hackatime_ids.present?
+          stats = service.get_projects
           (@project.hackatime_ids || []).each do |name|
             next if @hackatime_seconds.key?(name)
-            begin
-              @hackatime_seconds[name] = service.get_project_stats(name).to_i
-            rescue => e
-              Rails.logger.debug "Hackatime fetch failed for #{name}: #{e.message}"
-              @hackatime_seconds[name] = 0
-            end
+            @hackatime_seconds[name] = stats[name].to_i
           end
         end
       else

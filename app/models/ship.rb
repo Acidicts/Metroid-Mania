@@ -1,5 +1,5 @@
 class Ship < ApplicationRecord
-  belongs_to :project
+  belongs_to :project, counter_cache: true
   belongs_to :user
 
   validates :devlogged_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true

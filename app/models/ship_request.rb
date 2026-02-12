@@ -42,10 +42,8 @@ class ShipRequest < ApplicationRecord
         Multiplier: #{multiplier}
       TEXT
 
-      # Use the recorded devlogged seconds to compute minutes; allow 0 minutes for system entries
-      duration_min = (devlogged_seconds.to_i / 60).to_i
-
-      project.devlogs.create!(title: "Ship request ##{id}", content: content.strip, duration_minutes: duration_min, log_date: (requested_at || created_at).to_date, ship_request: self)
+      # Use the recorded devlogged seconds directly (seconds precision)
+      project.devlogs.create!(title: "Ship request ##{id}", content: content.strip, duration_seconds: devlogged_seconds.to_i, log_date: (requested_at || created_at).to_date, ship_request: self)
     rescue => e
       Rails.logger.error "Failed to create ship request devlog for ShipRequest ##{id}: #{e.message}"
     end
@@ -85,7 +83,7 @@ class ShipRequest < ApplicationRecord
         Multiplier: #{ciel(credits/formatted_time)}
       TEXT
 
-      d.update_columns(title: title, content: new_content.strip, duration_minutes: (devlogged_seconds.to_i / 60).to_i)
+      d.update_columns(title: title, content: new_content.strip, duration_seconds: devlogged_seconds.to_i)
     rescue => e
       Rails.logger.error "Failed to sync ship request devlog for ShipRequest ##{id}: #{e.message}"
     end
@@ -130,7 +128,7 @@ class ShipRequest < ApplicationRecord
     raise "cannot approve non-pending request" unless pending?
 
     # Compute the devlogged seconds if not already stored
-    self.devlogged_seconds = (devlogs.sum(:duration_minutes) * 60).to_i if devlogged_seconds.blank? || devlogged_seconds.to_i <= 0
+    self.devlogged_seconds = devlogs.sum(:duration_seconds).to_i if devlogged_seconds.blank? || devlogged_seconds.to_i <= 0
 
     # choose rate priority: explicit param -> request value -> project value
     rate = credits_per_hour.presence || self.credits_per_hour.presence || project.credits_per_hour

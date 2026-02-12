@@ -84,29 +84,28 @@ module ApplicationHelper
 
   # Calculate average credits per hour across all ships for a project
   def average_credits_per_hour(project)
-    return 0 if project.ships.empty?
+    # Use memoization to avoid recalculating for the same project
+    @avg_credits_cache ||= {}
+    return @avg_credits_cache[project.id] if @avg_credits_cache.key?(project.id)
+    
+    ships = project.ships.to_a # Use the preloaded association
+    return @avg_credits_cache[project.id] = 0 if ships.empty?
 
-    total_credits = 0
-    total_hours = 0
+    total_credits = ships.sum { |s| s.credits_awarded.to_f }
+    total_hours = ships.sum { |s| s.devlogged_seconds.to_f / 3600.0 }
 
-    project.ships.each do |ship|
-      total_credits += ship.credits_awarded.to_f
-      total_hours += ship.devlogged_seconds.to_f / 3600.0 if ship.devlogged_seconds.present?
-    end
-
-    return 0 if total_hours == 0
-
-    (total_credits / total_hours).round(2)
+    @avg_credits_cache[project.id] = total_hours > 0 ? (total_credits / total_hours).round(2) : 0
   end
 
   def user_total_ships(user)
-    ships = 0
     return 0 if user.nil?
-
-    for project in user.active_projects
-      ships += total_ships(project)
+    # Use cached value if available
+    @user_ships_cache ||= {}
+    @user_ships_cache[user.id] ||= begin
+      Ship.joins(:project)
+          .where(projects: { user_id: user.id, deleted_at: nil })
+          .count
     end
-    ships
   end
 
   # Calculate total credits across all ships for a user (exclude deleted projects)
@@ -126,7 +125,8 @@ module ApplicationHelper
 
   # Calculate total ships for a project
   def total_ships(project)
-    project.ships.count
+    # Use the preloaded association instead of triggering a new query
+    project.ships.size
   end
 
   # app/helpers/application_helper.rb

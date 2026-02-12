@@ -83,13 +83,28 @@ class HackatimeService
   end
   
   # Method to fetch stats for the current user (used for sync)
-  def get_project_stats(project_name)
+  # This version uses an instance-level cache to avoid calling the API repeatedly
+  # during a single request/operation.
+  def get_project_stats(project_name, start_date: START_DATE)
     return 0 unless @slack_id
 
-    stats = self.class.fetch_stats(@slack_id)
+    stats = fetch_stats_cached(start_date: start_date)
     return 0 unless stats && stats[:projects]
 
     stats[:projects][project_name] || 0
+  end
+
+  # Fetch stats but memoize per-instance per-date window to prevent duplicate
+  # HTTP calls when multiple project lookups are performed during a request.
+  def fetch_stats_cached(start_date: START_DATE, end_date: nil)
+    @stats_cache ||= {}
+    key = "#{start_date}-#{end_date}"
+    @stats_cache[key] ||= (self.class.fetch_stats(@slack_id, start_date: start_date, end_date: end_date) || { projects: {} })
+  end
+
+  # Return a hash mapping project name => seconds (convenience)
+  def get_projects(start_date: START_DATE, end_date: nil)
+    fetch_stats_cached(start_date: start_date, end_date: end_date)[:projects] || {}
   end
 
   # --- Adaptation of provided Service Logic ---
@@ -116,6 +131,18 @@ class HackatimeService
     params[:start_date] = start_date if start_date.present?
     params[:end_date] = end_date if end_date
 
+    cache_key = "hackatime:stats:#{hackatime_uid}:#{start_date}:#{end_date || 'none'}"
+    ttl_seconds = (ENV['HACKATIME_CACHE_TTL_SECONDS'] || 300).to_i
+    bypass_cache = ENV['HACKATIME_BYPASS_CACHE'].present?
+
+    unless bypass_cache
+      cached = Rails.cache.read(cache_key)
+      if cached
+        Rails.logger.debug "HackatimeService: cache hit for #{cache_key}"
+        return cached
+      end
+    end
+
     Rails.logger.info "HackatimeService: GET users/#{hackatime_uid}/stats with params: #{params}"
     response = connection.get("users/#{hackatime_uid}/stats", params)
 
@@ -125,11 +152,13 @@ class HackatimeService
       Rails.logger.info "HackatimeService: Stats response body (truncated): #{response.body[0..200]}"
       
       projects = data.dig("data", "projects") || []
-      
-      {
+      result = {
         projects: projects.to_h { |p| [ p["name"], p["total_seconds"].to_i ] },
         banned: data.dig("trust_factor", "trust_value") == 1
       }
+
+      Rails.cache.write(cache_key, result, expires_in: ttl_seconds.seconds) unless bypass_cache
+      result
     else
       Rails.logger.error "HackatimeService error: #{response.status} - #{response.body}"
       nil

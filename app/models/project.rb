@@ -33,7 +33,7 @@ class Project < ApplicationRecord
     # Count all user-created devlogs (exclude system-generated devlogs which have no user_id).
     # User-created devlogs are counted regardless of whether they've been linked to a ship request,
     # so that documented time remains documented after shipping and cannot be reused.
-    devlogs.where.not(user_id: nil).sum(:duration_minutes) * 60
+    devlogs.where.not(user_id: nil).sum(:duration_seconds)
   end
 
   # Remaining seconds on the project that have not been devlogged yet.
@@ -57,7 +57,8 @@ class Project < ApplicationRecord
     return unless user.slack_id.present?
 
     service = HackatimeService.new(slack_id: user.slack_id)
-    total = hackatime_targets.sum { |t| service.get_project_stats(t).to_i }
+    stats = service.get_projects
+    total = hackatime_targets.sum { |t| stats[t].to_i }
     update(total_seconds: total) if total > 0
   end
 
@@ -110,7 +111,7 @@ class Project < ApplicationRecord
 
   # Minutes of devlogged work created since baseline (exclude system-generated devlogs)
   def devlogged_minutes_since_baseline
-    devlogs.where.not(user_id: nil).where('created_at >= ?', ship_baseline).sum(:duration_minutes).to_i
+    (devlogs.where.not(user_id: nil).where('created_at >= ?', ship_baseline).sum(:duration_seconds).to_i / 60)
   end
 
   # Can the owner request a ship? Must not already be pending and at least 15 minutes of devlogs since baseline

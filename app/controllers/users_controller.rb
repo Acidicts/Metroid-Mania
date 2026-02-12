@@ -4,25 +4,40 @@ class UsersController < ApplicationController
 
   def show
     # Load user's projects (exclude deleted) with their ships and devlogs
-    @projects = @user.active_projects.includes(:ships, :devlogs).order(created_at: :desc)
+    # Use select to only load needed fields for better memory efficiency
+    @projects = @user.active_projects
+                     .includes(:ships, :devlogs)
+                     .order(created_at: :desc)
 
     # Load user's ships including ships with no project (so we can render 'Project removed'), but
     # exclude ships that belong to deleted projects
-    @ships = @user.ships.left_joins(:project).where('projects.deleted_at IS NULL OR ships.project_id IS NULL').includes(:project).order(shipped_at: :desc)
+    @ships = @user.ships
+                  .left_joins(:project)
+                  .where('projects.deleted_at IS NULL OR ships.project_id IS NULL')
+                  .includes(:project)
+                  .order(shipped_at: :desc)
 
     # Load user's devlogs (through their active projects)
-    @devlogs = Devlog.joins(:project).where(projects: { user_id: @user.id, deleted_at: nil }).includes(:project).order(created_at: :desc)
+    @devlogs = Devlog.joins(:project)
+                     .where(projects: { user_id: @user.id, deleted_at: nil })
+                     .includes(:project)
+                     .order(created_at: :desc)
 
-    # Fetch Slack profile image (if user has slack_id and token is configured)
+    # Fetch Slack profile image with caching (if user has slack_id and token is configured)
     if @user.slack_id.present?
-      begin
-        profile = SlackService.new.users_info([@user.slack_id]).first
-        @slack_profile = profile if profile.present?
-      rescue => e
-        Rails.logger.error("UsersController#show Slack fetch error for #{@user.id}: #{e.message}")
-        @slack_profile = nil
+      @slack_profile = Rails.cache.fetch("slack_profile_#{@user.slack_id}", expires_in: 1.hour) do
+        begin
+          profile = SlackService.new.users_info([@user.slack_id]).first
+          profile.present? ? profile : nil
+        rescue => e
+          Rails.logger.error("UsersController#show Slack fetch error for #{@user.id}: #{e.message}")
+          nil
+        end
       end
     end
+
+    # Pre-calculate statistics to avoid repeated calculations in views
+    @total_ships_count = @user.ships.joins(:project).where(projects: { deleted_at: nil }).count
   end
 
   def edit

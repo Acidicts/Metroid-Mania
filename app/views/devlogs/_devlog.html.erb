@@ -20,8 +20,8 @@
       <%= simple_format devlog.content %>
     </div>
 
-    <% if devlog.duration_minutes && devlog.duration_minutes > 0 %>
-      <span class="nb-chip">⏱ <%= format_duration(devlog.duration_minutes * 60) %></span>
+    <% if devlog.duration_seconds_total.to_i > 0 %>
+      <span class="nb-chip">⏱ <%= format_duration(devlog.duration_seconds_total.to_i) %></span>
     <% end %>
 
     <div class="nb-linkbar">
