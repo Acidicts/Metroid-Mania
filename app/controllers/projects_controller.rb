@@ -201,7 +201,10 @@ class ProjectsController < ApplicationController
           stats = service.get_projects
           (@project.hackatime_ids || []).each do |name|
             next if @hackatime_seconds.key?(name)
-            @hackatime_seconds[name] = stats[name].to_i
+            # Prefer the bulk `get_projects` result but fall back to `get_project_stats`
+            # so tests that stub the per-project method work correctly.
+            seconds = (stats && stats[name]) || service.get_project_stats(name)
+            @hackatime_seconds[name] = seconds.to_i
           end
         end
       else

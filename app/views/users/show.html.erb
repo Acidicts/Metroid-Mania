@@ -76,24 +76,43 @@
   <!-- Ships Section -->
   <div class="profile-section">
     <h2>📦 Ships</h2>
+
     <% ship_devlogs = @devlogs.select { |d| d.title&.include?("Ship") } %>
-    <% if ship_devlogs.any? %>
-      <div class="devlogs-list">
-        <% ship_devlogs.each do |devlog| %>
-          <% cache(devlog) do %>
-            <div class="devlog-item">
-              <div class="devlog-info">
-                <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
-                <span class="devlog-meta">
-                  Project: <%= devlog.project&.name || 'Project removed' %>
-                  • <%= devlog.log_date.strftime("%b %d, %Y") %>
-                </span>
+
+    <% if @ships.any? || ship_devlogs.any? %>
+      <% if @ships.any? %>
+        <div class="ships-list">
+          <% @ships.each do |ship| %>
+            <% cache([ship, ship.project]) do %>
+              <div class="ship-item">
+                <div class="ship-info">
+                  <strong>Project:</strong> <%= ship.project&.name || 'Project removed' %>
+                  • <%= ship.shipped_at.strftime("%b %d, %Y") if ship.shipped_at %>
+                </div>
               </div>
-              <span class="devlog-duration"><%= format_duration(devlog.duration_seconds_total.to_i) %></span>
-            </div>
+            <% end %>
           <% end %>
-        <% end %>
-      </div>
+        </div>
+      <% end %>
+
+      <% if ship_devlogs.any? %>
+        <div class="devlogs-list" style="margin-top:0.75rem;">
+          <% ship_devlogs.each do |devlog| %>
+            <% cache(devlog) do %>
+              <div class="devlog-item">
+                <div class="devlog-info">
+                  <span class="devlog-title"><%= devlog.title || "Untitled Devlog" %></span>
+                  <span class="devlog-meta">
+                    Project: <%= devlog.project&.name || 'Project removed' %>
+                    • <%= devlog.log_date.strftime("%b %d, %Y") %>
+                  </span>
+                </div>
+                <span class="devlog-duration"><%= format_duration(devlog.duration_seconds_total.to_i) %></span>
+              </div>
+            <% end %>
+          <% end %>
+        </div>
+      <% end %>
     <% else %>
       <div class="empty-state">
         <h3>No ships yet</h3>
