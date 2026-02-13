@@ -19,9 +19,66 @@
   </div>
 
   <div class="nb-form-group">
-    <%= form.label :content, class: "nb-label" %>
-    <%= form.text_area :content, rows: 5, class: "nb-textarea" %>
+    <div style="display: flex; flex-direction: row; gap: 6px;">
+      <%= form.label :content, class: "nb-label", style: "position:relative; width: 50%;" %>
+      <%= form.label :"markdown live preview", class: "nb-label", style: "margin-left:6px; position:relative; width: 50%;" %>
+    </div>
+    <div style="display: flex; flex-direction: row; gap: 6px;">
+      <%= form.text_area :content, id: "devlog_content_input", rows: 7, style: "width:50%", class: "nb-textarea" %>
+      <div id="markdown-preview-content-div" style="margin-left: 6px; width:45%; padding: 12px; background: var(--nb-bg); border: 1px solid var(--nb-border); border-radius: 6px; overflow-y: auto; max-height: 300px;">
+        <div id="markdown-preview-content"><%= raw(markdown_to_html(devlog.content)) %></div>
+      </div>
+    </div>
   </div>
+
+  <script>
+    (function() {
+      // lightweight client-side preview: uses `marked` + `DOMPurify` if available, falls back to simple escapep/linebreaks
+      function escapeHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+      function markdownToHtml(markdown) {
+        var md = String(markdown || '');
+        if (window.marked) {
+          try {
+            var rendered = window.marked.parse(md);
+            return window.DOMPurify ? DOMPurify.sanitize(rendered) : rendered;
+          } catch (e) {
+            return '<pre>' + escapeHtml(md) + '</pre>';
+          }
+        }
+
+        // fallback: minimal formatting (escape + preserve line breaks)
+        return escapeHtml(md).replace(/\n/g, '<br>');
+      }
+
+      // expose for other scripts
+      window.markdownToHtml = markdownToHtml;
+
+      function debounce(fn, wait) { var t; return function() { clearTimeout(t); var args = arguments; t = setTimeout(function(){ fn.apply(null, args); }, wait); }; }
+
+      var textarea = document.getElementById('devlog_content_input');
+      var preview = document.getElementById('markdown-preview-content');
+      if (!textarea || !preview) return;
+
+      var update = debounce(function() {
+        preview.innerHTML = markdownToHtml(textarea.value);
+      }, 150);
+
+      // initial render to keep server-side & client-side in sync
+      update();
+
+      textarea.addEventListener('input', update);
+
+      // load optional libraries (if not already present) and re-render when ready
+      function ensureScript(src, cb) {
+        if (document.querySelector('script[src="' + src + '"]')) { cb && cb(); return; }
+        var s = document.createElement('script'); s.src = src; s.defer = true; s.onload = cb; document.head.appendChild(s);
+      }
+
+      ensureScript('https://cdn.jsdelivr.net/npm/marked/marked.min.js', update);
+      ensureScript('https://cdn.jsdelivr.net/npm/dompurify@2.4.0/dist/purify.min.js', update);
+    })();
+  </script>
 
   <div class="nb-form-group">
     <span class="nb-label">Duration</span>

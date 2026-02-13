@@ -123,7 +123,13 @@
 .nb-badge.badge-ship    { background: var(--nb-yellow); color: var(--nb-text); }
 .nb-badge.badge-request { background: var(--nb-purple); color: #fff; }
 .nb-badge.badge-devlog  { background: var(--nb-green); color: var(--nb-text); }
-.nb-badge.badge-auto    { background: #e5e7eb; color: var(--nb-text); font-size: 0.7rem; }
+.nb-badge.badge-auto    { 
+  background: #e5e7eb; 
+  color: var(--nb-text); 
+  font-size: 0.75rem;
+  padding: 6px 14px;
+  box-shadow: 3px 3px 0px var(--nb-border);
+}
 
 .nb-timestamp {
   font-family: var(--nb-font);
@@ -163,7 +169,7 @@
   border: 3px solid var(--nb-border);
   box-shadow: var(--nb-shadow-sm);
   color: var(--nb-text);
-  line-height: 1.5;
+  line-height: 1;
   font-size: 0.95rem;
 }
 
@@ -310,11 +316,13 @@
 .nb-textarea {
   font-family: var(--nb-font);
   width: 100%;
-  padding: 12px 14px;
+  box-sizing: border-box;
+  padding: 8px 12px;
   border: 3px solid var(--nb-border);
   box-shadow: var(--nb-shadow-sm);
   background: #fff;
   font-size: 1rem;
+  line-height: 1.2;
   color: var(--nb-text);
   outline: none;
   transition: box-shadow 120ms ease;
@@ -326,7 +334,11 @@
   border-color: var(--nb-purple);
 }
 
-.nb-textarea { resize: vertical; min-height: 120px; }
+.nb-textarea { 
+  resize: none; 
+  min-height: 7rem;
+  overflow-y: scroll;
+}
 
 /* ---------- Error box ---------- */
 .nb-errors {
