@@ -27,21 +27,30 @@
     border-bottom-left-radius: 6px;
     border-bottom-right-radius: 6px;
   }
+
+  /* make thumbnail images scale to fit the .project-media--thumb container */
+  .project-media--thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* use 'contain' if you prefer no cropping */
+    border-radius: 5%;
+    display: block;
+  }
 </style>
 
 <div id="<%= dom_id project %>" class="project-card project-preview">
   <% if project.image.attached? %>
-    <div class="project-media project-media--thumb" style="height:120px; max-height:120px; overflow:hidden;">
+    <div class="project-media project-media--thumb" style="height:240px; max-height:240px; ">
         <% if project.respond_to?(:image_url) && project.image_url.present? %>
-          <img src="<%= project.image_url %>" alt="<%= project.name %>">
+          <img src="<%= project.image_url %>" alt="<%= project.name %>" loading="lazy">
         <% elsif project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached? %>
-          <%= image_tag(project.image, alt: project.name, style: "width:500px; height:300px; border-radius:5%") %>
+          <%= image_tag(project.image, alt: project.name, loading: "lazy") %>
         <% else %>
-          <img style="width:500px; height:300px; border-radius:5%" src="https://placehold.co/500x300" alt="<%= project.name %>">
+          <img src="https://placehold.co/240x240" alt="<%= project.name %>" loading="lazy">
         <% end %>
     </div>
   <% else %>
-    <div class="project-media project-media--thumb" style="height:120px; max-height:120px; background: var(--accent-gradient);"></div>
+    <div class="project-media project-media--thumb" style="height:240px; max-height:240px; background: var(--accent-gradient); border-radius: 5%;"></div>
   <% end %>
 
   <div class="project-content">
