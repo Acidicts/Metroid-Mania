@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
   allow_browser versions: :modern
 
   helper_method :current_user, :logged_in?, :admin?
+  helper MarkdownHelper
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
 

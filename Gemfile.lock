@@ -382,6 +382,7 @@ GEM
       erb
       psych (>= 4.0.0)
       tsort
+    redcarpet (3.6.1)
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -421,6 +422,9 @@ GEM
       ffi (~> 1.12)
       logger
     rubyzip (3.2.2)
+    sanitize (7.0.0)
+      crass (~> 1.0.2)
+      nokogiri (>= 1.16.8)
     securerandom (0.4.1)
     selenium-webdriver (4.39.0)
       base64 (~> 0.2)
@@ -534,7 +538,9 @@ DEPENDENCIES
   puma (>= 5.0)
   pundit (~> 2.4)
   rails (~> 8.1.2)
+  redcarpet
   rubocop-rails-omakase
+  sanitize
   selenium-webdriver
   solid_cable
   solid_cache

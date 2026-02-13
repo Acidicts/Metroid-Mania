@@ -36,11 +36,94 @@
         <div class="cta-row">
           <%= link_to 'View Repo', safe_url(@project.repository_url), class: 'btn-retro', target: '_blank', rel: 'noopener' %>
           <% if @project.readme_url.present? %>
-            <%= link_to 'Readme', safe_url(@project.readme_url), class: 'btn-retro btn-retro--outline', target: '_blank', rel: 'noopener' %>
+            <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>
           <% end %>
         </div>
       </div>
     </div>
+
+    <style>
+      .README-MENU {
+        position: fixed;
+        margin-top: 24px;
+        padding: 16px;
+        background-color: var(--accent3);
+        border-radius: 8px;
+        top: 10%;
+        width: 70%;
+        left: 15%;
+        border: 4px dashed var(--accent2);
+        z-index: 10;
+        transition: opacity 0.3s ease;
+      }
+
+      .CLOSE_CROSS {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: var(--accent2);
+        transition: transform 0.2s ease, color 0.2s ease;
+      }
+
+      .CLOSE_CROSS:hover {
+        color: white;
+        transform: rotate(180deg) scale(1.2);
+      }
+
+    </style>
+
+    <div class="README-MENU" id="README_MENU" style="opacity: 0;">
+      <button class="CLOSE_CROSS" id="README_CLOSE">x</button>
+      <%= github_markdown_to_html(@project.readme_url) %>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const readmeButton = document.getElementById('README_BTN');
+        const readmeClose = document.getElementById('README_CLOSE');
+        const readmeMenu = document.getElementById('README_MENU');
+
+        function setReadmeVisible(visible) {
+          if (!readmeMenu) return;
+          readmeMenu.style.opacity = visible ? '1' : '0';
+          readmeMenu.style.pointerEvents = visible ? 'auto' : 'none';
+          readmeMenu.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        }
+
+        if (readmeButton && readmeMenu) {
+          readmeButton.addEventListener('click', function() {
+            const isVisible = readmeMenu.style.opacity === '1';
+            setReadmeVisible(!isVisible);
+          });
+        }
+
+        if (readmeClose && readmeMenu) {
+          readmeClose.addEventListener('click', function() {
+            setReadmeVisible(false);
+          });
+        }
+
+        // close on Escape
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') setReadmeVisible(false);
+        });
+
+        // close when clicking outside the menu
+        document.addEventListener('click', function(e) {
+          if (!readmeMenu || readmeMenu.style.opacity !== '1') return;
+          if (!readmeMenu.contains(e.target) && e.target !== readmeButton) {
+            setReadmeVisible(false);
+          }
+        });
+
+        // ensure initial hidden state
+        setReadmeVisible(false);
+      });
+    </script>
 
     <aside class="hero-right">
       <div class="featured-project" style="box-shadow: 0px 0px 0 rgb(0,0,0,0);">

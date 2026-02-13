@@ -63,3 +63,6 @@ gem "faraday", "~> 2.14"
 gem "pundit", "~> 2.4"
 gem "aasm", "~> 5.5"
 gem "paper_trail", "~> 17.0"
+
+gem 'redcarpet'
+gem 'sanitize'
