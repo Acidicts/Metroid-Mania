@@ -240,7 +240,7 @@
   <% end %>
 <% end %>
 
-<%= form_with(model: project, id: 'new-project-form', html: { multipart: true }) do |form| %>
+<%= form_with(model: project, id: 'new-project-form', html: { multipart: true, data: { controller: 'project-url-validator' } }) do |form| %>
   <% if project.errors.any? %>
     <div style="color: red">
       <h2><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</h2>
@@ -264,14 +264,14 @@
 
   <div class="project-text-input" id="new-project-repository-url">
     <%= form.label :repository_url, "GitHub Repo URL" %>
-    <%= form.text_field :repository_url, id: "repo_text_box", class: "form-control" %>
-    <div id="repo-url-status" class="input-status" aria-live="polite"></div>
+    <%= form.text_field :repository_url, id: "repo_text_box", class: "form-control", data: { project_url_validator_target: 'repo' } %>
+    <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
   </div>
 
   <div class="project-text-input" id="new-project-readme-url">
     <%= form.label :readme_url, "Readme Address" %>
-    <%= form.text_field :readme_url, id: "readme_text_box", class: "form-control" %>
-    <div id="readme-url-status" class="input-status" aria-live="polite"></div>
+    <%= form.text_field :readme_url, id: "readme_text_box", class: "form-control", data: { project_url_validator_target: 'readme' } %>
+    <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
   </div>
 
   <div class="project-text-input" id="new-project-image">
@@ -342,192 +342,3 @@
   </div>
 <% end %>
 
-
-<script>
-(function(){
-  const repoInput = document.getElementById('repo_text_box');
-  const readmeInput = document.getElementById('readme_text_box');
-  const repoStatus = document.getElementById('repo-url-status');
-  const readmeStatus = document.getElementById('readme-url-status');
-  const form = document.getElementById('new-project-form');
-
-  function setStatus(el, text, cls) { if(!el) return; el.textContent = text; el.className = 'input-status ' + (cls || ''); }
-
-  function isGitSsh(str) { return /^git@github\.com:[^\/\s@]+\/[^\/\s@]+(?:\.git)?$/i.test(str); }
-  function isProbablyUrl(str) { try { new URL(str); return true; } catch(e) { return false; } }
-
-  function parseGithubRepo(url) {
-    const match = url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i);
-    if (!match) {
-      if (isGitSsh(url)) {
-        const sshMatch = url.match(/^git@github\.com:([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?$/i);
-        if (sshMatch) return { owner: sshMatch[1], repo: sshMatch[2] };
-      }
-      return null;
-    }
-    const owner = match[1];
-    const repoName = match[2].replace(/\.git$/i,'');
-    const branchMatch = url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i);
-    return { owner, repo: repoName, branch: branchMatch ? branchMatch[1] : null };
-  }
-
-  async function fetchResponse(url) {
-    // try HEAD first, fall back to GET when HEAD isn't allowed or CORS blocks it
-    try {
-      const res = await fetch(url, { method: 'HEAD' });
-      return res;
-    } catch (e) {
-      try {
-        const r2 = await fetch(url, { method: 'GET' });
-        return r2;
-      } catch (e2) {
-        return null;
-      }
-    }
-  }
-
-  async function checkRepositoryInput() {
-    const v = (repoInput.value || '').trim();
-    if (!v) { repoInput.removeAttribute('aria-invalid'); setStatus(repoStatus, 'Repository URL is empty — optional but recommended.', ''); return true; }
-
-    const parsed = parseGithubRepo(v);
-    if (!parsed) {
-      if (isProbablyUrl(v)) {
-        setStatus(repoStatus, "Not a recognized GitHub repository URL — we won't verify it.", 'error');
-        repoInput.setAttribute('aria-invalid','true');
-        return false;
-      } else {
-        setStatus(repoStatus, 'Looks like plain text (not a URL). Accepted but not verified.', 'checking');
-        repoInput.removeAttribute('aria-invalid');
-        return true;
-      }
-    }
-
-    setStatus(repoStatus, 'Checking GitHub for README...', 'checking');
-    let candidateUrls = [];
-    if (parsed.branch) {
-      candidateUrls.push(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${encodeURIComponent(parsed.branch)}/README.md`);
-    } else {
-      candidateUrls.push(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/main/README.md`);
-      candidateUrls.push(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/master/README.md`);
-    }
-
-    let saw404 = false;
-    for (const u of candidateUrls) {
-      const res = await fetchResponse(u);
-      if (res && res.ok) {
-        setStatus(repoStatus, 'Found README on GitHub — looks good ✅', 'success');
-        repoInput.removeAttribute('aria-invalid');
-        if (!readmeInput.value.trim()) {
-          readmeInput.value = u;
-          checkReadmeInput();
-        }
-        return true;
-      }
-
-      if (res && res.status === 404) {
-        saw404 = true;
-      }
-    }
-
-    if (saw404) {
-      setStatus(repoStatus, 'README returned 404 on GitHub — submission blocked.', 'error');
-      repoInput.setAttribute('aria-invalid','true');
-      return false;
-    }
-
-    // Could not conclusively verify (network/CORS/non-404 HTTP); warn but allow submit
-    setStatus(repoStatus, 'Could not verify README on GitHub (network/CORS or non-200). Submission allowed.', 'checking');
-    repoInput.removeAttribute('aria-invalid');
-    return true;
-  }
-
-  async function checkReadmeInput() {
-    const v = (readmeInput.value || '').trim();
-    if (!v) { readmeInput.removeAttribute('aria-invalid'); setStatus(readmeStatus, 'No README URL provided.', ''); return true; }
-    if (!isProbablyUrl(v)) {
-      setStatus(readmeStatus, 'Readme must be a valid URL (include https://).', 'error');
-      readmeInput.setAttribute('aria-invalid','true');
-      return false;
-    }
-
-    setStatus(readmeStatus, 'Checking readme URL...', 'checking');
-    const res = await fetchResponse(v);
-
-    // If we couldn't fetch (CORS/network), do **not** block — only explicit 404 should block
-    if (!res) {
-      setStatus(readmeStatus, 'Could not verify README URL (network/CORS). Submission allowed.', 'checking');
-      readmeInput.removeAttribute('aria-invalid');
-      return true;
-    }
-
-    if (res.status === 404) {
-      setStatus(readmeStatus, 'Readme URL returned 404 (not found) — submission blocked.', 'error');
-      readmeInput.setAttribute('aria-invalid','true');
-      return false;
-    }
-
-    if (!res.ok) {
-      // Non-404 HTTP statuses (403, 500, etc.) are treated as warnings — allow submit
-      setStatus(readmeStatus, `Readme returned status ${res.status} — submission allowed.`, 'checking');
-      readmeInput.removeAttribute('aria-invalid');
-      return true;
-    }
-
-    // If HEAD succeeded, optionally GET to verify content-type (warn only)
-    try {
-      const getRes = await fetch(v, { method: 'GET' });
-      const ct = getRes.headers.get('content-type') || '';
-      if (!ct.includes('text') && !ct.includes('markdown')) {
-        setStatus(readmeStatus, `Readme reachable but content-type looks unusual (${ct}) — submission allowed.`, 'checking');
-        readmeInput.removeAttribute('aria-invalid');
-        return true;
-      }
-        return false;
-      }
-    } catch (e) {
-      // if GET fails but HEAD succeeded, accept HEAD success
-    }
-
-    setStatus(readmeStatus, 'README reachable and looks valid ✅', 'success');
-    readmeInput.removeAttribute('aria-invalid');
-    return true;
-  }
-
-  if (repoInput) {
-    repoInput.addEventListener('blur', checkRepositoryInput);
-    repoInput.addEventListener('input', () => { repoStatus.className = 'input-status checking'; repoStatus.textContent = ''; repoInput.removeAttribute('aria-invalid'); });
-  }
-  if (readmeInput) {
-    readmeInput.addEventListener('blur', checkReadmeInput);
-    readmeInput.addEventListener('input', () => { readmeStatus.className = 'input-status checking'; readmeStatus.textContent = ''; readmeInput.removeAttribute('aria-invalid'); });
-  }
-
-  document.addEventListener('keydown', function(event) {
-    if (event.key === 'Enter') {
-      const activeElement = document.activeElement;
-      if (activeElement === repoInput && readmeInput && readmeInput.value.trim() === '') {
-        event.preventDefault();
-        checkRepositoryInput();
-      }
-    }
-  });
-
-  if (form) {
-    form.addEventListener('submit', async function(e) {
-      const repoLooksUrl = isProbablyUrl((repoInput.value||'').trim()) || isGitSsh((repoInput.value||'').trim());
-      const readmeLooksUrl = isProbablyUrl((readmeInput.value||'').trim());
-      let ok = true;
-      if (repoLooksUrl) ok = await checkRepositoryInput() && ok;
-      if (readmeLooksUrl) ok = await checkReadmeInput() && ok;
-      if (!ok) {
-        e.preventDefault();
-        const firstInvalid = form.querySelector('[aria-invalid="true"]');
-        if (firstInvalid) firstInvalid.focus();
-      }
-    });
-  }
-
-  window._projectUrlValidators = { checkRepositoryInput, checkReadmeInput };
-})();
-</script>
