@@ -220,6 +220,12 @@ class ProjectsController < ApplicationController
       permitted = [:name, :description, :repository_url, :readme_url, :image, :hackatime_id, :status, :total_seconds, { hackatime_ids: [] }]
       # only admin users may set featured flag via the form
       permitted << :featured if current_user&.admin?
-      params.require(:project).permit(*permitted)
+      pp = params.require(:project).permit(*permitted)
+
+      # Defensive: if an empty/blank `image` value was submitted (some clients/JS may send ''),
+      # remove the key so `update` does not unintentionally replace/detach the existing attachment.
+      pp.delete(:image) if pp.key?(:image) && pp[:image].blank?
+
+      pp
     end
 end

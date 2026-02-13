@@ -11,6 +11,13 @@ class Project < ApplicationRecord
   validates :name, presence: true
   validates :repository_url, presence: true
 
+  # Server-side reachability checks: ensure README URLs (and GitHub repo READMEs)
+  # respond successfully. These are conservative (only run for http(s) URLs or
+  # GitHub repos) and use short timeouts so they don't slow normal requests.
+  validate :readme_url_must_be_reachable
+  validate :github_repository_must_have_readme
+
+
   # Store multiple Hackatime project names in the text `hackatime_ids` column as YAML.
   # Provide simple accessor helpers so the model behaves like an Array.
   def hackatime_ids
@@ -81,6 +88,79 @@ class Project < ApplicationRecord
     overlap = hackatime_ids.map(&:to_s) & other_names
     if overlap.any?
       errors.add(:hackatime_ids, "contains project(s) already linked: #{overlap.join(', ')}")
+    end
+  end
+
+  # Server-side validator: ensure explicit README URL is reachable and not 404.
+  def readme_url_must_be_reachable
+    # Only treat an explicit HTTP 404 as a blocking validation error.
+    # Network/CORS/timeouts or other HTTP statuses will not prevent save.
+    return if readme_url.blank?
+    begin
+      uri = URI.parse(readme_url) rescue nil
+      return unless uri && %w[http https].include?(uri.scheme)
+
+      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', open_timeout: 3, read_timeout: 3) do |http|
+        head_req = Net::HTTP::Head.new(uri.request_uri)
+        res = http.request(head_req) rescue nil
+
+        if res && res.code.to_i == 404
+          errors.add(:readme_url, 'returned 404 (not found)')
+          return
+        end
+
+        # If HEAD wasn't successful, try GET — still only error on 404
+        unless res && res.is_a?(Net::HTTPSuccess)
+          get_req = Net::HTTP::Get.new(uri.request_uri)
+          get_res = http.request(get_req) rescue nil
+          if get_res && get_res.code.to_i == 404
+            errors.add(:readme_url, 'returned 404 (not found)')
+            return
+          end
+          # otherwise be permissive (network/timeouts/403/etc. do not block save)
+        end
+      end
+    rescue StandardError => _e
+      # Do not add a validation error on transient network/timeout exceptions.
+      return
+    end
+  end
+
+  # Server-side validator: if repository_url points at GitHub, ensure a README.md exists
+  # on a common branch (or the explicit branch if present). Fail on 404.
+  def github_repository_must_have_readme
+    return if repository_url.blank?
+
+    m = repository_url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
+    return unless m
+
+    owner = m[1]
+    repo_name = m[2].gsub(/\.git$/i, '')
+    branch_match = repository_url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
+    branches_to_try = branch_match ? [branch_match[1]] : ['main', 'master']
+
+    saw_404 = false
+    branches_to_try.each do |br|
+      uri = URI.parse("https://raw.githubusercontent.com/#{owner}/#{repo_name}/#{CGI.escape(br)}/README.md")
+      begin
+        Net::HTTP.start(uri.host, uri.port, use_ssl: true, open_timeout: 3, read_timeout: 3) do |http|
+          req = Net::HTTP::Head.new(uri.request_uri)
+          res = http.request(req) rescue nil
+
+          if res && res.is_a?(Net::HTTPSuccess)
+            return true
+          end
+
+          saw_404 = true if res && res.code.to_i == 404
+        end
+      rescue StandardError
+        # network error — try next branch
+      end
+    end
+
+    # Only add a blocking validation error when we actually observed a 404 on the README
+    if saw_404
+      errors.add(:repository_url, 'README.md not found on the repository (404)')
     end
   end
 

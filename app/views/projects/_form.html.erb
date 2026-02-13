@@ -206,6 +206,19 @@
         border: 0 !important;
       }
 
+      /* Validation status styles */
+      .input-status {
+        margin-top: 6px;
+        font-size: 0.9rem;
+        line-height: 1;
+        min-height: 20px;
+        color: var(--muted);
+      }
+      .input-status.checking { color: #9ca3af; }
+      .input-status.success { color: #10b981; font-weight: 600; }
+      .input-status.error { color: #ef4444; font-weight: 700; }
+      .form-control[aria-invalid="true"] { box-shadow: 0 0 0 4px rgba(239,68,68,0.08); border-color: #ef4444; }
+
       /* Responsive adjustments */
       @media (max-width: 600px) {
         #new-project-form {
@@ -252,30 +265,36 @@
   <div class="project-text-input" id="new-project-repository-url">
     <%= form.label :repository_url, "GitHub Repo URL" %>
     <%= form.text_field :repository_url, id: "repo_text_box", class: "form-control" %>
+    <div id="repo-url-status" class="input-status" aria-live="polite"></div>
   </div>
 
   <div class="project-text-input" id="new-project-readme-url">
     <%= form.label :readme_url, "Readme Address" %>
     <%= form.text_field :readme_url, id: "readme_text_box", class: "form-control" %>
+    <div id="readme-url-status" class="input-status" aria-live="polite"></div>
   </div>
 
   <div class="project-text-input" id="new-project-image">
     <%= form.label :image, "Project image (optional)" %>
     <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
-      <div style="margin-bottom:8px">
-        <%= image_tag project.image.variant(resize_to_limit: [600, 360]), alt: project.name, style: "max-width:100%; height:auto; border: 3px solid var(--main-700); border-radius:6px;" %>
-      </div>
-      <div style="margin-bottom:8px">
-        <label><%= form.check_box :remove_image, {}, '1', '0' %> Remove image</label>
-      </div>
     <% end %>
 
     <div class="file-input-wrapper" id="file-input-wrapper-form" data-controller="file-input">
       <%= form.file_field :image, accept: "image/*", class: "visually-hidden file-input-input", data: { action: "change->file-input#update", file_input_target: "input" } %>
-      <label class="file-input-button" for="<%= form.object_name %>_image">Choose file</label>
-      <img class="file-input-preview visually-hidden" data-file-input-target="preview" alt="Selected image preview">
-      <span class="file-input-filename" style="padding:3px; border: 3px dashed rgba(0, 0, 0, 0.2); border-radius:6px;" id="no-file-selected-form" data-file-input-target="filename">No file selected</span>
-      <button type="button" class="file-input-clear visually-hidden" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
+      
+
+      <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
+        <%= image_tag(project.image, class: 'file-input-preview', data: { file_input_target: 'preview' }, alt: 'Selected image preview', loading: 'lazy', style: 'max-height:160px; max-width:240px; height:auto; border-radius:6px; margin-left:8px;') %>
+      <% else %>
+        <img class="file-input-preview visually-hidden" data-file-input-target="preview" alt="Selected image preview">
+      <% end %>
+
+      <div style="display:flex; gap:8px; align-items:left; text-align:center; font-size:1.2rem; flex-direction:column; flex-wrap:wrap;">
+        <label class="file-input-button" for="<%= form.object_name %>_image">Choose file</label>
+        <span class="file-input-filename" style="padding:3px; border: 3px dashed rgba(0, 0, 0, 0.2); border-radius:6px;" id="no-file-selected-form" data-file-input-target="filename"><%= project.respond_to?(:image) && project.image.attached? ? project.image.filename.to_s : 'No file selected' %></span>
+        <button type="button" style="padding:0.375rem; font-weight:800; color:white; border: none; border-radius: 6px; background-color: #ec3750" class="file-input-clear <%= (project.respond_to?(:image) && project.image.attached?) ? '' : 'visually-hidden' %>" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
+      </div>
+
     </div>
   </div>
 
@@ -325,71 +344,190 @@
 
 
 <script>
-  document.addEventListener("keydown", function(event) {
-    const repo = document.getElementById("repo_text_box");
-    const readme = document.getElementById("readme_text_box");
+(function(){
+  const repoInput = document.getElementById('repo_text_box');
+  const readmeInput = document.getElementById('readme_text_box');
+  const repoStatus = document.getElementById('repo-url-status');
+  const readmeStatus = document.getElementById('readme-url-status');
+  const form = document.getElementById('new-project-form');
 
-    if (event.key === "Enter") {
+  function setStatus(el, text, cls) { if(!el) return; el.textContent = text; el.className = 'input-status ' + (cls || ''); }
+
+  function isGitSsh(str) { return /^git@github\.com:[^\/\s@]+\/[^\/\s@]+(?:\.git)?$/i.test(str); }
+  function isProbablyUrl(str) { try { new URL(str); return true; } catch(e) { return false; } }
+
+  function parseGithubRepo(url) {
+    const match = url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i);
+    if (!match) {
+      if (isGitSsh(url)) {
+        const sshMatch = url.match(/^git@github\.com:([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?$/i);
+        if (sshMatch) return { owner: sshMatch[1], repo: sshMatch[2] };
+      }
+      return null;
+    }
+    const owner = match[1];
+    const repoName = match[2].replace(/\.git$/i,'');
+    const branchMatch = url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i);
+    return { owner, repo: repoName, branch: branchMatch ? branchMatch[1] : null };
+  }
+
+  async function fetchResponse(url) {
+    // try HEAD first, fall back to GET when HEAD isn't allowed or CORS blocks it
+    try {
+      const res = await fetch(url, { method: 'HEAD' });
+      return res;
+    } catch (e) {
+      try {
+        const r2 = await fetch(url, { method: 'GET' });
+        return r2;
+      } catch (e2) {
+        return null;
+      }
+    }
+  }
+
+  async function checkRepositoryInput() {
+    const v = (repoInput.value || '').trim();
+    if (!v) { repoInput.removeAttribute('aria-invalid'); setStatus(repoStatus, 'Repository URL is empty — optional but recommended.', ''); return true; }
+
+    const parsed = parseGithubRepo(v);
+    if (!parsed) {
+      if (isProbablyUrl(v)) {
+        setStatus(repoStatus, "Not a recognized GitHub repository URL — we won't verify it.", 'error');
+        repoInput.setAttribute('aria-invalid','true');
+        return false;
+      } else {
+        setStatus(repoStatus, 'Looks like plain text (not a URL). Accepted but not verified.', 'checking');
+        repoInput.removeAttribute('aria-invalid');
+        return true;
+      }
+    }
+
+    setStatus(repoStatus, 'Checking GitHub for README...', 'checking');
+    let candidateUrls = [];
+    if (parsed.branch) {
+      candidateUrls.push(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/${encodeURIComponent(parsed.branch)}/README.md`);
+    } else {
+      candidateUrls.push(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/main/README.md`);
+      candidateUrls.push(`https://raw.githubusercontent.com/${parsed.owner}/${parsed.repo}/master/README.md`);
+    }
+
+    let saw404 = false;
+    for (const u of candidateUrls) {
+      const res = await fetchResponse(u);
+      if (res && res.ok) {
+        setStatus(repoStatus, 'Found README on GitHub — looks good ✅', 'success');
+        repoInput.removeAttribute('aria-invalid');
+        if (!readmeInput.value.trim()) {
+          readmeInput.value = u;
+          checkReadmeInput();
+        }
+        return true;
+      }
+
+      if (res && res.status === 404) {
+        saw404 = true;
+      }
+    }
+
+    if (saw404) {
+      setStatus(repoStatus, 'README returned 404 on GitHub — submission blocked.', 'error');
+      repoInput.setAttribute('aria-invalid','true');
+      return false;
+    }
+
+    // Could not conclusively verify (network/CORS/non-404 HTTP); warn but allow submit
+    setStatus(repoStatus, 'Could not verify README on GitHub (network/CORS or non-200). Submission allowed.', 'checking');
+    repoInput.removeAttribute('aria-invalid');
+    return true;
+  }
+
+  async function checkReadmeInput() {
+    const v = (readmeInput.value || '').trim();
+    if (!v) { readmeInput.removeAttribute('aria-invalid'); setStatus(readmeStatus, 'No README URL provided.', ''); return true; }
+    if (!isProbablyUrl(v)) {
+      setStatus(readmeStatus, 'Readme must be a valid URL (include https://).', 'error');
+      readmeInput.setAttribute('aria-invalid','true');
+      return false;
+    }
+
+    setStatus(readmeStatus, 'Checking readme URL...', 'checking');
+    const res = await fetchResponse(v);
+
+    // If we couldn't fetch (CORS/network), do **not** block — only explicit 404 should block
+    if (!res) {
+      setStatus(readmeStatus, 'Could not verify README URL (network/CORS). Submission allowed.', 'checking');
+      readmeInput.removeAttribute('aria-invalid');
+      return true;
+    }
+
+    if (res.status === 404) {
+      setStatus(readmeStatus, 'Readme URL returned 404 (not found) — submission blocked.', 'error');
+      readmeInput.setAttribute('aria-invalid','true');
+      return false;
+    }
+
+    if (!res.ok) {
+      // Non-404 HTTP statuses (403, 500, etc.) are treated as warnings — allow submit
+      setStatus(readmeStatus, `Readme returned status ${res.status} — submission allowed.`, 'checking');
+      readmeInput.removeAttribute('aria-invalid');
+      return true;
+    }
+
+    // If HEAD succeeded, optionally GET to verify content-type (warn only)
+    try {
+      const getRes = await fetch(v, { method: 'GET' });
+      const ct = getRes.headers.get('content-type') || '';
+      if (!ct.includes('text') && !ct.includes('markdown')) {
+        setStatus(readmeStatus, `Readme reachable but content-type looks unusual (${ct}) — submission allowed.`, 'checking');
+        readmeInput.removeAttribute('aria-invalid');
+        return true;
+      }
+        return false;
+      }
+    } catch (e) {
+      // if GET fails but HEAD succeeded, accept HEAD success
+    }
+
+    setStatus(readmeStatus, 'README reachable and looks valid ✅', 'success');
+    readmeInput.removeAttribute('aria-invalid');
+    return true;
+  }
+
+  if (repoInput) {
+    repoInput.addEventListener('blur', checkRepositoryInput);
+    repoInput.addEventListener('input', () => { repoStatus.className = 'input-status checking'; repoStatus.textContent = ''; repoInput.removeAttribute('aria-invalid'); });
+  }
+  if (readmeInput) {
+    readmeInput.addEventListener('blur', checkReadmeInput);
+    readmeInput.addEventListener('input', () => { readmeStatus.className = 'input-status checking'; readmeStatus.textContent = ''; readmeInput.removeAttribute('aria-invalid'); });
+  }
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Enter') {
       const activeElement = document.activeElement;
-      if (activeElement === repo && readme && readme.value.trim() === "") {
-        // prevent accidental form submit
+      if (activeElement === repoInput && readmeInput && readmeInput.value.trim() === '') {
         event.preventDefault();
-
-        const repoUrl = repo.value.trim();
-        if (!repoUrl) return;
-
-        // if user already provided a raw.githubusercontent URL, use it directly
-        if (/^https?:\/\/raw\.githubusercontent\.com\//i.test(repoUrl)) {
-          readme.value = repoUrl;
-          readme.focus();
-          return;
-        }
-
-        // Match common GitHub repo URL forms and extract owner/repo
-        // handles: https://github.com/owner/repo, github.com/owner/repo, git@github.com:owner/repo.git, etc.
-        const match = repoUrl.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i);
-        if (!match) return;
-
-        const owner = match[1];
-        const repoName = match[2].replace(/\.git$/i, '');
-
-        // detect branch if URL contains /tree/<branch> or /blob/<branch>
-        const branchMatch = repoUrl.match(/\/(?:tree|blob)\/([^\/\s]+)/i);
-
-        function buildRawUrl(branch) {
-          return `https://raw.githubusercontent.com/${owner}/${repoName}/refs/heads/${encodeURIComponent(branch)}/README.md`;
-        }
-
-        if (branchMatch) {
-          const branch = branchMatch[1];
-          const rawUrl = buildRawUrl(branch);
-          readme.value = rawUrl;
-          readme.focus();
-          return;
-        }
-
-        // No explicit branch — check common defaults (main, then master)
-        (async () => {
-          const branchesToTry = ['main', 'master'];
-          for (const b of branchesToTry) {
-            try {
-              const url = buildRawUrl(b);
-              const res = await fetch(url, { method: 'HEAD' });
-              if (res && res.ok) {
-                readme.value = url;
-                readme.focus();
-                return;
-              }
-            } catch (e) {
-              // ignore and try next branch
-            }
-          }
-          // fallback to main if neither branch responded OK
-          readme.value = buildRawUrl('main');
-          readme.focus();
-        })();
-
+        checkRepositoryInput();
       }
     }
   });
+
+  if (form) {
+    form.addEventListener('submit', async function(e) {
+      const repoLooksUrl = isProbablyUrl((repoInput.value||'').trim()) || isGitSsh((repoInput.value||'').trim());
+      const readmeLooksUrl = isProbablyUrl((readmeInput.value||'').trim());
+      let ok = true;
+      if (repoLooksUrl) ok = await checkRepositoryInput() && ok;
+      if (readmeLooksUrl) ok = await checkReadmeInput() && ok;
+      if (!ok) {
+        e.preventDefault();
+        const firstInvalid = form.querySelector('[aria-invalid="true"]');
+        if (firstInvalid) firstInvalid.focus();
+      }
+    });
+  }
+
+  window._projectUrlValidators = { checkRepositoryInput, checkReadmeInput };
+})();
 </script>
