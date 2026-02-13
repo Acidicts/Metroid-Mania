@@ -251,12 +251,12 @@
 
   <div class="project-text-input" id="new-project-repository-url">
     <%= form.label :repository_url, "GitHub Repo URL" %>
-    <%= form.text_field :repository_url, class: "form-control" %>
+    <%= form.text_field :repository_url, id: "repo_text_box", class: "form-control" %>
   </div>
 
   <div class="project-text-input" id="new-project-readme-url">
     <%= form.label :readme_url, "Readme Address" %>
-    <%= form.text_field :readme_url, class: "form-control" %>
+    <%= form.text_field :readme_url, id: "readme_text_box", class: "form-control" %>
   </div>
 
   <div class="project-text-input" id="new-project-image">
@@ -322,3 +322,74 @@
     <% end %>
   </div>
 <% end %>
+
+
+<script>
+  document.addEventListener("keydown", function(event) {
+    const repo = document.getElementById("repo_text_box");
+    const readme = document.getElementById("readme_text_box");
+
+    if (event.key === "Enter") {
+      const activeElement = document.activeElement;
+      if (activeElement === repo && readme && readme.value.trim() === "") {
+        // prevent accidental form submit
+        event.preventDefault();
+
+        const repoUrl = repo.value.trim();
+        if (!repoUrl) return;
+
+        // if user already provided a raw.githubusercontent URL, use it directly
+        if (/^https?:\/\/raw\.githubusercontent\.com\//i.test(repoUrl)) {
+          readme.value = repoUrl;
+          readme.focus();
+          return;
+        }
+
+        // Match common GitHub repo URL forms and extract owner/repo
+        // handles: https://github.com/owner/repo, github.com/owner/repo, git@github.com:owner/repo.git, etc.
+        const match = repoUrl.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i);
+        if (!match) return;
+
+        const owner = match[1];
+        const repoName = match[2].replace(/\.git$/i, '');
+
+        // detect branch if URL contains /tree/<branch> or /blob/<branch>
+        const branchMatch = repoUrl.match(/\/(?:tree|blob)\/([^\/\s]+)/i);
+
+        function buildRawUrl(branch) {
+          return `https://raw.githubusercontent.com/${owner}/${repoName}/refs/heads/${encodeURIComponent(branch)}/README.md`;
+        }
+
+        if (branchMatch) {
+          const branch = branchMatch[1];
+          const rawUrl = buildRawUrl(branch);
+          readme.value = rawUrl;
+          readme.focus();
+          return;
+        }
+
+        // No explicit branch — check common defaults (main, then master)
+        (async () => {
+          const branchesToTry = ['main', 'master'];
+          for (const b of branchesToTry) {
+            try {
+              const url = buildRawUrl(b);
+              const res = await fetch(url, { method: 'HEAD' });
+              if (res && res.ok) {
+                readme.value = url;
+                readme.focus();
+                return;
+              }
+            } catch (e) {
+              // ignore and try next branch
+            }
+          }
+          // fallback to main if neither branch responded OK
+          readme.value = buildRawUrl('main');
+          readme.focus();
+        })();
+
+      }
+    }
+  });
+</script>

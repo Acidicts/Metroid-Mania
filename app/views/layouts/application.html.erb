@@ -267,11 +267,9 @@
             });
           }
 
-          // Ensure menu is closed before Turbo caches the page
           if (!document._turboBeforeCacheBound) {
             document._turboBeforeCacheBound = true;
             document.addEventListener('turbo:before-cache', function() { setOpen(false); });
-            // turbolinks fallback
             document.addEventListener('turbolinks:before-cache', function() { setOpen(false); });
           }
         }
@@ -279,6 +277,133 @@
         document.addEventListener('DOMContentLoaded', initMobileMenu);
         document.addEventListener('turbo:load', initMobileMenu);
         document.addEventListener('turbolinks:load', initMobileMenu);
+
+        document.addEventListener('keydown', function() {
+          // populated from ENV['DISALLOWED_WORDS'] (accepts JSON array or comma-separated string)
+          var DISALLOWED = <%= begin
+            v = ENV['DISALLOWED_WORDS']
+            if v.present?
+              begin
+                JSON.parse(v)
+              rescue
+                v.split(',').map(&:strip)
+              end
+            else
+              []
+            end
+          end.to_json.html_safe %>;
+
+          function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&'); }
+
+          function isTextEditable(el) {
+            if (!el) return false;
+            if (el.isContentEditable) return true;
+            if (el.tagName === 'TEXTAREA') return true;
+            if (el.tagName === 'INPUT') {
+              var t = el.type;
+              return ['text','search','email','url','tel'].indexOf(t) !== -1;
+            }
+            return false;
+          }
+
+          function removeDisallowedFromInput(el) {
+            var val = el.value;
+            var original = val;
+            var selStart = el.selectionStart;
+            var selEnd = el.selectionEnd;
+
+            var removedBeforeStart = 0;
+            var removedBeforeEnd = 0;
+
+            DISALLOWED.forEach(function(word) {
+              var re = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'gi');
+              var m;
+              while ((m = re.exec(val)) !== null) {
+                var idx = m.index;
+                var len = m[0].length;
+                if (idx < selStart) removedBeforeStart += len;
+                if (idx < selEnd) removedBeforeEnd += len;
+              }
+              val = val.replace(re, '');
+            });
+
+            if (val !== original) {
+              el.value = val;
+              try {
+                var newStart = Math.max(0, selStart - removedBeforeStart);
+                var newEnd = Math.max(newStart, selEnd - removedBeforeEnd);
+                el.setSelectionRange(newStart, newEnd);
+              } catch (err) {}
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+
+          function removeDisallowedFromContentEditable(el) {
+            var sel = window.getSelection();
+            if (!sel || sel.rangeCount === 0) return;
+            var range = sel.getRangeAt(0);
+            var node = range.startContainer;
+            if (node.nodeType !== Node.TEXT_NODE) {
+              var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+              var found = null;
+              while (walker.nextNode()) {
+                var txt = walker.currentNode.nodeValue;
+                for (var i = 0; i < DISALLOWED.length; i++) {
+                  var r = new RegExp('\\b' + escapeRegExp(DISALLOWED[i]) + '\\b', 'i');
+                  if (r.test(txt)) { found = walker.currentNode; break; }
+                }
+                if (found) break;
+              }
+              if (!found) return;
+              node = found;
+            }
+
+            var text = node.nodeValue;
+            var original = text;
+            var offset = range.startOffset;
+            var removedBeforeOffset = 0;
+
+            DISALLOWED.forEach(function(word) {
+              var re = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'gi');
+              var m;
+              while ((m = re.exec(text)) !== null) {
+                var idx = m.index;
+                var len = m[0].length;
+                if (idx < offset) removedBeforeOffset += len;
+              }
+              text = text.replace(re, '');
+            });
+
+            if (text !== original) {
+              node.nodeValue = text;
+              var newOffset = Math.max(0, offset - removedBeforeOffset);
+              var newRange = document.createRange();
+              newRange.setStart(node, Math.min(newOffset, node.nodeValue.length));
+              newRange.collapse(true);
+              sel.removeAllRanges();
+              sel.addRange(newRange);
+              el.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          }
+
+          document.addEventListener('keydown', function(e) {
+            if (e.isComposing) return;
+            var t = e.target;
+            if (!isTextEditable(t)) return;
+            // don't process passwords
+            if (t.tagName === 'INPUT' && t.type === 'password') return;
+
+            // run immediately after the key updates the value
+            setTimeout(function() {
+              if (!t) return;
+              if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') {
+                removeDisallowedFromInput(t);
+              } else if (t.isContentEditable) {
+                removeDisallowedFromContentEditable(t);
+              }
+            }, 0);
+          }, true);
+        })();
       })();
     </script>
   </body>
