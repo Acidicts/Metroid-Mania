@@ -76,6 +76,38 @@ class ProjectsHackatimeIntegrationTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "add then save then remove hackatime chip before any ship" do
+    p = Project.create!(user: @owner, name: 'AddThenRemoveUI', repository_url: 'x', total_seconds: 3600)
+
+    # Prevent external calls when the controller refreshes total_seconds
+    original = HackatimeService.instance_method(:get_project_stats)
+    HackatimeService.define_method(:get_project_stats) do |_name|
+      0
+    end
+
+    begin
+      # Add a hackatime chip and save
+      patch project_url(p), params: { project: { hackatime_ids: ['NEW'], name: p.name } }
+      assert_redirected_to project_url(p)
+      assert_equal ['NEW'], p.reload.hackatime_ids.map(&:to_s)
+
+      # Edit page should show the removable button (not locked)
+      get edit_project_url(p)
+      assert_response :success
+      assert_select '#hackatime-selected .hackatime-chip' do
+        assert_select 'button.hackatime-remove--locked[disabled]', 0
+        assert_select 'button.hackatime-remove', 1
+      end
+
+      # Now remove the chip and save — send no hackatime_ids param (controller treats missing key as empty array)
+      patch project_url(p), params: { project: { name: p.name } }
+      assert_redirected_to project_url(p)
+      assert_empty p.reload.hackatime_ids
+    ensure
+      HackatimeService.define_method(:get_project_stats, original)
+    end
+  end
+
   test "edit form locks removal of hackatime chips if project was shipped using hackatime time" do
     p = Project.create!(user: @owner, name: 'Locked Edit', repository_url: 'x', hackatime_ids: ['A'], total_seconds: 3600)
     # Ship using project's total_seconds (Hackatime-derived usage)
@@ -97,6 +129,23 @@ class ProjectsHackatimeIntegrationTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_select '#hackatime-selected .hackatime-chip' do
       assert_select 'button.hackatime-remove--locked[disabled]', 1
+    end
+  end
+
+  test "edit form allows removal of hackatime chips added after last ship" do
+    p = Project.create!(user: @owner, name: 'PostShipUI', repository_url: 'x', total_seconds: 3600)
+
+    # Ship first (no hackatime linked at ship time)
+    p.ship_and_award_credits!(admin_user: @owner, rate: 1, devlogged_seconds: p.total_seconds, shipped_at: Time.current)
+
+    # Add a hackatime id after the ship — should be removable in the UI
+    p.update!(hackatime_ids: ['C'])
+
+    get edit_project_url(p)
+    assert_response :success
+    assert_select '#hackatime-selected .hackatime-chip' do
+      assert_select 'button.hackatime-remove--locked[disabled]', 0
+      assert_select 'button.hackatime-remove', 1
     end
   end
 end

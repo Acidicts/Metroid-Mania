@@ -44,7 +44,7 @@ class ProjectTest < ActiveSupport::TestCase
     # Attempt to remove linked hackatime id should be invalid
     p.hackatime_ids = []
     assert_not p.valid?
-    assert_match /cannot remove linked Hackatime projects/, p.errors[:hackatime_ids].join(', ')
+    assert_match /cannot remove Hackatime project\(s\).*linked when the project was shipped/, p.errors[:hackatime_ids].join(', ')
   end
 
   test "cannot remove hackatime id after any ship exists (even when ship used user devlogs)" do
@@ -61,7 +61,7 @@ class ProjectTest < ActiveSupport::TestCase
     # Removing hackatime id should now be blocked because the project was shipped
     p.hackatime_ids = []
     assert_not p.valid?
-    assert_match /cannot remove linked Hackatime projects because the project has been shipped/, p.errors[:hackatime_ids].join(', ')
+    assert_match /cannot remove Hackatime project\(s\).*linked when the project was shipped/, p.errors[:hackatime_ids].join(', ')
   end
 
   test "can remove hackatime id when project has never been shipped" do
@@ -69,6 +69,36 @@ class ProjectTest < ActiveSupport::TestCase
     p = Project.create!(user: owner, name: 'H-NoShip', repository_url: 'x', hackatime_ids: ['C'], total_seconds: 3600)
 
     # No ships exist — removal should be allowed
+    p.update!(hackatime_ids: [])
+    assert_empty p.reload.hackatime_ids
+  end
+
+  test "can add a hackatime id, save it, and remove it before any ship" do
+    owner = users(:one)
+    p = Project.create!(user: owner, name: 'AddThenRemove', repository_url: 'x', total_seconds: 3600)
+
+    # Add and persist a Hackatime ID
+    p.update!(hackatime_ids: ['Z'])
+    assert_equal ['Z'], p.reload.hackatime_ids.map(&:to_s)
+
+    # Because no ship exists after the addition, removal should be allowed
+    p.update!(hackatime_ids: [])
+    assert_empty p.reload.hackatime_ids
+  end
+
+  test "can add and remove hackatime id added after the last ship" do
+    owner = users(:one)
+    p = Project.create!(user: owner, name: 'PostShipHack', repository_url: 'x', total_seconds: 3600)
+
+    # Ship the project before any hackatime link exists
+    p.ship_and_award_credits!(admin_user: owner, rate: 1, devlogged_seconds: p.total_seconds, shipped_at: Time.current)
+    assert p.ships.any?
+
+    # Add a Hackatime ID after the ship — it should NOT be considered locked
+    p.update!(hackatime_ids: ['D'])
+    assert_not p.hackatime_id_locked?('D')
+
+    # Removing the newly added Hackatime ID should be allowed
     p.update!(hackatime_ids: [])
     assert_empty p.reload.hackatime_ids
   end
