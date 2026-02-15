@@ -226,6 +226,15 @@ class Project < ApplicationRecord
   # Scope for non-deleted projects
   scope :active, -> { where(deleted_at: nil) }
 
+  # Order projects by total user-created devlogged seconds (SQL-side aggregate).
+  # Uses CASE to ignore system-generated devlogs (user_id IS NULL).
+  scope :order_by_total_devlogged_seconds, ->(dir = :desc) {
+    dir_sql = dir.to_s.upcase == 'ASC' ? 'ASC' : 'DESC'
+    left_joins(:devlogs)
+      .group('projects.id')
+      .order(Arel.sql("SUM(CASE WHEN devlogs.user_id IS NOT NULL THEN devlogs.duration_seconds ELSE 0 END) #{dir_sql}"))
+  }
+
   # Soft-delete predicate
   def deleted?
     deleted_at.present?

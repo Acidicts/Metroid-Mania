@@ -83,6 +83,9 @@ Rails.application.routes.draw do
   get "home/index"
   get "home" => "home#index"
 
+  get "gallery/index"
+  get "gallery" => "gallery#index"
+
   # Local-only preview route for the shared retro sample partial
   get "/shared/_retro_sample", to: "shared#_retro_sample" if Rails.env.development? || Rails.env.test?
   

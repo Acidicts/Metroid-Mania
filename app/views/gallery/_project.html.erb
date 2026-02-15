@@ -1,0 +1,115 @@
+<style>
+  .btn-retro-pos {
+    background-color: var(--main-600);
+    padding: 4px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    text-align: center;
+    border : 2px dashed var(--main-800);
+    font-size: 0.9rem;
+    text-decoration: none;
+  }
+
+  .btn-retro-pos:hover {
+    background-color: var(--main-500);
+    border : 2px solid var(--main-900);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    transform: scale(1.05);
+  }
+
+  .btn-retro-top {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+
+  .btn-retro-bottom {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+  }
+
+  /* make thumbnail images scale to fit the .project-media--thumb container */
+  .project-media--thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* use 'contain' if you prefer no cropping */
+    border-radius: 5%;
+    display: block;
+  }
+
+  .project-media--thumb { flex-shrink: 0; }
+
+  .project-card {
+    background: var(--main-50);
+    border: 2px solid var(--main-300);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease-in-out;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%; /* fill the grid row */
+  }
+
+  .project-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto; /* make content grow so footer/CTAs are aligned */
+  }
+</style>
+
+<div id="<%= dom_id project %>" class="project-card project-preview">
+  <% if project.image.attached? %>
+    <div class="project-media project-media--thumb" style="height:240px; max-height:240px; ">
+        <% if project.respond_to?(:image_url) && project.image_url.present? %>
+          <img src="<%= project.image_url %>" alt="<%= project.name %>" loading="lazy">
+        <% elsif project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached? %>
+          <%= image_tag(project.image, alt: project.name, loading: "lazy") %>
+        <% else %>
+          <img src="https://placehold.co/240x240" alt="<%= project.name %>" loading="lazy">
+        <% end %>
+    </div>
+  <% else %>
+    <div class="project-media project-media--thumb" style="height:240px; max-height:240px; background: var(--accent-gradient); border-radius: 5%;"></div>
+  <% end %>
+
+  <div class="project-content">
+    <!-- status ribbon positioned at top-left of the card -->
+    <span class="ribbon <%= project.computed_status == 'shipped' ? 'shipped' : 'unshipped' %>"><%= project.computed_status == 'shipped' ? 'Shipped' : 'Unshipped' %></span>
+
+    <h3 class="project-title" style="margin:0 0 6px 0; font-size:1.05rem;"><%= link_to project.name, project_path(project) %></h3>
+
+    <% if project.description.present? %>
+      <p class="project-desc" style="margin:0 0 8px 0; color:var(--main-700); font-size:0.95rem;"><%= truncate(project.description, length: 160, separator: ' ') %></p>
+    <% end %>
+
+    <div style="display:flex; gap:12px; align-items:center; margin-top:10px; flex-wrap:wrap;">
+      <div class="tech" style="font-weight:700; padding:6px 8px; background:var(--accent3); border:2px solid var(--main-700); border-radius:6px;">Total: <span style="font-weight:800;"> <%= format_duration(project.total_devlogged_seconds) %> </span></div>
+      <div class="tech" style="font-weight:700; padding:6px 8px; background:rgba(255,255,255,0.92); border:2px solid var(--main-700); border-radius:6px;"></span>
+        <span style="margin-left:8px; font-weight:600; font-size:0.85rem; color:var(--main-900); opacity:0.9;"><%= pluralize(project.devlogs.count, 'devlog') %></span>
+      </div>
+    </div>
+
+    <div class="cta-row" style="margin-top:12px;">
+      <%= link_to 'View', project_path(project), class: 'btn-retro' %>
+      <div style="display:flex; flex-direction:column; gap:4px; margin-left:8px;">
+        <% if project.repository_url.present? %>
+          <%= link_to 'Repo', ensure_url_scheme(project.repository_url), class: 'btn-retro-top btn-retro-pos', target: '_blank', rel: 'noopener noreferrer', style: 'margin-left:8px;' %>
+        <% end %>
+        <% if project.readme_url.present? %>
+          <%= link_to 'Readme', ensure_url_scheme(project.readme_url), class: 'btn-retro-bottom btn-retro-pos', target: '_blank', rel: 'noopener noreferrer', style: 'margin-left:8px;' %>
+        <% end %>
+      </div>
+
+      <% if defined?(local_assigns) && local_assigns[:@hackatime_breakdown] && @hackatime_breakdown.any? %>
+        <span class="badge-retro" style="margin-left:8px; font-weight:600;"><%= @hackatime_breakdown.map { |h| "#{h[:name]}: #{format_duration(h[:seconds])}" }.join(" • ") %></span>
+      <% elsif project.hackatime_ids.present? && project.hackatime_ids.any? %>
+        <span class="badge-retro" style="margin-left:8px; font-weight:600;"><%= project.hackatime_ids.join(", ") %></span>
+      <% else %>
+        <span class="badge-retro" style="margin-left:8px; font-weight:600;"><%= project.hackatime_id.presence || "Not Linked" %></span>
+      <% end %>
+    </div>
+  </div>
+</div>
