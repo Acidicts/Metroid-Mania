@@ -142,8 +142,12 @@ a { font-size: 1.2rem;}
 
 /* Buttons */
 .btn-retro {
-  font: "Pixelify Sans", sans-serif;
-  display: inline-block;
+  font-family: "Pixelify Sans", sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   background: linear-gradient(180deg, var(--accent1), var(--accent2));
   color: var(--main-900);
   font-weight: 700;
@@ -354,6 +358,24 @@ code, pre { font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mo
 
 .project-hero .hero-left { padding-right: 12px; }
 .project-hero .hero-right { min-height: 300px; align-self: start; }
+
+/* Ensure action controls inside the featured-actions row match visually (buttons and link-to buttons) */
+.featured-project .featured-actions form { display: inline-block; margin: 0; padding: 0; }
+.featured-project .featured-actions .btn-retro,
+.featured-project .featured-actions a.btn-retro,
+.featured-project .featured-actions button.btn-retro,
+.featured-project .featured-actions input.btn-retro {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: 48px; /* consistent vertical size */
+  padding: 0 16px; /* horizontal padding kept for label spacing */
+  line-height: 1;
+  white-space: nowrap;
+}
+.featured-project .featured-actions .btn-retro { min-width: 110px; }
+
 
 .featured-project {
   display: block;

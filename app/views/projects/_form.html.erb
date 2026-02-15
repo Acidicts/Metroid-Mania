@@ -170,6 +170,11 @@
         font-weight: 700;
       }
 
+      .hackatime-remove--locked {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
       /* File input custom styles */
       .file-input-wrapper {
         display: flex;
@@ -323,7 +328,12 @@
           <% if seconds.present? && seconds.to_i > 0 %>
             <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
           <% end %>
-          <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
+          <% locked = project.persisted? && project.hackatime_id_locked?(h) %>
+          <% if locked %>
+            <button type="button" class="hackatime-remove hackatime-remove--locked" disabled title="Cannot remove — this was linked when the project was shipped">✕</button>
+          <% else %>
+            <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
+          <% end %>
           <input type="hidden" name="project[hackatime_ids][]" value="<%= h %>">
         </div>
       <% end %>

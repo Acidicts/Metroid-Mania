@@ -76,8 +76,42 @@ class Project < ApplicationRecord
     "#{hours} hrs #{minutes} mins"
   end
 
+  # Returns true when any Ship on this project recorded seconds that cannot be
+  # fully explained by in-app devlogs — this implies Hackatime/externally-sourced
+  # time was used when the project was shipped.
+  def hackatime_time_used_in_ships?
+    # Conservative detection: treat a Ship as having used Hackatime-derived project time
+    # when its recorded devlogged_seconds exactly matches the project's stored total_seconds
+    # AND that recorded seconds cannot be fully explained by user-created devlogs before
+    # the ship time. This avoids false positives when a ship used explicit devlogged_seconds
+    # that happen to equal `total_seconds`.
+    return false if total_seconds.to_i <= 0
+
+    ships.any? do |s|
+      ssec = s.devlogged_seconds.to_i
+      next false if ssec <= 0
+      next false unless ssec == total_seconds.to_i
+
+      logged = devlogs.where.not(user_id: nil).where('created_at <= ?', s.shipped_at).sum(:duration_seconds).to_i
+      logged < ssec
+    end
+  end
+
+  # Returns the set of Hackatime IDs that are locked (cannot be removed) because
+  # they were present on the project when it was shipped. Only protects IDs that
+  # existed at ship time — IDs added after a ship can still be removed.
+  def locked_hackatime_ids
+    ships.flat_map(&:hackatime_ids_snapshot).uniq.compact
+  end
+
+  # Returns true if the given hackatime_id is locked (present on any ship snapshot)
+  def hackatime_id_locked?(id)
+    locked_hackatime_ids.map(&:to_s).include?(id.to_s)
+  end
+
   # Ensure hackatime projects are not linked to multiple projects
   validate :hackatime_ids_unique_across_projects
+  validate :prevent_removal_of_hackatime_if_time_used, on: :update
 
   private
 
@@ -88,6 +122,26 @@ class Project < ApplicationRecord
     overlap = hackatime_ids.map(&:to_s) & other_names
     if overlap.any?
       errors.add(:hackatime_ids, "contains project(s) already linked: #{overlap.join(', ')}")
+    end
+  end
+
+  # Prevent removing linked Hackatime projects when Hackatime-derived time was used
+  # for any Ship on this project. We detect "used Hackatime time" by comparing a
+  # Ship's recorded seconds to the sum of user-created devlogs at the time of that ship.
+  def prevent_removal_of_hackatime_if_time_used
+    return unless persisted?
+
+    # Determine which hackatime IDs would be removed by this update
+    current_db_ids = (Project.find(id).hackatime_ids || [])
+    removed = (current_db_ids - (hackatime_ids || []))
+    return if removed.blank?
+
+    # Block removal only for IDs that were present when the project was shipped
+    locked = locked_hackatime_ids.map(&:to_s)
+    protected_being_removed = removed.map(&:to_s) & locked
+
+    if protected_being_removed.any?
+      errors.add(:hackatime_ids, "cannot remove Hackatime project(s) [#{protected_being_removed.join(', ')}] that were linked when the project was shipped")
     end
   end
 

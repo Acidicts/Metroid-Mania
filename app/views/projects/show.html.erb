@@ -158,7 +158,7 @@
           <% else %>
             <%= link_to 'Back to projects', projects_path, class: 'btn-retro btn-retro--outline' %>
           <% end %>
-            <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
+          <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
         </div>
       </div>
     </aside>
@@ -170,9 +170,9 @@
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
       <h2>Devlogs</h2>
       <% if (@project.total_seconds.to_i - @project.total_devlogged_seconds) > 900 %>
-        <%= link_to "New Devlog", new_project_devlog_path(@project), class: "btn-retro" %>
+        <%= link_to "New Devlog", new_project_devlog_path(@project), class: "nb-btn nb-btn-secondary" %>
       <% else %>
-        <button class="btn-retro-disabled" disabled>New Devlog</button>
+        <button class="nb-btn-disabled nb-btn-secondary-disabled" style="cursor: not-allowed;" disabled>New Devlog</button>
       <% end %>
     </div>
 

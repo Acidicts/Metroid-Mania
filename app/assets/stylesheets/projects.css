@@ -1,2 +1,7 @@
 /* Styles moved to: app/views/projects/_form.html.erb */
 /* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */
+
+.project-media__img {
+    border-radius: 4px;
+    border: 3px dashed var(--main-700);
+}

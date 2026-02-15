@@ -117,7 +117,8 @@ module Admin
         end
 
         # Anonymize and clear hackatime linkage so others can use those ids
-        @project.update!(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: [])
+        # Use update_columns to bypass validations so soft-delete always succeeds
+        @project.update_columns(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: nil)
 
         Audit.create!(user: current_user, project: @project, action: 'delete', details: { reclaimed_credits: total_awarded })
       end

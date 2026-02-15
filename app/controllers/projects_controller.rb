@@ -146,7 +146,8 @@ class ProjectsController < ApplicationController
         owner.update!(currency: (owner.currency || 0) - total_awarded)
       end
 
-      @project.update!(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: [])
+      # Soft-delete without running validations so we can clear metadata (including hackatime links)
+      @project.update_columns(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: nil)
 
       Audit.create!(user: current_user, project: @project, action: 'delete', details: { reclaimed_credits: total_awarded })
     end

@@ -5,12 +5,34 @@ class Ship < ApplicationRecord
   validates :devlogged_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :credits_awarded, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
+  before_create :snapshot_hackatime_ids
   after_create :touch_project_status
   after_create :associate_pending_request
   after_update :apply_multiplier_change, if: -> { saved_change_to_multiplier? }
   after_destroy :touch_project_status
 
+  # Accessor helpers for hackatime_ids_snapshot (YAML serialization)
+  def hackatime_ids_snapshot
+    raw = read_attribute(:hackatime_ids_snapshot)
+    return [] if raw.nil? || raw == ""
+    return raw if raw.is_a?(Array)
+
+    begin
+      YAML.safe_load(raw) || []
+    rescue
+      raw.to_s.split(",").map(&:strip)
+    end
+  end
+
+  def hackatime_ids_snapshot=(vals)
+    write_attribute(:hackatime_ids_snapshot, vals.present? ? vals.to_yaml : nil)
+  end
+
   private
+
+  def snapshot_hackatime_ids
+    self.hackatime_ids_snapshot = project&.hackatime_ids
+  end
 
   def touch_project_status
     project.recalculate_status! if project.present?
@@ -85,5 +107,19 @@ class Ship < ApplicationRecord
     rescue => e
       Rails.logger.error("Failed to sync multiplier for Ship #{id} with ShipRequest ##{req&.id}: #{e.message}")
     end
+  end
+
+  # Returns true when this Ship's recorded seconds cannot be fully explained by
+  # user-created devlogs up to the ship time — indicating external time (e.g. Hackatime)
+  # was used to satisfy the shipped seconds. This is used to prevent unlinking
+  # linked Hackatime projects that were relied upon when awarding credits.
+  public
+
+  def used_hackatime_time?
+    return false if devlogged_seconds.blank? || shipped_at.blank? || project.nil?
+
+    # Sum of user-created devlogs up to the shipped_at timestamp
+    logged = project.devlogs.where.not(user_id: nil).where('created_at <= ?', shipped_at).sum(:duration_seconds).to_i
+    devlogged_seconds.to_i > logged
   end
 end

@@ -39,13 +39,18 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update project" do
+    # Ensure we're updating an unshipped project so validations about locked hackatime links don't block the update
+    @project.ships.destroy_all
+    @project.update!(shipped: false, shipped_at: nil)
+
     patch project_url(@project), params: { project: { name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
     assert_redirected_to project_url(@project)
   end
 
   test "can remove hackatime projects by clearing selection" do
-    p = projects(:one)
-    p.update!(hackatime_ids: ['A','B'])
+    # Use a fresh, never-shipped project so clearing selection is permitted
+    owner = users(:one)
+    p = Project.create!(user: owner, name: 'Clearable', repository_url: 'x', hackatime_ids: ['A','B'], total_seconds: 0)
 
     patch project_url(p), params: { project: { name: p.name } } # no hackatime_ids param
     assert_redirected_to project_url(p)

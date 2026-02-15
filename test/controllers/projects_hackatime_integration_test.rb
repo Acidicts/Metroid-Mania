@@ -75,4 +75,28 @@ class ProjectsHackatimeIntegrationTest < ActionDispatch::IntegrationTest
       HackatimeService.define_method(:get_project_stats, original2)
     end
   end
+
+  test "edit form locks removal of hackatime chips if project was shipped using hackatime time" do
+    p = Project.create!(user: @owner, name: 'Locked Edit', repository_url: 'x', hackatime_ids: ['A'], total_seconds: 3600)
+    # Ship using project's total_seconds (Hackatime-derived usage)
+    p.ship_and_award_credits!(admin_user: @owner, rate: 1, devlogged_seconds: 0, shipped_at: Time.current)
+
+    get edit_project_url(p)
+    assert_response :success
+    assert_select '#hackatime-selected .hackatime-chip' do
+      assert_select 'button.hackatime-remove--locked[disabled]', 1
+    end
+  end
+
+  test "edit form locks removal of hackatime chips after any ship (even when ship used devlogs)" do
+    p = Project.create!(user: @owner, name: 'Locked Edit 2', repository_url: 'x', hackatime_ids: ['B'], total_seconds: 3600)
+    d = p.devlogs.create!(title: 'Work', content: 'x', duration_minutes: 60, log_date: Date.today, user: @owner)
+    p.ship_and_award_credits!(admin_user: @owner, rate: 1, devlogged_seconds: d.duration_seconds, shipped_at: Time.current)
+
+    get edit_project_url(p)
+    assert_response :success
+    assert_select '#hackatime-selected .hackatime-chip' do
+      assert_select 'button.hackatime-remove--locked[disabled]', 1
+    end
+  end
 end

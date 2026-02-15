@@ -22,13 +22,55 @@ class ProjectTest < ActiveSupport::TestCase
   end
 
   test "hackatime ids must be unique across projects" do
-    p1 = projects(:one)
-    p2 = projects(:two)
+    owner = users(:one)
 
-    p1.update!(hackatime_ids: ['Alpha Project'])
+    # use fresh projects (avoid fixture projects that may already be shipped)
+    p1 = Project.create!(user: owner, name: 'Unique1', repository_url: 'x', hackatime_ids: ['Alpha Project'])
+    p2 = Project.new(user: users(:two), name: 'Unique2', repository_url: 'x')
+
     p2.hackatime_ids = ['Alpha Project']
     assert_not p2.valid?
     assert_match /already linked/, p2.errors[:hackatime_ids].join(', ')
+  end
+
+  test "cannot remove hackatime id if project was shipped using hackatime time" do
+    owner = users(:one)
+    p = Project.create!(user: owner, name: 'H-Used', repository_url: 'x', hackatime_ids: ['A'], total_seconds: 3600)
+
+    # Create a Ship that uses the project's total_seconds (no devlogs present)
+    p.ship_and_award_credits!(admin_user: owner, rate: 5, devlogged_seconds: 0, shipped_at: Time.current)
+    assert_predicate p.ships.last, :used_hackatime_time?
+
+    # Attempt to remove linked hackatime id should be invalid
+    p.hackatime_ids = []
+    assert_not p.valid?
+    assert_match /cannot remove linked Hackatime projects/, p.errors[:hackatime_ids].join(', ')
+  end
+
+  test "cannot remove hackatime id after any ship exists (even when ship used user devlogs)" do
+    owner = users(:one)
+    p = Project.create!(user: owner, name: 'H-NotUsed', repository_url: 'x', hackatime_ids: ['B'], total_seconds: 3600)
+
+    # Add user-created devlogs that fully account for the ship seconds
+    d = p.devlogs.create!(title: 'Work', content: 'x', duration_minutes: 60, log_date: Date.today, user: owner)
+
+    # Ship using explicit devlogged_seconds (so not relying on project's total_seconds)
+    p.ship_and_award_credits!(admin_user: owner, rate: 5, devlogged_seconds: d.duration_seconds, shipped_at: Time.current)
+    assert_not p.ships.last.used_hackatime_time?
+
+    # Removing hackatime id should now be blocked because the project was shipped
+    p.hackatime_ids = []
+    assert_not p.valid?
+    assert_match /cannot remove linked Hackatime projects because the project has been shipped/, p.errors[:hackatime_ids].join(', ')
+  end
+
+  test "can remove hackatime id when project has never been shipped" do
+    owner = users(:one)
+    p = Project.create!(user: owner, name: 'H-NoShip', repository_url: 'x', hackatime_ids: ['C'], total_seconds: 3600)
+
+    # No ships exist — removal should be allowed
+    p.update!(hackatime_ids: [])
+    assert_empty p.reload.hackatime_ids
   end
 
   test "minutes_needed_for_ship_request returns remaining minutes to reach 15" do
