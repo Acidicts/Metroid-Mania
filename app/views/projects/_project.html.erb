@@ -55,7 +55,7 @@
 
   <div class="project-content">
     <!-- status ribbon positioned at top-left of the card -->
-    <span class="ribbon <%= project.computed_status == 'shipped' ? 'shipped' : 'unshipped' %>"><%= project.computed_status == 'shipped' ? 'Shipped' : 'Unshipped' %></span>
+    <span class="ribbon <%= project.computed_status %>"><%= project.computed_status.humanize %> - <%=project.computed_status%></span>
 
     <h3 class="project-title" style="margin:0 0 6px 0; font-size:1.05rem;"><%= link_to project.name, project_path(project) %></h3>
 

@@ -1,0 +1,30 @@
+<style>
+    #ship-request-new {
+        margin-top: 2rem;
+        border: 3px solid var(--main-700);
+        border-radius: 0.5rem;
+        padding: 1rem;
+        background-color: fff;
+    }
+</style>
+
+<div id="ship-request-new" class="container">
+    <h1>Request shipping</h1>
+
+    <%= form_with model: [@project, @ship_request], local: true do |f| %>
+    <p>Request shipping for <strong><%= @project.name %></strong>?</p>
+
+    <div class="checklist_ship">
+        <% raw markdown_to_html(ship_checklist(@project)) %>
+    </div>
+
+    <div class="form-actions" style="display: flex; flex-direction:row; gap: 1rem;">
+        <% if (@project.user == current_user) && !project_eligible(@project) %> 
+            <%= f.submit "Request Ship", class: "nb-btn nb-badge badge-devlog" %>
+        <% else %>
+            <button class="nb-btn-disabled nb-btn-secondary-disabled" style="cursor: not-allowed;" disabled>Request Ship</button>
+        <% end %>
+        <%= link_to "Cancel", project_path(@project), class: "nb-btn nb-btn-danger" %>
+    </div>
+    <% end %>
+<div>

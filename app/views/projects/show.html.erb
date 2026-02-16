@@ -136,28 +136,8 @@
         </div>
 
         <div class="featured-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
-          <% if @project.user == current_user %>
+          <%= ship_request_action_buttons(@project) %>
 
-            <% if @project.computed_shipped? %>
-              <% if (@project.devlogs.where('created_at >= ?', @project.computed_shipped_at || @project.approved_at || @project.created_at).sum(:duration_seconds).to_i / 60) >= 15 %>
-                <%= button_to 'Request another ship', project_ship_requests_path(@project), method: :post, data: { confirm: 'Request a new ship?' }, class: 'btn-retro' %>
-              <% else %>
-                <span style="color:var(--main-700);">Add a devlog to request another ship.</span>
-              <% end %>
-            <% elsif @project.computed_status == 'pending' %>
-              <span style="color:var(--accent2); font-weight:700">Awaiting approval</span>              <%# Link to view the pending ship request if present %>
-              <% if @project.ship_requests.where(status: 'pending').exists? %>
-                <%= link_to 'View request', project_ship_request_path(@project, @project.ship_requests.where(status: 'pending').first), class: 'btn-retro btn-retro--outline' %>
-              <% end %>
-              <% elsif !@project.eligible_for_ship_request? %>
-              <% remaining = [15 - @project.devlogged_minutes_since_baseline.to_i, 0].max %>
-              <span style="font-size:1.2rem">You need <strong style="font-family:monospace;"><%= remaining %></strong> more minutes of devlogs</span>
-            <% elsif @project.eligible_for_ship_request? %>
-              <%= button_to 'Request Ship', ship_project_path(@project), method: :post, data: { confirm: 'Request to ship this project?' }, class: 'btn-retro' %>
-            <% end %>
-          <% else %>
-            <%= link_to 'Back to projects', projects_path, class: 'btn-retro btn-retro--outline' %>
-          <% end %>
           <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
         </div>
       </div>

@@ -21,7 +21,7 @@ Rails.application.routes.draw do
   resources :products
   resources :projects do
     resources :devlogs
-    resources :ship_requests, only: [:create, :show, :index]
+    resources :ship_requests, only: [:new, :create, :show, :index]
   end
   resources :leaderboards, only: [:index]
 

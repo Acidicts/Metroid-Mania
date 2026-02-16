@@ -10,6 +10,15 @@ class ShipRequestsController < ApplicationController
     @ship_request = @project.ship_requests.find(params[:id])
   end
 
+  # GET /projects/:project_id/ship_requests/new
+  def new
+    if (@project.user != current_user) && !current_user.admin?
+      redirect_to project_path(@project) and flash_warn("Not authorized") and return
+    end
+
+    @ship_request = @project.ship_requests.new
+  end
+
   # POST /projects/:project_id/ship_requests
   def create
     unless @project.user == current_user

@@ -382,7 +382,7 @@ class Project < ApplicationRecord
     return 'pending' if ship_requests.where(status: 'pending').exists?
     latest_request = ship_requests.order(updated_at: :desc).first
     return 'rejected' if latest_request&.status == 'rejected'
-    return 'shipped' if ships.exists?
+    return 'shipped' if ships.exists? and latest_ship.shipped_at.present?
     'unshipped'
   end
 
