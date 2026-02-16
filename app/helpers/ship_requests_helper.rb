@@ -56,7 +56,6 @@ module ShipRequestsHelper
         end
 
       elsif project.computed_status == "pending"
-        parts << content_tag(:span, "Awaiting approval", style: "color:var(--accent2); font-weight:700")
         if project.ship_requests.where(status: "pending").exists?
           req = project.ship_requests.where(status: "pending").first
           parts << link_to("View request", project_ship_request_path(project, req), class: "btn-retro btn-retro--outline")

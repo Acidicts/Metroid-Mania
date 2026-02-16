@@ -1,9 +1,13 @@
 <h1>Ship request for <%= @project.name %> (#<%= @ship_request.id %>)</h1>
-<p>Requested at: <%= @ship_request.requested_at %></p>
-<p>Devlogged: <%= format_duration(@ship_request.devlogged_seconds.to_i) %></p>
-<p>Status: <%= @ship_request.status %></p>
 
-<h3>Devlogs included</h3>
-<% @ship_request.devlogs.order(log_date: :desc).each do |d| %>
-  <%= render d %>
+<%= render partial: 'devlogs/ship_request', locals: { ship_request: @ship_request, project: @project } %>
+
+<% for dev in @ship_request.devlogs.order(log_date: :desc) %>
+  <% if !dev.title.downcase.include?("ship") %>
+    <%= render dev %>
+  <% end %>
 <% end %>
+
+<div class="nb-linkbar" style="margin-top:12px;">
+  <%= link_to '← Back to project', project_path(@project), class: 'nb-link' %>
+</div>

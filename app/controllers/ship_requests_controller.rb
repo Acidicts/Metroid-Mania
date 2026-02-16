@@ -8,6 +8,19 @@ class ShipRequestsController < ApplicationController
 
   def show
     @ship_request = @project.ship_requests.find(params[:id])
+
+    # Allow access to the project owner or admins. Keep rejected requests viewable
+    # so owners can see rejection details (devlog preserved). The previous code
+    # incorrectly tried to read a `title` on ShipRequest which doesn't exist.
+    unless current_user.admin? || @ship_request.status != "rejected"
+      if @project.user != current_user
+        redirect_to project_path(@project) and flash_warn("Not authorized") and return
+      end
+      if @ship_request.status == "rejected"
+        redirect_to project_path(@project), flash: { warn_reject: "This ship request was rejected. Check the devlog for details." }
+        return
+      end
+    end
   end
 
   # GET /projects/:project_id/ship_requests/new
@@ -26,7 +39,7 @@ class ShipRequestsController < ApplicationController
       redirect_to project_path(@project) and return
     end
 
-    if @project.ship_requests.where(status: 'pending').exists?
+    if @project.ship_requests.where(status: "pending").exists?
       flash_info("A ship request is already pending for this project.")
       redirect_to project_path(@project) and return
     end
@@ -37,15 +50,15 @@ class ShipRequestsController < ApplicationController
     end
 
     baseline = @project.ship_baseline
-    devlogs_to_link = @project.devlogs.where('created_at >= ?', baseline).where(ship_request_id: nil)
+    devlogs_to_link = @project.devlogs.where("created_at >= ?", baseline).where(ship_request_id: nil)
     devlogged_seconds = devlogs_to_link.sum(:duration_seconds)
 
     ActiveRecord::Base.transaction do
-      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: 'pending')
+      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: "pending")
       devlogs_to_link.update_all(ship_request_id: req.id)
 
-      @project.update!(status: 'pending', ship_requested_at: Time.current)
-      Audit.create!(user: current_user, project: @project, action: 'ship_request', details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
+      @project.update!(status: "pending", ship_requested_at: Time.current)
+      Audit.create!(user: current_user, project: @project, action: "ship_request", details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
     end
 
     flash_pass("Ship request submitted and awaiting admin approval")

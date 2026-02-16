@@ -27,9 +27,15 @@ class CustomMarkdownRenderer < Redcarpet::Render::HTML
       content = Regexp.last_match(2)
       state_class = checked ? "task-list-item--checked" : "task-list-item--unchecked"
 
-      # Data-URI SVGs (percent-encoded) for pixel-art checkboxes.
-      unchecked_svg = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='16' height='16' fill='%23ffffff'/%3E%3Crect x='1' y='1' width='14' height='14' fill='none' stroke='%230d2b45' stroke-width='1'/%3E%3C/svg%3E"
-      checked_svg = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='16' height='16' fill='%23ffd4a3'/%3E%3Crect x='1' y='1' width='14' height='14' fill='none' stroke='%230d2b45' stroke-width='1'/%3E%3Crect x='4' y='8' width='2' height='2' fill='%230d2b45'/%3E%3Crect x='6' y='10' width='2' height='2' fill='%230d2b45'/%3E%3Crect x='8' y='6' width='2' height='2' fill='%230d2b45'/%3E%3Crect x='10' y='4' width='2' height='2' fill='%230d2b45'/%3E%3C/svg%3E"
+      # Use SVG asset files for pixel-art checkboxes (prefer asset pipeline; fall back to plain asset paths).
+      if defined?(ActionController::Base) && ActionController::Base.respond_to?(:helpers)
+        unchecked_svg = ERB::Util.html_escape(ActionController::Base.helpers.asset_path("empty_checkbox.svg"))
+        checked_svg   = ERB::Util.html_escape(ActionController::Base.helpers.asset_path("ticked_checkbox.svg"))
+      else
+        # Fallback (development / precompiled asset path)
+        unchecked_svg = "/assets/empty_checkbox.svg"
+        checked_svg   = "/assets/ticked_checkbox.svg"
+      end
 
       img_src = checked ? checked_svg : unchecked_svg
       glyph = checked ? "&#x2611;" : "&#x2610;"  # textual fallback

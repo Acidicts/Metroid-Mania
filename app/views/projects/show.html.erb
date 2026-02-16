@@ -74,6 +74,11 @@
         transform: rotate(180deg) scale(1.2);
       }
 
+      /* ensure action controls align with the Edit link */
+      .featured-actions { align-items: center; }
+      .featured-actions form { margin: 0; display: inline-block; }
+      .featured-actions > * { align-self: center; }
+
     </style>
 
     <div class="README-MENU" id="README_MENU" style="opacity: 0;">
@@ -135,7 +140,7 @@
           <p><strong>Undocumented:</strong> <%= format_duration([@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max) %></p>
         </div>
 
-        <div class="featured-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+        <div class="featured-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
           <%= ship_request_action_buttons(@project) %>
 
           <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>

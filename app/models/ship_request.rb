@@ -1,7 +1,7 @@
 class ShipRequest < ApplicationRecord
   belongs_to :project
   belongs_to :user
-  belongs_to :processed_by, class_name: 'User', optional: true
+  belongs_to :processed_by, class_name: "User", optional: true
   belongs_to :ship, optional: true
 
   has_many :devlogs
@@ -10,14 +10,14 @@ class ShipRequest < ApplicationRecord
 
   validates :status, inclusion: { in: STATUSES }
 
-  after_commit :recalculate_project_status, on: [:create, :update, :destroy]
+  after_commit :recalculate_project_status, on: [ :create, :update, :destroy ]
   after_create_commit :create_ship_request_devlog
   after_update_commit :sync_ship_request_devlog
   # When a request is updated after approval, propagate meaningful fields into the associated Ship (if it exists).
   after_update_commit :propagate_changes_to_ship
 
   def pending?
-    status == 'pending'
+    status == "pending"
   end
 
   private
@@ -28,9 +28,9 @@ class ShipRequest < ApplicationRecord
       # Human-friendly duration. Use helper when possible.
       formatted_time = if devlogged_seconds.present? && devlogged_seconds.to_i > 0
                          ApplicationController.helpers.format_duration(devlogged_seconds.to_i)
-                       else
+      else
                          "-"
-                       end
+      end
 
       credits = credits_awarded.present? ? credits_awarded : "-"
       multiplier = respond_to?(:multiplier) && multiplier.present? ? multiplier : "-"
@@ -57,9 +57,9 @@ class ShipRequest < ApplicationRecord
     begin
       formatted_time = if devlogged_seconds.present? && devlogged_seconds.to_i > 0
                          ApplicationController.helpers.format_duration(devlogged_seconds.to_i)
-                       else
+      else
                          "-"
-                       end
+      end
 
       credits = credits_awarded.present? ? credits_awarded : "-"
       multiplier = respond_to?(:multiplier) && multiplier.present? ? multiplier : "-"
@@ -67,7 +67,7 @@ class ShipRequest < ApplicationRecord
       # If a Ship has been created for this request, show Ship # and awarded credits
       ship = associated_ship
       if ship
-        ship_number = project.ships.where('shipped_at <= ?', ship.shipped_at).count
+        ship_number = project.ships.where("shipped_at <= ?", ship.shipped_at).count
         title = "Ship ##{ship_number}"
         awarded_credits = ship.credits_awarded.present? ? ApplicationController.helpers.format_credits(ship.credits_awarded) : "-"
         credits_line = "Credits awarded to owner: #{awarded_credits}"
@@ -111,7 +111,7 @@ class ShipRequest < ApplicationRecord
       return ship if ship
     end
 
-    project.ships.where('shipped_at >= ?', requested_at).order(:shipped_at).first
+    project.ships.where("shipped_at >= ?", requested_at).order(:shipped_at).first
   end
 
   # Prefer stored credits_awarded, but fall back to the associated ship's credited amount when missing
@@ -167,7 +167,7 @@ class ShipRequest < ApplicationRecord
     end
 
     # Link the request directly to the created Ship so future updates can operate on the same row.
-    update!(status: 'approved', approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id)
+    update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id)
 
     # ensure project status reflects this approved ship
     project.recalculate_status!
@@ -185,14 +185,33 @@ class ShipRequest < ApplicationRecord
             ship.update!(credits_awarded: 0.0)
             owner = project.user
             owner.update!(currency: (owner.currency || 0) - old_credits)
-            Audit.create!(user: admin_user, project: project, action: 'reverse_ship_credits', details: { ship_id: ship.id, reversed_amount: old_credits, request_id: id })
+            Audit.create!(user: admin_user, project: project, action: "reverse_ship_credits", details: { ship_id: ship.id, reversed_amount: old_credits, request_id: id })
           end
         rescue => e
           Rails.logger.error "Failed to reverse credits for Ship ##{ship.id} on rejection of ShipRequest ##{id}: #{e.message}"
         end
       end
 
-      update!(status: 'rejected', approved_at: Time.current, processed_by: admin_user, ship_id: ship&.id)
+      # Dissociate any project devlogs that were linked to this ship request so they
+      # can be re-used by a future ship request. Do this before updating the system
+      # devlog (which we preserve but mark as rejected and clear its duration).
+      begin
+        project.devlogs.where(ship_request_id: id).update_all(ship_request_id: nil)
+      rescue => e
+        Rails.logger.error "Failed to dissociate devlogs for ShipRequest ##{id}: #{e.message}"
+      end
+
+      # Preserve the system devlog but mark it rejected and clear duration_seconds
+      begin
+        d = project.devlogs.find_by(title: "Ship request ##{id}") || project.devlogs.where(title: "Ship request ##{id}").order(:created_at).first
+        if d
+          d.update_columns(title: "Rejected ship request ##{id}", duration_seconds: nil, ship_request_id: nil, updated_at: Time.current)
+        end
+      rescue => e
+        Rails.logger.error "Failed to update devlog for rejected ShipRequest ##{id}: #{e.message}"
+      end
+
+      update!(status: "rejected", approved_at: Time.current, processed_by: admin_user, ship_id: ship&.id)
       project.recalculate_status!
     end
   end
@@ -258,12 +277,12 @@ class ShipRequest < ApplicationRecord
             Rails.logger.error("Failed to recalculate currency for User ##{owner&.id}: #{e.message}")
           end
 
-          Audit.create!(user: processed_by || user, project: project, action: 'adjust_ship_credits_via_request', details: { ship_id: ship.id, delta: credits_delta, new_credits: new_credits, request_id: id })
+          Audit.create!(user: processed_by || user, project: project, action: "adjust_ship_credits_via_request", details: { ship_id: ship.id, delta: credits_delta, new_credits: new_credits, request_id: id })
         else
           ship.update!(attrs)
         end
 
-        Audit.create!(user: processed_by || user, project: project, action: 'sync_ship_from_request', details: { ship_id: ship.id, changes: attrs, request_id: id })
+        Audit.create!(user: processed_by || user, project: project, action: "sync_ship_from_request", details: { ship_id: ship.id, changes: attrs, request_id: id })
       end
     rescue => e
       Rails.logger.error "Failed to propagate changes to Ship ##{ship.id}: #{e.message}"
