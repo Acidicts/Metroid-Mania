@@ -19,7 +19,7 @@
     </div>
 
     <div class="form-actions" style="display: flex; flex-direction:row; gap: 1rem;">
-        <% if (@project.user == current_user) && !project_eligible(@project) %> 
+        <% if (@project.user == current_user) && project_eligible(@project) %> 
             <%= f.submit "Request Ship", class: "nb-btn nb-badge badge-devlog" %>
         <% else %>
             <button class="nb-btn-disabled nb-btn-secondary-disabled" style="cursor: not-allowed;" disabled>Request Ship</button>
