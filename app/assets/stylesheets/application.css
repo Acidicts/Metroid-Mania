@@ -598,3 +598,44 @@ body > header + .retro-container { margin-top: 12px; }
   left: 5%;
   border-bottom: 2px solid rgba(0,0,0,0.5);
 }
+
+/* Markdown task-list styling (pixel checkbox for - [x] / - [ ]) */
+li.task-list-item {
+  list-style: none; /* remove default bullet */
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  margin-bottom: 0.25rem;
+}
+
+/* visual checkbox box — uses pixel-art SVG backgrounds for checked/unchecked */
+.task-list-item-checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  box-sizing: border-box;
+  border-radius: 2px;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 22px 22px;
+}
+
+.task-list-item-pixel { display: block; width: 22px; height: 22px; image-rendering: pixelated; }
+.task-list-item-fallback { color: transparent; font-size: 0; }
+/* unchecked pixel box (transparent interior) */
+.task-list-item--unchecked .task-list-item-checkbox {
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='16' height='16' fill='%23ffffff'/%3E%3Crect x='1' y='1' width='14' height='14' fill='none' stroke='%230d2b45' stroke-width='1'/%3E%3C/svg%3E");
+  background-color: transparent;
+}
+
+/* checked pixel box (pixelated tick inside) */
+.task-list-item--checked .task-list-item-checkbox {
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' shape-rendering='crispEdges'%3E%3Crect x='0' y='0' width='16' height='16' fill='%23ffd4a3'/%3E%3Crect x='1' y='1' width='14' height='14' fill='none' stroke='%230d2b45' stroke-width='1'/%3E%3Crect x='4' y='8' width='2' height='2' fill='%230d2b45'/%3E%3Crect x='6' y='10' width='2' height='2' fill='%230d2b45'/%3E%3Crect x='8' y='6' width='2' height='2' fill='%230d2b45'/%3E%3Crect x='10' y='4' width='2' height='2' fill='%230d2b45'/%3E%3C/svg%3E");
+}
+
+/* small visually-hidden helper for screen-readers */
+.sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.task-list-item-label { display: inline-block; }

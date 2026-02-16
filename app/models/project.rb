@@ -7,7 +7,7 @@ class Project < ApplicationRecord
 
   # Attach a representative image for the project (Active Storage)
   has_one_attached :image
-  
+
   validates :name, presence: true
   validates :repository_url, presence: true
 
@@ -46,7 +46,7 @@ class Project < ApplicationRecord
   # Remaining seconds on the project that have not been devlogged yet.
   # Used by views/controllers to determine if a user can create a devlog.
   def undocumented_seconds
-    [total_seconds.to_i - total_devlogged_seconds, 0].max
+    [ total_seconds.to_i - total_devlogged_seconds, 0 ].max
   end
 
   # Return array of target names to query in Hackatime. Backwards compatible with `hackatime_id`.
@@ -54,9 +54,9 @@ class Project < ApplicationRecord
     if hackatime_ids.present? && hackatime_ids.any?
       hackatime_ids.map(&:to_s)
     elsif respond_to?(:hackatime_id) && hackatime_id.present?
-      [hackatime_id.to_s]
+      [ hackatime_id.to_s ]
     else
-      [name]
+      [ name ]
     end
   end
 
@@ -70,7 +70,7 @@ class Project < ApplicationRecord
   end
 
   def time
-    remaining = [total_seconds.to_i - total_devlogged_seconds, 0].max
+    remaining = [ total_seconds.to_i - total_devlogged_seconds, 0 ].max
     hours = (remaining / 3600).floor
     minutes = ((remaining % 3600) / 60).floor
     "#{hours} hrs #{minutes} mins"
@@ -92,7 +92,7 @@ class Project < ApplicationRecord
       next false if ssec <= 0
       next false unless ssec == total_seconds.to_i
 
-      logged = devlogs.where.not(user_id: nil).where('created_at <= ?', s.shipped_at).sum(:duration_seconds).to_i
+      logged = devlogs.where.not(user_id: nil).where("created_at <= ?", s.shipped_at).sum(:duration_seconds).to_i
       logged < ssec
     end
   end
@@ -154,12 +154,12 @@ class Project < ApplicationRecord
       uri = URI.parse(readme_url) rescue nil
       return unless uri && %w[http https].include?(uri.scheme)
 
-      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == 'https', open_timeout: 3, read_timeout: 3) do |http|
+      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 3) do |http|
         head_req = Net::HTTP::Head.new(uri.request_uri)
         res = http.request(head_req) rescue nil
 
         if res && res.code.to_i == 404
-          errors.add(:readme_url, 'returned 404 (not found)')
+          errors.add(:readme_url, "returned 404 (not found)")
           return
         end
 
@@ -168,7 +168,7 @@ class Project < ApplicationRecord
           get_req = Net::HTTP::Get.new(uri.request_uri)
           get_res = http.request(get_req) rescue nil
           if get_res && get_res.code.to_i == 404
-            errors.add(:readme_url, 'returned 404 (not found)')
+            errors.add(:readme_url, "returned 404 (not found)")
             return
           end
           # otherwise be permissive (network/timeouts/403/etc. do not block save)
@@ -176,7 +176,7 @@ class Project < ApplicationRecord
       end
     rescue StandardError => _e
       # Do not add a validation error on transient network/timeout exceptions.
-      return
+      nil
     end
   end
 
@@ -189,9 +189,9 @@ class Project < ApplicationRecord
     return unless m
 
     owner = m[1]
-    repo_name = m[2].gsub(/\.git$/i, '')
+    repo_name = m[2].gsub(/\.git$/i, "")
     branch_match = repository_url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
-    branches_to_try = branch_match ? [branch_match[1]] : ['main', 'master']
+    branches_to_try = branch_match ? [ branch_match[1] ] : [ "main", "master" ]
 
     saw_404 = false
     branches_to_try.each do |br|
@@ -214,7 +214,7 @@ class Project < ApplicationRecord
 
     # Only add a blocking validation error when we actually observed a 404 on the README
     if saw_404
-      errors.add(:repository_url, 'README.md not found on the repository (404)')
+      errors.add(:repository_url, "README.md not found on the repository (404)")
     end
   end
 
@@ -229,9 +229,9 @@ class Project < ApplicationRecord
   # Order projects by total user-created devlogged seconds (SQL-side aggregate).
   # Uses CASE to ignore system-generated devlogs (user_id IS NULL).
   scope :order_by_total_devlogged_seconds, ->(dir = :desc) {
-    dir_sql = dir.to_s.upcase == 'ASC' ? 'ASC' : 'DESC'
+    dir_sql = dir.to_s.upcase == "ASC" ? "ASC" : "DESC"
     left_joins(:devlogs)
-      .group('projects.id')
+      .group("projects.id")
       .order(Arel.sql("SUM(CASE WHEN devlogs.user_id IS NOT NULL THEN devlogs.duration_seconds ELSE 0 END) #{dir_sql}"))
   }
 
@@ -242,7 +242,7 @@ class Project < ApplicationRecord
 
   # Set default status for new projects
   before_create do
-    self.status ||= 'unshipped'
+    self.status ||= "unshipped"
     # Only set shipped to false by default if it's currently nil
     self.shipped = false if respond_to?(:shipped) && self.shipped.nil?
   end
@@ -254,18 +254,18 @@ class Project < ApplicationRecord
 
   # Minutes of devlogged work created since baseline (exclude system-generated devlogs)
   def devlogged_minutes_since_baseline
-    (devlogs.where.not(user_id: nil).where('created_at >= ?', ship_baseline).sum(:duration_seconds).to_i / 60)
+    (devlogs.where.not(user_id: nil).where("created_at >= ?", ship_baseline).sum(:duration_seconds).to_i / 60)
   end
 
   # Can the owner request a ship? Must not already be pending and at least 15 minutes of devlogs since baseline
   def eligible_for_ship_request?
-    return false if status == 'pending'
+    return false if status == "pending"
     devlogged_minutes_since_baseline >= 15
   end
 
   # Minutes still required for the owner to be able to request a ship (0 when eligible)
   def minutes_needed_for_ship_request
-    [15 - devlogged_minutes_since_baseline.to_i, 0].max
+    [ 15 - devlogged_minutes_since_baseline.to_i, 0 ].max
   end
 
   # Can an admin ship (approve) this project? Must be pending and have at least 15 minutes of devlogs since baseline
@@ -273,9 +273,87 @@ class Project < ApplicationRecord
     # Admins may approve/ship a pending project when either:
     # - there are >= 15 minutes of devlogs since the baseline (owner-requested work), OR
     # - the project already has sufficient recorded total_seconds (admin fallback).
-    return false unless status == 'pending'
+    return false unless status == "pending"
     devlogged_minutes_since_baseline >= 15 || total_seconds.to_i >= 15.minutes.to_i
   end
+
+  # --- GitHub / repository helpers (used by views/helpers) -----------------
+
+  # Parse GitHub owner/repo (and optional branch) from repository_url. Returns
+  # a hash { owner:, repo:, branch: } or nil when the URL doesn't look like GitHub.
+  def github_repo_parts
+    return nil if repository_url.blank?
+    m = repository_url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
+    return nil unless m
+    owner = m[1]
+    repo_name = m[2].gsub(/\.git$/i, "")
+    branch_match = repository_url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
+    { owner: owner, repo: repo_name, branch: (branch_match ? branch_match[1] : nil) }
+  end
+
+  # Return true when a README.md is reachable either via explicit readme_url or
+  # by checking the repository's README on GitHub (tries branch if present,
+  # otherwise main/master). Results are cached briefly to avoid repeated network calls.
+  def github_readme_present?
+    return true if readme_url.present?
+    parts = github_repo_parts
+    return false unless parts
+
+    branches = parts[:branch] ? [ parts[:branch] ] : [ "main", "master" ]
+
+    branches.any? do |br|
+      Rails.cache.fetch("project:#{id}:github_readme:#{br}", expires_in: 10.minutes) do
+        uri = URI.parse("https://raw.githubusercontent.com/#{parts[:owner]}/#{parts[:repo]}/#{CGI.escape(br)}/README.md")
+        begin
+          Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 3) do |http|
+            req = Net::HTTP::Head.new(uri.request_uri)
+            res = http.request(req) rescue nil
+            res && res.is_a?(Net::HTTPSuccess)
+          end
+        rescue StandardError
+          false
+        end
+      end
+    end
+  end
+
+  # Heuristic: determine whether the GitHub repository is publicly reachable.
+  # We treat a repository as public when an unauthenticated HEAD to the repo
+  # page returns success. Result is cached briefly.
+  def github_repo_public?
+    parts = github_repo_parts
+    return false unless parts
+
+    Rails.cache.fetch("project:#{id}:github_public", expires_in: 10.minutes) do
+      uri = URI.parse("https://github.com/#{parts[:owner]}/#{parts[:repo]}")
+      begin
+        Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 3) do |http|
+          req = Net::HTTP::Head.new(uri.request_uri)
+          res = http.request(req) rescue nil
+          res && res.is_a?(Net::HTTPSuccess)
+        end
+      rescue StandardError
+        false
+      end
+    end
+  end
+
+  # Determine whether the project repository is plausibly clonable. For GitHub
+  # repos we require the repo to be public; otherwise we accept common git URL
+  # formats or any HTTP(S) URL as clonable (best-effort).
+  def clonable?
+    return false if repository_url.blank?
+
+    if github_repo_parts
+      github_repo_public?
+    else
+      return true if repository_url =~ /\Agit@[^:]+:[^\/]+\/.+\.git\z/i
+      return true if repository_url =~ /\Ahttps?:\/\/.+\.git\z/i
+      uri = URI.parse(repository_url) rescue nil
+      uri && (uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS))
+    end
+  end
+
 
   # Award credits to the project owner based on credits_per_hour and either total_seconds or provided seconds
   # Returns the amount awarded (float) or nil if no rate provided
@@ -342,7 +420,7 @@ class Project < ApplicationRecord
       if amount.present?
         details = { amount: amount, rate: rate, hours: (used_seconds.to_f / 3600.0) }
         details[:recipient_user_id] = recipient_user.id if recipient_user.present?
-        Audit.create!(user: admin_user, project: self, action: 'credit_awarded', details: details)
+        Audit.create!(user: admin_user, project: self, action: "credit_awarded", details: details)
       end
 
       # Ensure recipient's currency is canonical (sum of ships - spent) in case of prior inconsistencies
@@ -364,7 +442,7 @@ class Project < ApplicationRecord
   # Predicate for the explicit 'unshipped' status value used throughout the app/tests.
   def unshipped?
     return true unless has_attribute?(:status)
-    status.to_s == 'unshipped'
+    status.to_s == "unshipped"
   end
 
   # Return the latest Ship (or nil)
@@ -379,11 +457,11 @@ class Project < ApplicationRecord
   # - any Ship exists => 'shipped'
   # - otherwise => 'unshipped'
   def computed_status
-    return 'pending' if ship_requests.where(status: 'pending').exists?
+    return "pending" if ship_requests.where(status: "pending").exists?
     latest_request = ship_requests.order(updated_at: :desc).first
-    return 'rejected' if latest_request&.status == 'rejected'
-    return 'shipped' if ships.exists? and latest_ship.shipped_at.present?
-    'unshipped'
+    return "rejected" if latest_request&.status == "rejected"
+    return "shipped" if ships.exists? and latest_ship.shipped_at.present?
+    "unshipped"
   end
 
   # Return the shipped_at time derived from the latest ship (non-persistent)
@@ -393,7 +471,7 @@ class Project < ApplicationRecord
 
   # Predicate for computed shipped state (derived from ships/requests)
   def computed_shipped?
-    computed_status == 'shipped'
+    computed_status == "shipped"
   end
 
   # Recalculate and persist project status based on computed_status
@@ -401,7 +479,7 @@ class Project < ApplicationRecord
     new_status = computed_status
     self.status = new_status if has_attribute?(:status)
 
-    if new_status == 'shipped' && (ls = latest_ship)
+    if new_status == "shipped" && (ls = latest_ship)
       self.shipped = true if has_attribute?(:shipped)
       self.shipped_at = ls.shipped_at if respond_to?(:shipped_at)
     else

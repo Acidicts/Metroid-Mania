@@ -20,19 +20,21 @@ module ShipRequestsHelper
   def project_eligible(project)
     return false unless project
     return false unless project.eligible_for_ship_request?
-    return false if project.ship_requests.where(status: 'pending').exists?
+    return false if project.ship_requests.where(status: "pending").exists?
     true
   end
 
   def ship_checklist(project)
-    """
-    - [#{project.devlogged_minutes_since_baseline >= 15 ? "x" : " "}] At least 15 minutes of devlogs since last ship or project creation
-    - [#{project.ship_requests.where(status: 'pending').exists? ? "x" : " "}] No existing pending ship request
-    - [] Github Repo is Public
-    - [] Project has a README
-    - [] Project is clonable
-    - [] Project has a banner image
-    """
+    return "" if project.nil?
+
+    <<~MD
+      - [#{project.devlogged_minutes_since_baseline >= 15 ? "x" : " "}] At least 15 minutes of devlogs since last ship or project creation
+      - [#{project.ship_requests.where(status: 'pending').exists? ? " " : "x"}] No existing pending ship request
+      - [#{project.github_repo_public? ? "x" : " "}] Github Repo is Public
+      - [#{project.github_readme_present? ? "x" : " "}] Project has a README
+      - [#{project.clonable? ? "x" : " "}] Project is clonable
+      - [#{(project.respond_to?(:image) && project.image.attached?) ? "x" : " "}] Project has a banner image
+    MD
   end
 
   # Render the action controls for ship-requests on a project show card.

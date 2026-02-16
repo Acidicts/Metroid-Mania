@@ -9,13 +9,13 @@
 </style>
 
 <div id="ship-request-new" class="container">
-    <h1>Request shipping</h1>
+    <h1>Before You Ship</h1>
 
     <%= form_with model: [@project, @ship_request], local: true do |f| %>
-    <p>Request shipping for <strong><%= @project.name %></strong>?</p>
+    <p>Pre-Adventure Checklist for <strong><%= @project.name %></strong>?</p>
 
     <div class="checklist_ship">
-        <% raw markdown_to_html(ship_checklist(@project)) %>
+        <%= markdown_to_html(ship_checklist(@project)) %>
     </div>
 
     <div class="form-actions" style="display: flex; flex-direction:row; gap: 1rem;">
