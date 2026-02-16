@@ -17,8 +17,7 @@ class ShipRequestsController < ApplicationController
         redirect_to project_path(@project) and flash_warn("Not authorized") and return
       end
       if @ship_request.status == "rejected"
-        redirect_to project_path(@project), flash: { warn_reject: "This ship request was rejected. Check the devlog for details." }
-        return
+        redirect_to project_path(@project), flash: { warn_reject: "Check the devlog for details." } and return
       end
     end
   end
