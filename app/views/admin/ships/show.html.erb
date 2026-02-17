@@ -22,4 +22,12 @@
   <% else %>
     <p><em>Related project removed; no audits available.</em></p>
   <% end %>
+
+  <h3 style="margin-top:24px">Comments</h3>
+  <% @ship.comments.order(created_at: :asc).each do |comment| %>
+    <%= render comment %>
+  <% end %>
+  <% if defined?(current_user) && current_user&.admin? %>
+    <%= render 'comments/form', comment: Comment.new(ship: @ship), ship: @ship %>
+  <% end %>
 </div>

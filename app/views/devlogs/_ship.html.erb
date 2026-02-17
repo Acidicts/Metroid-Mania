@@ -38,7 +38,7 @@
         <span class="nb-stat-value"><%= devlogs_count %></span>
       </div>
     </div>
-
+    <span>Devlogs Included :</span>
     <% if req && req.devlogs.any? %>
       <ul class="nb-devlog-list">
         <% req.devlogs.order(log_date: :desc).each do |d| %>
@@ -51,6 +51,19 @@
       </ul>
     <% else %>
       <p class="nb-empty">No linked devlogs.</p>
+    <% end %>
+
+    <% if defined?(current_user) && current_user && (current_user&.admin? || current_user == ship.project.user) %>
+      <hr style="margin: 16px 0;">
+      <div id="comments-for">
+        <% ship.comments.each do |comment| %>
+          <%= render comment %>
+        <% end %>
+
+        <% if current_user&.admin? %>
+          <%= render 'comments/form', comment: Comment.new(ship: ship), ship: ship %>
+        <% end %>
+      </div>
     <% end %>
   </div>
 </div>

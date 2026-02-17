@@ -186,9 +186,6 @@
         <% else %>
           <% d = devlogs.shift %>
           <%= render d %>
-          <p>
-            <%= link_to "Show this devlog", project_devlog_path(@project, d) %>
-          </p>
         <% end %>
       <% end %>
       </div>

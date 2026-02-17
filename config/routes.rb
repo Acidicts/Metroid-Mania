@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :comments
   get "metroidmania/index"
   get "shared/_retro_sample"
   get '/auth/:provider/callback', to: 'sessions#create'

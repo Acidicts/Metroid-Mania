@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  message: MyText
+  last_editted: 2026-02-17 14:41:41
+
+two:
+  user: two
+  message: MyText
+  last_editted: 2026-02-17 14:41:41
+
+ship_one:
+  user: admin
+  ship: one
+  message: Ship comment
+  last_editted: 2026-02-17 14:41:41

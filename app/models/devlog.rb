@@ -11,6 +11,8 @@ class Devlog < ApplicationRecord
   validate :owner_minimum_duration
   before_validation :ensure_duration_seconds
 
+  has_many :comments, dependent: :destroy
+
   # Indicates whether a given user may edit this devlog. System-generated devlogs
   # (those tied to a ShipRequest) are never editable.
   def editable_by?(u)

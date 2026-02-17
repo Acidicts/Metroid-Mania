@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_15_123000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_17_173200) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -63,6 +63,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_15_123000) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["project_id"], name: "index_audits_on_project_id"
     t.index ["user_id"], name: "index_audits_on_user_id"
+  end
+
+  create_table "comments", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "devlog_id"
+    t.datetime "last_editted"
+    t.text "message"
+    t.integer "ship_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["devlog_id"], name: "index_comments_on_devlog_id"
+    t.index ["ship_id"], name: "index_comments_on_ship_id"
+    t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
   create_table "devlog_versions", force: :cascade do |t|
@@ -445,6 +458,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_15_123000) do
     t.index ["user_id"], name: "index_votes_on_user_id"
   end
 
+  add_foreign_key "comments", "devlogs"
+  add_foreign_key "comments", "ships"
+  add_foreign_key "comments", "users"
   add_foreign_key "devlog_versions", "post_devlogs", column: "devlog_id"
   add_foreign_key "devlog_versions", "users"
   add_foreign_key "devlogs", "users"

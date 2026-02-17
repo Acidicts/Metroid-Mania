@@ -2,6 +2,8 @@ class Ship < ApplicationRecord
   belongs_to :project, counter_cache: true
   belongs_to :user
 
+  has_many :comments
+
   validates :devlogged_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :credits_awarded, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
 
@@ -43,12 +45,12 @@ class Ship < ApplicationRecord
   def associate_pending_request
     return unless project.present? && shipped_at.present?
 
-    req = project.ship_requests.where(status: 'pending').where('requested_at <= ?', shipped_at).order(requested_at: :desc).first
+    req = project.ship_requests.where(status: "pending").where("requested_at <= ?", shipped_at).order(requested_at: :desc).first
     return unless req
 
     begin
-      req.update!(status: 'approved', approved_at: shipped_at, processed_by: user, credits_awarded: credits_awarded, devlogged_seconds: (devlogged_seconds || req.devlogged_seconds))
-      Audit.create!(user: user, project: project, action: 'approve_via_ship', details: { ship_id: id, ship_request_id: req.id, credits_awarded: credits_awarded })
+      req.update!(status: "approved", approved_at: shipped_at, processed_by: user, credits_awarded: credits_awarded, devlogged_seconds: (devlogged_seconds || req.devlogged_seconds))
+      Audit.create!(user: user, project: project, action: "approve_via_ship", details: { ship_id: id, ship_request_id: req.id, credits_awarded: credits_awarded })
     rescue => e
       Rails.logger.error("associate_pending_request failed for Ship #{id}: #{e.message}")
     end
@@ -79,7 +81,7 @@ class Ship < ApplicationRecord
           Rails.logger.error("Failed to recalculate currency for User ##{owner&.id}: #{e.message}")
         end
 
-        Audit.create!(user: (user || owner), project: project, action: 'apply_multiplier', details: { ship_id: id, multiplier: multiplier, delta: delta, new_credits: new_credits })
+        Audit.create!(user: (user || owner), project: project, action: "apply_multiplier", details: { ship_id: id, multiplier: multiplier, delta: delta, new_credits: new_credits })
       end
     rescue => e
       Rails.logger.error("apply_multiplier_change failed for Ship #{id}: #{e.message}")
@@ -92,7 +94,7 @@ class Ship < ApplicationRecord
   def sync_multiplier_with_request
     return unless project.present?
 
-    req = project.ship_requests.find_by(ship_id: id) || project.ship_requests.where('requested_at <= ?', shipped_at).order(requested_at: :desc).first
+    req = project.ship_requests.find_by(ship_id: id) || project.ship_requests.where("requested_at <= ?", shipped_at).order(requested_at: :desc).first
     return unless req
 
     begin
@@ -119,7 +121,7 @@ class Ship < ApplicationRecord
     return false if devlogged_seconds.blank? || shipped_at.blank? || project.nil?
 
     # Sum of user-created devlogs up to the shipped_at timestamp
-    logged = project.devlogs.where.not(user_id: nil).where('created_at <= ?', shipped_at).sum(:duration_seconds).to_i
+    logged = project.devlogs.where.not(user_id: nil).where("created_at <= ?", shipped_at).sum(:duration_seconds).to_i
     devlogged_seconds.to_i > logged
   end
 end

@@ -90,5 +90,18 @@
     <div class="nb-linkbar" style="margin-top:12px">
       <%= link_to "View Request →", project_ship_request_path(project, ship_request), class: "nb-btn nb-btn-primary nb-btn-sm" %>
     </div>
+
+    <hr style="margin: 16px 0;">
+    <% if defined?(current_user) && current_user && (current_user&.admin? || current_user == ship.project.user) %>
+      <div id="comments-for">
+        <% ship.comments.each do |comment| %>
+          <%= render comment %>
+        <% end %>
+
+        <% if current_user&.admin? %>
+          <%= render 'comments/form', comment: Comment.new(ship: ship), ship: ship %>
+        <% end %>
+      </div>
+    <% end %>
   </div>
 </div>

@@ -19,3 +19,13 @@ two:
   verification_status: MyString
   role: 0
   currency: 0.0
+
+admin:
+  provider: MyString
+  uid: uid_admin
+  email: admin@example.com
+  name: Admin User
+  slack_id: MyString
+  verification_status: MyString
+  role: 1
+  currency: 0.0
