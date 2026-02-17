@@ -8,6 +8,9 @@
         👤
       <% end %>
       <%= @user.name %>
+      <% if @user.admin? %>
+        <img src="https://icons.hackclub.com/api/icons/red/admin" style="height:3rem; width:auto; position:relative; bottom:-0.75rem;" alt="admin badge" class="nb-admin-badge" title="Admin">
+      <% end %>
     </h1>
     <% if @user.name != "Deleted User" %>
       <div class="user-info">

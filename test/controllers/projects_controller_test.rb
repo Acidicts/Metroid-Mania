@@ -13,6 +13,15 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "redirects to home when not logged in" do
+    # ensure no user is signed in
+    delete logout_url rescue nil
+
+    get projects_url
+    assert_redirected_to home_path
+    assert_match /Please sign in to view projects\./, flash[:alert]
+  end
+
   test "should get new" do
     get new_project_url
     assert_response :success

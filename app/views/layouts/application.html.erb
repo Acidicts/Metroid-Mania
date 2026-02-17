@@ -154,6 +154,9 @@
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
 
+    <%# Turbo Drive is disabled in application.js to prevent frozen UI %>
+    <meta name="turbo-visit-control" content="reload">
+
     <%# Includes all stylesheet files in app/assets/stylesheets %>
     <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
     <%= controller_stylesheet_link_tag %>
@@ -186,7 +189,7 @@
             </form>
           </noscript>
         <% else %>
-          <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" style="font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login</button>
+          <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" style="font-family: 'Phantom Sans'; font-size:1rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login</button>
         <% end %>
       </nav>
     </header>
@@ -405,6 +408,24 @@
             }, 0);
           }, true);
         })();
+      })();
+
+      // Ensure page is always interactive (safety check)
+      // With Turbo Drive disabled, this is just a precaution
+      (function() {
+        function ensureInteractive() {
+          // Ensure pointer events are enabled
+          if (document.body.style.pointerEvents === 'none') {
+            document.body.style.pointerEvents = '';
+          }
+          if (document.documentElement.style.pointerEvents === 'none') {
+            document.documentElement.style.pointerEvents = '';
+          }
+        }
+
+        // Run on page load
+        document.addEventListener('DOMContentLoaded', ensureInteractive);
+        ensureInteractive();
       })();
     </script>
   </body>

@@ -31,6 +31,16 @@
         padding: 4px;
     }
 
+    .nb-admin-badge {
+        display: inline-block;
+        vertical-align: middle;
+        position: relative;
+        bottom: -0.18rem;
+        max-height: 1.75rem; /* increased size */
+        width: auto;
+        margin-left: 0.35rem;
+    }
+
     @media (max-width: 768px) {
         .plus-768 {
             display: none;
@@ -41,7 +51,12 @@
 <div id="<%= dom_id comment %>" class="nb-comment">
   <div class="comment">
     <% if defined?(current_user) && current_user %>
-        <strong style="font-family: var(--nb-font); font-size: 0.9rem;"><%= comment.user&.display_name || "Unknown User" %> <% if comment.user&.admin? %> - <span class="badge badge-admin">Admin</span><% end %></strong>
+        <strong style="font-family: var(--nb-font); font-size: 0.9rem;">
+          <%= comment.user&.display_name || "Unknown User" %>
+          <% if comment.user&.admin? %>
+            <img src="https://icons.hackclub.com/api/icons/red/admin" alt="admin badge" class="nb-admin-badge" title="Admin">
+          <% end %>
+        </strong>
     <% else %>
         <strong style="font-family: var(--nb-font); font-size: 0.9rem;"><%= link_to "Login", "#{ENV['APP_URL']}/auth/hackclub" %> to See User</strong>
     <% end %>

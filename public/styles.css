@@ -35,6 +35,17 @@ body {
     repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0 1px, transparent 1px 6px);
 }
 
+/* Critical: Prevent body from ever becoming non-interactive during Turbo transitions */
+html, body {
+  pointer-events: auto !important;
+}
+
+html[aria-busy="true"], body[aria-busy="true"], 
+html[data-turbo-preview], body[inert] {
+  pointer-events: auto !important;
+  cursor: default !important;
+}
+
 /* Utility: base class for Pixelify Sans — use modifier classes for weights (examples below) */
 .pixelify-sans {
   font-family: "Pixelify Sans", sans-serif;

@@ -5,11 +5,12 @@ class ProjectsController < ApplicationController
 
   # GET /projects or /projects.json
   def index
-    if logged_in?
-      @projects = current_user.active_projects.includes(:user)
-    else
-      @projects = Project.active.where(status: 'approved').includes(:user)
+    # Require login for the projects index — redirect anonymous users to the home page.
+    unless logged_in?
+      redirect_to home_path, flash: { warn: "Please sign in to view projects." } and return
     end
+
+    @projects = current_user.active_projects.includes(:user)
   end
 
   # GET /projects/1 or /projects/1.json

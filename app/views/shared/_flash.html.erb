@@ -3,7 +3,7 @@
   <% mapping = { notice: :pass, success: :pass, pass: :pass, info: :info, warning: :warn, warn: :warn, warn_reject: :warn, alert: :error, error: :error, danger: :error } %>
 
   <%# Labels --- prefer a label keyed by the original flash key when present %>
-  <% labels = { pass: 'Pass', info: 'Info - Not enough credits', warn: 'Warn - Auth issue', error: 'Error - System Error', warning: 'Warning', warn_reject: "This was rejected" } %>
+  <% labels = { pass: 'Success', info: 'Info - Not enough credits', warn: 'Warn - Auth issue', error: 'Error - System Error', warning: 'Warning', warn_reject: "This was rejected" } %>
 
   <div class="retro-container" style="margin-top:12px;">
     <% seen = [] %>

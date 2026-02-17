@@ -8,6 +8,38 @@
  *
  * Consider organizing styles into separate files for maintainability.
  */
+
+ @font-face {
+  font-family: 'Phantom Sans';
+  src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff')
+      format('woff'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Regular.woff2')
+      format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff')
+      format('woff'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Italic.woff2')
+      format('woff2');
+  font-weight: normal;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Phantom Sans';
+  src: url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff')
+      format('woff'),
+    url('https://assets.hackclub.com/fonts/Phantom_Sans_0.7/Bold.woff2')
+      format('woff2');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --main-900: #0d2b45;
   --main-800: #203c56;
@@ -35,6 +67,17 @@ body {
   background-image:
     linear-gradient(180deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.02) 100%),
     repeating-linear-gradient(0deg, rgba(0,0,0,0.02) 0 1px, transparent 1px 6px);
+}
+
+/* Critical: Prevent body from ever becoming non-interactive during Turbo transitions */
+html, body {
+  pointer-events: auto !important;
+}
+
+html[aria-busy="true"], body[aria-busy="true"], 
+html[data-turbo-preview], body[inert] {
+  pointer-events: auto !important;
+  cursor: default !important;
 }
 
 /* When a user has enabled custom fonts, switch the site to Pixelify/DynaPuff */
