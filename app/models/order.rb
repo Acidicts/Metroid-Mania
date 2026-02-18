@@ -1,4 +1,4 @@
-require 'securerandom'
+require "securerandom"
 
 class Order < ApplicationRecord
   belongs_to :user
@@ -28,25 +28,25 @@ class Order < ApplicationRecord
   # Run balance validation for 'normal' creates (where status isn't explicitly set to a
   # non-pending value). This lets fixtures create historical/non-pending orders without
   # triggering the funds check while ensuring normal creates are validated.
-  validate :user_has_enough_currency, on: :create, if: -> { status.blank? || status == 'pending' }
+  validate :user_has_enough_currency, on: :create, if: -> { status.blank? || status == "pending" }
   # Prevent duplicate pending orders at model level (best-effort; DB unique index is authoritative)
-  validates :product_id, uniqueness: { scope: [:user_id, :status], message: 'already has a pending order' }, if: -> { status == 'pending' }
+  validates :product_id, uniqueness: { scope: [ :user_id, :status ], message: "already has a pending order" }, if: -> { status == "pending" }
 
   # canonical mapping used by migration/tests/views
   STATUS_VALUE_MAP = {
-    'pending'   => 0,
-    'denied'    => 1,
-    'shipped'   => 2
+    "pending"   => 0,
+    "denied"    => 1,
+    "shipped"   => 2
   }.freeze
 
   # Select-friendly array (used by views)
-  STATUSES = STATUS_VALUE_MAP.keys.map { |k| [k.humanize, k] }.freeze unless const_defined?(:STATUSES)
+  STATUSES = STATUS_VALUE_MAP.keys.map { |k| [ k.humanize, k ] }.freeze unless const_defined?(:STATUSES)
 
   # Prefer an integer-backed enum when the DB column is integer.
   # Fall back to a string-backed compatibility layer while migrating.
   begin
-    db_has_orders = (ActiveRecord::Base.connection.data_source_exists?('orders') rescue false)
-    status_col = (columns_hash['status'] rescue nil)
+    db_has_orders = (ActiveRecord::Base.connection.data_source_exists?("orders") rescue false)
+    status_col = (columns_hash["status"] rescue nil)
     if db_has_orders && status_col && status_col.type == :integer
       enum status: STATUS_VALUE_MAP.transform_keys(&:to_sym)
 
@@ -142,10 +142,10 @@ class Order < ApplicationRecord
     # Normalize nil costs to 0.0 so arithmetic and deductions are safe
     self.cost = (self.cost || 0).to_f
 
-    self.status ||= 'pending'
+    self.status ||= "pending"
 
     # Only deduct balance when creating a real pending order
-    if status == 'pending'
+    if status == "pending"
       # Ensure user.currency is numeric and not nil, and track amount_spent
       user.update!(currency: (user.currency || 0).to_f - self.cost, amount_spent: (user.amount_spent || 0).to_f + self.cost)
     end
@@ -166,7 +166,7 @@ class Order < ApplicationRecord
       product.cost_in_credits.to_f
     end
 
-    if (user.currency || 0).to_f < required
+    if (user.available_balance) < required
       errors.add(:base, "Insufficient funds")
     end
   end
@@ -192,22 +192,22 @@ class Order < ApplicationRecord
   # Refunds the user when an order transitions to `denied` unless a refund was already recorded.
   def refund_if_denied
     prev_status, new_status = saved_change_to_status
-    return unless new_status == 'denied' && prev_status != 'denied'
+    return unless new_status == "denied" && prev_status != "denied"
     return unless cost.present? && cost.to_f > 0
 
     # If an explicit refund audit exists for this order, assume refund already happened.
     adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
     refund_exists = if adapter.include?("sqlite")
       # sqlite: use json_extract
-      Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", 'order_refunded', id.to_s).exists?
+      Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", "order_refunded", id.to_s).exists?
     else
       # postgres and others: use jsonb operator and cast
-      Audit.where("action = ? AND (details ->> 'order_id')::text = ?", 'order_refunded', id.to_s).exists?
+      Audit.where("action = ? AND (details ->> 'order_id')::text = ?", "order_refunded", id.to_s).exists?
     end
 
     # Fallback: some environments may serialize JSON slightly differently — do an in-memory check as a last resort.
     unless refund_exists
-      refund_exists = Audit.where(action: 'order_refunded').to_a.any? { |a| a.details && a.details['order_id'].to_i == id }
+      refund_exists = Audit.where(action: "order_refunded").to_a.any? { |a| a.details && a.details["order_id"].to_i == id }
     end
 
     return if refund_exists
@@ -228,7 +228,7 @@ class Order < ApplicationRecord
       prev_status.to_s
     end
 
-    Audit.create!(user: audit_user, project: nil, action: 'order_refunded', details: { order_id: id, order_public_id: public_id, amount: cost.to_f, previous_status: canonical_prev })
+    Audit.create!(user: audit_user, project: nil, action: "order_refunded", details: { order_id: id, order_public_id: public_id, amount: cost.to_f, previous_status: canonical_prev })
   end
 
   public
@@ -240,13 +240,13 @@ class Order < ApplicationRecord
 
   # Find an order by either numeric id or the public_id (e.g., '!a1B2c3')
   def self.find_by_param(param)
-    return find(param) unless param.to_s.start_with?('!')
+    return find(param) unless param.to_s.start_with?("!")
     find_by!(public_id: param.to_s)
   end
 
   # Backwards-compatible predicate aliases for previous misspellings / synonyms
   def fulfilled?
-    respond_to?(:status) ? (status.to_s == 'shipped' || status.to_s == 'fulfilled') : false
+    respond_to?(:status) ? (status.to_s == "shipped" || status.to_s == "fulfilled") : false
   end
 
   def fufilled?

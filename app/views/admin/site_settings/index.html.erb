@@ -1,0 +1,13 @@
+<div class="admin-page">
+  <h1>Site settings</h1>
+
+  <%= form_with url: admin_site_settings_path, method: :patch, local: true do %>
+    <div style="margin-bottom:12px;">
+      <label for="site_setting_enabled" style="font-weight:600; margin-right:8px;">Store (shop)</label>
+      <%= check_box_tag 'site_setting[enabled]', '1', SiteSetting.enabled?('shop'), id: 'site_setting_enabled' %>
+      <span style="color:#6b7280; margin-left:8px;">Enable or disable the public storefront</span>
+    </div>
+
+    <%= submit_tag 'Save', class: 'btn-retro' %>
+  <% end %>
+</div>

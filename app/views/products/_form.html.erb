@@ -1,113 +1,195 @@
-<%= form_with(model: product, html: { multipart: true }) do |form| %>
+<%= form_with(model: product, html: { multipart: true, class: 'admin-product-form' }) do |form| %>
   <% if product.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(product.errors.count, "error") %> prohibited this product from being saved:</h2>
-
+    <div class="error-summary" role="alert">
+      <strong><%= pluralize(product.errors.count, "error") %> prohibited this product from being saved:</strong>
       <ul>
-        <% product.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+        <% product.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <div>
-    <%= form.label :name, style: "display: block" %>
-    <%= form.text_field :name %>
-  </div>
+  <div class="form-grid">
+    <div class="main-column">
 
-  <div>
-    <%= form.label :description, style: "display: block" %>
-    <%= form.text_area :description, rows: 4 %>
-  </div>
+      <!-- ── Product Info ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Product Info</div>
 
-  <div>
-    <%= form.label :price_currency, "Price (USD)", style: "display: block; font-family: Arial, sans-serif;" %>
-    <%= form.text_field :price_currency %>
-  </div>
+        <div class="form-group">
+          <%= form.label :name %>
+          <%= form.text_field :name, placeholder: "Short product title", class: "form-input" %>
+        </div>
 
-  <div>
-    <%= form.label :cost_credits, "Cost (Credits) — leave blank to compute from Price * Credits/ $", style: "display: block; font-family: Arial, sans-serif;" %>
-    <%= form.number_field :cost_credits, step: 0.01 %>
-  </div>
-
-  <div>
-    <%= form.label :credits_per_dollar, "Credits per $ (conversion ratio)", style: "display: block; font-family: Arial, sans-serif;" %>
-    <%= form.number_field :credits_per_dollar, step: 0.01 %>
-  </div>
-
-  <div>
-    <%= form.label :link, "Link (optional)", style: "display: block" %>
-    <%= form.text_field :link %>
-  </div>
-
-  <hr />
-
-  <div style="margin-top: 10px;">
-    <%= form.label :image_file, "Photo (optional)", style: "display: block" %>
-    <%= form.file_field :image_file %>
-
-    <% if product.image_url.present? %>
-      <div style="margin-top:8px;">
-        <p>Current image:</p>
-        <img src="<%= product.image_url %>" alt="Product image" style="max-width: 200px; max-height: 200px;" />
+        <div class="form-group">
+          <%= form.label :description %>
+          <%= form.text_area :description, rows: 5, placeholder: "Describe the product and any important details", class: "form-input" %>
+        </div>
       </div>
-    <% end %>
-  </div>
 
-  <div>
-    <%= form.check_box :variable_grant, { id: "variable_grant_checkbox" }, "1", "0" %>
-    <%= form.label :variable_grant, "Variable grant (allow user to select $ amount when ordering)" %>
-  </div>
+      <!-- ── Pricing ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Pricing</div>
 
-  <div id="variable_grant_container" style="margin-top: 8px;">
-    <%= form.label :grant_min_dollars, "Minimum grant ($)", style: "display: block" %>
-    <%= form.number_field :grant_min_dollars, value: (@product.grant_min_dollars || (Product::DEFAULT_MIN_GRANT_CENTS / 100.0)), step: 0.01, min: 0, id: "grant_min_dollars_field" %>
+        <!-- Fixed-price fields — hidden when variable grant is on -->
+        <div id="fixed_price_container" class="form-row collapsible <%= product.variable_grant? ? '' : 'collapsible--open' %>" aria-hidden="<%= product.variable_grant? %>">
+          <div class="form-group">
+            <%= form.label :price_currency, "Price (USD)" %>
+            <%= form.text_field :price_currency, placeholder: "e.g. 4.99", class: "form-input", inputmode: "decimal" %>
+            <div class="field-hint">Decimal value, no $ sign. Used for payments.</div>
+          </div>
+          <div class="form-group">
+            <%= form.label :cost_credits, "Cost (Credits)" %>
+            <%= form.number_field :cost_credits, step: 0.01, placeholder: "e.g. 50.00", class: "form-input", inputmode: "decimal" %>
+            <div class="field-hint">Leave blank to compute from Price &times; Credits/$.</div>
+          </div>
+        </div>
 
-    <%= form.label :grant_max_dollars, "Maximum grant ($)", style: "display: block; margin-top: 4px;" %>
-    <%= form.number_field :grant_max_dollars, value: (@product.grant_max_dollars || (Product::DEFAULT_MAX_GRANT_CENTS / 100.0)), step: 0.01, min: 0, id: "grant_max_dollars_field" %>
-  </div>
+        <!-- Credits-per-$ — shown when variable grant is on -->
+        <div id="credits_per_dollar_container" class="form-group collapsible <%= product.variable_grant? ? 'collapsible--open' : '' %>" aria-hidden="<%= !product.variable_grant? %>">
+          <%= form.label :credits_per_dollar, "Credits per $" %>
+          <%= form.number_field :credits_per_dollar, step: 0.01, class: "form-input", placeholder: "e.g. 10" %>
+          <div class="field-hint">Conversion ratio used to calculate credits from a dollar amount.</div>
+        </div>
+      </div>
 
-  <div style="margin-top: 10px;">
-    <%= form.submit %>
+      <!-- ── Options ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Options</div>
+
+        <!-- limited + stock hidden when variable grant is on -->
+        <div class="form-row">
+          <div id="limited_container" class="form-group collapsible <%= product.variable_grant? ? '' : 'collapsible--open' %>">
+            <label class="checkbox-card">
+              <%= form.check_box :limited, {}, "1", "0" %>
+              <div>
+                <%= form.label :limited, "Limited availability" %>
+                <div class="field-hint">When stock runs out, hide from store.</div>
+              </div>
+            </label>
+          </div>
+
+          <div id="stock_container" class="form-group collapsible <%= product.variable_grant? ? '' : 'collapsible--open' %>">
+            <%= form.label :stock, "Stock quantity" %>
+            <%= form.number_field :stock, min: 0, class: "form-input", placeholder: "Leave blank for unlimited" %>
+            <div class="field-hint">Leave blank for unlimited stock.</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :link, "Link (optional)" %>
+          <%= form.text_field :link, placeholder: "Optional external URL (https://...)", class: "form-input" %>
+        </div>
+      </div>
+
+      <!-- ── Variable Grant ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Variable Grant</div>
+
+        <label class="checkbox-card form-group">
+          <%= form.check_box :variable_grant, { id: "variable_grant_checkbox" }, "1", "0" %>
+          <div>
+            <%= form.label :variable_grant, "Enable variable grant" %>
+            <div class="field-hint">Allow users to choose a dollar amount when ordering. Hides fixed-price fields above.</div>
+          </div>
+        </label>
+
+        <div id="variable_grant_container" class="variable-grant collapsible <%= product.variable_grant? ? 'collapsible--open' : '' %>" aria-hidden="<%= !product.variable_grant? %>">
+          <div class="form-row">
+            <div class="form-group">
+              <%= form.label :grant_min_dollars, "Minimum grant ($)" %>
+              <%= form.number_field :grant_min_dollars, value: (@product.grant_min_dollars || (Product::DEFAULT_MIN_GRANT_CENTS / 100.0)), step: 0.01, min: 0, id: "grant_min_dollars_field", class: "form-input" %>
+            </div>
+            <div class="form-group">
+              <%= form.label :grant_max_dollars, "Maximum grant ($)" %>
+              <%= form.number_field :grant_max_dollars, value: (@product.grant_max_dollars || (Product::DEFAULT_MAX_GRANT_CENTS / 100.0)), step: 0.01, min: 0, id: "grant_max_dollars_field", class: "form-input" %>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit class: "btn-primary" %>
+      </div>
+    </div>
+
+    <aside class="sidebar-column">
+      <div class="apf-section">
+        <div class="apf-section-title">Photo</div>
+        <div class="form-group">
+          <%= form.label :image_file, "Upload image (optional)" %>
+          <%= form.file_field :image_file, class: "form-input file-input" %>
+          <% if product.image_url.present? %>
+            <div class="current-image" aria-live="polite">
+              <p class="form-note">Current image</p>
+              <img src="<%= product.image_url %>" alt="Product image" />
+            </div>
+          <% end %>
+        </div>
+      </div>
+    </aside>
   </div>
 
   <script>
-    // Toggle variable grant settings visibility and sync price/credits fields
     document.addEventListener("DOMContentLoaded", function() {
       var checkbox = document.getElementById('variable_grant_checkbox');
       var container = document.getElementById('variable_grant_container');
 
       function setState() {
-        container.style.display = checkbox.checked ? 'block' : 'none';
+        var checked = checkbox && checkbox.checked;
+
+        // grant options panel
+        if (container) {
+          container.classList.toggle('collapsible--open', !!checked);
+          container.setAttribute('aria-hidden', (!checked).toString());
+        }
+
+        // fixed-price rows
+        var fixedPrice = document.getElementById('fixed_price_container');
+        if (fixedPrice) {
+          fixedPrice.classList.toggle('collapsible--open', !checked);
+          fixedPrice.setAttribute('aria-hidden', (!!checked).toString());
+        }
+
+        // credits-per-$ field
+        var ratioContainer = document.getElementById('credits_per_dollar_container');
+        if (ratioContainer) {
+          ratioContainer.classList.toggle('collapsible--open', !!checked);
+          ratioContainer.setAttribute('aria-hidden', (!checked).toString());
+        }
+
+        // limited + stock fields
+        ['limited_container', 'stock_container'].forEach(function(id) {
+          var el = document.getElementById(id);
+          if (el) {
+            el.classList.toggle('collapsible--open', !checked);
+            el.setAttribute('aria-hidden', (!!checked).toString());
+          }
+        });
       }
 
-      checkbox.addEventListener('change', setState);
-      setState();
+      if (checkbox) {
+        checkbox.addEventListener('change', setState);
+        setState();
+      }
 
-      // Syncing between Price (USD) and Cost (Credits) on the admin product form
+      // Price <-> Credits sync
       var priceInput = document.getElementById('product_price_currency');
-      var costInput = document.getElementById('product_cost_credits');
+      var costInput  = document.getElementById('product_cost_credits');
       var ratioInput = document.getElementById('product_credits_per_dollar');
 
       function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
 
       function syncPriceToCost(){
         if (!priceInput || !ratioInput || !costInput) return;
-        var price = toNumber(priceInput.value);
         var ratio = toNumber(ratioInput.value);
-        if (ratio > 0) {
-          costInput.value = (price * ratio).toFixed(2);
-        }
+        if (ratio > 0) costInput.value = (toNumber(priceInput.value) * ratio).toFixed(2);
       }
-
       function syncCostToPrice(){
         if (!priceInput || !ratioInput || !costInput) return;
-        var cost = toNumber(costInput.value);
         var ratio = toNumber(ratioInput.value);
-        if (ratio > 0) {
-          priceInput.value = (cost / ratio).toFixed(2);
-        }
+        if (ratio > 0) priceInput.value = (toNumber(costInput.value) / ratio).toFixed(2);
       }
 
       if (priceInput && ratioInput) {
@@ -116,20 +198,9 @@
         ratioInput.addEventListener('input', syncPriceToCost);
         ratioInput.addEventListener('change', syncPriceToCost);
       }
-
       if (costInput && ratioInput) {
         costInput.addEventListener('input', syncCostToPrice);
         costInput.addEventListener('change', syncCostToPrice);
-      }
-
-      // Initialize
-      if (priceInput && ratioInput && costInput) {
-        // If cost is empty but price and ratio present, compute cost; otherwise derive price from cost if price blank
-        if (toNumber(costInput.value) === 0 && toNumber(priceInput.value) > 0 && toNumber(ratioInput.value) > 0) {
-          syncPriceToCost();
-        } else if (toNumber(priceInput.value) === 0 && toNumber(costInput.value) > 0 && toNumber(ratioInput.value) > 0) {
-          syncCostToPrice();
-        }
       }
     });
   </script>

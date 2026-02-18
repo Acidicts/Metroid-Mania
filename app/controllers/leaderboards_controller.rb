@@ -1,7 +1,7 @@
 class LeaderboardsController < ApplicationController
   def index
     # Cache the leaderboard for 5 minutes to reduce database load
-    @users = Rails.cache.fetch('leaderboard_rankings', expires_in: 5.minutes) do
+    @users = Rails.cache.fetch("leaderboard_rankings", expires_in: 5.minutes) do
       # Get all users with their total credits from ships
       # Use left outer join to include users with no ships
       # Sum credits_awarded from all ships for each user (NULL values are treated as 0)
@@ -11,10 +11,10 @@ class LeaderboardsController < ApplicationController
           .select(
             "users.*, \
              COALESCE(SUM(CASE WHEN projects.id IS NOT NULL AND projects.deleted_at IS NULL THEN ships.credits_awarded ELSE 0 END), 0) AS total_shipped, \
-             (COALESCE(SUM(CASE WHEN projects.id IS NOT NULL AND projects.deleted_at IS NULL THEN ships.credits_awarded ELSE 0 END), 0) - COALESCE(users.amount_spent, 0)) AS total_balance"
+             (COALESCE(SUM(CASE WHEN projects.id IS NOT NULL AND projects.deleted_at IS NULL THEN ships.credits_awarded ELSE 0 END), 0) + COALESCE(users.credit_offset, 0) - COALESCE(users.amount_spent, 0)) AS total_balance"
           )
-          .group('users.id')
-          .order(Arel.sql('total_balance DESC'))
+          .group("users.id")
+          .order(Arel.sql("total_balance DESC"))
           .to_a
     end
   end

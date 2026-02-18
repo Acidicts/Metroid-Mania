@@ -2,10 +2,20 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :logged_in?, :admin?
+  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?
   helper MarkdownHelper
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
+
+  # DB-backed feature flag helper (falls back to ENV_<NAME>_ENABLED)
+  def feature_enabled?(name)
+    if defined?(SiteSetting)
+      SiteSetting.enabled?(name, default: ENV.fetch("#{name.to_s.upcase}_ENABLED", "true") == "true")
+    else
+      val = ENV.fetch("#{name.to_s.upcase}_ENABLED", "true")
+      %w[1 true yes on].include?(val.to_s.downcase)
+    end
+  end
 
   # Graceful handling for unique constraint races (e.g., duplicate pending orders)
   rescue_from ActiveRecord::RecordNotUnique, with: :handle_record_not_unique
@@ -73,8 +83,14 @@ class ApplicationController < ActionController::Base
 
   private
 
+  def ensure_shop_enabled
+    unless feature_enabled?(:shop) || current_user&.admin?
+      redirect_to root_path and return
+    end
+  end
+
   def warn_if_app_url_mismatch
-    app_url = ENV.fetch('APP_URL', 'http://localhost:3000')
+    app_url = ENV.fetch("APP_URL", "http://localhost:3000")
     begin
       app_uri = URI(app_url)
       if app_uri.host != request.host || app_uri.port != request.port
@@ -91,7 +107,7 @@ class ApplicationController < ActionController::Base
     if msg.include?("orders.user_id, orders.product_id") || msg.match?(/orders.*user_id.*product_id/)
       prod_id = params[:product_id] || params.dig(:order, :product_id)
       if prod_id.present? && current_user
-        existing = current_user.orders.find_by(product_id: prod_id, status: 'pending')
+        existing = current_user.orders.find_by(product_id: prod_id, status: "pending")
         if existing
           flash_pass("Order already placed")
           redirect_to existing and return

@@ -196,6 +196,12 @@
 
     <%= render 'shared/flash' %>
 
+    <% unless feature_enabled?(:shop) %>
+      <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+        Store is currently disabled. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+      </div>
+    <% end %>
+
     <main class="retro-container" role="main" style="padding-top:18px; padding-bottom:18px;">
       <%= yield %>
     </main>

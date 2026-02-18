@@ -1,5 +1,6 @@
 class OrdersController < ApplicationController
   before_action :require_login
+  before_action :ensure_shop_enabled, only: %i[ new create ]
   before_action :set_order, only: %i[ show ]
 
   # GET /orders or /orders.json
@@ -31,17 +32,17 @@ class OrdersController < ApplicationController
 
     begin
       # Debug: log existing orders for this user/product (helps diagnose intermittant test failures)
-      puts "DEBUG ORDERS LOOKUP (before create): #{Order.where(user_id: current_user.id, product_id: @product.id).map { |o| [o.id, o.status] }.inspect }"
-      Rails.logger.debug "ORDERS LOOKUP (before create): #{Order.where(user_id: current_user.id, product_id: @product.id).map { |o| [o.id, o.status] }.inspect }"
+      puts "DEBUG ORDERS LOOKUP (before create): #{Order.where(user_id: current_user.id, product_id: @product.id).map { |o| [ o.id, o.status ] }.inspect }"
+      Rails.logger.debug "ORDERS LOOKUP (before create): #{Order.where(user_id: current_user.id, product_id: @product.id).map { |o| [ o.id, o.status ] }.inspect }"
 
       # Direct DB lookup for pending order (avoid association cache).
       # Use the DB-backed enum value when available (some adapters store an integer in the DB).
       pending_db_val = if Order.respond_to?(:statuses)
-        Order.statuses['pending']
+        Order.statuses["pending"]
       elsif Order.const_defined?(:STATUS_VALUE_MAP)
-        Order::STATUS_VALUE_MAP['pending']
+        Order::STATUS_VALUE_MAP["pending"]
       else
-        'pending'
+        "pending"
       end
 
       puts "DEBUG OrdersController#create: pending_db_val=#{pending_db_val.inspect} (class=#{pending_db_val.class})"
@@ -88,13 +89,13 @@ class OrdersController < ApplicationController
 
         # If creation failed due to insufficient funds and there's a denied order for the same product,
         # surface a clearer message so users know a refund may be missing.
-        if @order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses['denied'] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP['denied'] : 'denied')))
+        if @order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] : "denied")))
             flash_warn("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
             redirect_to products_path and return
-          else
+        else
             flash_error(@order.errors.full_messages.to_sentence)
             redirect_to products_path and return
-          end
+        end
       end
     rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
       puts "DEBUG OrdersController#create: outer rescue caught #{e.class} - #{e.message.inspect}"
@@ -117,7 +118,7 @@ class OrdersController < ApplicationController
       invalid_order = e.record
 
       # Check for denied order condition first, regardless of product match
-      if invalid_order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses['denied'] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP['denied'] : 'denied')))
+      if invalid_order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] : "denied")))
         flash_warn("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
         redirect_to products_path and return
       elsif invalid_order.product_id == @product.id

@@ -4,6 +4,7 @@
         <h3><%= product.name %></h3>
         <p style="word-wrap: break-word; overflow-wrap: break-word;"><%= simple_format(product.description) %></p>
         <p style="word-wrap: break-word; overflow-wrap: break-word;"><%= credit_label %>: <% if product.cost_in_credits.present? %><%= sprintf('%.2f', product.cost_in_credits) %><% else %><em>Variable</em><% end %></p>
+        <p style="word-wrap: break-word; overflow-wrap: break-word;">Stock: <% if product.limited? %><%= product.stock %><% else %><em>Unlimited</em><% end %></p>
 
         <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro buy-button' %>
         <% if admin? %>

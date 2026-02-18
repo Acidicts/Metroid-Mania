@@ -155,7 +155,9 @@
 
     <div class="home-actions">
       <%= link_to "My Projects", projects_path, class: 'btn-retro' %>
-      <%= link_to "Store", products_path, class: 'btn-retro' %>
+      <% if feature_enabled?(:shop) %>
+        <%= link_to "Store", products_path, class: 'btn-retro' %>
+      <% end %>
       <%= link_to "My Orders", orders_path, class: 'btn-retro' %>
       <%= link_to "Leaderboard", leaderboards_path, class: 'btn-retro' %>
       <% if admin? %>
@@ -172,7 +174,9 @@
       <div class="feature">
         <h3>Buy Stuff</h3>
         <p>Visit the store to purchase assets, and games</p>
-        <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
+        <% if feature_enabled?(:shop) %>
+          <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
+        <% end %>
       </div>
     </div>
 

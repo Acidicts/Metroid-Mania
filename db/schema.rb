@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_17_173200) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_18_150000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -191,11 +191,13 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_173200) do
     t.integer "grant_max_cents"
     t.integer "grant_min_cents"
     t.string "image_url"
+    t.boolean "limited", default: false, null: false
     t.string "link"
     t.string "name"
     t.float "price_currency"
     t.integer "steam_app_id"
     t.integer "steam_price_cents"
+    t.integer "stock", default: 0
     t.datetime "updated_at", null: false
     t.boolean "variable_grant", default: false, null: false
   end
@@ -268,6 +270,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_173200) do
     t.index ["project_id", "shipped_at"], name: "index_ships_on_project_id_and_shipped_at"
     t.index ["project_id"], name: "index_ships_on_project_id"
     t.index ["user_id"], name: "index_ships_on_user_id"
+  end
+
+  create_table "site_settings", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "key", null: false
+    t.datetime "updated_at", null: false
+    t.string "value"
+    t.index ["key"], name: "index_site_settings_on_key", unique: true
   end
 
   create_table "solid_queue_blocked_executions", force: :cascade do |t|
@@ -394,6 +404,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_17_173200) do
   create_table "users", force: :cascade do |t|
     t.float "amount_spent", default: 0.0, null: false
     t.datetime "created_at", null: false
+    t.float "credit_offset", default: 0.0, null: false
     t.float "currency"
     t.string "email"
     t.boolean "font_on", default: true, null: false

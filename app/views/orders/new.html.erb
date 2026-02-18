@@ -148,7 +148,9 @@
 
         <div style="margin-top: 12px;">
           <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
-          <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+          <% if feature_enabled?(:shop) %>
+            <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+          <% end %>
         </div>
       <% end %>
 
@@ -326,7 +328,9 @@
 
         <div style="margin-top: 12px;">
           <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
-          <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+          <% if feature_enabled?(:shop) %>
+            <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+          <% end %>
         </div>
       <% end %>
     <% end %>

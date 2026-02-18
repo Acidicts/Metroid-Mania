@@ -45,6 +45,11 @@ module Admin
         return
       end
 
+      if @order.product&.limited? && @order.product.stock.present? && @order.product.stock <= 0
+        redirect_back fallback_location: admin_orders_path, alert: 'Cannot fulfill order: product is out of stock.'
+        return
+      end
+
       previous = @order.status
       dbg = normalize_status_for_db('shipped')
       puts "DEBUG normalize_status_for_db('shipped') => #{dbg.inspect}"
@@ -56,6 +61,9 @@ module Admin
       rescue => e
         puts "DEBUG Admin::OrdersController#fulfill: update failed: #{e.class} - #{e.message}"
         raise
+      end
+      if @order.product&.limited? && @order.product.stock.present? && @order.product.stock > 0
+        @order.product.decrement!(:stock)
       end
 
       Audit.create!(user: current_user, project: nil, action: 'order_fulfilled', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous), new_status: canonical_status(@order.status) })

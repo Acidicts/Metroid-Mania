@@ -5,7 +5,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     @order = orders(:one)
     @user = users(:one)
     # ensure the test user has an email for dev sign-in and sufficient balance
-    @user.update!(email: 'user@example.com', currency: 100.0)
+    @user.update!(email: "user@example.com", currency: 100.0)
     sign_in_as(@user)
   end
 
@@ -16,16 +16,16 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "should create order" do
     # choose a brand new product so test avoids fixture collisions
-    product = Product.create!(name: 'TempProduct', steam_app_id: 9999, price_currency: 5.0)
+    product = Product.create!(name: "TempProduct", steam_app_id: 9999, price_currency: 5.0)
     puts "DEBUG product id=#{product.id} name=#{product.name}"
 
     # debug: list existing orders
-    puts "DEBUG ORDERS BEFORE: #{Order.all.map { |o| [o.id, o.user&.email, o.product&.id, o.product&.name, o.status] }.inspect }"
+    puts "DEBUG ORDERS BEFORE: #{Order.all.map { |o| [ o.id, o.user&.email, o.product&.id, o.product&.name, o.status ] }.inspect }"
 
     # Ensure no pending order exists for this user/product before we start
-    @user.orders.where(product: product, status: 'pending').destroy_all
+    @user.orders.where(product: product, status: "pending").destroy_all
 
-    assert_difference 'Order.count', 1 do
+    assert_difference "Order.count", 1 do
       post orders_url, params: { product_id: product.id }
     end
 
@@ -35,11 +35,10 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     order = Order.find_by_param(id_param)
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
-
   end
 
   test "should not create duplicate pending order" do
-    product = Product.create!(name: 'TempProduct', steam_app_id: 9999, price_currency: 5.0)
+    product = Product.create!(name: "TempProduct", steam_app_id: 9999, price_currency: 5.0)
 
     # First request should create the order
     post orders_url, params: { product_id: product.id }
@@ -59,14 +58,14 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
       assert_match /Order/, flash[:notice].to_s
     rescue ActiveRecord::RecordNotUnique
       # In some DBs/tests a race may raise; ensure there's exactly one pending order for this user/product
-      existing = @user.orders.find_by(product_id: product.id, status: 'pending')
+      existing = @user.orders.find_by(product_id: product.id, status: "pending")
       assert existing.present?
       assert_equal before, Order.count
     end
   end
 
   test "can create new order after a previous denied order (and refund occurs)" do
-    product = Product.create!(name: 'TempProduct', steam_app_id: 9998, price_currency: 7.5)
+    product = Product.create!(name: "TempProduct", steam_app_id: 9998, price_currency: 7.5)
 
     # Create initial order
     post orders_url, params: { product_id: product.id }
@@ -76,8 +75,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     # Simulate admin declining the order via the admin endpoint (ensures refund path exercised)
     admin = users(:one)
-    admin.update!(role: :admin, email: 'admin-orders@example.com', password: 'password')
-    sign_in_as(admin, password: 'password')
+    admin.update!(role: :admin, email: "admin-orders@example.com", password: "password")
+    sign_in_as(admin, password: "password")
     # route helper may not be available in this context in some test setups — POST directly to the admin path
     post "/admin/orders/#{first.to_param}/decline", params: {}
     assert_response :redirect
@@ -90,7 +89,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     # Sign back in as normal user and place a new order for the same product — should succeed
     sign_in_as(@user)
-    assert_difference 'Order.count', 1 do
+    assert_difference "Order.count", 1 do
       post orders_url, params: { product_id: product.id }
     end
     assert response.redirect?
@@ -99,10 +98,10 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "denied order without refund should show helpful message and not silently block" do
-    product = Product.create!(name: 'TempProduct2', steam_app_id: 9997, price_currency: 12.0, credits_per_dollar: 10.0)
+    product = Product.create!(name: "TempProduct2", steam_app_id: 9997, price_currency: 12.0, credits_per_dollar: 10.0)
 
     # Create an order that is already denied but (simulating buggy code) the user wasn't refunded
-    denied = @user.orders.create!(product: product, status: 'denied', cost: product.price_currency)
+    denied = @user.orders.create!(product: product, status: "denied", cost: product.price_currency)
     @user.update!(currency: 0.0)
 
     # Attempt to create a new order — should not raise a confusing uniqueness error; instead show helpful alert
@@ -117,7 +116,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test "should create order with variable grant amount" do
     # Create a variable grant product
     product = Product.create!(
-      name: 'Variable Grant Product',
+      name: "Variable Grant Product",
       steam_app_id: 9996,
       price_currency: 10.0,
       credits_per_dollar: 100.0,
@@ -127,17 +126,17 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     )
 
     # Ensure no pending order exists for this user/product before we start
-    @user.orders.where(product: product, status: 'pending').destroy_all
+    @user.orders.where(product: product, status: "pending").destroy_all
 
     # Give user enough currency for the test
     @user.update!(currency: 5000.0)  # 5000 credits
 
     # Test creating an order with a specific grant amount
     grant_amount = 25.0  # $25.00
-    assert_difference 'Order.count', 1 do
-      post orders_url, params: { 
-        product_id: product.id, 
-        grant_amount_dollars: grant_amount 
+    assert_difference "Order.count", 1 do
+      post orders_url, params: {
+        product_id: product.id,
+        grant_amount_dollars: grant_amount
       }
     end
 
@@ -154,5 +153,17 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test "should show order" do
     get order_url(@order)
     assert_response :success
+  end
+
+  test "creating order blocked when shop disabled" do
+    SiteSetting.set("shop", "false")
+    product = Product.create!(name: "TempProductX", steam_app_id: 9988, price_currency: 5.0)
+
+    post orders_url, params: { product_id: product.id }
+    assert_redirected_to root_url
+    follow_redirect!
+    assert_match /Store is currently unavailable/, response.body
+  ensure
+    SiteSetting.set("shop", "true")
   end
 end

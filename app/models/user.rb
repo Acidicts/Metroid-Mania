@@ -2,7 +2,7 @@ class User < ApplicationRecord
   # When a user is deleted we nullify references and reassign them to the system user
   has_many :projects, dependent: :nullify
   # Active (non-deleted) projects owned by this user
-  has_many :active_projects, -> { where(deleted_at: nil) }, class_name: 'Project'
+  has_many :active_projects, -> { where(deleted_at: nil) }, class_name: "Project"
   has_many :orders, dependent: :nullify
   has_many :ships, dependent: :nullify
   has_many :ship_requests, dependent: :nullify
@@ -15,7 +15,7 @@ class User < ApplicationRecord
   enum :role, { user: 0, admin: 1 }
 
   # Scope to exclude the system placeholder user
-  scope :not_system, -> { where.not(provider: 'system', uid: 'deleted_user') }
+  scope :not_system, -> { where.not(provider: "system", uid: "deleted_user") }
 
   # Allow optional password for OAuth users. Use has_secure_password without validations
   # and manage presence checks if needed elsewhere.
@@ -54,8 +54,8 @@ class User < ApplicationRecord
 
   # Is this user the superadmin defined by environment?
   def superadmin?
-    env_uid = ENV['SUPERADMIN_UID']
-    env_email = ENV['SUPERADMIN_EMAIL']&.downcase
+    env_uid = ENV["SUPERADMIN_UID"]
+    env_email = ENV["SUPERADMIN_EMAIL"]&.downcase
     (env_uid.present? && uid == env_uid) || (env_email.present? && email&.downcase == env_email)
   end
 
@@ -66,16 +66,16 @@ class User < ApplicationRecord
 
   # System placeholder user used to own records of deleted users. Created lazily.
   def self.system_user
-    find_or_create_by!(provider: 'system', uid: 'deleted_user') do |u|
-      u.email = 'deleted@example.com'
-      u.name = 'Deleted User'
+    find_or_create_by!(provider: "system", uid: "deleted_user") do |u|
+      u.email = "deleted@example.com"
+      u.name = "Deleted User"
       u.password = SecureRandom.hex(16)
       u.role = :user
     end
   end
 
   def system_user?
-    provider == 'system' && uid == 'deleted_user'
+    provider == "system" && uid == "deleted_user"
   end
 
   before_destroy do
@@ -126,7 +126,7 @@ class User < ApplicationRecord
 
       # Overwrite personal fields on this user with anonymized values
       anonymized_email = "deleted_user_#{id}@example.invalid"
-      update!(name: 'Deleted User', email: anonymized_email, slack_id: nil, uid: "deleted_user_#{id}_#{SecureRandom.hex(6)}", provider: 'deleted', password: SecureRandom.hex(16))
+      update!(name: "Deleted User", email: anonymized_email, slack_id: nil, uid: "deleted_user_#{id}_#{SecureRandom.hex(6)}", provider: "deleted", password: SecureRandom.hex(16))
     end
 
     true
@@ -135,22 +135,32 @@ class User < ApplicationRecord
   # Recalculate the amount the user has spent on Orders (sum of non-denied orders) and persist it.
   # Returns the computed amount (float).
   def recalculate_amount_spent!
-    total = orders.where.not(status: 'denied').sum(:cost).to_f
+    total = orders.where.not(status: "denied").sum(:cost).to_f
     update!(amount_spent: total)
     total
   end
 
-  # Recalculate and persist the user's currency to be the total awarded via Ships (for their projects)
-  # minus the recorded `amount_spent` (so currency always reflects "earned - spent").
+  # Sum of credits_awarded across all ships for active (non-deleted) projects owned by this user.
+  def total_shipped_credits
+    Ship.joins(:project).where(projects: { user_id: id, deleted_at: nil }).sum(:credits_awarded).to_f
+  end
+
+  # Canonical total credits = ships total + admin-set offset, always rounded up.
+  # credit_offset is set by an admin to raise/lower the total to a target value.
+  def total_credits
+    (total_shipped_credits + (credit_offset || 0.0)).ceil
+  end
+
+  # Available balance = total_credits - amount already spent on orders, always rounded up.
+  def available_balance
+    (total_credits - (amount_spent || 0.0)).ceil
+  end
+
+  # Recalculate and persist the user's currency to be total_credits minus amount_spent.
+  # Incorporates credit_offset so currency always reflects "earned + offset - spent".
   # Returns the computed currency value (float).
   def recalculate_currency!
-    # Sum credits awarded on Ships for projects owned by this user
-    # Only count ships that belong to active (non-deleted) projects
-    total_shipped = Ship.joins(:project).where(projects: { user_id: id, deleted_at: nil }).sum(:credits_awarded).to_f
-
-    amt_spent = (amount_spent || 0.0).to_f
-    new_currency = total_shipped - amt_spent
-
+    new_currency = available_balance
     update!(currency: new_currency)
     new_currency
   end
@@ -194,7 +204,7 @@ class User < ApplicationRecord
     stats = service.get_projects
     return unless stats && stats.any?
 
-    owned_projects = projects.where.not(hackatime_ids: [nil, '']).where(deleted_at: nil)
+    owned_projects = projects.where.not(hackatime_ids: [ nil, "" ]).where(deleted_at: nil)
     owned_projects.find_each do |proj|
       total = proj.hackatime_targets.sum { |t| stats[t].to_i }
       prior = proj.total_seconds.to_i

@@ -26,9 +26,27 @@
       </div>
 
       <% if current_user&.admin? || current_user&.superadmin? %>
+        <%
+          shipped  = @user.total_shipped_credits.round(2)
+          offset   = (@user.credit_offset || 0.0).round(2)
+          total    = (shipped + offset).round(2)
+          balance  = @user.available_balance.round(2)
+        %>
+        <div class="admin-form-row">
+          <label class="admin-form-label">Credits (from ships)</label>
+          <div class="admin-form-control"><%= number_with_precision(shipped, precision: 2) %></div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label">Credit Offset</label>
+          <div class="admin-form-control"><%= number_with_precision(offset, precision: 2) %></div>
+        </div>
         <div class="admin-form-row">
           <label class="admin-form-label">Total Credits</label>
-          <div class="admin-form-control"><%= number_with_precision(@user.currency.to_f, precision: 2) %></div>
+          <div class="admin-form-control"><%= number_with_precision(total, precision: 2) %></div>
+        </div>
+        <div class="admin-form-row">
+          <label class="admin-form-label">Available Balance</label>
+          <div class="admin-form-control"><%= number_with_precision(balance, precision: 2) %></div>
         </div>
       <% end %>
 

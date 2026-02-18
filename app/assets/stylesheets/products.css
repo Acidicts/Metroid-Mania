@@ -59,3 +59,210 @@
   .buy-menu-controls { flex-direction: column; align-items: stretch; }
   .buy-input { width: 100%; }
 }
+
+/* Admin product form — Metroid Mania palette
+   #fbbbad warm pink · #ee8695 rose · #4a7a96 muted blue · #333f58 dark blue · #292831 near-black */
+
+.admin-product-form {
+  max-width: 980px;
+  margin: 18px 0;
+  font-family: "Pixelify Sans", sans-serif;
+  color: var(--admin-900, #292831);
+}
+
+/* ── Section cards ── */
+.apf-section {
+  background: rgba(247,237,240,0.65);
+  border: 1.5px solid rgba(74,122,150,0.15);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+}
+.apf-section-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--palette-3, #4a7a96);
+  margin: 0 0 14px;
+  padding-bottom: 9px;
+  border-bottom: 1.5px solid rgba(74,122,150,0.13);
+}
+
+/* ── Labels & inputs ── */
+.admin-product-form .form-group { margin-bottom: 14px; }
+.admin-product-form .form-group:last-child { margin-bottom: 0; }
+.admin-product-form label {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--admin-900, #292831);
+}
+.admin-product-form .form-input {
+  width: 100%;
+  padding: 10px 13px;
+  border: 1.5px solid rgba(74,122,150,0.28);
+  border-radius: 7px;
+  font-size: 0.94rem;
+  font-family: inherit;
+  background: #fff;
+  color: var(--admin-900, #292831);
+  box-sizing: border-box;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.admin-product-form .form-input:focus {
+  outline: none;
+  border-color: var(--palette-3, #4a7a96);
+  box-shadow: 0 0 0 3px rgba(74,122,150,0.13);
+}
+.admin-product-form .form-input::placeholder { color: rgba(51,63,88,0.38); }
+.admin-product-form .field-hint {
+  margin-top: 5px;
+  font-size: 0.81rem;
+  color: var(--palette-4, #333f58);
+  opacity: 0.68;
+  line-height: 1.45;
+}
+
+/* ── Two-col row ── */
+.admin-product-form .form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+@media (max-width: 600px) { .admin-product-form .form-row { grid-template-columns: 1fr; } }
+
+/* ── Checkbox card ── */
+.admin-product-form .checkbox-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 14px;
+  background: rgba(251,187,173,0.14);
+  border: 1.5px solid rgba(251,187,173,0.38);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+.admin-product-form .checkbox-card:has(input:checked) {
+  background: rgba(251,187,173,0.26);
+  border-color: rgba(251,187,173,0.6);
+}
+.admin-product-form .checkbox-card input[type="checkbox"] {
+  margin-top: 2px;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--palette-3, #4a7a96);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.admin-product-form .checkbox-card label {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+/* ── Variable grant expanded section ── */
+.admin-product-form .variable-grant {
+  background: rgba(74,122,150,0.06);
+  border: 1.5px solid rgba(74,122,150,0.18);
+  border-radius: 8px;
+  padding: 16px;
+  margin-top: 0;
+}
+
+/* ── Error summary ── */
+.admin-product-form .error-summary {
+  background: rgba(238,134,149,0.13);
+  border: 1.5px solid rgba(238,134,149,0.45);
+  border-radius: 9px;
+  padding: 14px 17px;
+  margin-bottom: 18px;
+  color: #6b1727;
+  font-size: 0.93rem;
+}
+.admin-product-form .error-summary ul { margin: 7px 0 0; padding-left: 18px; }
+.admin-product-form .error-summary li { margin-bottom: 3px; }
+
+/* ── Submit ── */
+.admin-product-form .form-actions { margin-top: 6px; }
+.btn-primary {
+  background: var(--palette-3, #4a7a96);
+  color: #fff;
+  padding: 11px 24px;
+  border-radius: 7px;
+  border: none;
+  cursor: pointer;
+  font-weight: 700;
+  font-family: inherit;
+  font-size: 0.97rem;
+  letter-spacing: 0.02em;
+  transition: background 160ms ease, transform 80ms ease;
+}
+.btn-primary:hover { background: #3b6378; }
+.btn-primary:active { transform: translateY(1px); }
+
+/* ── Sidebar ── */
+.admin-product-form .form-note {
+  font-size: 0.81rem;
+  color: var(--palette-4, #333f58);
+  opacity: 0.65;
+  margin: 6px 0 5px;
+}
+.admin-product-form .current-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  border: 1.5px solid rgba(74,122,150,0.18);
+  display: block;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+}
+.admin-product-form .file-input { cursor: pointer; }
+
+/* ── Outer two-col grid ── */
+.admin-product-form .form-grid {
+  display: grid;
+  grid-template-columns: 1fr 290px;
+  gap: 20px;
+  align-items: start;
+}
+.admin-product-form .sidebar-column {
+  border-left: 1.5px solid rgba(74,122,150,0.12);
+  padding-left: 20px;
+}
+@media (max-width: 880px) {
+  .admin-product-form .form-grid { grid-template-columns: 1fr; }
+  .admin-product-form .sidebar-column { border-left: none; padding-left: 0; border-top: 1.5px solid rgba(74,122,150,0.12); padding-top: 16px; }
+}
+
+/* ── Animated collapsible ── */
+.admin-product-form .collapsible {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transform: translateY(-5px);
+  transition:
+    max-height 320ms cubic-bezier(0.2,0,0,1),
+    opacity    200ms ease,
+    transform  200ms ease,
+    margin     200ms ease;
+  will-change: max-height, opacity, transform;
+  pointer-events: none;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+.admin-product-form .collapsible--open {
+  max-height: 800px;
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+  margin-top: 12px;
+  margin-bottom: 4px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .admin-product-form .collapsible,
+  .admin-product-form .collapsible--open { transition: none; transform: none; }
+}
+
+.hidden { display: none !important; }

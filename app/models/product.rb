@@ -11,6 +11,9 @@ class Product < ApplicationRecord
   validates :grant_max_cents, numericality: { only_integer: true, greater_than_or_equal_to: 0 }, allow_nil: true
   validate :grant_range_consistency
 
+  validates :stock, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
+  validates :limited, inclusion: { in: [true, false] }
+
   attribute :image_url, :string, default: 'https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg'
   attribute :description, :string, default: ''
 

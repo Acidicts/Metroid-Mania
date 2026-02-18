@@ -1,6 +1,6 @@
 module ApplicationHelper
   def format_credits(amount)
-    "#{amount.to_i} Units"
+    "#{amount.to_f.ceil} Units"
   end
 
   def format_duration(seconds, include_days: false)
@@ -79,7 +79,7 @@ module ApplicationHelper
   # Human-friendly label for site-specific credits (configured by ENV['CREDIT_NAME']).
   # Falls back to 'Credits' when not set.
   def credit_label
-    ENV['CREDIT_NAME'].presence || 'Credits'
+    ENV["CREDIT_NAME"].presence || "Credits"
   end
 
   # Calculate average credits per hour across all ships for a project
@@ -87,7 +87,7 @@ module ApplicationHelper
     # Use memoization to avoid recalculating for the same project
     @avg_credits_cache ||= {}
     return @avg_credits_cache[project.id] if @avg_credits_cache.key?(project.id)
-    
+
     ships = project.ships.to_a # Use the preloaded association
     return @avg_credits_cache[project.id] = 0 if ships.empty?
 
@@ -108,19 +108,20 @@ module ApplicationHelper
     end
   end
 
-  # Calculate total credits across all ships for a user (exclude deleted projects)
+  # Calculate total credits across all ships for a user (exclude deleted projects) plus any admin offset.
+  # Always rounded up to the nearest integer.
   def user_total_credits(user)
     return 0 if user.nil?
-    # Use DB aggregation for efficiency and handle nil credits gracefully
-    Ship.joins(:project).where(projects: { user_id: user.id, deleted_at: nil }).sum(:credits_awarded).to_f
+    raw = Ship.joins(:project).where(projects: { user_id: user.id, deleted_at: nil }).sum(:credits_awarded).to_f +
+            (user.credit_offset || 0.0)
+    raw.ceil
   end
 
-  # Return available balance for a user: total shipped credits minus amount spent
+  # Return available balance for a user: (total shipped credits + offset) minus amount spent.
+  # Always rounded up to the nearest integer.
   def user_balance(user)
     return 0 if user.nil?
-    # Sum credits across all ships that belong to the user's projects (avoid N+1)
-    ships_sum = Ship.joins(:project).where(projects: { user_id: user.id, deleted_at: nil }).sum(:credits_awarded).to_f
-    ships_sum - (user.amount_spent || 0.0)
+    (user_total_credits(user) - (user.amount_spent || 0.0)).ceil
   end
 
   # Calculate total ships for a project

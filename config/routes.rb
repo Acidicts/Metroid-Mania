@@ -2,43 +2,43 @@ Rails.application.routes.draw do
   resources :comments
   get "metroidmania/index"
   get "shared/_retro_sample"
-  get '/auth/:provider/callback', to: 'sessions#create'
-  get '/auth/failure', to: 'sessions#failure'
+  get "/auth/:provider/callback", to: "sessions#create"
+  get "/auth/failure", to: "sessions#failure"
 
   get "/leaderboard", to: "leaderboards#index"
 
-  delete '/logout', to: 'sessions#destroy'
-  
-  get 'profile', to: 'users#edit'
-  patch 'profile', to: 'users#update'
-  get 'users/:id', to: 'users#show', as: 'user_profile'
+  delete "/logout", to: "sessions#destroy"
 
-  resources :orders, only: [:index, :new, :create, :show]
+  get "profile", to: "users#edit"
+  patch "profile", to: "users#update"
+  get "users/:id", to: "users#show", as: "user_profile"
+
+  resources :orders, only: [ :index, :new, :create, :show ]
 
   # Dev-only sign-in to ease testing and local dev (available only in dev & test)
   if Rails.env.development? || Rails.env.test?
-    post 'dev_login', to: 'dev_sessions#create'
+    post "dev_login", to: "dev_sessions#create"
   end
   resources :products
   resources :projects do
     resources :devlogs
-    resources :ship_requests, only: [:new, :create, :show, :index]
+    resources :ship_requests, only: [ :new, :create, :show, :index ]
   end
-  resources :leaderboards, only: [:index]
+  resources :leaderboards, only: [ :index ]
 
   namespace :admin do
-    root to: 'dashboard#index'
-    get 'dashboard', to: 'dashboard#index'
-    get 'login', to: 'sessions#new'
-    post 'login', to: 'sessions#create'
-    delete 'logout', to: 'sessions#destroy'
+    root to: "dashboard#index"
+    get "dashboard", to: "dashboard#index"
+    get "login", to: "sessions#new"
+    post "login", to: "sessions#create"
+    delete "logout", to: "sessions#destroy"
 
     resources :users do
       member do
         post :revert_actions
       end
     end
-    resources :orders, only: [:index, :show] do
+    resources :orders, only: [ :index, :show ] do
       member do
         post :fulfill
         post :decline
@@ -59,25 +59,28 @@ Rails.application.routes.draw do
       end
     end
 
-    resources :ship_requests, only: [:index, :show] do
+    resources :ship_requests, only: [ :index, :show ] do
       member do
         post :approve
         post :reject
       end
     end
 
-    resources :ships, only: [:index, :show, :edit, :update]
+    resources :ships, only: [ :index, :show, :edit, :update ]
 
-    post 'projects/bulk_update', to: 'projects_bulk#create', as: 'bulk_update_admin_projects'
+    post "projects/bulk_update", to: "projects_bulk#create", as: "bulk_update_admin_projects"
 
-    resources :audits, only: [:index]
+    resources :audits, only: [ :index ]
 
+    # Site settings (feature toggles)
+    get "site_settings", to: "site_settings#index"
+    patch "site_settings", to: "site_settings#update"
   end
 
   # Allow project owners to ship their own project
   resources :projects, only: [] do
     member do
-      post :ship, to: 'projects#ship'
+      post :ship, to: "projects#ship"
     end
   end
 
@@ -89,7 +92,7 @@ Rails.application.routes.draw do
 
   # Local-only preview route for the shared retro sample partial
   get "/shared/_retro_sample", to: "shared#_retro_sample" if Rails.env.development? || Rails.env.test?
-  
+
   get "up" => "rails/health#show", as: :rails_health_check
 
   # Ensure a DELETE /logout exists for link_to(..., method: :delete).

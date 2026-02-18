@@ -19,11 +19,30 @@ module Admin
         return
       end
 
-      previous_currency = @user.currency
-      if @user.update(user_params)
-        # Audit currency changes when an admin adjusts a user's credits
-        if user_params.key?(:currency) && previous_currency.to_f != @user.currency.to_f
-          Audit.create!(user: current_user, action: 'update_currency', details: { user_id: @user.id, before: previous_currency.to_f, after: @user.currency.to_f })
+      # When the admin supplies a credit_target (desired total = ships + offset),
+      # derive credit_offset = target - total_shipped so the formula holds.
+      base_params = user_params
+      if params[:user]&.key?(:credit_target)
+        credit_target = params[:user][:credit_target].to_f
+        total_shipped = @user.total_shipped_credits
+        base_params[:credit_offset] = (credit_target - total_shipped).round(6)
+        base_params.delete(:credit_target)
+      end
+
+      previous_offset = @user.credit_offset.to_f
+      if @user.update(base_params)
+        # Audit credit offset changes (which represent a change in the user's total credits)
+        if base_params.key?(:credit_offset) && previous_offset != @user.credit_offset.to_f
+          old_total = @user.total_shipped_credits + previous_offset
+          new_total = @user.total_credits
+          Audit.create!(user: current_user, action: "update_currency", details: {
+            user_id: @user.id,
+            before: old_total.round(6),
+            after: new_total.round(6),
+            credit_offset: @user.credit_offset.to_f
+          })
+          # Keep currency cache in sync
+          @user.recalculate_currency!
         end
 
         flash_pass("User updated")
@@ -65,7 +84,7 @@ module Admin
 
         # For each project owned by the user: unship, reset status to pending, clear approved_at, remove devlogs
         @user.projects.find_each do |p|
-          p.update!(shipped: false, status: 'pending', approved_at: nil)
+          p.update!(shipped: false, status: "pending", approved_at: nil)
           p.devlogs.destroy_all
         end
       end
@@ -93,8 +112,8 @@ module Admin
         # Allow role changes only when role param present
         permitted[:role] = params[:user][:role] if params[:user][:role].present?
 
-        # Allow admins to adjust user credits safely
-        permitted[:currency] = params[:user][:currency] if params[:user].key?(:currency)
+        # Allow admins to adjust the credit offset (computed from credit_target in update action)
+        permitted[:credit_offset] = params[:user][:credit_offset] if params[:user].key?(:credit_offset)
       end
       permitted
     end

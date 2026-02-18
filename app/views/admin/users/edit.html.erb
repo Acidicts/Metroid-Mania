@@ -62,13 +62,36 @@
       </div>
 
       <% if current_user&.admin? || current_user&.superadmin? %>
+        <%
+          shipped   = @user.total_shipped_credits.round(2)
+          offset    = (@user.credit_offset || 0.0).round(2)
+          total     = (shipped + offset).round(2)
+        %>
         <div class="admin-form-row">
-          <%= f.label :currency, "Total Credits", class: "admin-form-label" %>
+          <span class="admin-form-label">Credits (from ships)</span>
           <div class="admin-form-control">
-            <%= f.number_field :currency, step: 0.01, value: user_balance(@user) || 0.0, class: "admin-input #{'field-error' if f.object.errors[:currency].any?}" %>
-            <% if f.object.errors[:currency].any? %>
-              <div class="field-error-text"><%= f.object.errors.full_messages_for(:currency).join(', ') %></div>
-            <% end %>
+            <span class="admin-input" style="display:inline-block;background:#f4f4f4;cursor:default;"><%= shipped %></span>
+            <div class="field-hint">Sum of all approved ship awards. Read-only.</div>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <span class="admin-form-label">Credit Offset</span>
+          <div class="admin-form-control">
+            <span class="admin-input" style="display:inline-block;background:#f4f4f4;cursor:default;"><%= offset %></span>
+            <div class="field-hint">Admin adjustment (<em>target&nbsp;&minus;&nbsp;ships</em>). Computed automatically from the target below.</div>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="user_credit_target">Credit Total (target)</label>
+          <div class="admin-form-control">
+            <%= number_field_tag "user[credit_target]", total, step: "any", id: "user_credit_target",
+                class: "admin-input #{'field-error' if @user.errors[:credit_offset].any? || @user.errors[:currency].any?}" %>
+            <div class="field-hint">
+              Set the desired total credits (<code>ships&nbsp;+&nbsp;offset</code>).
+              The offset will be recalculated as <code>target&nbsp;&minus;&nbsp;ships&nbsp;(#{shipped})</code>.
+            </div>
           </div>
         </div>
       <% end %>

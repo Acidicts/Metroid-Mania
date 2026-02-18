@@ -4,7 +4,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @product = products(:one)
     admin = users(:one)
-    admin.update!(role: :admin, email: 'admin2@example.com')
+    admin.update!(role: :admin, email: "admin2@example.com")
     sign_in_as(admin)
   end
 
@@ -27,18 +27,18 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should create product with uploaded image" do
-    tmp = create_sample_image('product_upload.png')
-    fake = { 'url' => 'https://cdn.hackclub.com/abcd/product_upload.png' }
+    tmp = create_sample_image("product_upload.png")
+    fake = { "url" => "https://cdn.hackclub.com/abcd/product_upload.png" }
 
     orig = CdnService.method(:upload)
     CdnService.define_singleton_method(:upload) { |_f| fake }
     begin
       assert_difference("Product.count") do
-        post products_url, params: { product: { name: 'WithImage', price_currency: 1.23, image_file: fixture_file_upload(tmp, 'image/png') } }
+        post products_url, params: { product: { name: "WithImage", price_currency: 1.23, image_file: fixture_file_upload(tmp, "image/png") } }
       end
 
       p = Product.last
-      assert_equal 'https://cdn.hackclub.com/abcd/product_upload.png', p.image_url
+      assert_equal "https://cdn.hackclub.com/abcd/product_upload.png", p.image_url
     ensure
       CdnService.define_singleton_method(:upload) { |*a, &b| orig.call(*a, &b) }
     end
@@ -68,5 +68,24 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to products_url
+  end
+
+  test "admin can access index when shop disabled" do
+    SiteSetting.set("shop", "false")
+    get products_url
+    assert_response :success
+  ensure
+    SiteSetting.set("shop", "true")
+  end
+
+  test "non-admin is blocked from index when shop disabled" do
+    SiteSetting.set("shop", "false")
+    sign_in_as(users(:two))
+    get products_url
+    assert_redirected_to root_url
+    follow_redirect!
+    assert_match /Store is currently unavailable/, response.body
+  ensure
+    SiteSetting.set("shop", "true")
   end
 end
