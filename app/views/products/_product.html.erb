@@ -1,41 +1,64 @@
-<div id="<%= dom_id product %>">
-  <div>
-    <strong>Name:</strong>
-    <%= product.name %>
-  </div>
+<style>
+  .product-content {
+    flex: 1 1 auto;
+    position: relative;
+    padding: 6px 8px;
+    background-color: #f8f8f8;
+    margin-left: 4rem;
+  }
+</style>
 
-  <div>
-    <strong>Description:</strong>
-    <%= product.description %>
-  </div>
-
-  <% if product.link.present? %>
-    <div>
-      <strong>Link:</strong>
-      <%= link_to safe_url(product.link), safe_url(product.link), target: "_blank", rel: "noopener" %>
-    </div>
-  <% end %>
-
-  <div>
-    <strong>Price (USD):</strong>
-    $<%= sprintf('%.2f', product.price_currency || 0) %>
-  </div>
-
-  <div>
-    <strong>Cost (Credits):</strong>
-    <% if product.cost_in_credits %>
-      <%= sprintf('%.2f', product.cost_in_credits) %>
-    <% else %>
-      <em>Computed from price * credits-per-$</em>
+<div id="<%= dom_id product %>" class="product-detail product-card product-card--large">
+  <div class="product-detail-grid">
+    <% if product.image_url.present? %>
+      <div class="product-media">
+        <img src="<%= product.image_url %>" alt="<%= product.name %> image" class="product-image product-image--large" loading="lazy">
+      </div>
     <% end %>
-  </div>
 
-  <% if product.variable_grant? %>
-    <div>
-      <strong>Variable grant:</strong>
-      Yes — Allowed: $<%= sprintf('%.2f', product.grant_min_dollars) %> – $<%= sprintf('%.2f', product.grant_max_dollars) %>
-      <% if product.credits_per_dollar %> (Ratio: <%= sprintf('%.2f', product.credits_per_dollar) %> credits / $)<% end %>
+    <div class="product-content">
+      <h1 class="product-title pixelify-sans"><%= product.name %></h1>
+
+      <div class="product-description"><%= simple_format(product.description) %></div>
+
+      <aside class="product-info-box">
+        <ul class="product-stats">
+          <li><strong>Price (USD):</strong> <span class="price stat-pill pixelify-sans">$<%= sprintf('%.2f', product.price_currency || 0) %></span></li>
+
+          <li><strong>Cost (Credits):</strong>
+            <span class="credits stat-pill pixelify-sans">
+              <% if product.cost_in_credits %>
+                <%= sprintf('%.2f', product.cost_in_credits) %>
+              <% else %>
+                <em>Computed from price × credits-per-$</em>
+              <% end %>
+            </span>
+          </li>
+
+          <% if product.link.present? %>
+            <li><strong>Link:</strong> <%= link_to safe_url(product.link), safe_url(product.link), target: "_blank", rel: "noopener", class: "external-link" %></li>
+          <% end %>
+
+          <% if product.variable_grant? %>
+            <li>
+              <strong>Variable grant:</strong>
+              <span class="badge badge-info">Yes</span>
+              <span class="ml">Allowed: $<%= sprintf('%.2f', product.grant_min_dollars) %>–$<%= sprintf('%.2f', product.grant_max_dollars) %></span>
+              <% if product.credits_per_dollar %> <span class="muted">(<%= sprintf('%.2f', product.credits_per_dollar) %> credits / $)</span><% end %>
+            </li>
+          <% end %>
+        </ul>
+
+        <div class="product-actions" >
+          <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro btn-retro--primary' %>
+          <%= link_to "Back to products", products_path, class: 'btn-retro btn-retro--outline' %>
+
+          <% if admin? %>
+            <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
+            <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin' %>
+          <% end %>
+        </div>
+      </aside>
     </div>
-  <% end %>
-
+  </div>
 </div>
