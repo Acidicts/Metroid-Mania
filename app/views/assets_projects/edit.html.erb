@@ -1,0 +1,12 @@
+<% content_for :title, "Editing assets project" %>
+
+<h1>Editing assets project</h1>
+
+<%= render "form", assets_project: @assets_project %>
+
+<br>
+
+<div>
+  <%= link_to "Show this assets project", @assets_project %> |
+  <%= link_to "Back to assets projects", assets_projects_path %>
+</div>

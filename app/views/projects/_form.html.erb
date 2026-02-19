@@ -1,354 +1,122 @@
-<% unless content_for?(:styles) %>
-  <% content_for :styles do %>
-    <style>
-      /* Projects form styles — modernized, responsive, accessible */
-
-      :root {
-        --card: #ffffff;
-        --accent: #1f6feb;
-        --accent-800: #1a56c1;
-        --muted: #6b7280;
-        --border: #e5e7eb;
-        --shadow: 0 6px 18px rgba(31,41,55,0.08);
-      }
-
-      body.projects { background-color: var(--bg); color: #111827; }
-
-      #new-project-form {
-        max-width: 760px;
-        margin: 32px auto;
-        background: var(--card);
-        padding: 24px;
-        border-radius: 12px;
-        box-shadow: var(--shadow);
-        border: 3px dashed rgba(0,0,0,0.2);
-        box-sizing: border-box;
-      }
-
-      .project-text-input {
-        margin-bottom: 16px;
-      }
-
-      .project-text-input label {
-        display: block;
-        font-weight: 600;
-        margin-bottom: 8px;
-        color: #0f172a;
-      }
-
-      .form-control,
-      .form-control[type="file"],
-      textarea.form-control,
-      select.form-control {
-        display: block;
-        width: 100%;
-        padding: 0.72rem 0.9rem;
-        font-size: 1rem;
-        border: 3px solid var(--main-700);
-        border-radius: 6px;
-        background: linear-gradient(180deg, #fff, var(--accent3));
-        color: var(--main-900);
-        box-sizing: border-box;
-        transition: box-shadow .12s ease, border-color .12s ease;
-      }
-
-      textarea.form-control {
-        min-height: 140px;
-        line-height: 1.5;
-        resize: vertical;
-        background: linear-gradient(180deg, #fff, var(--accent3));
-        color: var(--main-900);
-      }
-
-      textarea.form-control::placeholder {
-        color: var(--muted);
-        opacity: 1;
-      }
-
-      .form-control:focus,
-      .form-control:focus-visible {
-        outline: none;
-        border-color: var(--main-700);
-        box-shadow: 0 0 0 4px rgba(255,170,94,0.12);
-      }
-
-      /* Wrapper to center the button */
-      #project-form-actions {
-        text-align: center;
-        margin-top: 24px;
-        width: 100%;
-      }
-
-      #project-form-submit {
-        display: block;
-        margin-bottom: 12px;
-      }
-
-      /* Primary submit button */
-      .project-submit {
-        display: inline-block;
-        width: auto;
-        min-width: 200px; /* Ensures button isn't too tiny with short text */
-        max-width: 100%;
-        background: linear-gradient(180deg, var(--accent), var(--accent-800));
-        color: #ffffff;
-        font-family: inherit;
-        font-weight: 600;
-        font-size: 1.15rem;
-        padding: 14px 32px; /* Even padding on all sides */
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        text-align: center;
-        box-sizing: border-box;
-        box-shadow: 0 6px 0 rgba(13,30,84,0.18);
-        transition: transform 120ms ease, box-shadow 120ms ease, filter 120ms ease;
-        line-height: 1.2;
-        appearance: none;
-        -webkit-appearance: none;
-      }
-
-      .project-submit:hover {
-        filter: brightness(.96);
-      }
-
-      .project-submit:active {
-        transform: translateY(2px);
-        box-shadow: 0 3px 0 rgba(13,30,84,0.18);
-      }
-
-      .project-submit:focus-visible {
-        outline: 3px solid rgba(255,170,94,0.18);
-        outline-offset: 3px;
-      }
-
-      #project-editing-info {
-        font-size: 14px;
-        color: var(--accent-800);
-        margin-top: 8px;
-      }
-
-      #new-project-image img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        border: 2px solid rgba(31,111,235,0.08);
-      }
-
-      .hackatime-selected {
-        margin-top: 10px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 10px;
-      }
-
-      .hackatime-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        background: #eef2ff;
-        border: 1px solid #dbeafe;
-        color: #0f172a;
-        font-weight: 600;
-      }
-
-      .hackatime-seconds {
-        color: var(--muted);
-        font-size: 12px;
-        font-weight: 400;
-      }
-
-      .hackatime-remove {
-        background: transparent;
-        border: none;
-        cursor: pointer;
-        color: #374151;
-        padding: 2px 6px;
-        border-radius: 6px;
-        font-weight: 700;
-      }
-
-      .hackatime-remove--locked {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-
-      /* File input custom styles */
-      .file-input-wrapper {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        margin-top: 8px;
-        flex-wrap: wrap;
-      }
-
-      .file-input-button, .project-text-input label.file-input-button {
-        display: inline-block;
-        background: linear-gradient(180deg,var(--accent),var(--accent-800));
-        color: #ffffff !important;
-        padding: 8px 14px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: 600;
-        border: 1px solid rgba(255,255,255,0.12);
-        text-decoration: none;
-        transition: transform .06s ease, box-shadow .12s ease, filter .06s ease;
-        box-shadow: 0 3px 8px rgba(31,41,55,0.08);
-        margin-bottom: 0; /* Reset label margin */
-      }
-
-      .visually-hidden {
-        position: absolute !important;
-        width: 1px !important;
-        height: 1px !important;
-        padding: 0 !important;
-        margin: -1px !important;
-        overflow: hidden !important;
-        clip: rect(0 0 0 0) !important;
-        white-space: nowrap !important;
-        border: 0 !important;
-      }
-
-      /* Validation status styles */
-      .input-status {
-        margin-top: 6px;
-        font-size: 0.9rem;
-        line-height: 1;
-        min-height: 20px;
-        color: var(--muted);
-      }
-      .input-status.checking { color: #9ca3af; }
-      .input-status.success { color: #10b981; font-weight: 600; }
-      .input-status.error { color: #ef4444; font-weight: 700; }
-      .form-control[aria-invalid="true"] { box-shadow: 0 0 0 4px rgba(239,68,68,0.08); border-color: #ef4444; }
-
-      /* Responsive adjustments */
-      @media (max-width: 600px) {
-        #new-project-form {
-          margin: 16px;
-          padding: 16px;
-        }
-
-        .project-submit {
-          width: 100%;
-          padding: 16px;
-        }
-
-        #file-input-wrapper-form {
-          flex-direction: column;
-          align-items: flex-start;
-        }
-      }
-    </style>
-  <% end %>
-<% end %>
-
-<%= form_with(model: project, id: 'new-project-form', html: { multipart: true, data: { controller: 'project-url-validator' } }) do |form| %>
+<%= form_with(model: project, html: { multipart: true, class: 'admin-product-form', data: { controller: 'project-url-validator' } }) do |form| %>
   <% if project.errors.any? %>
-    <div style="color: red">
-      <h2><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</h2>
+    <div class="error-summary" role="alert">
+      <strong><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</strong>
       <ul>
-        <% project.errors.each do |error| %>
-          <li><%= error.full_message %></li>
+        <% project.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
         <% end %>
       </ul>
     </div>
   <% end %>
 
-  <div class="project-text-input" id="new-project-name">
-    <%= form.label :name, "Project Title/Name" %>
-    <%= form.text_field :name, class: "form-control" %>
-  </div>
+  <div class="form-grid">
+    <div class="main-column">
 
-  <div class="project-text-input" id="new-project-description">
-    <%= form.label :description, "Project Description" %>
-    <%= form.text_area :description, rows: 5, class: "form-control", placeholder: "Short summary of your project" %>
-  </div>
+      <!-- ── Project Info ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Project Info</div>
 
-  <div class="project-text-input" id="new-project-repository-url">
-    <%= form.label :repository_url, "GitHub Repo URL" %>
-    <%= form.text_field :repository_url, id: "repo_text_box", class: "form-control", data: { project_url_validator_target: 'repo' } %>
-    <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
-  </div>
-
-  <div class="project-text-input" id="new-project-readme-url">
-    <%= form.label :readme_url, "Readme Address" %>
-    <%= form.text_field :readme_url, id: "readme_text_box", class: "form-control", data: { project_url_validator_target: 'readme' } %>
-    <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
-  </div>
-
-  <div class="project-text-input" id="new-project-image">
-    <%= form.label :image, "Project image (optional)" %>
-    <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
-    <% end %>
-
-    <div class="file-input-wrapper" id="file-input-wrapper-form" data-controller="file-input">
-      <%= form.file_field :image, accept: "image/*", class: "visually-hidden file-input-input", data: { action: "change->file-input#update", file_input_target: "input" } %>
-      
-
-      <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
-        <%= image_tag(project.image, class: 'file-input-preview', data: { file_input_target: 'preview' }, alt: 'Selected image preview', loading: 'lazy', style: 'max-height:160px; max-width:240px; height:auto; border-radius:6px; margin-left:8px;') %>
-      <% else %>
-        <img class="file-input-preview visually-hidden" data-file-input-target="preview" alt="Selected image preview">
-      <% end %>
-
-      <div style="display:flex; gap:8px; align-items:left; text-align:center; font-size:1.2rem; flex-direction:column; flex-wrap:wrap;">
-        <label class="file-input-button" for="<%= form.object_name %>_image">Choose file</label>
-        <span class="file-input-filename" style="padding:3px; border: 3px dashed rgba(0, 0, 0, 0.2); border-radius:6px;" id="no-file-selected-form" data-file-input-target="filename"><%= project.respond_to?(:image) && project.image.attached? ? project.image.filename.to_s : 'No file selected' %></span>
-        <button type="button" style="padding:0.375rem; font-weight:800; color:white; border: none; border-radius: 6px; background-color: #ec3750" class="file-input-clear <%= (project.respond_to?(:image) && project.image.attached?) ? '' : 'visually-hidden' %>" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
-      </div>
-
-    </div>
-  </div>
-
-  <div class="project-text-input" id="new-project-hackatime-id" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
-    <%= form.label :hackatime_ids, "Link Hackatime Projects", id: "new-project-hackatime-id-label" %>
-    <% if @hackatime_projects.present? %>
-      <div>
-        <select id="hackatime-dropdown" class="form-control" data-action="change->hackatime-selector#add">
-          <option value="">Select a Hackatime project...</option>
-          <% @hackatime_projects.each do |p| %>
-            <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
-          <% end %>
-        </select>
-      </div>
-    <% else %>
-       <p>
-         <em>No Hackatime Projects. Start <a href="https://hackatime.hackclub.com/">here</a></em>
-       </p>
-    <% end %>
-
-    <div id="hackatime-selected" class="hackatime-selected">
-      <% (f_h = project.hackatime_ids).to_a.each do |h| %>
-        <% seconds = (@hackatime_seconds || {})[h] || (@hackatime_projects || []).find { |p| p['name'] == h }&.dig('seconds') %>
-        <div class="hackatime-chip" data-hackatime-value="<%= h %>">
-          <span class="hackatime-label"><%= h %></span>
-          <% if seconds.present? && seconds.to_i > 0 %>
-            <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
-          <% end %>
-          <% locked = project.persisted? && project.hackatime_id_locked?(h) %>
-          <% if locked %>
-            <button type="button" class="hackatime-remove hackatime-remove--locked" disabled title="Cannot remove — this was linked when the project was shipped">✕</button>
-          <% else %>
-            <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
-          <% end %>
-          <input type="hidden" name="project[hackatime_ids][]" value="<%= h %>">
+        <div class="form-group">
+          <%= form.label :name, "Project Title/Name" %>
+          <%= form.text_field :name, class: "form-input" %>
         </div>
-      <% end %>
-    </div>
-  </div>
 
-  <div id="project-form-actions">
-    <div id="project-form-submit">
-      <%= form.submit "Submit Project", class: 'project-submit' %>
-    </div>
-    <% if project.persisted? %>
-      <div id="project-editing-info">
-        <strong>Editing existing project.</strong>
+        <div class="form-group">
+          <%= form.label :description, "Project Description" %>
+          <%= form.text_area :description, rows: 5, placeholder: "Short summary of your project", class: "form-input" %>
+        </div>
       </div>
-    <% end %>
+
+      <!-- ── Links ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Links</div>
+
+        <div class="form-group">
+          <%= form.label :repository_url, "GitHub Repo URL" %>
+          <%= form.text_field :repository_url, id: "repo_text_box", class: "form-input", data: { project_url_validator_target: 'repo' } %>
+          <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :readme_url, "Readme Address" %>
+          <%= form.text_field :readme_url, id: "readme_text_box", class: "form-input", data: { project_url_validator_target: 'readme' } %>
+          <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <!-- ── Hackatime ── -->
+      <div class="apf-section" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
+        <div class="apf-section-title">Hackatime</div>
+
+        <% if @hackatime_projects.present? %>
+          <div class="form-group">
+            <%= form.label :hackatime_ids, "Link Hackatime Projects" %>
+            <select id="hackatime-dropdown" class="form-input" data-action="change->hackatime-selector#add">
+              <option value="">Select a Hackatime project...</option>
+              <% @hackatime_projects.each do |p| %>
+                <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
+              <% end %>
+            </select>
+          </div>
+        <% else %>
+          <p class="field-hint"><em>No Hackatime Projects. Start <a href="https://hackatime.hackclub.com/">here</a></em></p>
+        <% end %>
+
+        <div id="hackatime-selected" class="hackatime-selected">
+          <% (project.hackatime_ids || []).each do |h| %>
+            <% seconds = (@hackatime_seconds || {})[h] || (@hackatime_projects || []).find { |p| p['name'] == h }&.dig('seconds') %>
+            <div class="hackatime-chip" data-hackatime-value="<%= h %>">
+              <span class="hackatime-label"><%= h %></span>
+              <% if seconds.present? && seconds.to_i > 0 %>
+                <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
+              <% end %>
+              <% locked = project.persisted? && project.hackatime_id_locked?(h) %>
+              <% if locked %>
+                <button type="button" class="hackatime-remove hackatime-remove--locked" disabled title="Cannot remove — this was linked when the project was shipped">✕</button>
+              <% else %>
+                <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
+              <% end %>
+              <input type="hidden" name="project[hackatime_ids][]" value="<%= h %>">
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <%= form.submit "Submit Project", class: "btn-primary" %>
+        <% if project.persisted? %>
+          <p class="field-hint" style="margin-top: 8px;"><strong>Editing existing project.</strong></p>
+        <% end %>
+      </div>
+
+    </div>
+
+    <aside class="sidebar-column">
+
+      <!-- ── Image ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Image</div>
+        <div class="form-group">
+          <%= form.label :image, "Project image (optional)" %>
+          <div class="file-input-wrapper" data-controller="file-input">
+            <%= form.file_field :image, accept: "image/*", class: "visually-hidden file-input-input", data: { action: "change->file-input#update", file_input_target: "input" } %>
+
+            <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
+              <%= image_tag(project.image, class: 'file-input-preview', data: { file_input_target: 'preview' }, alt: 'Selected image preview', loading: 'lazy', style: 'max-height:160px; max-width:100%; height:auto; border-radius:6px;') %>
+            <% else %>
+              <img class="file-input-preview visually-hidden" data-file-input-target="preview" alt="Selected image preview">
+            <% end %>
+
+            <div style="display:flex; gap:8px; flex-direction:column;">
+              <label class="file-input-button" for="<%= form.object_name %>_image">Choose file</label>
+              <span class="file-input-filename" style="padding:3px; border: 3px dashed rgba(0,0,0,0.2); border-radius:6px;" data-file-input-target="filename"><%= project.respond_to?(:image) && project.image.attached? ? project.image.filename.to_s : 'No file selected' %></span>
+              <button type="button" style="padding:0.375rem; font-weight:800; color:white; border:none; border-radius:6px; background-color:#ec3750;" class="file-input-clear <%= project.respond_to?(:image) && project.image.attached? ? '' : 'visually-hidden' %>" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </aside>
   </div>
 <% end %>
-

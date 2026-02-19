@@ -1,0 +1,42 @@
+<div id="<%= dom_id assets_item %>" class="assets-item-card project-card">
+  <div class="assets-item-content project-content">
+    <h3 class="project-title" style="margin: 0 0 8px 0; font-size: 1.05rem;">
+      <%= assets_item.title.presence || "Untitled Asset" %>
+    </h3>
+
+    <% if assets_item.description.present? %>
+      <p class="project-desc" style="margin: 0 0 12px 0; color: var(--main-700); font-size: 0.95rem;">
+        <%= truncate(assets_item.description, length: 120, separator: ' ') %>
+      </p>
+    <% end %>
+
+    <div class="tech-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+      <% if assets_item.media_type.present? %>
+        <span class="tech"><%= assets_item.media_type %></span>
+      <% end %>
+      <span class="tech" style="background: <%= assets_item.shipped? ? 'rgba(34,197,94,0.95)' : 'var(--accent3)' %>; color: <%= assets_item.shipped? ? '#ffffff' : 'var(--main-900)' %>;">
+        <%= assets_item.shipped? ? "Shipped" : "Unshipped" %>
+      </span>
+      <% if assets_item.has_spritesheets? %>
+        <% spritesheet_count = assets_item.spritesheets.count + (assets_item.spritesheet_url.present? ? 1 : 0) %>
+        <span class="tech" style="background: var(--accent1);">🖼️ <%= spritesheet_count %> Image<%= 's' if spritesheet_count != 1 %></span>
+      <% end %>
+      <% if assets_item.audio.attached? %>
+        <span class="tech" style="background: var(--accent2);">🔊 Audio</span>
+      <% end %>
+    </div>
+
+    <div class="cta-row" style="display: flex; gap: 8px; align-items: center; margin-top: auto;">
+      <%= link_to 'View', assets_item_path(assets_item), class: 'btn-retro' %>
+      <% if assets_item.project_id.present? %>
+        <%= link_to 'Project', assets_project_path(assets_item.project_id), class: 'btn-retro btn-retro--outline' %>
+      <% end %>
+    </div>
+
+    <div style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--main-700);">
+      <span style="font-size: 0.85rem; color: var(--main-700); font-weight: 600;">
+        By <%= link_to assets_item.user.display_name, user_profile_path(assets_item.user), style: "color: var(--main-900);" %>
+      </span>
+    </div>
+  </div>
+</div>

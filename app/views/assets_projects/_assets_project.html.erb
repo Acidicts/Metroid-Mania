@@ -1,0 +1,39 @@
+<div id="<%= dom_id assets_project %>" class="assets-project-card project-card">
+  <div class="assets-project-content project-content">
+    <div class="project_image">
+      <img src="<%= assets_project.image_url.presence || 'https://placehold.co/400x225' %>" alt="<%= assets_project.title %>" class="project-image__img" style="width: 100%; height: auto; border-radius: 4px; object-fit: cover;">
+    </div>
+
+    <h3 class="project-title" style="margin: 0 0 8px 0; font-size: 1.05rem;">
+      <%= assets_project.title.presence || "Untitled Asset" %>
+    </h3>
+
+    <% if assets_project.description.present? %>
+      <p class="project-desc" style="margin: 0 0 12px 0; color: var(--main-700); font-size: 0.95rem;">
+        <%= truncate(assets_project.description, length: 120, separator: ' ') %>
+      </p>
+    <% end %>
+
+    <div class="tech-list" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px;">
+      <% if assets_project.media_type.present? %>
+        <span class="tech"><%= assets_project.media_type %></span>
+      <% end %>
+      <span class="tech" style="background: <%= assets_project.shipped? ? 'rgba(34,197,94,0.95)' : 'var(--accent3)' %>; color: <%= assets_project.shipped? ? '#ffffff' : 'var(--main-900)' %>;">
+        <%= assets_project.shipped? ? "Shipped" : "Unshipped" %>
+      </span>
+    </div>
+
+    <div class="cta-row" style="display: flex; gap: 8px; align-items: center; margin-top: auto;">
+      <%= link_to 'View', assets_project_path(assets_project), class: 'btn-retro' %>
+      <% if current_user == assets_project.user || admin? %>
+        <%= link_to 'Edit', edit_assets_project_path(assets_project), class: 'btn-retro btn-retro--outline' %>
+      <% end %>
+    </div>
+
+    <div style="margin-top: 10px; padding-top: 10px; border-top: 2px dashed var(--main-700);">
+      <span style="font-size: 0.85rem; color: var(--main-700); font-weight: 600;">
+        By <%= link_to assets_project.user.display_name, user_profile_path(assets_project.user), style: "color: var(--main-900);" %>
+      </span>
+    </div>
+  </div>
+</div>

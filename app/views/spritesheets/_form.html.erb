@@ -1,0 +1,52 @@
+<%= form_with(model: [assets_item, spritesheet], html: { multipart: true }, data: { controller: "file-input" }) do |form| %>
+  <div class="spritesheet-form" style="background: linear-gradient(180deg, rgba(255,255,255,0.96), var(--accent3)); border: 3px dashed var(--main-700); border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+    <% if spritesheet.errors.any? %>
+      <div class="error-summary" role="alert" style="margin-bottom: 12px;">
+        <strong style="color: var(--main-900);"><%= pluralize(spritesheet.errors.count, "error") %> prohibited this spritesheet from being saved:</strong>
+        <ul style="margin: 8px 0 0 20px; color: var(--main-900);">
+          <% spritesheet.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div style="display: grid; gap: 12px;">
+      <div>
+        <%= form.label :name, "Spritesheet Name", style: "display: block; font-weight: 700; color: var(--main-900); margin-bottom: 4px;" %>
+        <%= form.text_field :name, placeholder: "e.g. Walk Cycle, Jump, Idle", class: "form-input", style: "width: 100%; padding: 8px; border: 2px solid var(--main-700); border-radius: 6px;" %>
+        <div class="field-hint" style="font-size: 0.85rem; color: var(--main-700);">Name this spritesheet (e.g., the animation it represents).</div>
+      </div>
+
+      <div>
+        <%= form.label :file, "Upload Image", style: "display: block; font-weight: 700; color: var(--main-900); margin-bottom: 4px;" %>
+        <%= form.file_field :file, 
+            class: "form-input file-input",
+            data: { 
+              file_input_target: "input",
+              action: "change->file-input#update"
+            },
+            accept: "image/*" %>
+      </div>
+
+      <!-- Preview -->
+      <div class="image_preview" style="margin-top: 12px;">
+        <img data-file-input-target="preview" 
+             src="<%= spritesheet.url.presence || '' %>" 
+             alt="Spritesheet preview" 
+             style="max-width: 100%; height: auto; border-radius: 8px; object-fit: cover; <%= 'display: none;' if spritesheet.url.blank? %>"
+             class="image-preview-thumb" />
+        <% if spritesheet.url.present? %>
+          <p class="form-note" style="margin-top: 8px; font-size: 0.85rem; color: var(--main-700);">Current spritesheet</p>
+        <% end %>
+      </div>
+
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <%= form.submit spritesheet.new_record? ? "Add Spritesheet" : "Update Spritesheet", class: "btn-retro" %>
+        <% if spritesheet.persisted? %>
+          <%= link_to "Cancel", assets_item, class: "btn-retro btn-retro--outline" %>
+        <% end %>
+      </div>
+    </div>
+  </div>
+<% end %>

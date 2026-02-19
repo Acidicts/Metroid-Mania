@@ -15,17 +15,16 @@ export default class extends Controller {
 
   update() {
     const file = this.inputTarget.files && this.inputTarget.files[0]
-    this.filenameTarget.textContent = file ? file.name : "No file selected"
-
+    
     if (file && this.hasPreviewTarget) {
       this._revokeLastUrl()
       const url = URL.createObjectURL(file)
       this._lastUrl = url
       this.previewTarget.src = url
-      this.previewTarget.classList.remove('visually-hidden')
+      this.previewTarget.style.display = 'block'
     } else if (this.hasPreviewTarget) {
       this.previewTarget.src = ''
-      this.previewTarget.classList.add('visually-hidden')
+      this.previewTarget.style.display = 'none'
     }
 
     if (this.hasClearTarget) {
@@ -37,10 +36,9 @@ export default class extends Controller {
   clear() {
     if (!this.hasInputTarget) return
     this.inputTarget.value = ''
-    this.filenameTarget.textContent = 'No file selected'
     if (this.hasPreviewTarget) {
       this.previewTarget.src = ''
-      this.previewTarget.classList.add('visually-hidden')
+      this.previewTarget.style.display = 'none'
     }
     if (this.hasClearTarget) this.clearTarget.classList.add('visually-hidden')
     this._revokeLastUrl()

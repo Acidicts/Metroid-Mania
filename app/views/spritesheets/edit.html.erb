@@ -1,0 +1,11 @@
+<% content_for :title, "Edit Spritesheet" %>
+
+<div class="retro-container">
+  <div style="margin-bottom: 24px;">
+    <%= link_to 'Back to Asset', @assets_item, class: 'btn-retro' %>
+  </div>
+
+  <h1 style="font-size: 1.8rem; margin-bottom: 24px;">Edit Spritesheet</h1>
+
+  <%= render "form", spritesheet: @spritesheet, assets_item: @assets_item %>
+</div>

@@ -1,0 +1,26 @@
+<% content_for :title, "New Spritesheet" %>
+
+<div class="retro-container">
+  <div style="margin-bottom: 24px;">
+    <%= link_to 'Back to Asset', @assets_item, class: 'btn-retro' %>
+  </div>
+
+  <h1 style="font-size: 1.8rem; margin-bottom: 24px;">Add New Spritesheet</h1>
+  <p style="margin-bottom: 24px; color: var(--main-700);">Add a spritesheet for a specific animation or frame sequence (e.g., Walk Cycle, Jump, Attack).</p>
+
+  <%= render "form", spritesheet: @spritesheet, assets_item: @assets_item %>
+
+  <% if @assets_item.spritesheets.any? %>
+    <div style="margin-top: 24px;">
+      <h3 style="font-size: 1.2rem; margin-bottom: 12px; color: var(--main-900);">Existing Spritesheets (<%= @assets_item.spritesheets.count %>)</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+        <% @assets_item.spritesheets.each do |s| %>
+          <div style="background: rgba(255,255,255,0.5); border: 2px solid var(--main-700); border-radius: 6px; padding: 8px;">
+            <img src="<%= s.url %>" alt="<%= s.name %>" style="width: 100%; max-height: 120px; object-fit: cover; border-radius: 4px;">
+            <p style="margin: 8px 0 0 0; font-weight: 700; color: var(--main-900); font-size: 0.9rem;"><%= s.name %></p>
+          </div>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>

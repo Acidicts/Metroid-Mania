@@ -1,12 +1,100 @@
-/* Styles moved to: app/views/projects/_form.html.erb */
-/* This file has been left for reference and can be deleted once you're satisfied the views render correctly. */
-
-.project-media__img {
-    border-radius: 4px;
-    border: 3px dashed var(--main-700);
+/* Assets Projects Cards - matching project card aesthetic */
+.assets-project-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff, rgba(255,255,255,0.94));
+  border: 3px solid var(--main-700);
+  box-shadow: 8px 10px 0 var(--main-800);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  display: flex;
+  flex-direction: column;
 }
 
+.assets-project-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 14px 16px 0 var(--main-800);
+}
+
+.assets-project-content {
+  padding: 12px 16px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Project media images */
+.project-media__img {
+  border-radius: 4px;
+  border: 3px dashed var(--main-700);
+}
+
+/* Status colors */
 .rejected {
-    background-color: var(--red);
-    color: white;
+  background-color: var(--red);
+  color: white;
+}
+
+/* Image preview styling */
+.image_preview {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), var(--accent3));
+  border: 3px dashed var(--main-700);
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.image_preview img {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 6px;
+  box-shadow: 4px 4px 0 var(--main-800);
+  transition: transform 160ms ease;
+}
+
+.image_preview img:hover {
+  transform: scale(1.02);
+}
+
+.image-preview-thumb {
+  display: block;
+  margin: 0 auto;
+}
+
+/* Assets Items Cards - matching project card aesthetic */
+.assets-item-card {
+  position: relative;
+  border-radius: 10px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff, rgba(255,255,255,0.94));
+  border: 3px solid var(--main-700);
+  box-shadow: 8px 10px 0 var(--main-800);
+  transition: transform 160ms ease, box-shadow 160ms ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.assets-item-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 14px 16px 0 var(--main-800);
+}
+
+.assets-item-content {
+  padding: 12px 16px;
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Audio preview styling */
+.audio-preview, .audio-section {
+  background: linear-gradient(180deg, rgba(255,255,255,0.96), var(--accent3));
+  border: 3px dashed var(--main-700);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.audio-preview audio, .audio-section audio {
+  width: 100%;
+  margin-top: 8px;
 }

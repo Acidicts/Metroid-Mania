@@ -6,6 +6,8 @@ class User < ApplicationRecord
   has_many :orders, dependent: :nullify
   has_many :ships, dependent: :nullify
   has_many :ship_requests, dependent: :nullify
+  has_many :assets_projects, dependent: :nullify
+  has_many :assets_items, dependent: :nullify
 
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
@@ -94,6 +96,7 @@ class User < ApplicationRecord
     Project.where(user_id: id).update_all(user_id: sys.id)
     Order.where(user_id: id).update_all(user_id: sys.id)
     Ship.where(user_id: id).update_all(user_id: sys.id)
+    AssetsProject.where(user_id: id).update_all(user_id: sys.id)
     ShipRequest.where(user_id: id).update_all(user_id: sys.id)
     ShipRequest.where(processed_by_id: id).update_all(processed_by_id: sys.id)
     Audit.where(user_id: id).update_all(user_id: sys.id)
@@ -119,6 +122,7 @@ class User < ApplicationRecord
 
       # Reassign other dependent records to system user (orders, ships, ship_requests, audits)
       Order.where(user_id: id).update_all(user_id: sys.id)
+      AssetsProject.where(user_id: id).update_all(user_id: sys.id)
       Ship.where(user_id: id).update_all(user_id: sys.id)
       ShipRequest.where(user_id: id).update_all(user_id: sys.id)
       ShipRequest.where(processed_by_id: id).update_all(processed_by_id: sys.id)

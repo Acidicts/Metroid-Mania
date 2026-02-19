@@ -1,0 +1,33 @@
+<%= form_with(model: assets_item, url: assets_item_path(assets_item), method: :patch, html: { multipart: true }, data: { controller: "file-input" }) do |form| %>
+  <div style="background: linear-gradient(180deg, rgba(255,255,255,0.96), var(--accent3)); border: 3px dashed var(--main-700); border-radius: 8px; padding: 16px;">
+    <div style="display: grid; gap: 12px;">
+      <div>
+        <%= form.label :spritesheet_file, "Upload single spritesheet (legacy)", style: "display: block; font-weight: 700; color: var(--main-900); margin-bottom: 4px;" %>
+        <%= form.file_field :spritesheet_file, 
+            class: "form-input file-input",
+            data: { 
+              file_input_target: "input",
+              action: "change->file-input#update"
+            },
+            accept: "image/*" %>
+        <div class="field-hint" style="font-size: 0.85rem; color: var(--main-700); margin-top: 4px;">Note: For multiple animations, use the "Add New" button above instead.</div>
+      </div>
+
+      <!-- Preview -->
+      <div class="image_preview" style="margin-top: 12px;">
+        <img data-file-input-target="preview" 
+             src="<%= assets_item.spritesheet_url.presence || '' %>" 
+             alt="Spritesheet preview" 
+             style="max-width: 100%; height: auto; border-radius: 8px; object-fit: cover; <%= 'display: none;' if assets_item.spritesheet_url.blank? %>"
+             class="image-preview-thumb" />
+        <% if assets_item.spritesheet_url.present? %>
+          <p class="form-note" style="margin-top: 8px; font-size: 0.85rem; color: var(--main-700);">Current spritesheet</p>
+        <% end %>
+      </div>
+
+      <div>
+        <%= form.submit "Update Legacy Spritesheet", class: "btn-retro" %>
+      </div>
+    </div>
+  </div>
+<% end %>

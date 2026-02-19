@@ -1,0 +1,166 @@
+<!-- Mobile styles moved to `app/assets/stylesheets/application.css` -->
+
+
+
+<div class="retro-container">
+  <button onclick="window.location.href='<%= assets_projects_path %>'" class="btn-retro">Back to Assets</button>
+
+  <section class="project-hero" style="margin-top:18px;">
+    <div class="hero-left">
+      <div class="project-media">
+        <% if @project.image_url.present? %>
+          <img class="project-media__img" src="<%= @project.image_url %>" alt="<%= @project.title %>">
+        <% else %>
+          <div class="project-media__img" style="background: linear-gradient(135deg, var(--accent1), var(--accent2)); border-radius: 4px;"></div>
+        <% end %>
+      </div>    
+
+      <div style="margin-top:12px">
+        <h1 class="project-title"><%= @project.title %></h1>
+        <div class="kv" style="margin-bottom:8px">
+          <div class="label">By</div>
+          <div class="value"><%= link_to @project.user.display_name, user_profile_path(@project.user) %></div>
+        </div>
+        <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet. \n Required for Ship') %></p>
+
+        <div style="margin-top:12px" class="tech-list">
+          <% if @project.hackatime_ids.present? %>
+            <% @project.hackatime_ids.each do |t| %>
+              <span class="tech"><%= t %></span>
+            <% end %>
+          <% end %>
+        </div>
+
+        <div class="cta-row">
+          <%= link_to 'View Repo', safe_url(@project.repository_url), class: 'btn-retro', target: '_blank', rel: 'noopener' %>
+          <% if @project.readme_url.present? %>
+            <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .README-MENU {
+        position: fixed;
+        margin-top: 24px;
+        padding: 16px;
+        background-color: var(--accent3);
+        border-radius: 8px;
+        top: 10%;
+        width: 70%;
+        left: 15%;
+        border: 4px dashed var(--accent2);
+        z-index: 10;
+        transition: opacity 0.3s ease;
+      }
+
+      .CLOSE_CROSS {
+        position: absolute;
+        top: 8px;
+        right: 12px;
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        color: var(--accent2);
+        transition: transform 0.2s ease, color 0.2s ease;
+      }
+
+      .CLOSE_CROSS:hover {
+        color: white;
+        transform: rotate(180deg) scale(1.2);
+      }
+
+      /* ensure action controls align with the Edit link */
+      .featured-actions { align-items: center; }
+      .featured-actions form { margin: 0; display: inline-block; }
+      .featured-actions > * { align-self: center; }
+
+    </style>
+
+    <div class="README-MENU" id="README_MENU" style="opacity: 0;">
+      <button class="CLOSE_CROSS" id="README_CLOSE">x</button>
+      <%= github_markdown_to_html(@project.readme_url) %>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const readmeButton = document.getElementById('README_BTN');
+        const readmeClose = document.getElementById('README_CLOSE');
+        const readmeMenu = document.getElementById('README_MENU');
+
+        function setReadmeVisible(visible) {
+          if (!readmeMenu) return;
+          readmeMenu.style.opacity = visible ? '1' : '0';
+          readmeMenu.style.pointerEvents = visible ? 'auto' : 'none';
+          readmeMenu.setAttribute('aria-hidden', visible ? 'false' : 'true');
+        }
+
+        if (readmeButton && readmeMenu) {
+          readmeButton.addEventListener('click', function() {
+            const isVisible = readmeMenu.style.opacity === '1';
+            setReadmeVisible(!isVisible);
+          });
+        }
+
+        if (readmeClose && readmeMenu) {
+          readmeClose.addEventListener('click', function() {
+            setReadmeVisible(false);
+          });
+        }
+
+        // close on Escape
+        document.addEventListener('keydown', function(e) {
+          if (e.key === 'Escape') setReadmeVisible(false);
+        });
+
+        // close when clicking outside the menu
+        document.addEventListener('click', function(e) {
+          if (!readmeMenu || readmeMenu.style.opacity !== '1') return;
+          if (!readmeMenu.contains(e.target) && e.target !== readmeButton) {
+            setReadmeVisible(false);
+          }
+        });
+
+        // ensure initial hidden state
+        setReadmeVisible(false);
+      });
+    </script>
+
+    <aside class="hero-right">
+      <div class="featured-project" style="box-shadow: 0px 0px 0 rgb(0,0,0,0);">
+
+        <div style="margin-top:10px; top:10px; position:relative;">
+          <p><strong>Owner:</strong> <%= link_to @project.user.display_name, user_profile_path(@project.user) %></p>
+          <p><strong>Media type:</strong> <%= @project.media_type.presence || '—' %></p>
+          <p><strong>Shipped:</strong> <%= @project.respond_to?(:shipped) && @project.shipped? ? 'Yes' : 'No' %></p>
+          <% if @project.repository_url.present? %>
+            <p><strong>Repository:</strong> <%= link_to safe_url(@project.repository_url), safe_url(@project.repository_url), target: '_blank', rel: 'noopener' %></p>
+          <% end %>
+          <% if @project.readme_url.present? %>
+            <p><strong>Readme:</strong> <%= link_to 'View README', @project.readme_url, target: '_blank', rel: 'noopener' %></p>
+          <% end %>
+        </div>
+
+        <div class="featured-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+          <%= link_to 'Edit', edit_assets_project_path(@project), class: 'btn-retro' %>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <hr style="margin-top: 64px; margin:24px 0">
+
+  <div class="devlogs-section">
+    <h2>Assets</h2>
+    <div class="devlogs-grid">
+      <% @project.assets_items.each do |asset| %>
+      
+        <%= render asset %>
+      <% end %>
+     </div>
+     <%= link_to "Create New Asset", new_assets_project_assets_item_path(@project), class: "btn-retro", style: "margin-top:12px;" %>
+  </div>
+
+</div>

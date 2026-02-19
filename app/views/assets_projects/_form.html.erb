@@ -1,0 +1,119 @@
+<%= form_with(model: assets_project, html: { class: 'admin-product-form', data: { controller: 'project-url-validator' } }) do |form| %>
+  <% if assets_project.errors.any? %>
+    <div class="error-summary" role="alert">
+      <strong><%= pluralize(assets_project.errors.count, "error") %> prohibited this assets project from being saved:</strong>
+      <ul>
+        <% assets_project.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-grid">
+    <div class="main-column">
+
+      <!-- ── Asset Info ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Asset Info</div>
+
+        <div class="form-group">
+          <%= form.label :title %>
+          <%= form.text_field :title, placeholder: "Short asset title", class: "form-input" %>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :description %>
+          <%= form.text_area :description, rows: 5, placeholder: "Describe the asset and any important details", class: "form-input" %>
+        </div>
+      </div>
+
+      <!-- ── Media ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Media</div>
+
+        <div class="form-group">
+          <%= form.label :media_type, "Media Type" %>
+          <%= form.text_field :media_type, placeholder: "e.g. art, audio", class: "form-input" %>
+          <div class="field-hint">The kind of media this asset represents.</div>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :repository_url, "GitHub Repo URL (optional)" %>
+          <%= form.text_field :repository_url, id: "repo_text_box", class: "form-input", data: { project_url_validator_target: 'repo' } %>
+          <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
+        </div>
+
+        <div class="form-group">
+          <%= form.label :readme_url, "Readme Address (optional)" %>
+          <%= form.text_field :readme_url, id: "readme_text_box", class: "form-input", data: { project_url_validator_target: 'readme' } %>
+          <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
+        </div>
+      </div>
+
+      <div class="apf-section" data-controller="file-input">
+        <div class="apf-section-title">Banner Image</div>
+
+        <div class="form-group">
+          <%= form.label :image_file, "Upload image (optional)" %>
+          <%= form.file_field :image_file, 
+              class: "form-input file-input",
+              data: { 
+                file_input_target: "input",
+                action: "change->file-input#update"
+              },
+              accept: "image/*" %>
+        </div>
+
+        <!-- Image Preview -->
+        <div class="image_preview" style="margin-top: 12px;">
+          <img data-file-input-target="preview" 
+               src="<%= assets_project.image_url.presence || '' %>" 
+               alt="Image preview" 
+               style="max-width: 100%; height: auto; border-radius: 8px; object-fit: cover; <%= 'display: none;' if assets_project.image_url.blank? %>"
+               class="image-preview-thumb" />
+          <% if assets_project.image_url.present? %>
+            <p class="form-note" style="margin-top: 8px; font-size: 0.85rem; color: var(--main-700);">Current image</p>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="apf-section" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
+        <div class="apf-section-title">Hackatime</div>
+
+        <% if @hackatime_projects.present? %>
+          <div class="form-group">
+            <%= form.label :hackatime_ids, "Link Hackatime Projects" %>
+            <select id="hackatime-dropdown" class="form-input" data-action="change->hackatime-selector#add">
+              <option value="">Select a Hackatime project...</option>
+              <% @hackatime_projects.each do |p| %>
+                <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
+              <% end %>
+            </select>
+          </div>
+        <% else %>
+          <p class="field-hint"><em>No Hackatime Projects. Start <a href="https://hackatime.hackclub.com/">here</a></em></p>
+        <% end %>
+
+        <div id="hackatime-selected" class="hackatime-selected">
+          <% (assets_project.hackatime_ids || []).each do |h| %>
+            <% seconds = (@hackatime_seconds || {})[h] || (@hackatime_projects || []).find { |p| p['name'] == h }&.dig('seconds') %>
+            <div class="hackatime-chip" data-hackatime-value="<%= h %>">
+              <span class="hackatime-label"><%= h %></span>
+              <% if seconds.present? && seconds.to_i > 0 %>
+                <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
+              <% end %>
+              <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
+              <input type="hidden" name="assets_project[hackatime_ids][]" value="<%= h %>">
+            </div>
+          <% end %>
+        </div>
+      </div>
+      
+      <div class="form-actions">
+        <%= form.submit class: "btn-primary" %>
+      </div>
+
+    </div>
+  </div>
+<% end %>

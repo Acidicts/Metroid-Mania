@@ -1,0 +1,13 @@
+<% content_for :title, "Assets Projects" %>
+
+<h1 style="font-size: 2rem; margin-bottom: 24px;">Assets Projects</h1>
+
+<div class="project-grid" id="assets_projects">
+  <% @assets_projects.each do |assets_project| %>
+    <%= render assets_project %>
+  <% end %>
+</div>
+
+<div style="margin-top: 24px; text-align: center;">
+  <%= link_to "New Assets Project", new_assets_project_path, class: 'btn-retro' %>
+</div>

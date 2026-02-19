@@ -1,4 +1,16 @@
 Rails.application.routes.draw do
+  resources :assets_items do
+    resources :spritesheets, only: [:show, :new, :create, :edit, :update, :destroy] do
+      get :download, on: :member
+    end
+  end
+  resources :assets_projects do
+    resources :assets_items, only: [:new, :create] do
+      resources :spritesheets, only: [:show, :new, :create, :edit, :update, :destroy] do
+        get :download, on: :member
+      end
+    end
+  end
   resources :comments
   get "metroidmania/index"
   get "shared/_retro_sample"

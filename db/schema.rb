@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_18_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_19_201233) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -50,6 +50,35 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_18_150000) do
     t.text "metadata"
     t.string "service_name"
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "assets_items", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "media_type"
+    t.integer "project_id", null: false
+    t.boolean "shipped"
+    t.string "spritesheet_url"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["project_id"], name: "index_assets_items_on_project_id"
+    t.index ["user_id"], name: "index_assets_items_on_user_id"
+  end
+
+  create_table "assets_projects", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.text "hackatime_ids"
+    t.string "image_url"
+    t.string "media_type"
+    t.string "readme_url"
+    t.string "repository_url"
+    t.boolean "shipped"
+    t.string "title"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_assets_projects_on_user_id"
   end
 
   create_table "audits", force: :cascade do |t|
@@ -401,6 +430,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_18_150000) do
     t.index ["key"], name: "index_solid_queue_semaphores_on_key", unique: true
   end
 
+  create_table "spritesheets", force: :cascade do |t|
+    t.integer "assets_item_id", null: false
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+    t.string "url"
+    t.index ["assets_item_id"], name: "index_spritesheets_on_assets_item_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.float "amount_spent", default: 0.0, null: false
     t.datetime "created_at", null: false
@@ -469,6 +507,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_18_150000) do
     t.index ["user_id"], name: "index_votes_on_user_id"
   end
 
+  add_foreign_key "assets_items", "assets_projects", column: "project_id"
+  add_foreign_key "assets_items", "users"
+  add_foreign_key "assets_projects", "users"
   add_foreign_key "comments", "devlogs"
   add_foreign_key "comments", "ships"
   add_foreign_key "comments", "users"
@@ -489,6 +530,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_18_150000) do
   add_foreign_key "solid_queue_ready_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_recurring_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
   add_foreign_key "solid_queue_scheduled_executions", "solid_queue_jobs", column: "job_id", on_delete: :cascade
+  add_foreign_key "spritesheets", "assets_items"
   add_foreign_key "vote_suggestion_tokens", "post_ship_events", column: "ship_event_id"
   add_foreign_key "vote_suggestion_tokens", "users"
   add_foreign_key "votes", "post_ship_events", column: "ship_event_id"

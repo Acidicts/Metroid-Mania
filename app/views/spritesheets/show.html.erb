@@ -1,0 +1,69 @@
+<% content_for :title, @spritesheet.name %>
+
+<div class="retro-container">
+  <div style="display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap;">
+    <%= link_to 'Back to Asset', @assets_item, class: 'btn-retro' %>
+    <%= link_to 'Back to All Spritesheets', assets_items_path, class: 'btn-retro btn-retro--outline' %>
+  </div>
+
+  <section class="project-hero" style="margin-top: 18px;">
+    <div class="hero-left">
+      <!-- Full-size Spritesheet Display -->
+      <div class="project-media" style="height: auto; max-height: none;">
+        <img class="project-media__img" src="<%= @spritesheet.url %>" alt="<%= @spritesheet.name %>" style="max-height: 600px;">
+      </div>
+
+      <div style="margin-top: 12px;">
+        <h1 class="project-title"><%= @spritesheet.name %></h1>
+        
+        <div class="kv" style="margin-bottom: 12px;">
+          <div class="label">Asset</div>
+          <div class="value"><%= link_to @assets_item.title, @assets_item %></div>
+        </div>
+
+        <div class="kv" style="margin-bottom: 12px;">
+          <div class="label">Created</div>
+          <div class="value"><%= @spritesheet.created_at.strftime("%B %-d, %Y at %-I:%M %p") %></div>
+        </div>
+
+        <div class="kv" style="margin-bottom: 16px;">
+          <div class="label">Updated</div>
+          <div class="value"><%= @spritesheet.updated_at.strftime("%B %-d, %Y at %-I:%M %p") %></div>
+        </div>
+
+        <div class="cta-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <%= link_to 'View Full Size', @spritesheet.url, target: '_blank', rel: 'noopener', class: 'btn-retro' %>
+          <%= link_to 'Download', download_assets_item_spritesheet_path(@assets_item, @spritesheet), class: 'btn-retro btn-retro--outline' %>
+          <% if current_user == @assets_item.user || admin? %>
+            <%= link_to 'Edit', edit_assets_item_spritesheet_path(@assets_item, @spritesheet), class: 'btn-retro btn-retro--outline' %>
+            <%= button_to 'Delete', [@assets_item, @spritesheet], method: :delete, class: 'btn-retro btn-retro--outline',
+                form: { data: { turbo_confirm: "Are you sure you want to delete this spritesheet?" } } %>
+          <% end %>
+        </div>
+      </div>
+    </div>
+
+    <aside class="hero-right">
+      <div class="featured-project">
+        <h3 style="margin: 0 0 12px 0; font-size: 1.1rem;">Spritesheet Info</h3>
+        
+        <div style="margin-bottom: 16px;">
+          <p><strong>Name:</strong> <%= @spritesheet.name %></p>
+          <p><strong>Asset:</strong> <%= link_to @assets_item.title, @assets_item %></p>
+          <p><strong>Media Type:</strong> <%= @assets_item.media_type.presence || '—' %></p>
+        </div>
+
+        <% if @assets_item.spritesheets.count > 1 %>
+          <div style="margin-top: 16px;">
+            <h4 style="margin: 0 0 8px 0; font-size: 0.95rem; color: var(--main-700);">Other Spritesheets for this Asset:</h4>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              <% @assets_item.spritesheets.where.not(id: @spritesheet.id).each do |s| %>
+                <%= link_to s.name, [@assets_item, s], class: 'btn-retro', style: "font-size: 0.85rem; padding: 6px 10px; text-align: center;" %>
+              <% end %>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    </aside>
+  </section>
+</div>

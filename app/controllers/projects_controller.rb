@@ -1,5 +1,5 @@
 class ProjectsController < ApplicationController
-  before_action :require_login, except: [:index, :show]
+  before_action :require_login, except: [ :index, :show ]
   before_action :set_project, only: %i[ show edit update destroy ship ]
   before_action :authorize_owner!, only: %i[ edit update destroy ]
 
@@ -11,6 +11,7 @@ class ProjectsController < ApplicationController
     end
 
     @projects = current_user.active_projects.includes(:user)
+    @assets = current_user.assets_projects.includes(:user)
   end
 
   # GET /projects/1 or /projects/1.json
@@ -45,7 +46,7 @@ class ProjectsController < ApplicationController
 
     # Delegate to the new ShipRequests flow
     baseline = @project.ship_baseline
-    if @project.ship_requests.where(status: 'pending').exists?
+    if @project.ship_requests.where(status: "pending").exists?
       flash_info("A ship request is already pending.")
       redirect_to project_path(@project) and return
     end
@@ -55,15 +56,15 @@ class ProjectsController < ApplicationController
       redirect_to project_path(@project) and return
     end
 
-    devlogs_to_link = @project.devlogs.where('created_at >= ?', baseline).where(ship_request_id: nil)
+    devlogs_to_link = @project.devlogs.where("created_at >= ?", baseline).where(ship_request_id: nil)
     devlogged_seconds = devlogs_to_link.sum(:duration_seconds)
 
     ActiveRecord::Base.transaction do
-      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: 'pending')
+      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: "pending")
       devlogs_to_link.update_all(ship_request_id: req.id)
 
-      @project.update!(status: 'pending', ship_requested_at: Time.current, shipped: false)
-      Audit.create!(user: current_user, project: @project, action: 'ship_request', details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
+      @project.update!(status: "pending", ship_requested_at: Time.current, shipped: false)
+      Audit.create!(user: current_user, project: @project, action: "ship_request", details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
     end
 
     flash_pass("Ship request submitted and awaiting admin approval")
@@ -89,7 +90,7 @@ class ProjectsController < ApplicationController
     end
 
     @project = current_user.projects.build(project_params)
-    @project.status = 'unshipped'
+    @project.status = "unshipped"
 
     respond_to do |format|
       if @project.save
@@ -148,9 +149,9 @@ class ProjectsController < ApplicationController
       end
 
       # Soft-delete without running validations so we can clear metadata (including hackatime links)
-      @project.update_columns(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: nil)
+      @project.update_columns(deleted_at: Time.current, status: "deleted", name: "Deleted Project", hackatime_ids: nil)
 
-      Audit.create!(user: current_user, project: @project, action: 'delete', details: { reclaimed_credits: total_awarded })
+      Audit.create!(user: current_user, project: @project, action: "delete", details: { reclaimed_credits: total_awarded })
     end
 
     respond_to do |format|
@@ -162,21 +163,27 @@ class ProjectsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_project
-      @project = Project.find(params[:id])
+      @project = Project.find_by(id: params[:id])
+
+      # If the project wasn't found, redirect to index with a friendly message
+      unless @project
+        flash_warn("Project not found.")
+        redirect_to projects_path and return
+      end
 
       # If the project is soft-deleted, block access unless admin or the owner
       if @project.deleted? && !(admin? || (current_user && current_user == @project.user))
-        flash_warn('Project not found.')
-      redirect_to projects_path and return
+        flash_warn("Project not found.")
+        redirect_to projects_path and return
       end
     end
-    
+
     def authorize_owner!
       unless @project.user == current_user || admin?
         redirect_to projects_path, alert: "Not authorized"
       end
     end
-    
+
     def load_hackatime_projects
       if current_user.slack_id.present?
         service = HackatimeService.new(slack_id: current_user.slack_id)
@@ -187,7 +194,7 @@ class ProjectsController < ApplicationController
 
         # Provide available projects for selection (exclude taken ones) but keep current project's selections available
         @hackatime_projects = all_projects.reject do |p|
-          taken.include?(p['name']) && !(@project && @project.hackatime_ids.map(&:to_s).include?(p['name']))
+          taken.include?(p["name"]) && !(@project && @project.hackatime_ids.map(&:to_s).include?(p["name"]))
         end
 
         @taken_hackatime_names = taken
@@ -195,7 +202,7 @@ class ProjectsController < ApplicationController
         # Build a seconds lookup for each project name so the form can display times for selected chips
         @hackatime_seconds = {}
         @hackatime_projects.each do |p|
-          @hackatime_seconds[p['name']] = p['seconds'].to_i
+          @hackatime_seconds[p["name"]] = p["seconds"].to_i
         end
 
         # Ensure we also query any already-selected names that might not be listed in @hackatime_projects
@@ -219,7 +226,7 @@ class ProjectsController < ApplicationController
     # Only allow a list of trusted parameters through.
     def project_params
       # `remove_image` is handled explicitly in the controller (it is NOT a model attribute).
-      permitted = [:name, :description, :repository_url, :readme_url, :image, :hackatime_id, :status, :total_seconds, { hackatime_ids: [] }]
+      permitted = [ :name, :description, :repository_url, :readme_url, :image, :hackatime_id, :status, :total_seconds, { hackatime_ids: [] } ]
       # only admin users may set featured flag via the form
       permitted << :featured if current_user&.admin?
       pp = params.require(:project).permit(*permitted)
