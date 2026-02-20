@@ -3,61 +3,61 @@ require "test_helper"
 class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @admin = users(:one)
-    @admin.update!(role: :admin, email: 'admin@test.local', uid: "admin-#{SecureRandom.uuid}", password: 'password')
+    @admin.update!(role: :admin, email: "admin@test.local", uid: "admin-#{SecureRandom.uuid}", password: "password")
     @user = users(:two)
   end
 
   test "admin can promote a user to admin" do
-    sign_in_as(@admin, password: 'password')
+    sign_in_as(@admin, password: "password")
 
-    patch admin_user_url(@user), params: { user: { role: 'admin' } }
+    patch admin_user_url(@user), params: { user: { role: "admin" } }
 
     assert_redirected_to admin_users_url
-    assert_equal 'admin', @user.reload.role
+    assert_equal "admin", @user.reload.role
   end
 
   test "admin can update user's credits" do
-    sign_in_as(@admin, password: 'password')
+    sign_in_as(@admin, password: "password")
 
     user_before = (@user.currency || 0)
 
-    assert_difference 'Audit.count', 1 do
+    assert_difference "Audit.count", 1 do
       patch admin_user_url(@user), params: { user: { currency: 42.5 } }
     end
 
     assert_redirected_to admin_users_url
-# currency is stored as ceil(total_credits) so 42.5 becomes 43
+      # currency is stored as ceil(total_credits) so 42.5 becomes 43
       assert_in_delta 43.0, @user.reload.currency, 0.001
 
     a = Audit.last
-    assert_equal 'update_currency', a.action
+    assert_equal "update_currency", a.action
     assert_equal @admin, a.user
-    assert_equal @user.id, a.details['user_id']
+    assert_equal @user.id, a.details["user_id"]
 
     expected_before = @user.total_shipped_credits.to_f
-    assert_in_delta expected_before, a.details['before'].to_f, 0.001
+    assert_in_delta expected_before, a.details["before"].to_f, 0.001
       # audit records total_credits (rounded up)
-      assert_in_delta 43.0, a.details['after'].to_f, 0.001
+      assert_in_delta 43.0, a.details["after"].to_f, 0.001
   end
 
   test "cannot change superadmin role" do
-    ENV['SUPERADMIN_EMAIL'] = 'super@example.com'
-    super_user = User.create!(provider: 'dev', uid: 'super-1', email: 'super@example.com', name: 'Super', role: :user)
+    ENV["SUPERADMIN_EMAIL"] = "super@example.com"
+    super_user = User.create!(provider: "dev", uid: "super-1", email: "super@example.com", name: "Super", role: :user)
 
-    sign_in_as(@admin, password: 'password')
-    patch admin_user_url(super_user), params: { user: { role: 'admin' } }
+    sign_in_as(@admin, password: "password")
+    patch admin_user_url(super_user), params: { user: { role: "admin" } }
 
     assert_redirected_to admin_users_url
-    assert_equal 'user', super_user.reload.role
+    assert_equal "user", super_user.reload.role
   ensure
-    ENV.delete('SUPERADMIN_EMAIL')
+    ENV.delete("SUPERADMIN_EMAIL")
   end
 
   test "cannot delete the system placeholder user" do
     sys = User.system_user
 
-    sign_in_as(@admin, password: 'password')
-    assert_no_difference 'User.count' do
+    sign_in_as(@admin, password: "password")
+    assert_no_difference "User.count" do
       delete admin_user_url(sys)
     end
 
@@ -68,7 +68,7 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   test "system user is excluded from admin users list" do
     sys = User.system_user
 
-    sign_in_as(@admin, password: 'password')
+    sign_in_as(@admin, password: "password")
     get admin_users_url
 
     assert_response :success
