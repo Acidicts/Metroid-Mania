@@ -2,7 +2,11 @@ class Ship < ApplicationRecord
   belongs_to :project, counter_cache: true
   belongs_to :user
 
-  has_many :comments
+  # when a ship is removed (e.g. during test setup) we should also remove
+  # any associated comments; otherwise SQLite complains with foreign key
+  # constraint failures.  Devlogs already handle this, but ships were missing the
+  # dependency.
+  has_many :comments, dependent: :destroy
 
   validates :devlogged_seconds, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
   validates :credits_awarded, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true

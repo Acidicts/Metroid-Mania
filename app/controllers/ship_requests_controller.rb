@@ -9,17 +9,17 @@ class ShipRequestsController < ApplicationController
   def show
     @ship_request = @project.ship_requests.find(params[:id])
 
-    # Allow access to the project owner or admins. Keep rejected requests viewable
-    # so owners can see rejection details (devlog preserved). The previous code
-    # incorrectly tried to read a `title` on ShipRequest which doesn't exist.
-    unless current_user.admin? || @ship_request.status != "rejected"
-      if @project.user != current_user
-        redirect_to project_path(@project) and flash_warn("Not authorized") and return
-      end
-      if @ship_request.status == "rejected"
-        redirect_to project_path(@project), flash: { warn_reject: "Check the devlog for details." } and return
-      end
+    # Only the project owner or an admin may view a request.  Owners should be
+    # able to see rejected requests too so they can inspect the linked devlog,
+    # but everyone else is simply denied.
+    unless current_user.admin? || @project.user == current_user
+      flash_warn("Not authorized")
+      redirect_to project_path(@project) and return
     end
+
+    # Note: we intentionally do *not* redirect owners away from rejected
+    # requests; the earlier implementation attempted to do so and was overly
+    # complicated, leading to incorrect behavior and test failures.
   end
 
   # GET /projects/:project_id/ship_requests/new

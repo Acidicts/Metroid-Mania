@@ -105,6 +105,10 @@ class ProjectTest < ActiveSupport::TestCase
 
   test "minutes_needed_for_ship_request returns remaining minutes to reach 15" do
     p = projects(:one)
+    # make sure baseline (created_at) is in the past; fixtures sometimes have
+    # future timestamps which cause devlogged_minutes_since_baseline to ignore
+    # newly created devlogs when running tests concurrently.
+    p.update!(created_at: 1.hour.ago, shipped_at: nil)
     p.devlogs.destroy_all
 
     assert_equal 15, p.minutes_needed_for_ship_request

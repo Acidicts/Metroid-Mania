@@ -19,7 +19,8 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
     get projects_url
     assert_redirected_to home_path
-    assert_match /Please sign in to view projects\./, flash[:alert]
+    # controller sets a :warn flash for this scenario
+    assert_match /Please sign in to view projects\./, flash[:warn]
   end
 
   test "should get new" do

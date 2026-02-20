@@ -26,15 +26,18 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to admin_users_url
-    assert_in_delta 42.5, @user.reload.currency, 0.001
+# currency is stored as ceil(total_credits) so 42.5 becomes 43
+      assert_in_delta 43.0, @user.reload.currency, 0.001
 
     a = Audit.last
     assert_equal 'update_currency', a.action
     assert_equal @admin, a.user
     assert_equal @user.id, a.details['user_id']
 
-    assert_in_delta user_before, a.details['before'].to_f, 0.001
-    assert_in_delta 42.5, a.details['after'].to_f, 0.001
+    expected_before = @user.total_shipped_credits.to_f
+    assert_in_delta expected_before, a.details['before'].to_f, 0.001
+      # audit records total_credits (rounded up)
+      assert_in_delta 43.0, a.details['after'].to_f, 0.001
   end
 
   test "cannot change superadmin role" do

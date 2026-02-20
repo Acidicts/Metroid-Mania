@@ -21,12 +21,23 @@ module Admin
 
       # When the admin supplies a credit_target (desired total = ships + offset),
       # derive credit_offset = target - total_shipped so the formula holds.
+      # Also support the legacy `currency` parameter: tests and some admin UI
+      # forms may submit a target currency value which should be converted to an
+      # equivalent credit_offset in the same way.
       base_params = user_params
+
       if params[:user]&.key?(:credit_target)
         credit_target = params[:user][:credit_target].to_f
         total_shipped = @user.total_shipped_credits
         base_params[:credit_offset] = (credit_target - total_shipped).round(6)
         base_params.delete(:credit_target)
+      end
+
+      if params[:user]&.key?(:currency)
+        desired = params[:user][:currency].to_f
+        total_shipped = @user.total_shipped_credits
+        base_params[:credit_offset] = (desired - total_shipped).round(6)
+        # do not store currency directly; it will be recalculated below
       end
 
       previous_offset = @user.credit_offset.to_f

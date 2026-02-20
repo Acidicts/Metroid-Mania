@@ -28,21 +28,22 @@ class DevlogsControllerTest < ActionDispatch::IntegrationTest
 
     # Give this project a limited total_seconds and make existing devlogs fill most of it
     project.update!(total_seconds: 60 * 60)
-    project.devlogs.create!(title: 'filler', content: 'fill', log_date: Date.current, duration_minutes: 55, user: project.user)
+    project.devlogs.create!(title: "filler", content: "fill", log_date: Date.current, duration_minutes: 55, user: project.user)
 
     assert_no_difference("Devlog.count") do
-      post project_devlogs_url(project), params: { devlog: { title: 'Too short', content: 'Not enough time' } }
+      post project_devlogs_url(project), params: { devlog: { title: "Too short", content: "Not enough time" } }
     end
 
     assert_response :unprocessable_entity
-    assert_select 'div', /Not enough undocumented time left/
+    assert_select "div", /Not enough undocumented time left/
   end
 
   test "admin can sign in with email/password" do
     admin = users(:one)
-    admin.update!(email: 'admin@example.com', password: 'password', role: :admin, uid: "admin-#{SecureRandom.uuid}")
+    unique_email = "admin-#{SecureRandom.uuid}@example.com"
+    admin.update!(email: unique_email, password: "password", role: :admin, uid: "admin-#{SecureRandom.uuid}")
 
-    post admin_login_url, params: { email: 'admin@example.com', password: 'password' }
+    post admin_login_url, params: { email: unique_email, password: "password" }
     assert_redirected_to admin_dashboard_url
     assert_equal session[:user_id], admin.id
   end
@@ -54,8 +55,9 @@ class DevlogsControllerTest < ActionDispatch::IntegrationTest
 
   test "should get edit" do
     admin = users(:one)
-    admin.update!(role: :admin, email: 'admin@example.com', password: 'password', uid: "admin-#{SecureRandom.uuid}")
-    sign_in_as(admin, password: 'password')
+    unique_email = "admin-#{SecureRandom.uuid}@example.com"
+    admin.update!(role: :admin, email: unique_email, password: "password", uid: "admin-#{SecureRandom.uuid}")
+    sign_in_as(admin, password: "password")
 
     get edit_project_devlog_url(@devlog.project, @devlog)
     assert_response :success
@@ -68,8 +70,8 @@ class DevlogsControllerTest < ActionDispatch::IntegrationTest
 
   test "should destroy devlog" do
     admin = users(:one)
-    admin.update!(role: :admin, email: 'admin2@example.com', password: 'password', uid: "admin-#{SecureRandom.uuid}")
-    sign_in_as(admin, password: 'password')
+    admin.update!(role: :admin, email: "admin2@example.com", password: "password", uid: "admin-#{SecureRandom.uuid}")
+    sign_in_as(admin, password: "password")
 
     assert_difference("Devlog.count", -1) do
       delete project_devlog_url(@devlog.project, @devlog)

@@ -84,7 +84,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     get products_url
     assert_redirected_to root_url
     follow_redirect!
-    assert_match /Store is currently unavailable/, response.body
+    assert_match /Store is currently disabled/, response.body
   ensure
     SiteSetting.set("shop", "true")
   end

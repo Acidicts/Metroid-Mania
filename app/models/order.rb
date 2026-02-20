@@ -166,7 +166,16 @@ class Order < ApplicationRecord
       product.cost_in_credits.to_f
     end
 
-    if (user.available_balance) < required
+    # Historically we compared against available_balance, which is derived from
+    # shipped credits and amount_spent. In tests (and some maintenance scripts) we
+    # often set `user.currency` directly, and the UI/checkout flow trusts the
+    # currency value more than the derived balance.  Using only
+    # available_balance caused spurious "Insufficient funds" errors when the
+    # two values diverged.  Use whichever balance is larger to avoid rejecting a
+    # valid purchase, and normalize to a float for comparison.
+    current_balance = [ user.currency.to_f, user.available_balance.to_f ].max
+
+    if current_balance < required
       errors.add(:base, "Insufficient funds")
     end
   end

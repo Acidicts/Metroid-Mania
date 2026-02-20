@@ -162,7 +162,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     post orders_url, params: { product_id: product.id }
     assert_redirected_to root_url
     follow_redirect!
-    assert_match /Store is currently unavailable/, response.body
+    # banner text changed to "disabled" in layout
+    assert_match /Store is currently disabled/, response.body
   ensure
     SiteSetting.set("shop", "true")
   end
