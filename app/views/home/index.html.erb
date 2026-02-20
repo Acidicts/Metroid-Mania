@@ -66,6 +66,18 @@
       border-radius: 8px;
       text-align: left;
       box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+    }
+
+    .feature:hover {
+      background: linear-gradient(180deg, #fff, #fbfaf9);
+      border: 3px dashed rgba(0,0,0,0.2);
+      padding: 14px;
+      width: 300px;
+      border-radius: 8px;
+      text-align: left;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+      transform: translateY(-2px);
     }
 
     .feature h3 { margin: 0 0 8px; font-size: 1.05rem; }
@@ -172,8 +184,15 @@
         <%= link_to "Start Building", new_project_path, class: 'btn-discreet' %>
       </div>
       <div class="feature">
-        <h3>Buy Stuff</h3>
-        <p>Visit the store to purchase assets, and games</p>
+        <h3>Equip Charms</h3>
+        <p>Visit the merchant to equip charms to get prizes.</p>
+        <% if feature_enabled?(:shop) %>
+          <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
+        <% end %>
+      </div>
+      <div class="feature">
+        <h3>Boost Your Rewards</h3>
+        <p>Let an admin give you a feature to implement for bonus charm slot.</p>
         <% if feature_enabled?(:shop) %>
           <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
         <% end %>

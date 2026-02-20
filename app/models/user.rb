@@ -13,6 +13,8 @@ class User < ApplicationRecord
   attribute :font_on, :boolean, default: true
   attribute :hackatime_trust_status, :string
   attribute :region, :string
+  # Store how many charm slots a user has; defaults to zero so new users start with none
+  attribute :charm_slots, :integer, default: 0
 
   enum :role, { user: 0, admin: 1 }
 
@@ -27,6 +29,7 @@ class User < ApplicationRecord
 
   validates :uid, presence: true, uniqueness: true
   validates :provider, presence: true
+  validates :charm_slots, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
   def self.from_omniauth(auth)
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|

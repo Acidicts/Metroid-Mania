@@ -26,6 +26,10 @@
           <span class="info-label">Total Ships</span>
           <span class="info-value"><%= @total_ships_count || user_total_ships(@user) %></span>
         </div>
+        <div class="info-item">
+          <span class="info-label">Total Charm Slots</span>
+          <span class="info-value"><%= @user.charm_slots %></span>
+        </div>
       </div>
       <div class="profile-actions">
         <%= link_to "Edit Profile", profile_path, class: "btn-profile" %>

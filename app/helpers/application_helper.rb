@@ -23,6 +23,15 @@ module ApplicationHelper
     parts.join(" ")
   end
 
+  def calculate_total_charm_slots(user)
+    hours = calculate_user_total_time(user) / 3600.0
+    (hours / 5).floor + 1 # Every 12 hours = 1 charm slot
+  end
+
+  def calculate_user_total_time(user)
+      Ship.joins(:project).where(projects: { user_id: user.id, deleted_at: nil }).sum(:devlogged_seconds).to_i
+  end
+
   # Check whether a logical asset exists in the current asset configuration.
   # Works with Sprockets (development) and Propshaft (production), with fallbacks.
   def asset_exists?(logical_path)
