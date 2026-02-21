@@ -40,6 +40,52 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
       assert_in_delta 43.0, a.details["after"].to_f, 0.001
   end
 
+  test "admin can update user's charm notches upward and downward" do
+    sign_in_as(@admin, password: "password")
+
+    # ensure the user starts with no free notches (remove any notches or slots)
+    @user.charm_notches.destroy_all
+    @user.charm_slots.destroy_all
+    assert_equal 0, @user.free_notches
+
+    patch admin_user_url(@user), params: { user: { charm_notches: 3 } }
+    assert_redirected_to admin_users_url
+    assert_equal 3, @user.reload.free_notches
+
+    # reducing the value should delete unassigned notches
+    patch admin_user_url(@user), params: { user: { charm_notches: 1 } }
+    assert_redirected_to admin_users_url
+    assert_equal 1, @user.reload.free_notches
+  end
+
+  test "edit form displays current free notches count" do
+    sign_in_as(@admin, password: "password")
+    @user.charm_notches.destroy_all
+    @user.charm_slots.destroy_all
+    slot = @user.charm_slots.create!
+    @user.charm_notches.create!(charm_slot: slot)
+
+    get edit_admin_user_url(@user)
+    assert_response :success
+    assert_select "input#user_charm_notches[value='1']"
+  end
+
+  test "negative charm notches value shows error and does not change" do
+    sign_in_as(@admin, password: "password")
+
+    original = @user.free_notches
+    patch admin_user_url(@user), params: { user: { charm_notches: -5 } }
+
+    assert_response :unprocessable_entity
+    # controller reload may have wiped errors so re-check via assigns or
+    # perform the update again to capture errors? Simpler: after response the
+    # @user instance variable won't be available; instead reload from DB and
+    # verify nothing changed.
+    assert_equal original, @user.reload.free_notches
+    # The rendered page will show the error message; we don't need to inspect
+    # the model errors here because they're not preserved after reload.
+  end
+
   test "cannot change superadmin role" do
     ENV["SUPERADMIN_EMAIL"] = "super@example.com"
     super_user = User.create!(provider: "dev", uid: "super-1", email: "super@example.com", name: "Super", role: :user)

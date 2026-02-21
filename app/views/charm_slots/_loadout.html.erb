@@ -1,5 +1,9 @@
 <div id="charm_slots">
-  <% (@charm_slots.order(:order_id).last(5) || []).each do |charm_slot| %>
+  <% (5 - @charm_slots.where.not(order_id: nil).order(:order_id).count || 0).times do |i| %>
+    <% charm_slot = @charm_slots.where(order_id: nil).first %>
+    <%= render charm_slot %>
+  <% end %>
+  <% (@charm_slots.where.not(order_id: nil).order(:order_id) || []).each do |charm_slot| %>
     <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
       <%= render charm_slot %>
     <% end %>

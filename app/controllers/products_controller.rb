@@ -84,7 +84,7 @@ class ProductsController < ApplicationController
     # there are associated orders. use the non-bang `destroy` so we get a
     # boolean return and can show a friendly message rather than blowing up
     # with an SQLite constraint exception.
-    if @product.destroy
+    if @product.destroy!
       respond_to do |format|
         format.html { flash_pass("Product was successfully destroyed."); redirect_to products_path, status: :see_other }
         format.json { head :no_content }
@@ -126,7 +126,8 @@ class ProductsController < ApplicationController
         :grant_max_dollars,    # virtual setter
         :grant_amount_cents,
         :grant_amount_dollars,
-        :image_url
+        :image_url,
+        :notch_cost
       )
     end
 end

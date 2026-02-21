@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_22_090001) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_22_190000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -95,7 +95,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_090001) do
   end
 
   create_table "charm_notches", force: :cascade do |t|
-    t.integer "charm_slot_id", null: false
+    t.integer "charm_slot_id"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
@@ -185,6 +185,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_090001) do
     t.boolean "limited", default: false, null: false
     t.string "link"
     t.string "name"
+    t.integer "notch_cost"
     t.float "price_currency"
     t.boolean "show", default: true
     t.integer "steam_app_id"

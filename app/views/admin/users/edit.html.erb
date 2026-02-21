@@ -62,28 +62,15 @@
       </div>
 
       <% if current_user&.admin? || current_user&.superadmin? %>
-        <%
-          shipped   = @user.total_shipped_credits.round(2)
-          offset    = (@user.credit_offset || 0.0).round(2)
-          total     = (shipped + offset).round(2)
-        %>
+          <%# display number of free notches instead of credits; previous code
+            %
+        <%# computed and shown here but not submitted, so no need for shipped/offset
+            %>
         <div class="admin-form-row">
-          <span class="admin-form-label">Credits (from ships)</span>
+          <label class="admin-form-label" for="user_charm_notches">Charm Notches</label>
           <div class="admin-form-control">
-            <span class="admin-input" style="display:inline-block;background:#f4f4f4;cursor:default;"><%= shipped %></span>
-            <div class="field-hint">Sum of all approved ship awards. Read-only.</div>
-          </div>
-        </div>
-
-        <div class="admin-form-row">
-          <label class="admin-form-label" for="user_credit_target">Credit Total (target)</label>
-          <div class="admin-form-control">
-            <%= number_field_tag "user[credit_target]", total, step: "any", id: "user_credit_target",
-                class: "admin-input #{'field-error' if @user.errors[:credit_offset].any? || @user.errors[:currency].any?}" %>
-            <div class="field-hint">
-              Set the desired total credits (<code>ships&nbsp;+&nbsp;offset</code>).
-              The offset will be recalculated as <code>target&nbsp;&minus;&nbsp;ships&nbsp;(#{shipped})</code>.
-            </div>
+            <%= number_field_tag "user[charm_notches]", @user.charm_notches.count, step: 1, id: "user_charm_notches",
+                class: "admin-input #{'field-error' if @user.errors[:charm_notches].any?}" %>
           </div>
         </div>
       <% end %>

@@ -7,7 +7,8 @@ class LeaderboardsController < ApplicationController
       # Sum credits_awarded from all ships for each user (NULL values are treated as 0)
       # Order users by their available balance (shipped credits on active projects minus amount_spent)
       # IMPORTANT: aggregate ships via the user's projects (users -> projects -> ships), not ships the user created.
-      User.where.not(name: "Deleted User").not_system.left_joins(projects: :ships)
+      # build an array at cache time; sorting by free_notches happens below in Ruby
+      users = User.where.not(name: "Deleted User").not_system.left_joins(projects: :ships)
           .select(
             "users.*, \
              COALESCE(SUM(CASE WHEN projects.id IS NOT NULL AND projects.deleted_at IS NULL THEN ships.credits_awarded ELSE 0 END), 0) AS total_shipped, \
@@ -16,6 +17,12 @@ class LeaderboardsController < ApplicationController
           .group("users.id")
           .order(Arel.sql("total_balance DESC"))
           .to_a
+
+      # while we cached by balance to reduce DB load, the leaderboard page ranks by free_notches,
+      # so sort the resulting array now to avoid needing `order` in the view (and since cached
+      # value is an Array we can't call AR methods on it after retrieval).
+      users.sort_by! { |u| -u.free_notches }
+      users
     end
   end
 end

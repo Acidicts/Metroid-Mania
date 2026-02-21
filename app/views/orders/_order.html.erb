@@ -25,6 +25,10 @@
           <span style="color: orange;">Pending</span>
         <% elsif order.status == "shipped" %>
           <span style="color: green;">Fulfilled</span>
+        <% elsif order.status == "user_denied" %>
+          <span style="color: red;">User Denied</span>
+        <% elsif order.status == "submitted" %>
+          <span style="color: green;">Submitted</span>
         <% else %>
           <span>Unknown - <%= order.status %></span>
         <% end %>
@@ -34,6 +38,12 @@
         <strong>Created At:</strong>
         <%= order.created_at.strftime("%B %d, %Y %I:%M %p") %>
       </div>
+
+      <% if order.status == "pending" && current_page?(order_path(order)) && order.user == current_user %>
+        <div>
+          <%= button_to "Cancel Order", order_path(order_public_id_by_id(order.id), status: "user_denied"), method: :put, class: 'btn-retro btn-retro--outline', data: { confirm: "Are you sure you want to cancel this order?" } %>
+        </div>
+      <% end %>
       
       <div class="order-actions">
         <% unless current_page?(order_path(order)) %>

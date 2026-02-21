@@ -7,7 +7,9 @@ class AssetsProject < ApplicationRecord
 
   validates :image_url, format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]), message: "must be a valid URL" }, allow_blank: true
 
-  has_many :assets_items, dependent: :destroy, foreign_key: :project_id
+  # association uses the current column name; explicit foreign_key is no
+  # longer required but left here for clarity.
+  has_many :assets_items, dependent: :destroy, foreign_key: :assets_project_id
 
   # Predicate for image presence (CDN-based)
   def image_url?

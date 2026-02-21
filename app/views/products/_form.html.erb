@@ -40,8 +40,8 @@
             <div class="field-hint">Decimal value, no $ sign. Used for payments.</div>
           </div>
           <div class="form-group">
-            <%= form.label :cost_credits, "Cost (Credits)" %>
-            <%= form.number_field :cost_credits, step: 0.01, placeholder: "e.g. 50.00", class: "form-input", inputmode: "decimal" %>
+            <%= form.label :notch_cost, "Notch Cost" %>
+            <%= form.number_field :notch_cost, step: 1, placeholder: "e.g. 5", class: "form-input", inputmode: "decimal" %>
             <div class="field-hint">Leave blank to compute from Price &times; Credits/$.</div>
           </div>
         </div>

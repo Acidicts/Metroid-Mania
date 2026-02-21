@@ -59,8 +59,8 @@ class ApplicationController < ActionController::Base
   end
 
   def admin?
-    # Treat either a DB-set admin role or the env-defined superadmin as admin
-    logged_in? && (current_user.admin? || current_user.superadmin?)
+    return false unless logged_in?
+    current_user.admin? || current_user.superadmin?
   end
 
   def require_login
@@ -72,6 +72,13 @@ class ApplicationController < ActionController::Base
 
   def require_admin
     if !admin?
+      flash_warn("Not authorized")
+      redirect_to root_path and return
+    end
+  end
+
+  def require_superadmin
+    if !current_user.superadmin?
       flash_warn("Not authorized")
       redirect_to root_path and return
     end

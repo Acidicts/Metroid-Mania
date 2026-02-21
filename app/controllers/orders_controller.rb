@@ -1,10 +1,14 @@
 class OrdersController < ApplicationController
   before_action :require_login
   before_action :ensure_shop_enabled, only: %i[ new create ]
-  before_action :set_order, only: %i[ show ]
+  before_action :set_order, only: %i[ show update ]
 
   # GET /orders or /orders.json
   def index
+    if !current_user.admin?
+      redirect_to home_path and flash_warn("You have no orders") and return unless current_user.orders.count > 0
+    end
+
     @orders = current_user.orders.order(created_at: :desc)
   end
 
@@ -18,11 +22,6 @@ class OrdersController < ApplicationController
     else
       @order = current_user.orders.build
     end
-    if current_user.charm_slots.where(order_id: nil).exists?
-      charm = CharmSlot.create!(user: current_user, order: @order.id)
-    else
-      current_user.charm_slots.where(order_id: nil).first&.update(order_id: @order.id)
-    end
     @order
   end
 
@@ -32,6 +31,28 @@ class OrdersController < ApplicationController
       flash_warn("Not authorized")
       redirect_to orders_path and return
     end
+
+    # current behaviour: allow a status change via query param when viewing the order
+    # this is mainly exercised by the cancel button on the show page
+    if params[:status].present? && params[:status] == "user_denied" && @order.status == "pending"
+      @order.update(status: params[:status])
+      redirect_to @order and return
+    end
+  end
+
+  # PUT/PATCH /orders/1
+  # Used by the 'Cancel Order' button so we respect RESTful routing.
+  def update
+    unless @order.user == current_user
+      flash_warn("Not authorized")
+      redirect_to orders_path and return
+    end
+
+    if params[:status].present? && params[:status] == "user_denied" && @order.status == "pending"
+      @order.update(status: params[:status])
+    end
+
+    redirect_to @order
   end
 
   # POST /orders or /orders.json
@@ -88,9 +109,6 @@ class OrdersController < ApplicationController
           flash_pass("Order already placed")
           redirect_to existing and return
         end
-
-        # otherwise re-raise so outer rescue can handle
-        raise
       end
 
       if @order && @order.persisted?
@@ -122,7 +140,7 @@ class OrdersController < ApplicationController
       if msg.include?("UNIQUE constraint failed") || msg.match?(/duplicate/i)
         existing = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
         if existing
-          flash_pass("Order already placed")
+          flash_info("Order already placed")
           redirect_to existing and return
         end
       end

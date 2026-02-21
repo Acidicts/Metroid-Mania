@@ -21,6 +21,19 @@ class Product < ApplicationRecord
   attribute :image_url, :string, default: "https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg"
   attribute :description, :string, default: ""
   attribute :show, :boolean, default: true
+  attribute :notch_cost, :integer, default: 1
+
+  validate :notch_cost_is_int
+
+  def notch_cost_is_int
+    if notch_cost.present? && !notch_cost.is_a?(Integer)
+      if notch_cost < 0
+        self.notch_cost = abs(notch_cost)
+      else
+        self.notch_cost = 1
+      end
+    end
+  end
 
   def set_image_from_url(url)
     self.image_url = url
@@ -87,6 +100,13 @@ class Product < ApplicationRecord
       self.price_currency = price_data["final"] / 100.0
       save
     end
+  end
+
+  def destroy!
+    if Order.where(product_id: id).exists?
+      Order.where(product_id: id).destroy_all
+    end
+    super
   end
 
   private

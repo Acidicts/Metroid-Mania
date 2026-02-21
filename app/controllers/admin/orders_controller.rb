@@ -125,6 +125,8 @@ module Admin
           end
         end
 
+        @order.charm_slot&.update!(order: nil)
+
         redirect_back fallback_location: admin_orders_path, notice: 'Order declined and user refunded.'
       rescue ActiveRecord::RecordNotUnique => e
         # Defensive fallback in case of an unexpected uniqueness race — log and perform refund/audit without deleting

@@ -4,6 +4,8 @@ class Order < ApplicationRecord
   belongs_to :user
   belongs_to :product
 
+  has_one :charm_slot, dependent: :nullify, inverse_of: :order
+
   # Optional image used when an order represents a custom "charm" purchase.  This allows
   # callers (typically from the storefront or admin UI) to attach a specific URL which is
   # then displayed in user-facing areas such as the charm slot grid.  It is intentionally
@@ -16,9 +18,13 @@ class Order < ApplicationRecord
                       message: "must be a valid URL" },
             allow_blank: true
 
-  # Ensure cost is set and balance is deducted when creating an Order (status will be set to `pending`).
-  # Set cost when creating; only deduct/validate balance when the order will be `pending`.
-  before_create :set_cost_and_deduct_balance
+  # Ensure the order has a sane default status before any other work runs.
+  #
+  # Historically this method also removed notches, but that logic has been
+  # moved to an after_commit hook so that it only runs once (and never during a
+  # rolled-back transaction).  The old name accumulated some cruft over time,
+  # so rename the callback to reflect its current responsibility.
+  before_create :set_default_status
   before_validation :set_public_id, on: :create
 
   validates :public_id, presence: true, uniqueness: true, allow_nil: false, on: :create
@@ -36,19 +42,21 @@ class Order < ApplicationRecord
     end
   end
 
-  # Validate balance only when creating an actual pending order (fixtures or manual creates with other statuses should skip)
-  # Run balance validation for 'normal' creates (where status isn't explicitly set to a
-  # non-pending value). This lets fixtures create historical/non-pending orders without
-  # triggering the funds check while ensuring normal creates are validated.
-  validate :user_has_enough_currency, on: :create, if: -> { status.blank? || status == "pending" }
+  # Overhaul uses charm notches instead of credits, so validate against user's currency but display free notches on the leaderboard.
+  # validate :user_has_enough_currency, on: :create, if: -> { status.blank? || status == "pending" }
+  #
+  validate :user_denied_is_denied, if: -> { status == "user_denied" }, on: :update
+  validate :user_has_enough_free_notches, on: :create, if: -> { status.blank? || status == "pending" }
   # Prevent duplicate pending orders at model level (best-effort; DB unique index is authoritative)
   validates :product_id, uniqueness: { scope: [ :user_id, :status ], message: "already has a pending order" }, if: -> { status == "pending" }
 
   # canonical mapping used by migration/tests/views
   STATUS_VALUE_MAP = {
-    "pending"   => 0,
-    "denied"    => 1,
-    "shipped"   => 2
+    "pending"     => 0,
+    "denied"      => 1,
+    "shipped"     => 2,
+    "user_denied" => 3,
+    "submitted"   => 4
   }.freeze
 
   # Select-friendly array (used by views)
@@ -60,7 +68,7 @@ class Order < ApplicationRecord
     db_has_orders = (ActiveRecord::Base.connection.data_source_exists?("orders") rescue false)
     status_col = (columns_hash["status"] rescue nil)
     if db_has_orders && status_col && status_col.type == :integer
-      enum status: STATUS_VALUE_MAP.transform_keys(&:to_sym)
+      enum :status, STATUS_VALUE_MAP.transform_keys(&:to_sym)
 
       # Normalize human-friendly enum keys into the DB-backed integer before validation so
       # callers may pass either a key ('denied') or a numeric/string DB value ('1'/'1').
@@ -90,6 +98,7 @@ class Order < ApplicationRecord
       }
     end
 
+
     def status
       v = read_attribute(:status)
       # if stored as numeric, translate to canonical key
@@ -116,6 +125,15 @@ class Order < ApplicationRecord
     end
   end
 
+  def user_denied_is_denied
+    unless status == "user_denied"
+      errors.add(:status, "can only be set to 'user_denied'")
+    end
+    charm_slot_temp = self.charm_slot
+    charm_slot_temp&.update(order: nil)
+    charm_slot_temp&.charm_notches&.update_all(charm_slot_id: nil)
+  end
+
   # Stable array used by views/forms — do not build this by calling other class methods at class-eval time.
   # STATUSES = [
   #   ['Pending',    'pending'],
@@ -132,6 +150,31 @@ class Order < ApplicationRecord
     STATUSES
   end
 
+  def ensure_correct_number_of_notches_used
+    return unless charm_slot
+
+    required = product.notch_cost.to_i
+    assigned = CharmNotch.where(user_id: user_id, charm_slot_id: charm_slot_id).count
+
+    if assigned != required
+      if assigned < required
+        CharmNotch.where(user_id: user_id, charm_slot_id: nil).limit(required - assigned).update_all(charm_slot_id: charm_slot_id)
+      else
+        CharmNotch.where(user_id: user_id, charm_slot_id: charm_slot_id).limit(assigned - required).update_all(charm_slot_id: nil)
+      end
+    end
+  end
+
+  def user_has_enough_free_notches
+    return if product.blank?
+
+    required = product.notch_cost
+
+    if user.free_notches < required
+      errors.add(:base, "Insufficient free notches")
+    end
+  end
+
   # Return the image that should be shown for this order when it is rendered in contexts
   # such as a charm slot.  Prefer the explicitly-set `charm_image_url` attribute but fall
   # back to the associated product's image if one exists.  This keeps display logic in the
@@ -144,30 +187,58 @@ class Order < ApplicationRecord
   # attempt to refund here (idempotent: skip if an `order_refunded` audit already exists).
   after_update_commit :refund_if_denied, if: -> { saved_change_to_status? }
 
+  # Deduct the user's free notches when the order is successfully committed
+  # to the database.  Using `after_commit` prevents the common bug where a
+  # nested or premature insert would fire the callback and then be rolled back
+  # later, leaving the user charged twice.  The `on: :create` option ensures
+  # the logic only runs once for the initial insert.
+  after_commit :deduct_notches_after_create, on: :create
+
   private
 
-  def set_cost_and_deduct_balance
-    # Determine price in USD and cost (in credits).
-    if product.variable_grant? && grant_amount_cents.present?
-      dollars = grant_amount_cents.to_f / 100.0
-      # Preserve explicitly provided price_usd/cost when present (tests and fixtures sometimes set cost manually)
-      self.price_usd ||= dollars
-      self.cost ||= product.credits_for_dollars(dollars)
-    else
-      # Fixed product: prefer explicit cost_credits; otherwise compute from price * ratio
-      self.price_usd ||= product.price_currency.to_f
-      self.cost ||= product.cost_in_credits
-    end
-
-    # Normalize nil costs to 0.0 so arithmetic and deductions are safe
-    self.cost = (self.cost || 0).to_f
-
+  # `before_create` hook moved to a more descriptive name; kept as a
+  # separate method for clarity and to avoid surprising side effects when the
+  # callback list is inspected.
+  def set_default_status
+    # Set a default status before the record is saved (validation and the
+    # after_commit deduction callback both rely on status == "pending").
     self.status ||= "pending"
+  end
 
-    # Only deduct balance when creating a real pending order
-    if status == "pending"
-      # Ensure user.currency is numeric and not nil, and track amount_spent
-      user.update!(currency: (user.currency || 0).to_f - self.cost, amount_spent: (user.amount_spent || 0).to_f + self.cost)
+  def deduct_notches_after_create
+    # Only charge when the order still looks like a real purchase.  If the
+    # status has been changed out from under us (or the product has no cost),
+    # there's nothing to do.
+    return unless status == "pending"
+    return unless product.notch_cost.present? && product.notch_cost.to_i > 0
+
+    # Guard against races: acquire a row-level lock on the user so two orders
+    # can't examine the old free_notches value at the same time.  If the lock
+    # is already held by another transaction the current thread will wait until
+    # it commits, ensuring we always operate on a stable counter.
+    user.with_lock do
+      # reload user associations now that we have the lock
+      user.reload
+
+      required = product.notch_cost.to_i
+      if required > user.free_notches
+        # If the cost has changed or another order drained the account while
+        # we were waiting, gracefully abort rather than raising an exception.
+        Rails.logger.warn("Order #{id} not charged: insufficient free notches after lock")
+        # mark the order denied so the UI can surface the failure
+        update!(status: "denied") if status == "pending"
+        return
+      end
+
+      slot = charm_slot || create_charm_slot!(user: user)
+
+      user_notches = user.charm_notches
+                         .where(charm_slot_id: nil)
+                         .limit(required)
+      if user_notches.size != required
+        Rails.logger.warn("Expected to deduct #{required} notches for order #{id} but found #{user_notches.size}")
+      end
+      user_notches.each { |n| n.update!(charm_slot: slot) }
     end
   end
 

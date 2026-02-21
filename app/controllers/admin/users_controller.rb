@@ -31,26 +31,73 @@ module Admin
         base_params = {}
       end
 
-      if params[:user]&.key?(:credit_target)
+      if (params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)) && params[:user].key?(:credit_target)
         credit_target = params[:user][:credit_target].to_f
         total_shipped = @user.total_shipped_credits
         base_params[:credit_offset] = (credit_target - total_shipped).round(6)
         base_params.delete(:credit_target)
       end
 
-      if params[:user]&.key?(:currency)
+      if (params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)) && params[:user].key?(:currency)
         desired = params[:user][:currency].to_f
         total_shipped = @user.total_shipped_credits
         base_params[:credit_offset] = (desired - total_shipped).round(6)
         # do not store currency directly; it will be recalculated below
       end
 
-      if params[:user]&.key?(:charm_slots)
+      if (params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)) && params[:user].key?(:charm_slots)
         base_params[:charm_slots] = params[:user][:charm_slots].to_i
+      end
+
+      # `charm_notches` is a virtual value surfaced on the admin form.  When the
+      # admin supplies a number we don't persist it directly; instead we create or
+      # destroy individual CharmNotch records so that the user's free notch count
+      # matches the given value.  Validation occurs later (before the update) so
+      # we can return errors if the supplied value is invalid.
+      if (params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)) && params[:user].key?(:charm_notches)
+        # convert early for use in validation block below
+        @charm_notches_param = params[:user][:charm_notches]
+      end
+
+      # validate notch param before attempting to save anything.  We do this
+      # before calling `update` because ActiveRecord#update clears the existing
+      # errors object, which would otherwise drop our manually added messages.
+      if @charm_notches_param.present?
+        begin
+          # coerce value exactly like the model does
+          desired = @charm_notches_param.to_f.to_i
+          if desired < 0
+            @user.errors.add(:charm_notches, "must be 0 or greater")
+          end
+        rescue ArgumentError
+          @user.errors.add(:charm_notches, "is not a valid number")
+        end
+      end
+
+      # if any pre-update validation errors occurred, bail out early so the
+      # record isn't saved and the errors are displayed.
+      if @user.errors.any?
+        render :edit, status: :unprocessable_entity
+        return
       end
 
       previous_offset = @user.credit_offset.to_f
       if @user.update(base_params)
+        # perform the actual notch adjustment only once the user record has
+        # successfully saved; this keeps the operations separate and avoids
+        # partially applying notches when the main update fails.
+        if @charm_notches_param.present?
+          begin
+            @user.adjust_charm_notches!(@charm_notches_param)
+          rescue ArgumentError => e
+            # revert any changes made by earlier callbacks and surface error
+            @user.reload
+            @user.errors.add(:charm_notches, e.message)
+            render :edit, status: :unprocessable_entity
+            return
+          end
+        end
+
         # Audit credit offset changes (which represent a change in the user's total credits)
         if base_params.key?(:credit_offset) && previous_offset != @user.credit_offset.to_f
           old_total = @user.total_shipped_credits + previous_offset

@@ -9,6 +9,7 @@ class User < ApplicationRecord
   has_many :assets_projects, dependent: :nullify
   has_many :assets_items, dependent: :nullify
   has_many :charm_slots, dependent: :nullify
+  has_many :charm_notches, dependent: :nullify
 
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
@@ -17,7 +18,7 @@ class User < ApplicationRecord
   # Store how many charm slots a user has; defaults to zero so new users start with none
   attribute :charm_slots, :integer, default: 0
 
-  enum :role, { user: 0, admin: 1 }
+  enum :role, { user: 0, admin: 1, superadmin: 2 }, default: :user
 
   # Scope to exclude the system placeholder user
   scope :not_system, -> { where.not(provider: "system", uid: "deleted_user") }
@@ -32,6 +33,8 @@ class User < ApplicationRecord
   validates :provider, presence: true
   validates :charm_slots, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
+  validate :is_superadmin, on: :update
+
   def self.from_omniauth(auth)
     where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
       user.name = auth.info.name
@@ -41,6 +44,55 @@ class User < ApplicationRecord
       # Set admin role if the auth provider says so (and we trust it)
       # user.role = :admin if auth.info.admin
       user.role ||= :user # Default role
+    end
+  end
+
+  # The number of notches that are available for use.  Notches always
+  # belong to a `CharmSlot`, but a slot may be tied to an order (meaning the
+  # notch has already been spent).  Free notches are therefore those associated
+  # with slots that have no order.
+  def free_notches
+    CharmNotch.where(user_id: id, charm_slot_id: nil).count
+  end
+
+  # Adjust the number of *free* (unassigned) charm notches the user has.  The
+  # admin UI allows an integer value to be supplied, and setting a target value
+  # should create or delete unlinked `CharmNotch` records accordingly.  The
+  # method operates purely on records where `charm_slot_id` is `nil` (notches
+  # already assigned to slots are untouched).  Negative targets are not
+  # permitted and will raise `ArgumentError` so callers can propagate an error
+  # message back to the form if necessary.
+  def adjust_charm_notches!(target)
+    # coerce numeric-ish values to integer; decimals/drop fractions silently
+    target = target.to_f.to_i
+    if target < 0
+      raise ArgumentError, "desired charm notches must be >= 0"
+    end
+
+    current = free_notches
+    return if target == current
+
+    if target > current
+      # add new free notches; each notch needs a slot with no order.  To keep
+      # things simple we create a fresh slot for each notch.  Any existing free
+      # slots are ignored because there's no capacity concept.
+      (target - current).times do
+        slot = charm_slots.create!
+        charm_notches.create!(charm_slot: nil)
+      end
+    else
+      # remove excess *free* (unlinked) notches first.  The public API of this
+      # method promises to operate only on unassigned records, so there's no need
+      # to touch notches already bound to a slot.
+      to_remove = current - target
+      removable = CharmNotch.where(user_id: id, charm_slot_id: nil).limit(to_remove)
+      removable.destroy_all
+
+      # clean up any empty slots that no longer have notches and are unassigned
+      CharmSlot.where(user_id: id, order_id: nil)
+               .left_joins(:charm_notches)
+               .where(charm_notches: { id: nil })
+               .destroy_all
     end
   end
 
@@ -58,11 +110,29 @@ class User < ApplicationRecord
     region
   end
 
+  def admin?
+    self.role == "admin" || self.superadmin?
+  end
+
   # Is this user the superadmin defined by environment?
   def superadmin?
+    if self.role == "superadmin" or self.role == 2
+      true
+    else
+      false
+      is_superadmin
+    end
+  end
+
+  def is_superadmin
     env_uid = ENV["SUPERADMIN_UID"]
     env_email = ENV["SUPERADMIN_EMAIL"]&.downcase
-    (env_uid.present? && uid == env_uid) || (env_email.present? && email&.downcase == env_email)
+    if (env_uid.present? && uid == env_uid) || (env_email.present? && email&.downcase == env_email)
+      self.role = 2
+      true
+    else
+      false
+    end
   end
 
   # Display name for the user (falls back to email or name)

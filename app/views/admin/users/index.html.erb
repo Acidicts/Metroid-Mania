@@ -34,7 +34,7 @@
 
               <% if u.verification_status == "verified" %>
                 <td class="col-id col-shrink">✅</td>
-              <% elsif u.verification_status.humanize == "Needs submission" %>
+              <% elsif u.verification_status.to_s.downcase == "needs submission" %>
                 <td class="col-id col-shrink">⌛</td>
               <% else %>
                 <td class="col-id col-shrink">❌</td>

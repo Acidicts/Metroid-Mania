@@ -163,7 +163,10 @@
   <h1>Metroid-Mania</h1>
 
   <% if logged_in? %>
-    <p class="lead">Welcome, <%= current_user.name %>! Your Balance: <span style="font-family: Comfortaa, monospace;"><%= format_credits(user_balance(current_user) || 0) %></span></p>
+    <p class="lead">Hi, <%= current_user.name %>! You have: <span style="font-family: Comfortaa, monospace;"><%= current_user.free_notches %> free charm notches</span></p>
+    <% if current_user.free_notches == 0 %>
+      <p class="lead">You have no free charm notches. Get Coding to earn some!</p>
+    <% end %>
 
     <div class="home-actions">
       <%= link_to "My Projects", projects_path, class: 'btn-retro' %>

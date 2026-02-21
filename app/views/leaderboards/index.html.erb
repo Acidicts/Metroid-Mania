@@ -136,7 +136,7 @@
 <div class="leaderboard-container">
   <div class="leaderboard-header">
     <h1>🏆 Leaderboard</h1>
-    <p>Ranking users by total credits earned</p>
+    <p>Ranking users by total charm notches earned</p>
   </div>
 
   <% if @users.any? %>
@@ -145,27 +145,30 @@
         <tr>
           <th>Rank</th>
           <th>User</th>
-          <th>Total Credits</th>
-          <th>Charm Slots</th>
+          <th>Charm Notches</th>
         </tr>
       </thead>
       <tbody>
-        <% @users.each_with_index do |user, index| %>
-        <% if user.name != "Deleted User" %>
+        <% # @users is cached as an Array; guard against calling AR methods.  Sort by free_notches in Ruby and take top 10.
+           sorted_users = if @users.respond_to?(:order)
+             @users.order(free_notches: :desc).to_a
+           else
+             @users.sort_by { |u| -u.free_notches }
+           end
+        %>
+        <% sorted_users.first(10).each_with_index do |user, index| %>
             <tr>
               <td><%= index + 1 %></td>
               <td><%= link_to user.name, user_profile_path(user), style: "color: var(--accent1); text-decoration: none; font-weight: 700;" %></td>
-              <td><%= format_credits((user.respond_to?(:total_balance) ? user.total_balance.to_f : user_balance(user)) || 0) %></td>
-              <td><%= user.charm_slots.count %></td>
+              <td><%= user.free_notches %></td>
             </tr>
-          <% end %>
         <% end %>
       </tbody>
     </table>
   <% else %>
     <div class="empty-state">
       <h2>No users found</h2>
-      <p>There are no users with credits yet.</p>
+      <p>There are no users with charm notches yet.</p>
     </div>
   <% end %>
 </div>

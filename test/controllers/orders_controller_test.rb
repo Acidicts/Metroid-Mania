@@ -26,7 +26,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     @user.orders.where(product: product, status: "pending").destroy_all
 
     assert_difference "Order.count", 1 do
-      post orders_url, params: { product_id: product.id, charm_image_url: 'https://cdn.example.com/charm.png' }
+      post orders_url, params: { product_id: product.id, charm_image_url: "https://cdn.example.com/charm.png" }
     end
 
     assert response.redirect?
@@ -35,15 +35,15 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     order = Order.find_by_param(id_param)
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
-    assert_equal 'https://cdn.example.com/charm.png', order.charm_image_url
+    assert_equal "https://cdn.example.com/charm.png", order.charm_image_url
 
     # test default when parameter omitted
-    product2 = Product.create!(name: "TempDefault", steam_app_id: 9994, price_currency: 4.0, image_url: 'http://prod/default.png')
+    product2 = Product.create!(name: "TempDefault", steam_app_id: 9994, price_currency: 4.0, image_url: "http://prod/default.png")
     assert_difference "Order.count", 1 do
       post orders_url, params: { product_id: product2.id }
     end
     order2 = Order.last
-    assert_equal 'http://prod/default.png', order2.charm_image_url
+    assert_equal "http://prod/default.png", order2.charm_image_url
   end
 
   test "should not create duplicate pending order" do
@@ -54,23 +54,16 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :redirect
 
     before = Order.count
-    begin
-      # Second request for the same product should not create a new pending order
-      post orders_url, params: { product_id: product.id }
-      after = Order.count
 
-      assert_equal before, after, "Duplicate pending order was created"
-      assert response.redirect?
-      follow_redirect!
+    # Second request for the same product should also redirect and not increase count
+    post orders_url, params: { product_id: product.id }
+    after = Order.count
 
-      puts "DEBUG flash class=#{flash[:notice].class} inspect=#{flash[:notice].inspect} bytes=#{flash[:notice].to_s.bytes.inspect}"
-      assert_match /Order/, flash[:notice].to_s
-    rescue ActiveRecord::RecordNotUnique
-      # In some DBs/tests a race may raise; ensure there's exactly one pending order for this user/product
-      existing = @user.orders.find_by(product_id: product.id, status: "pending")
-      assert existing.present?
-      assert_equal before, Order.count
-    end
+    assert_equal before, after, "Duplicate pending order was created"
+    assert response.redirect?
+    follow_redirect!
+
+    assert_match /Order/, flash[:notice].to_s
   end
 
   test "can create new order after a previous denied order (and refund occurs)" do
@@ -167,6 +160,27 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "user can cancel pending order via update route" do
+    @order.update!(status: "pending")
+    put order_url(@order), params: { status: "user_denied" }
+    assert_redirected_to order_url(@order)
+    @order.reload
+    assert_equal "user_denied", @order.status
+  end
+
+  test "cannot cancel order belonging to someone else" do
+    other = users(:two)
+    other.update!(email: "other@example.com", currency: 100.0)
+    # create a pending order for the other user; skip validations to avoid notch checks
+    order = Order.new(user: other, product: products(:one), status: "pending", cost: 1)
+    order.save!(validate: false)
+
+    put order_url(order), params: { status: "user_denied" }
+    assert_redirected_to orders_url
+    order.reload
+    assert_equal "pending", order.status
+  end
+
   test "new order form prepopulates charm_image_url from product" do
     product = Product.create!(name: "HasImage", steam_app_id: 1234, price_currency: 1.0, image_url: "http://foo/bar.png")
     get new_order_url(product_id: product.id)
@@ -176,7 +190,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "invalid charm_image_url prevents creation and displays error" do
     product = Product.create!(name: "TempBadUrl", steam_app_id: 9995, price_currency: 2.0)
-    post orders_url, params: { product_id: product.id, charm_image_url: 'not_a_url' }
+    post orders_url, params: { product_id: product.id, charm_image_url: "not_a_url" }
     assert_response :redirect
     follow_redirect!
     assert_match /must be a valid URL/, flash[:alert].to_s

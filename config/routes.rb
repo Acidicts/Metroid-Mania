@@ -34,7 +34,8 @@ Rails.application.routes.draw do
   patch "profile", to: "users#update"
   get "users/:id", to: "users#show", as: "user_profile"
 
-  resources :orders, only: [ :index, :new, :create, :show ]
+  # allow users to cancel or otherwise modify their own orders via PUT/PATCH
+  resources :orders, only: [ :index, :new, :create, :show, :update ]
 
   # Dev-only sign-in to ease testing and local dev (available only in dev & test)
   if Rails.env.development? || Rails.env.test?

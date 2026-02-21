@@ -3,6 +3,14 @@ module ApplicationHelper
     "#{amount.to_f.ceil} Units"
   end
 
+  def order_by_public_id(public_id)
+    Order.find_by(public_id: public_id)
+  end
+
+  def order_public_id_by_id(id)
+    Order.find_by(id: id)&.public_id
+  end
+
   def format_duration(seconds, include_days: false)
     # ie: 2h 3m 4s
     # ie. 37h 15m (if include_days is false)
