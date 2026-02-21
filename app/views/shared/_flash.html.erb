@@ -21,4 +21,17 @@
       <div class="callout" data-flash="<%= tier %>"><strong><%= display_label %>:</strong> <%= msg %></div>
     <% end %>
   </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // fade out flash callouts after a short delay, then remove them from DOM
+      setTimeout(function() {
+        document.querySelectorAll('.retro-container .callout').forEach(function(el) {
+          el.style.transition = 'opacity 0.5s ease-out';
+          el.style.opacity = '0';
+          setTimeout(function() { el.remove(); }, 500);
+        });
+      }, 3000); // wait 3 seconds before starting fade
+    });
+  </script>
 <% end %>

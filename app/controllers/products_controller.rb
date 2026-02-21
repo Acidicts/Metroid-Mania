@@ -80,11 +80,21 @@ class ProductsController < ApplicationController
 
   # DELETE /products/1 or /products/1.json
   def destroy
-    @product.destroy!
-
-    respond_to do |format|
-      format.html { flash_pass("Product was successfully destroyed."); redirect_to products_path, status: :see_other }
-      format.json { head :no_content }
+    # `dependent: :restrict_with_error` on Product prevents deletion when
+    # there are associated orders. use the non-bang `destroy` so we get a
+    # boolean return and can show a friendly message rather than blowing up
+    # with an SQLite constraint exception.
+    if @product.destroy
+      respond_to do |format|
+        format.html { flash_pass("Product was successfully destroyed."); redirect_to products_path, status: :see_other }
+        format.json { head :no_content }
+      end
+    else
+      respond_to do |format|
+        flash_warn("Cannot delete product because there are existing orders.")
+        format.html { redirect_to @product }
+        format.json { render json: @product.errors, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -108,6 +118,7 @@ class ProductsController < ApplicationController
         :credits_per_dollar,
         :variable_grant,
         :limited,
+        :show,                 # visibility toggle
         :stock,
         :grant_min_cents,
         :grant_max_cents,

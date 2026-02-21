@@ -26,7 +26,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     @user.orders.where(product: product, status: "pending").destroy_all
 
     assert_difference "Order.count", 1 do
-      post orders_url, params: { product_id: product.id }
+      post orders_url, params: { product_id: product.id, charm_image_url: 'https://cdn.example.com/charm.png' }
     end
 
     assert response.redirect?
@@ -35,6 +35,15 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     order = Order.find_by_param(id_param)
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
+    assert_equal 'https://cdn.example.com/charm.png', order.charm_image_url
+
+    # test default when parameter omitted
+    product2 = Product.create!(name: "TempDefault", steam_app_id: 9994, price_currency: 4.0, image_url: 'http://prod/default.png')
+    assert_difference "Order.count", 1 do
+      post orders_url, params: { product_id: product2.id }
+    end
+    order2 = Order.last
+    assert_equal 'http://prod/default.png', order2.charm_image_url
   end
 
   test "should not create duplicate pending order" do
@@ -122,7 +131,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
       credits_per_dollar: 100.0,
       variable_grant: true,
       grant_min_cents: 1000,  # $10.00
-      grant_max_cents: 50000  # $500.00
+      grant_max_cents: 50000, # $500.00
+      image_url: "https://cdn.example.com/variable.png"
     )
 
     # Ensure no pending order exists for this user/product before we start
@@ -148,11 +158,30 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_equal @user.id, order.user_id
     assert_equal (grant_amount * 100).round, order.grant_amount_cents
     assert_equal (grant_amount * product.credits_per_dollar), order.cost
+    # product has no explicit image_url so charm_image should default nil
+    assert_equal product.image_url, order.charm_image_url
   end
 
   test "should show order" do
     get order_url(@order)
     assert_response :success
+  end
+
+  test "new order form prepopulates charm_image_url from product" do
+    product = Product.create!(name: "HasImage", steam_app_id: 1234, price_currency: 1.0, image_url: "http://foo/bar.png")
+    get new_order_url(product_id: product.id)
+    assert_response :success
+    assert_select "input[name='charm_image_url'][value='http://foo/bar.png']"
+  end
+
+  test "invalid charm_image_url prevents creation and displays error" do
+    product = Product.create!(name: "TempBadUrl", steam_app_id: 9995, price_currency: 2.0)
+    post orders_url, params: { product_id: product.id, charm_image_url: 'not_a_url' }
+    assert_response :redirect
+    follow_redirect!
+    assert_match /must be a valid URL/, flash[:alert].to_s
+    # no new order should have been added
+    assert_not Order.exists?(product: product, user: @user)
   end
 
   test "creating order blocked when shop disabled" do

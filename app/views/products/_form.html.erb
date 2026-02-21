@@ -77,6 +77,16 @@
           </div>
         </div>
 
+        <div id="limited_container" class="form-group collapsible <%= product.variable_grant? ? '' : 'collapsible--open' %>">
+          <label class="checkbox-card">
+            <%= form.check_box :show, {}, "1", "0" %>
+            <div>
+              <%= form.label :show, "Show" %>
+              <div class="field-hint">When unchecked, hide from store.</div>
+            </div>
+          </label>
+        </div>
+
         <div class="form-group">
           <%= form.label :link, "Link (optional)" %>
           <%= form.text_field :link, placeholder: "Optional external URL (https://...)", class: "form-input" %>

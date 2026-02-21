@@ -1,5 +1,9 @@
 class Product < ApplicationRecord
-  has_many :orders
+  # don't accidentally blow away users' order history when an admin
+  # deletes a product. the foreign key in the database enforces this
+  # already, but having an AR-level restriction allows us to show a
+  # sensible validation error instead of raising a constraint exception.
+  has_many :orders, dependent: :restrict_with_error
 
   # Helpers/constants
   DEFAULT_MIN_GRANT_CENTS = 10_00
@@ -12,10 +16,11 @@ class Product < ApplicationRecord
   validate :grant_range_consistency
 
   validates :stock, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
-  validates :limited, inclusion: { in: [true, false] }
+  validates :limited, inclusion: { in: [ true, false ] }
 
-  attribute :image_url, :string, default: 'https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg'
-  attribute :description, :string, default: ''
+  attribute :image_url, :string, default: "https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg"
+  attribute :description, :string, default: ""
+  attribute :show, :boolean, default: true
 
   def set_image_from_url(url)
     self.image_url = url
@@ -76,10 +81,10 @@ class Product < ApplicationRecord
 
     price_data = SteamService.get_price(steam_app_id)
     if price_data
-      update(steam_price_cents: price_data['final'])
+      update(steam_price_cents: price_data["final"])
       # Logic to convert steam price (cents) to Mania currency?
       # Assuming 1 currency = $1.00 => 100 cents
-      self.price_currency = price_data['final'] / 100.0
+      self.price_currency = price_data["final"] / 100.0
       save
     end
   end

@@ -1,8 +1,12 @@
 <div class="admin-panel-show-order">
   <h1>Order <%= @order.public_id || @order.id %></h1>
     <div class="order-show-info" style="display:flex; gap:12px; align-items:center; justify-content:space-between;">
-      <div>
-        <div style="font-weight:700; font-size:1.05rem;"><%= @order.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <% if @order.charm_image_url_for_display.present? %>
+          <img src="<%= @order.charm_image_url_for_display %>" alt="item image" style="height:48px;width:48px;object-fit:cover;" />
+        <% end %>
+        <div>
+          <div style="font-weight:700; font-size:1.05rem;"><%= @order.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
         <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.email %></div>
         <div style="margin-top:6px; color:#666; font-size:0.9rem;">Created: <%= l(@order.created_at, format: :short) %></div>
       </div>

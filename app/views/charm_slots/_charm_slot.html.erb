@@ -1,9 +1,30 @@
+<style>
+  .charm-slot-link {
+    display: inline-block;
+    width: 48px;
+    height: 48px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid transparent;
+    transition: border-color 0.2s ease-in-out;
+  }
+
+  .charm-slot-link:hover {
+    border-color: rgb(0, 123, 255, 0.3); /* Change to your desired hover color */
+  }
+</style>
+
 <div id="<%= dom_id charm_slot %>" style="display: inline-block; margin: 4px;">
 
   <% if charm_slot.order_id.present? %>
-    <%# Add Logic for displaying custom charm for item %>
-    <%= charm_slot.order_id %>
-    <%= charm_slot.order.name %>
+    <%# Show an image if the related order has either a custom charm URL or a product image %>
+    <% if charm_slot.order.charm_image_url_for_display.present? %>
+      <a href="<%= order_path(charm_slot.order) %>" title="<%= charm_slot.order.name.split(" - ").first %>" class="charm-slot-link">
+        <img height="48" width="48" src="<%= charm_slot.order.charm_image_url_for_display %>" alt="Charm image" />
+      </a>
+    <% else %>
+      <%= charm_slot.order.name %>
+    <% end %>
   <% else %>
     <%= charm_slot.order_id %>
     <img height="48px" width="48px" src="https://cdn.hackclub.com/019c8076-7229-7de5-9709-a0e340b8ac65/Charm_Slot.png">

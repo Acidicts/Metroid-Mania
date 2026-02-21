@@ -48,7 +48,7 @@ This project is a Ruby on Rails based system for managing the You Ship We Ship (
   - `user.rb` - User model with authentication
   - `project.rb` - Project model with time tracking
   - `devlog.rb` - Development log entries
-  - `order.rb` - Order model
+  - `order.rb` - Order model (includes optional `charm_image_url` for custom charms)
   - `ship_request.rb` - Shipping request model
 
 ### Views

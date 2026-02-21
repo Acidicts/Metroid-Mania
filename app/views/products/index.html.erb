@@ -21,6 +21,10 @@
 
 <div id="products" class="products-grid">
   <% @products.each do |product| %>
-    <%= render 'product_card', product: product %>
+    <% if product.show? %>
+      <%= render 'product_card', product: product %>
+    <% elsif !product.show? && current_user&.admin? %>
+      <%= render 'product_card', product: product %>
+    <% end %>
   <% end %>
 </div>

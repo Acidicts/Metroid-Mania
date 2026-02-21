@@ -86,17 +86,6 @@
             </div>
           </div>
         </div>
-
-        <div class="admin-form-row">
-          <label class="admin-form-label" for="user_charm_slots">Charm Slots</label>
-          <div class="admin-form-control">
-            <%= number_field_tag "user[charm_slots]", @user.charm_slots, step: "any", id: "user_charm_slots",
-                class: "admin-input #{'field-error' if @user.errors[:charm_slots].any?}" %>
-            <div class="field-hint">
-              Set the number of charm slots this user has.
-            </div>
-          </div>
-        </div>
       <% end %>
 
       <div class="admin-form-actions">

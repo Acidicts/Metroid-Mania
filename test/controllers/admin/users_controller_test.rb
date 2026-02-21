@@ -74,4 +74,14 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_not_includes response.body, sys.email
   end
+
+  test "update with non-hash user param does not crash" do
+    sign_in_as(@admin, password: "password")
+    # some buggy forms or external calls might send user as a bare integer
+    patch admin_user_url(@user), params: { user: 5 }
+
+    assert_redirected_to admin_users_url
+    # nothing should change to the record
+    assert_equal users(:two).email, @user.reload.email
+  end
 end

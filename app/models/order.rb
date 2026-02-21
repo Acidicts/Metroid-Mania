@@ -4,6 +4,18 @@ class Order < ApplicationRecord
   belongs_to :user
   belongs_to :product
 
+  # Optional image used when an order represents a custom "charm" purchase.  This allows
+  # callers (typically from the storefront or admin UI) to attach a specific URL which is
+  # then displayed in user-facing areas such as the charm slot grid.  It is intentionally
+  # optional so existing orders continue working and the product's normal
+  # `image_url` can still be used as a fallback.
+  attribute :charm_image_url, :string
+
+  validates :charm_image_url,
+            format: { with: URI::DEFAULT_PARSER.make_regexp(%w[http https]),
+                      message: "must be a valid URL" },
+            allow_blank: true
+
   # Ensure cost is set and balance is deducted when creating an Order (status will be set to `pending`).
   # Set cost when creating; only deduct/validate balance when the order will be `pending`.
   before_create :set_cost_and_deduct_balance
@@ -118,6 +130,14 @@ class Order < ApplicationRecord
   # (protects against methods that require arguments and triggered the ArgumentError).
   def self.statuses_for_select
     STATUSES
+  end
+
+  # Return the image that should be shown for this order when it is rendered in contexts
+  # such as a charm slot.  Prefer the explicitly-set `charm_image_url` attribute but fall
+  # back to the associated product's image if one exists.  This keeps display logic in the
+  # model and lets views stay simple.
+  def charm_image_url_for_display
+    charm_image_url.presence || product&.image_url
   end
 
   # If an order ever becomes `denied` through a code path that didn't refund the user,

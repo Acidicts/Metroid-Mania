@@ -1,7 +1,7 @@
-<p style="color: green"><%= notice %></p>
-
 <div id="charm_slots">
-  <% (@charm_slots || []).each do |charm_slot| %>
-    <%= render charm_slot %>
+  <% (@charm_slots.order(:order_id).last(5) || []).each do |charm_slot| %>
+    <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
+      <%= render charm_slot %>
+    <% end %>
   <% end %>
 </div>

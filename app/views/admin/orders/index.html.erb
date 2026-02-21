@@ -29,9 +29,14 @@
 
             <td class="order-info">
               <div style="display:flex; align-items:center; gap:8px; justify-content:space-between;">
-                <div>
-                  <div><%= o.name %> <span class="order-item-badge"><%= o.cost %></span></div>
-                  <div style="font-size:0.85rem; color: #666;">ID: <%= o.public_id || o.id %></div>
+                <div style="display:flex; align-items:center; gap:6px;">
+                  <% if o.charm_image_url_for_display.present? %>
+                    <img src="<%= o.charm_image_url_for_display %>" alt="item image" style="height:32px;width:32px;object-fit:cover;" />
+                  <% end %>
+                  <div>
+                    <div><%= o.name %> <span class="order-item-badge"><%= o.cost %></span></div>
+                    <div style="font-size:0.85rem; color: #666;">ID: <%= o.public_id || o.id %></div>
+                  </div>
                 </div>
                 <div style="display:flex; align-items:center; gap:12px;">
                   <div class="status-badge <%= case o.status.to_s

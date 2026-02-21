@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_21_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_22_090001) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -143,6 +143,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_150000) do
   end
 
   create_table "orders", force: :cascade do |t|
+    t.string "charm_image_url"
     t.float "cost"
     t.datetime "created_at", null: false
     t.integer "grant_amount_cents"
@@ -185,6 +186,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_21_150000) do
     t.string "link"
     t.string "name"
     t.float "price_currency"
+    t.boolean "show", default: true
     t.integer "steam_app_id"
     t.integer "steam_price_cents"
     t.integer "stock", default: 0

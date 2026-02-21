@@ -70,6 +70,16 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to products_url
   end
 
+  test "should not destroy product with existing orders" do
+    # fixture `one` has an order in orders.yml
+    assert_no_difference("Product.count") do
+      delete product_url(products(:one))
+    end
+
+    assert_redirected_to product_url(products(:one))
+    assert_match /Cannot delete product/, flash[:warning]
+  end
+
   test "admin can access index when shop disabled" do
     SiteSetting.set("shop", "false")
     get products_url

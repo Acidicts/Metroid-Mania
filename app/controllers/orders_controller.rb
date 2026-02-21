@@ -13,9 +13,17 @@ class OrdersController < ApplicationController
     @product = Product.find_by(id: params[:product_id])
     if @product
       @order = current_user.orders.build(product: @product)
+      # prepopulate charm_image_url when showing the form
+      @order.charm_image_url = @product.image_url if @product.image_url.present?
     else
       @order = current_user.orders.build
     end
+    if current_user.charm_slots.where(order_id: nil).exists?
+      charm = CharmSlot.create!(user: current_user, order: @order.id)
+    else
+      current_user.charm_slots.where(order_id: nil).first&.update(order_id: @order.id)
+    end
+    @order
   end
 
   # GET /orders/1 or /orders/1.json
@@ -66,6 +74,10 @@ class OrdersController < ApplicationController
           # store cents on the order model
           order_attrs[:grant_amount_cents] = (params[:grant_amount_dollars].to_f * 100).round
         end
+        # custom charm image URL if provided
+        if params[:charm_image_url].present?
+          order_attrs[:charm_image_url] = params[:charm_image_url]
+        end
 
         @order = current_user.orders.create!(order_attrs)
         puts "DEBUG OrdersController#create: create! returned; order_id=#{@order&.id.inspect} persisted=#{@order&.persisted?.inspect} errors=#{@order&.errors&.full_messages.inspect}"
@@ -85,7 +97,12 @@ class OrdersController < ApplicationController
         flash_pass("Order placed successfully!")
         redirect_to @order and return
       else
-        @order = current_user.orders.build(product: @product, status: pending_db_val)
+        @order = current_user.orders.build(
+          product: @product,
+          status: pending_db_val,
+          charm_image_url: params[:charm_image_url].presence || @product.image_url
+        )
+        @order.charm_image_url = params[:charm_image_url] if params[:charm_image_url].present?
 
         # If creation failed due to insufficient funds and there's a denied order for the same product,
         # surface a clearer message so users know a refund may be missing.

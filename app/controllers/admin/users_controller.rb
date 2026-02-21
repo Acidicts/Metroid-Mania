@@ -25,6 +25,11 @@ module Admin
       # forms may submit a target currency value which should be converted to an
       # equivalent credit_offset in the same way.
       base_params = user_params
+      # ensure we always have a hash before attempting to treat it like one
+      unless base_params.is_a?(Hash)
+        Rails.logger.warn "Admin::UsersController#update - expected hash from user_params but got #{base_params.inspect}; defaulting to empty hash"
+        base_params = {}
+      end
 
       if params[:user]&.key?(:credit_target)
         credit_target = params[:user][:credit_target].to_f
@@ -118,8 +123,14 @@ module Admin
     # Only permit role changes when the current user is a superadmin.
     # Returning a plain hash avoids permitting dangerous keys globally.
     def user_params
+      # Guard against malformed requests where `params[:user]` might be an
+      # integer/string etc instead of the usual hash.  Return an empty hash in
+      # that case to avoid blowing up later when the caller mutates or iterates
+      # it.
+      return {} unless params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)
+
       permitted = {}
-      if params[:user] && (current_user&.superadmin? || current_user&.admin?)
+      if (current_user&.superadmin? || current_user&.admin?)
         # Allow admins to adjust contact and identity fields
         permitted[:name] = params[:user][:name] if params[:user].key?(:name)
         permitted[:email] = params[:user][:email] if params[:user].key?(:email)
