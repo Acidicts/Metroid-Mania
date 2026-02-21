@@ -156,7 +156,7 @@
               <td><%= index + 1 %></td>
               <td><%= link_to user.name, user_profile_path(user), style: "color: var(--accent1); text-decoration: none; font-weight: 700;" %></td>
               <td><%= format_credits((user.respond_to?(:total_balance) ? user.total_balance.to_f : user_balance(user)) || 0) %></td>
-              <td><%= user.charm_slots %></td>
+              <td><%= user.charm_slots.count %></td>
             </tr>
           <% end %>
         <% end %>
