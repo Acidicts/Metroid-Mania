@@ -8,6 +8,7 @@ class User < ApplicationRecord
   has_many :ship_requests, dependent: :nullify
   has_many :assets_projects, dependent: :nullify
   has_many :assets_items, dependent: :nullify
+  has_many :charm_slots, dependent: :nullify
 
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
@@ -170,6 +171,42 @@ class User < ApplicationRecord
     new_currency = available_balance
     update!(currency: new_currency)
     new_currency
+  end
+
+  # Ensure the number of associated CharmSlot records matches the integer stored
+  # in the `charm_slots` column.  This callback runs every time a user is loaded
+  # from the database (after_find) so that changes made by admins or migration
+  # backfills will automatically create any missing slots the next time the
+  # user record is fetched.  Excess records are left alone.
+  after_find :ensure_charm_slots_match_attribute
+
+  def ensure_charm_slots_match_attribute
+    desired = read_attribute(:charm_slots).to_i
+    current = charm_slots.size
+    return if desired <= current
+
+    missing = desired - current
+
+    # Any slot must point at an Order.  We'll use a single placeholder product
+    # that has no cost or inventory; the precise values are unimportant, as orders
+    # pointing at this product will always have cost 0 and never correspond to a real
+    # shop item.  Because the product model validates that `credits_per_dollar` is
+    # greater than zero, create or update the placeholder while skipping validations
+    # so we don't run into errors when the app loads during boot or in tests.
+    placeholder = Product.find_or_initialize_by(name: "Charm slot placeholder")
+    placeholder.stock = 0
+    placeholder.limited = false
+    placeholder.price_currency = 0.0
+    # leave credits_per_dollar nil so validation allows it
+    placeholder.save!(validate: false) if placeholder.new_record? || placeholder.changed?
+
+    transaction do
+      missing.times do
+        # create an empty slot with no order; order can be added later when the
+        # user buys/assigns something.
+        charm_slots.create!
+      end
+    end
   end
 
   # Sync Hackatime trust status for this user and persist it to the DB.

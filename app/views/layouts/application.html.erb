@@ -2,11 +2,29 @@
   /* Prevent horizontal overflow across the viewport */
   html, body { overflow-x: hidden; }
 
+  /* reduce navbar vertical spacing (override public/styles.css) */
+  .retro-navbar {
+    padding: 6px 12px !important;
+    gap: 8px !important;
+  }
+  .retro-navbar a {
+    padding: 2px 6px !important;
+    line-height: 1 !important;
+    font-size: 1.1rem !important; /* slightly smaller text helps reduce height */
+  }
+  /* shrink avatar image to match tighter bar */
+  .profile-link img {
+    height: 32px !important;
+    width: 32px !important;
+    margin-right: 4px !important;
+  }
+
   /* Mobile menu icon (hidden on wide screens) */
   .menu-icon {
     display: none;
     cursor: pointer;
-    margin: 10px;
+    /* reduce margin to shrink header height */
+    margin: 6px;
     -webkit-tap-highlight-color: transparent;
     background: transparent;
     border: none;
@@ -28,12 +46,98 @@
   .menu-icon.open span:nth-child(2) { opacity: 0; }
   .menu-icon.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
 
+  /* common hover styles for profile icon (apply to all screen sizes) */
+  .profile-link {
+    margin-top: 6px;
+    transition: transform 220ms ease, opacity 220ms ease;
+    /* shrink vertical spacing around avatar */
+    line-height: 1;
+    background: var(--main-800);
+    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+  }
+
+  .profile-link span {
+    padding-left: 4px
+  }
+
+  .profile-link img {
+    transition: transform 220ms ease, opacity 220ms ease;
+    display: block; /* ensure scaling origin is correct */
+  }
+
+  .profile-link:hover {
+    transform: translateY(-2px);
+  }
+
+  .profile-link:hover img {
+    transform: scale(1.1);
+    opacity: 0.9;
+  }
+
+  /* dropdown menu attached to profile picture */
+  .profile-menu {
+    position: relative;
+    display: inline-block;
+  }
+
+  .profile-dropdown {
+    /* keep layout present so we can animate opacity/transform */
+    visibility: hidden;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 4px);
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    min-width: 120px;
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 180ms ease, transform 180ms ease;
+  }
+
+  .profile-dropdown li {
+    padding: 0;
+  }
+
+  .profile-dropdown li a {
+    display: block;
+    padding: 6px 12px;
+    color: #333;
+    text-decoration: none;
+  }
+
+  .profile-dropdown li a:hover {
+    background: #f4f4f4;
+  }
+
+  /* hovered state: show & animate */
+  .profile-menu:hover .profile-dropdown {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0s;
+  }
+
+  /* non-hover state: hide after animation completes */
+  .profile-menu:not(:hover) .profile-dropdown {
+    visibility: hidden;
+    transition-delay: 180ms; /* wait for fade out before hiding */
+  }
+
   @media (max-width: 600px) {
     /* allow the menu button to sit above the header so it isn't clipped */
     header { position: relative; overflow: visible; }
     .retro-navbar a, .retro-navbar button, #sign_out_btn {
       font-size: 0.9rem;
-      padding: 6px 10px;
+      /* reduce vertical padding */
+      padding: 4px 10px;
     }
 
     /* ensure items not covered by the absolute top-left icon */
@@ -178,10 +282,24 @@
         <%= link_to 'Gallery', gallery_path %>
         <div style="flex:1"></div>
         <% if logged_in? %>
-          <%= link_to current_user.name || current_user.email, user_profile_path(current_user), class: 'btn-retro btn-retro--outline' %>
+          <div style="display: inline-flex">
+            <%= render 'charm_slots/loadout' %>
+            <div class="profile-menu">
+              <a href="<%= user_profile_path(current_user) %>" class="profile-link">
+                <% if slack_profile && slack_profile[:image].present? %>
+                  <%= image_tag slack_profile[:image], alt: "#{current_user.name} avatar", style: "height:40px; width:40px; border-radius:999px; vertical-align:middle; margin-right:8px;" %>
+                <% end %>
+                <span><%= current_user.name %></span>
+              </a>
 
-          <!-- ensure Turbo/JS will send DELETE; also provide a <noscript> fallback -->
-          <%= link_to 'Sign out', logout_path, data: { turbo_method: :delete }, id: 'sign_out_btn' %>
+              <ul class="profile-dropdown">
+                <li>
+                  <%= link_to 'Sign out', logout_path, data: { turbo_method: :delete } %>
+                </li>
+              </ul>
+            </div>
+          </div>
+
           <noscript>
             <form action="<%= logout_path %>" method="post" style="display:inline">
               <input type="hidden" name="_method" value="delete" />
@@ -195,6 +313,12 @@
     </header>
 
     <%= render 'shared/flash' %>
+
+    <% unless feature_enabled?(:running) %>
+      <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+        This ysws is not active – RSVP here. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+      </div>
+    <% end %>
 
     <% unless feature_enabled?(:shop) %>
       <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">

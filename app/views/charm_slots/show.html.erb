@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @charm_slot %>
+
+<div>
+  <%= link_to "Edit this charm slot", edit_charm_slot_path(@charm_slot) %> |
+  <%= link_to "Back to charm slots", charm_slots_path %>
+
+  <%= button_to "Destroy this charm slot", @charm_slot, method: :delete %>
+</div>

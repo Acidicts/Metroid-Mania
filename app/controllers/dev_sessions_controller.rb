@@ -6,6 +6,12 @@ class DevSessionsController < ApplicationController
     email = params[:email]
     user = User.find_by(email: email)
     if user
+      # application-level toggle; mimic behaviour of the real callback
+      if SiteSetting.enabled?("disable_non_admin_logins", default: false) && !user.admin?
+        render plain: "Logins disabled for non-admins", status: :forbidden
+        return
+      end
+
       # Set region on dev sign-in as well
       begin
         user.set_region_from_ip(request.remote_ip)

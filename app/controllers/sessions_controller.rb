@@ -3,12 +3,18 @@ class SessionsController < ApplicationController
 
   def create
     # Successful callback from OmniAuth
-    auth = request.env['omniauth.auth']
+    auth = request.env["omniauth.auth"]
     Rails.logger.info "OmniAuth Info: #{auth.info.inspect}"
     Rails.logger.info "OmniAuth Credentials: #{auth.credentials.inspect}"
     Rails.logger.info "OmniAuth Extra: #{auth.extra.inspect}"
 
     user = User.from_omniauth(auth)
+
+    # block logins if the setting is flipped and the user isn't an admin
+    if SiteSetting.enabled?("disable_non_admin_logins", default: false) && !user.admin?
+      flash_warn("Logins are temporarily disabled for non-admin users")
+      redirect_to root_path and return
+    end
 
     # Update user's region based on request IP on every sign-in (don't break login if the lookup fails)
     begin
@@ -19,7 +25,7 @@ class SessionsController < ApplicationController
 
     session[:user_id] = user.id
 
-    origin = request.env['omniauth.origin'] || params[:origin] || root_path
+    origin = request.env["omniauth.origin"] || params[:origin] || root_path
 
     flash_pass("Signed in successfully!")
     redirect_to origin

@@ -1,12 +1,18 @@
 Rails.application.routes.draw do
+  resources :charm_notches
+  # legacy path used by older clients; redirect to index to avoid hitting
+  # the show action with id = "loadout".
+  get "charm_slots/loadout", to: redirect("/charm_slots")
+
+  resources :charm_slots
   resources :assets_items do
-    resources :spritesheets, only: [:show, :new, :create, :edit, :update, :destroy] do
+    resources :spritesheets, only: [ :show, :new, :create, :edit, :update, :destroy ] do
       get :download, on: :member
     end
   end
   resources :assets_projects do
-    resources :assets_items, only: [:new, :create] do
-      resources :spritesheets, only: [:show, :new, :create, :edit, :update, :destroy] do
+    resources :assets_items, only: [ :new, :create ] do
+      resources :spritesheets, only: [ :show, :new, :create, :edit, :update, :destroy ] do
         get :download, on: :member
       end
     end
@@ -19,7 +25,10 @@ Rails.application.routes.draw do
 
   get "/leaderboard", to: "leaderboards#index"
 
-  delete "/logout", to: "sessions#destroy"
+  # primary logout route: support DELETE for normal operation and GET as a safe fallback
+  # some clients (e.g. crawlers or users with JS disabled) may issue a GET, so
+  # we handle both methods rather than raising a routing error.
+  match "/logout", to: "sessions#destroy", via: [ :delete, :get ]
 
   get "profile", to: "users#edit"
   patch "profile", to: "users#update"
@@ -107,25 +116,20 @@ Rails.application.routes.draw do
 
   get "up" => "rails/health#show", as: :rails_health_check
 
-  # Ensure a DELETE /logout exists for link_to(..., method: :delete).
-  # Be defensive: if a route or helper named :logout already exists, skip adding to avoid ArgumentError.
+  # ensure a named helper exists for logout and that it accepts DELETE (and GET via
+  # the primary route above). we guard against redefinition in case some other
+  # segment of the app already set up a logout path.
   begin
     unless Rails.application.routes.named_routes.key?(:logout)
-      delete "/logout", to: "sessions#destroy", as: :logout
+      # the `match` above already defines both methods; specify as a helper here too.
+      match "/logout", to: "sessions#destroy", via: [ :delete, :get ], as: :logout
     end
   rescue ArgumentError
     # another route with the same name/path was registered elsewhere — ignore to keep routes loadable
   end
 
-  # Development-only GET fallback when JS isn't running — only add if it won't collide
-  if Rails.env.development?
-    begin
-      # add GET fallback only when it won't raise due to duplicate routes
-      get "/logout", to: "sessions#destroy" unless Rails.application.routes.recognize_path("/logout", method: :get) rescue true
-    rescue ArgumentError, ActionController::RoutingError
-      # skip adding fallback if it collides or can't be recognized
-    end
-  end
+  # previous development-only GET fallback is no longer necessary, since the route
+  # already accepts GET in all environments.
 
   root "home#index"
 end

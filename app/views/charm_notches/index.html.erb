@@ -1,0 +1,16 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Charm notches" %>
+
+<h1>Charm notches</h1>
+
+<div id="charm_notches">
+  <% @charm_notches.each do |charm_notch| %>
+    <%= render charm_notch %>
+    <p>
+      <%= link_to "Show this charm notch", charm_notch %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New charm notch", new_charm_notch_path %>

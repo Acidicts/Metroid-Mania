@@ -76,14 +76,6 @@
         </div>
 
         <div class="admin-form-row">
-          <span class="admin-form-label">Credit Offset</span>
-          <div class="admin-form-control">
-            <span class="admin-input" style="display:inline-block;background:#f4f4f4;cursor:default;"><%= offset %></span>
-            <div class="field-hint">Admin adjustment (<em>target&nbsp;&minus;&nbsp;ships</em>). Computed automatically from the target below.</div>
-          </div>
-        </div>
-
-        <div class="admin-form-row">
           <label class="admin-form-label" for="user_credit_target">Credit Total (target)</label>
           <div class="admin-form-control">
             <%= number_field_tag "user[credit_target]", total, step: "any", id: "user_credit_target",
@@ -91,6 +83,17 @@
             <div class="field-hint">
               Set the desired total credits (<code>ships&nbsp;+&nbsp;offset</code>).
               The offset will be recalculated as <code>target&nbsp;&minus;&nbsp;ships&nbsp;(#{shipped})</code>.
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-form-row">
+          <label class="admin-form-label" for="user_charm_slots">Charm Slots</label>
+          <div class="admin-form-control">
+            <%= number_field_tag "user[charm_slots]", @user.charm_slots, step: "any", id: "user_charm_slots",
+                class: "admin-input #{'field-error' if @user.errors[:charm_slots].any?}" %>
+            <div class="field-hint">
+              Set the number of charm slots this user has.
             </div>
           </div>
         </div>

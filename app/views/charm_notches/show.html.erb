@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @charm_notch %>
+
+<div>
+  <%= link_to "Edit this charm notch", edit_charm_notch_path(@charm_notch) %> |
+  <%= link_to "Back to charm notches", charm_notches_path %>
+
+  <%= button_to "Destroy this charm notch", @charm_notch, method: :delete %>
+</div>

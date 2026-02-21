@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_20_150100) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_21_150000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -92,6 +92,24 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_20_150100) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["project_id"], name: "index_audits_on_project_id"
     t.index ["user_id"], name: "index_audits_on_user_id"
+  end
+
+  create_table "charm_notches", force: :cascade do |t|
+    t.integer "CharmSlot_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["CharmSlot_id"], name: "index_charm_notches_on_CharmSlot_id"
+    t.index ["user_id"], name: "index_charm_notches_on_user_id"
+  end
+
+  create_table "charm_slots", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "order_id"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["order_id"], name: "index_charm_slots_on_order_id"
+    t.index ["user_id"], name: "index_charm_slots_on_user_id"
   end
 
   create_table "comments", force: :cascade do |t|
@@ -282,6 +300,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_20_150100) do
   add_foreign_key "assets_projects", "users"
   add_foreign_key "audits", "projects"
   add_foreign_key "audits", "users"
+  add_foreign_key "charm_notches", "CharmSlots"
+  add_foreign_key "charm_notches", "users"
+  add_foreign_key "charm_slots", "orders"
+  add_foreign_key "charm_slots", "users"
   add_foreign_key "comments", "devlogs"
   add_foreign_key "comments", "ships"
   add_foreign_key "comments", "users"

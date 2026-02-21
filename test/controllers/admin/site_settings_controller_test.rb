@@ -6,14 +6,22 @@ class Admin::SiteSettingsControllerTest < ActionDispatch::IntegrationTest
     sign_in_as(@admin)
   end
 
-  test "can view and update shop setting" do
+  test "can view and update shop, running, and login restriction settings" do
     get admin_site_settings_url
     assert_response :success
 
-    patch admin_site_settings_url, params: { site_setting: { enabled: "0" } }
+    patch admin_site_settings_url, params: { site_setting: {
+      shop: "0",
+      running: "0",
+      disable_non_admin_logins: "1"
+    } }
     assert_redirected_to admin_site_settings_url
     assert_not SiteSetting.enabled?("shop")
+    assert_not SiteSetting.enabled?("running")
+    assert SiteSetting.enabled?("disable_non_admin_logins")
   ensure
     SiteSetting.set("shop", "true")
+    SiteSetting.set("running", "true")
+    SiteSetting.set("disable_non_admin_logins", "false")
   end
 end

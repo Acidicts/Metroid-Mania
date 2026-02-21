@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?
+  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile
   helper MarkdownHelper
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
@@ -35,6 +35,24 @@ class ApplicationController < ActionController::Base
     @current_user
   end
 
+  def slack_profile
+    return @slack_profile if defined?(@slack_profile)
+
+    user = current_user
+    if user&.slack_id.present?
+      @slack_profile = Rails.cache.fetch("slack_profile_#{user.slack_id}", expires_in: 1.hour) do
+        begin
+          profile = SlackService.new.users_info([ user.slack_id ]).first
+          profile.present? ? profile : nil
+        rescue => e
+          Rails.logger.error("ApplicationController#slack_profile Slack fetch error for #{user.id}: #{e.message}")
+          nil
+        end
+      end
+    end
+    @slack_profile
+  end
+
   def logged_in?
     !!current_user
   end
@@ -52,7 +70,7 @@ class ApplicationController < ActionController::Base
   end
 
   def require_admin
-    unless admin?
+    if !admin?
       flash_warn("Not authorized")
       redirect_to root_path and return
     end

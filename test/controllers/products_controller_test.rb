@@ -88,4 +88,13 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   ensure
     SiteSetting.set("shop", "true")
   end
+
+  test "banner appears for running disabled on product index" do
+    SiteSetting.set("running", "false")
+    get products_url
+    assert_response :success
+    assert_match /This ysws is not active RSVP here/, response.body
+  ensure
+    SiteSetting.set("running", "true")
+  end
 end

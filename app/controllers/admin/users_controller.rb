@@ -40,6 +40,10 @@ module Admin
         # do not store currency directly; it will be recalculated below
       end
 
+      if params[:user]&.key?(:charm_slots)
+        base_params[:charm_slots] = params[:user][:charm_slots].to_i
+      end
+
       previous_offset = @user.credit_offset.to_f
       if @user.update(base_params)
         # Audit credit offset changes (which represent a change in the user's total credits)
@@ -50,7 +54,8 @@ module Admin
             user_id: @user.id,
             before: old_total.round(6),
             after: new_total.round(6),
-            credit_offset: @user.credit_offset.to_f
+            credit_offset: @user.credit_offset.to_f,
+            charm_slots: @user.charm_slots
           })
           # Keep currency cache in sync
           @user.recalculate_currency!

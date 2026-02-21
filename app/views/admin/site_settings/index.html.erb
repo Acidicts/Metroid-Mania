@@ -3,9 +3,21 @@
 
   <%= form_with url: admin_site_settings_path, method: :patch, local: true do %>
     <div style="margin-bottom:12px;">
-      <label for="site_setting_enabled" style="font-weight:600; margin-right:8px;">Store (shop)</label>
-      <%= check_box_tag 'site_setting[enabled]', '1', SiteSetting.enabled?('shop'), id: 'site_setting_enabled' %>
+      <label for="site_setting_shop" style="font-weight:600; margin-right:8px;">Store (shop)</label>
+      <%= check_box_tag 'site_setting[shop]', '1', SiteSetting.enabled?('shop'), id: 'site_setting_shop' %>
       <span style="color:#6b7280; margin-left:8px;">Enable or disable the public storefront</span>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label for="site_setting_running" style="font-weight:600; margin-right:8px;">YSWS running</label>
+      <%= check_box_tag 'site_setting[running]', '1', SiteSetting.enabled?('running'), id: 'site_setting_running' %>
+      <span style="color:#6b7280; margin-left:8px;">If unchecked a site-wide banner will tell visitors the event is not active.</span>
+    </div>
+
+    <div style="margin-bottom:12px;">
+      <label for="site_setting_disable_non_admin_logins" style="font-weight:600; margin-right:8px;">Prevent non‑admin logins</label>
+      <%= check_box_tag 'site_setting[disable_non_admin_logins]', '1', SiteSetting.enabled?('disable_non_admin_logins', default: false), id: 'site_setting_disable_non_admin_logins' %>
+      <span style="color:#6b7280; margin-left:8px;">When enabled only administrators can sign in.</span>
     </div>
 
     <%= submit_tag 'Save', class: 'btn-retro' %>

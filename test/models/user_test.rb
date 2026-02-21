@@ -51,4 +51,30 @@ class UserTest < ActiveSupport::TestCase
     u.charm_slots = 3
     assert u.valid?
   end
+
+  test "loading a user creates any missing charm slot records" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev", charm_slots: 2)
+    # newly created record doesn't trigger after_find yet
+    assert_equal 0, u.charm_slots.count
+
+    # reload from database should trigger the callback and create slots
+    u2 = User.find(u.id)
+    assert_equal 2, u2.charm_slots.count
+    assert u2.charm_slots.all? { |s| s.user_id == u2.id }
+    # slot objects should be created without an associated order by default
+    assert u2.charm_slots.all? { |s| s.order.nil? }
+  end
+
+  test "subsequent loads only create the gap not duplicate existing slots" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev", charm_slots: 1)
+    u2 = User.find(u.id)
+    assert_equal 1, u2.charm_slots.count
+
+    u2.update!(charm_slots: 3)
+    # bumping the attribute doesn't immediately add slots until reload
+    assert_equal 1, u2.charm_slots.count
+
+    u3 = User.find(u.id)
+    assert_equal 3, u3.charm_slots.count
+  end
 end

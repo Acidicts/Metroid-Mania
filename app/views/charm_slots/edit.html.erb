@@ -1,0 +1,12 @@
+<% content_for :title, "Editing charm slot" %>
+
+<h1>Editing charm slot</h1>
+
+<%= render "form", charm_slot: @charm_slot %>
+
+<br>
+
+<div>
+  <%= link_to "Show this charm slot", @charm_slot %> |
+  <%= link_to "Back to charm slots", charm_slots_path %>
+</div>

@@ -1,0 +1,27 @@
+<%= form_with(model: charm_slot) do |form| %>
+  <% if charm_slot.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(charm_slot.errors.count, "error") %> prohibited this charm_slot from being saved:</h2>
+
+      <ul>
+        <% charm_slot.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :user_id, style: "display: block" %>
+    <%= form.text_field :user_id %>
+  </div>
+
+  <div>
+    <%= form.label :order_id, style: "display: block" %>
+    <%= form.text_field :order_id %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

@@ -167,4 +167,13 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   ensure
     SiteSetting.set("shop", "true")
   end
+
+  test "root page shows ysws-not-running banner when disabled" do
+    SiteSetting.set("running", "false")
+    get root_url
+    assert_response :success
+    assert_match /This ysws is not active RSVP here/, response.body
+  ensure
+    SiteSetting.set("running", "true")
+  end
 end

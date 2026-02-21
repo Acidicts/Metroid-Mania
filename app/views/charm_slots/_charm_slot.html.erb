@@ -1,0 +1,12 @@
+<div id="<%= dom_id charm_slot %>" style="display: inline-block; margin: 4px;">
+
+  <% if charm_slot.order_id.present? %>
+    <%# Add Logic for displaying custom charm for item %>
+    <%= charm_slot.order_id %>
+    <%= charm_slot.order.name %>
+  <% else %>
+    <%= charm_slot.order_id %>
+    <img height="48px" width="48px" src="https://cdn.hackclub.com/019c8076-7229-7de5-9709-a0e340b8ac65/Charm_Slot.png">
+  <% end %>
+
+</div>
