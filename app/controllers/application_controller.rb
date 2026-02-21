@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
   helper MarkdownHelper
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
+  before_action :load_charm_slots
 
   # DB-backed feature flag helper (falls back to ENV_<NAME>_ENABLED)
   def feature_enabled?(name)
@@ -116,6 +117,19 @@ class ApplicationController < ActionController::Base
       end
     rescue => e
       Rails.logger.warn("Invalid APP_URL: #{e.message}")
+    end
+  end
+
+  def load_charm_slots
+    # used by layout to render the current user's charm slot loadout. we set
+    # this for every request so that the value is available anywhere the
+    # header is rendered (which includes pages that aren't served by
+    # CharmSlotsController). without this the instance variable will be nil and
+    # the _loadout partial will blow up in production (see recent deploys).
+    if logged_in?
+      @charm_slots = current_user.charm_slots.includes(:order)
+    else
+      @charm_slots = []
     end
   end
 
