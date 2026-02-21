@@ -282,7 +282,7 @@
         <%= link_to 'Gallery', gallery_path %>
         <div style="flex:1"></div>
         <% if logged_in? %>
-          <div style="display: inline-flex">
+          <div style="display: inline-flex; align-items: center;">
             <%= render 'charm_slots/loadout' %>
             <div class="profile-menu">
               <a href="<%= user_profile_path(current_user) %>" class="profile-link">
