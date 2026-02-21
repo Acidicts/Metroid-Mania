@@ -321,7 +321,7 @@
 
     <% unless feature_enabled?(:running) %>
       <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
-        This ysws is not active – RSVP here. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+        This ysws is not active – RSVP <a href="https://metroidmania.fillout.com/rsvp">here</a>. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
       </div>
     <% end %>
 

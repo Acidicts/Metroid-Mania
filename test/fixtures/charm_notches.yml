@@ -2,8 +2,8 @@
 
 one:
   user: one
-  CharmSlot: one
+  charm_slot: one
 
 two:
   user: two
-  CharmSlot: two
+  charm_slot: two

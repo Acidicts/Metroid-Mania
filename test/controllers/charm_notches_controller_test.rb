@@ -17,7 +17,7 @@ class CharmNotchesControllerTest < ActionDispatch::IntegrationTest
 
   test "should create charm_notch" do
     assert_difference("CharmNotch.count") do
-      post charm_notches_url, params: { charm_notch: { CharmSlot_id: @charm_notch.CharmSlot_id, user_id: @charm_notch.user_id } }
+      post charm_notches_url, params: { charm_notch: { charm_slot_id: @charm_notch.charm_slot_id, user_id: @charm_notch.user_id } }
     end
 
     assert_redirected_to charm_notch_url(CharmNotch.last)
@@ -34,7 +34,7 @@ class CharmNotchesControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should update charm_notch" do
-    patch charm_notch_url(@charm_notch), params: { charm_notch: { CharmSlot_id: @charm_notch.CharmSlot_id, user_id: @charm_notch.user_id } }
+    patch charm_notch_url(@charm_notch), params: { charm_notch: { charm_slot_id: @charm_notch.charm_slot_id, user_id: @charm_notch.user_id } }
     assert_redirected_to charm_notch_url(@charm_notch)
   end
 

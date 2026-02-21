@@ -1,4 +1,4 @@
 class CharmNotch < ApplicationRecord
   belongs_to :user
-  belongs_to :CharmSlot
+  belongs_to :charm_slot
 end

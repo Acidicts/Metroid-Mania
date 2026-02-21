@@ -95,11 +95,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_090001) do
   end
 
   create_table "charm_notches", force: :cascade do |t|
-    t.integer "CharmSlot_id", null: false
+    t.integer "charm_slot_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["CharmSlot_id"], name: "index_charm_notches_on_CharmSlot_id"
+    t.index ["charm_slot_id"], name: "index_charm_notches_on_charm_slot_id"
     t.index ["user_id"], name: "index_charm_notches_on_user_id"
   end
 
@@ -302,7 +302,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_090001) do
   add_foreign_key "assets_projects", "users"
   add_foreign_key "audits", "projects"
   add_foreign_key "audits", "users"
-  add_foreign_key "charm_notches", "CharmSlots"
+  add_foreign_key "charm_notches", "charm_slots"
   add_foreign_key "charm_notches", "users"
   add_foreign_key "charm_slots", "orders"
   add_foreign_key "charm_slots", "users"

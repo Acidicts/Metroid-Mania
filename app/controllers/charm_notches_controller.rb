@@ -65,6 +65,6 @@ class CharmNotchesController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def charm_notch_params
-      params.expect(charm_notch: [ :user_id, :CharmSlot_id ])
+      params.expect(charm_notch: [ :user_id, :charm_slot_id ])
     end
 end
