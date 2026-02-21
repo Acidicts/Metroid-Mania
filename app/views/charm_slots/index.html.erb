@@ -16,4 +16,20 @@
   <% end %>
 </div>
 
-
+<div id="charm_notches">
+  <p><strong>Notches:</strong></p>
+  <% (current_user.charm_notches.where(charm_slot: nil).count || 0).times do |i| %>
+    <% if asset_exists?("charm_notch_full.png") %>
+      <%= image_tag "charm_notch_full.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
+    <% else %>
+      <!-- fallback content or blank --><span class="notch-icon missing"></span>
+    <% end %>
+  <% end %>
+  <% (current_user.charm_notches.where.not(charm_slot: nil).count || 0).times do |i| %>
+    <% if asset_exists?("charm_notch_empty.png") %>
+      <%= image_tag "charm_notch_empty.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
+    <% else %>
+      <!-- fallback content or blank --><span class="notch-icon missing"></span>
+    <% end %>
+  <% end %>
+</div>

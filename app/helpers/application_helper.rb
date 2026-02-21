@@ -43,15 +43,24 @@ module ApplicationHelper
   # Check whether a logical asset exists in the current asset configuration.
   # Works with Sprockets (development) and Propshaft (production), with fallbacks.
   def asset_exists?(logical_path)
-    # 1) Check local source file (works in dev & for simple deployments)
-    return true if Rails.root.join("app", "assets", "stylesheets", logical_path).exist?
+    # 1) Look for a source file under app/assets (images, javascripts, stylesheets).
+    #    This works in development and for simple deployments where assets aren't
+    #    precompiled.  We check the generic `app/assets` tree because the logical
+    #    path doesn't indicate the subfolder.
+    return true if Rails.root.join("app", "assets", logical_path).exist?
 
-    # 2) Sprockets (development) - check the runtime environment
+    # 2) If a runtime asset environment is present (Sprockets in dev or a
+    #    Propshaft environment), ask it.  Propshaft::Environment#find_asset will
+    #    raise when the logical path is missing, so swallow that and return false.
     if defined?(Rails.application.assets) && Rails.application.assets.respond_to?(:find_asset)
-      return Rails.application.assets.find_asset(logical_path).present?
+      begin
+        return Rails.application.assets.find_asset(logical_path).present?
+      rescue Propshaft::MissingAssetError
+        return false
+      end
     end
 
-    # 3) Propshaft manifest (produced to public/assets/manifest.json)
+    # 3) Inspect the Propshaft manifest produced by `rails assets:precompile`.
     manifest_path = Rails.root.join("public", "assets", "manifest.json")
     if manifest_path.exist?
       begin
@@ -62,7 +71,7 @@ module ApplicationHelper
       end
     end
 
-    # 4) Fallback: check public/assets for files matching the logical name
+    # 4) Last‑ditch: look for any file with a matching basename in public/assets.
     assets_dir = Rails.root.join("public", "assets")
     if assets_dir.exist?
       basename = File.basename(logical_path, File.extname(logical_path))
