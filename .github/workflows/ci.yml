@@ -206,42 +206,42 @@ jobs:
             echo "No annotation changes detected."
           fi
   
-  coolify_deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Trigger Coolify deploy via API
-        env:
-          # Your specific deploy URL
-          COOLIFY_DEPLOY_URL: "https://coolify.bing-bong.uk/api/v1/deploy?uuid=fk8g0gk000gokko4g8kc8c8s&force=false"
-          # The API Token generated in Coolify (Keys & Tokens)
-          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
-        run: |
-          set -euo pipefail
+  # coolify_deploy:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Trigger Coolify deploy via API
+  #       env:
+  #         # Your specific deploy URL
+  #         COOLIFY_DEPLOY_URL: "https://coolify.bing-bong.uk/api/v1/deploy?uuid=fk8g0gk000gokko4g8kc8c8s&force=false"
+  #         # The API Token generated in Coolify (Keys & Tokens)
+          # COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+  #       run: |
+  #         set -euo pipefail
 
-          if [ -z "$COOLIFY_TOKEN" ]; then
-            echo "ERROR: COOLIFY_TOKEN secret is not set in GitHub"
-            exit 1
-          fi
+  #         if [ -z "$COOLIFY_TOKEN" ]; then
+  #           echo "ERROR: COOLIFY_TOKEN secret is not set in GitHub"
+  #           exit 1
+  #         fi
 
-          echo "🚀 Triggering deployment at coolify.bing-bong.uk..."
+  #         echo "🚀 Triggering deployment at coolify.bing-bong.uk..."
 
-          # Coolify API uses GET for this endpoint with the Bearer token
-          response=$(curl -s -w "\n%{http_code}" -X GET "$COOLIFY_DEPLOY_URL" \
-            -H "Authorization: Bearer $COOLIFY_TOKEN" \
-            -H "Content-Type: application/json")
+  #         # Coolify API uses GET for this endpoint with the Bearer token
+  #         response=$(curl -s -w "\n%{http_code}" -X GET "$COOLIFY_DEPLOY_URL" \
+  #           -H "Authorization: Bearer $COOLIFY_TOKEN" \
+  #           -H "Content-Type: application/json")
 
-          http_code=$(echo "$response" | tail -n1)
-          body=$(echo "$response" | sed '$d')
+  #         http_code=$(echo "$response" | tail -n1)
+  #         body=$(echo "$response" | sed '$d')
 
-          echo "Coolify Status: $http_code"
-          echo "Response Body: $body"
+  #         echo "Coolify Status: $http_code"
+  #         echo "Response Body: $body"
 
-          if [ "$http_code" -ge 400 ]; then
-            echo "❌ Deployment failed to trigger."
-            exit 1
-          fi
+  #         if [ "$http_code" -ge 400 ]; then
+  #           echo "❌ Deployment failed to trigger."
+  #           exit 1
+  #         fi
 
-          echo "✅ Deployment successfully queued!"
+  #         echo "✅ Deployment successfully queued!"
 
 
 
