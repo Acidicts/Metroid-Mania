@@ -316,7 +316,7 @@
     <% else %>
       <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :product_id, @product.id %>
-        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong><%= sprintf('%.2f', @product.notch_cost || 0) %></strong> Notches.</p>
+        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', @product.notch_cost || 0) %></strong> Notches.</p>
 
         <div style="margin-top: 12px;">
           <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>

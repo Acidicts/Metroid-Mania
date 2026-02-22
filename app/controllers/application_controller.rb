@@ -134,7 +134,8 @@ class ApplicationController < ActionController::Base
     # CharmSlotsController). without this the instance variable will be nil and
     # the _loadout partial will blow up in production (see recent deploys).
     if logged_in?
-      @charm_slots = current_user.charm_slots.includes(:order)
+      # query directly to bypass User#charm_slots attribute
+      @charm_slots = CharmSlot.where(user: current_user).includes(:order)
     else
       @charm_slots = []
     end

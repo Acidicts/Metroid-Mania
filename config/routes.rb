@@ -4,7 +4,18 @@ Rails.application.routes.draw do
   # the show action with id = "loadout".
   get "charm_slots/loadout", to: redirect("/charm_slots")
 
-  resources :charm_slots
+  resources :charm_slots do
+    collection do
+      # submit a user's pending slots (loadout) for processing
+      post :submit
+    end
+    member do
+      # detach a slot from its order and clear any attached notches
+      patch :remove
+      # support GET for clients that can't do PATCH (older browsers, crawlers)
+      get :remove
+    end
+  end
   resources :assets_items do
     resources :spritesheets, only: [ :show, :new, :create, :edit, :update, :destroy ] do
       get :download, on: :member
@@ -66,6 +77,8 @@ Rails.application.routes.draw do
         post :decline
         post :delete
         post :pend
+        post :update_status
+        post :dm
       end
     end
     resources :projects do

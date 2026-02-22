@@ -18,13 +18,18 @@ class OrderTest < ActiveSupport::TestCase
 
   test "statuses_for_select does not call an incompatible statuses method" do
     # simulate a broken/odd-arity statuses method that would previously cause class-eval errors
+    orig = Order.method(:statuses) if Order.respond_to?(:statuses)
     Order.define_singleton_method(:statuses) { |*_args| raise "should not be called" }
 
     begin
       assert_equal Order::STATUSES, Order.statuses_for_select
     ensure
-      # restore environment
-      Order.singleton_class.send(:remove_method, :statuses) rescue nil
+      # restore the original definition if we saved one; otherwise remove the override
+      if orig
+        Order.define_singleton_method(:statuses, &orig)
+      else
+        Order.singleton_class.send(:remove_method, :statuses) rescue nil
+      end
     end
   end
 

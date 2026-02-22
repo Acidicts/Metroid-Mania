@@ -8,7 +8,8 @@ class CharmSlotsController < ApplicationController
   # action which was exposed as a route, but we now keep it internal only).
   def index
     if logged_in? && !admin?
-      @charm_slots = current_user.charm_slots.includes(:order)
+      # avoid collision with the `charm_slots` integer column on User
+      @charm_slots = CharmSlot.where(user: current_user).includes(:order)
     else
       @charm_slots = CharmSlot.all
     end
@@ -42,6 +43,57 @@ class CharmSlotsController < ApplicationController
     end
   end
 
+  # POST /charm_slots/submit or /charm_slots/submit/:user_id
+  # This action transitions all of the given user's pending slots to `submitted`.
+  # The user parameter is provided via the route, but for security we only allow
+  # the current user unless an admin is performing the action.
+  def submit
+    user = if admin? && params[:user_id].present?
+             User.find(params[:user_id])
+    else
+             current_user
+    end
+
+    # iterate slots that have an order pending approval
+    user.charm_slots.includes(:order).where.not(order_id: nil).find_each do |slot|
+      if slot.order&.status == "pending"
+        slot.order.status = "submitted"
+        slot.order.save!
+      end
+    end
+
+    respond_to do |format|
+      format.html { redirect_to charm_slots_path, notice: "Loadout submitted successfully." }
+      format.json { head :no_content }
+    end
+  end
+
+  def remove
+    # load early so we can inspect it for authorization and status checks
+    @charm_slot = CharmSlot.find(params[:id])
+
+    # only allow the owner or an admin to change a slot
+    unless (current_user && current_user.charm_slots.exists?(id: @charm_slot.id)) || admin?
+      redirect_to charm_slots_path and flash_warn("You are not Authorised to do this") and return
+    end
+
+    # cannot remove if slot has already moved past pending state
+    if @charm_slot.order.nil? || @charm_slot.order.status != "pending"
+      redirect_to charm_slots_path and flash_warn("This Charm Is already submitted dm @Alex if you have any issues") and return
+    end
+
+    # mark the associated order as cancelled and clear ownership
+    @charm_slot.order.update!(status: "user_denied")
+    @charm_slot.update!(order_id: nil)
+    @charm_slot.charm_notches.update_all(charm_slot_id: nil)
+
+    # respond similarly to other mutating actions
+    respond_to do |format|
+      format.html { redirect_to charm_slots_path, notice: "Charm slot was successfully cleared.", status: :see_other }
+      format.json { head :no_content }
+    end
+  end
+
   # PATCH/PUT /charm_slots/1 or /charm_slots/1.json
   def update
     respond_to do |format|
@@ -57,6 +109,10 @@ class CharmSlotsController < ApplicationController
 
   # DELETE /charm_slots/1 or /charm_slots/1.json
   def destroy
+    unless (current_user && @charm_slot.user == current_user) || admin?
+      redirect_to charm_slots_path and flash_warn("You are not Authorised to do this") and return
+    end
+
     @charm_slot.destroy!
 
     respond_to do |format|

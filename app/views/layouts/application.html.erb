@@ -299,6 +299,7 @@
 
               <ul class="profile-dropdown">
                 <li>
+                  <%= link_to 'My Charms', charm_slots_loadout_path() %>
                   <%= link_to 'Sign out', logout_path, data: { turbo_method: :delete } %>
                 </li>
               </ul>

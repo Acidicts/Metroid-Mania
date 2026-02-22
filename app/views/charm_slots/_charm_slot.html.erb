@@ -1,8 +1,16 @@
 <style>
+  .charm-slot {
+    display: inline-block;
+    margin: 4px;
+    vertical-align: middle;
+  }
+
+  .charm-slot img {
+    vertical-align: middle;
+  }
+
   .charm-slot-link {
     display: inline-block;
-    width: 48px;
-    height: 48px;
     border-radius: 8px;
     overflow: hidden;
     border: 2px solid transparent;
@@ -14,20 +22,36 @@
   }
 </style>
 
-<div id="<%= dom_id charm_slot %>" style="display: inline-block; margin: 4px;">
+<div id="<%= dom_id charm_slot %>" class="charm-slot">
 
   <% if charm_slot.order_id.present? %>
     <%# Show an image if the related order has either a custom charm URL or a product image %>
     <% if charm_slot.order.charm_image_url_for_display.present? %>
-      <a href="<%= order_path(charm_slot.order) %>" title="<%= charm_slot.order.name.split(" - ").first %>" class="charm-slot-link">
-        <img height="48" width="48" src="<%= charm_slot.order.charm_image_url_for_display %>" alt="Charm image" />
-      </a>
+      <% if request.path == charm_slots_path %>
+        <div style="position: relative; display: inline-block;">
+          <a href="<%= order_path(charm_slot.order) %>" title="<%= charm_slot.order.name.split(" - ").first %>" class="charm-slot-link">
+            <img height="96px" width="96px" src="<%= charm_slot.order.charm_image_url_for_display %>" alt="Charm image" />
+          </a>
+          <%= link_to remove_charm_slot_path(charm_slot), method: :patch, class: "remove-charm-slot-link", title: "Remove Charm" do %>
+            <span style="position:relative; top:0">&times;</span>
+          <% end %>
+        </div>
+      <% else %>
+        <a href="<%= order_path(charm_slot.order) %>" title="<%= charm_slot.order.name.split(" - ").first %>" class="charm-slot-link">
+          <img height="48px" width="48px" src="<%= charm_slot.order.charm_image_url_for_display %>" alt="Charm image" />
+        </a>
+      <% end %>
     <% else %>
       <%= charm_slot.order.name %>
     <% end %>
   <% else %>
-    <%= charm_slot.order_id %>
-    <img height="48px" width="48px" src="https://cdn.hackclub.com/019c8076-7229-7de5-9709-a0e340b8ac65/Charm_Slot.png">
+    <% if request.path != charm_slots_path %>
+      <%= charm_slot.order_id %>
+      <%= image_tag "charm_notch_empty.png", height: "48px", width: "48px"%>
+    <% else %>
+      <%= charm_slot.order_id %>
+      <%= image_tag "charm_notch_empty.png", height: "48px", width: "48px"%>
+    <% end %>
   <% end %>
 
 </div>

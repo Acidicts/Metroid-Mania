@@ -3,10 +3,18 @@
       <div class="product-content">
         <h3><%= product.name %></h3>
         <p style="word-wrap: break-word; overflow-wrap: break-word;"><%= simple_format(product.description) %></p>
-        <p style="word-wrap: break-word; overflow-wrap: break-word;"><%= credit_label %>: <% if product.cost_in_credits.present? %><%= sprintf('%.2f', product.cost_in_credits) %><% else %><em>Variable</em><% end %></p>
+        <p style="word-wrap: break-word; overflow-wrap: break-word;">Notches: <span style="font-family: Comfortaa, monospace;"><%= product.notch_cost %></span></p>
         <p style="word-wrap: break-word; overflow-wrap: break-word;">Stock: <% if product.limited? %><%= product.stock %><% else %><em>Unlimited</em><% end %></p>
 
-        <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro buy-button' %>
+        <%# When the user clicks the button we create the order immediately instead of
+            showing the intermediate checkout page.  For variable-grant products we
+            include the minimum dollar amount so the order validates. %>
+        <% order_params = { product_id: product.id } %>
+        <% if product.variable_grant? %>
+          <% order_params[:grant_amount_dollars] = product.grant_min_dollars %>
+        <% end %>
+        <%= button_to "Add To Loadout", orders_path(order_params), method: :post,
+                      class: 'btn-retro buy-button', form: { "data-turbo" => false } %>
         <% if admin? %>
           <div style="margin-top:8px;">
             <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>

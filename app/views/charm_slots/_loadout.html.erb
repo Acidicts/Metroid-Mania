@@ -1,14 +1,16 @@
 <div id="charm_slots">
-  <% empty_slots = @charm_slots.where(order_id: nil) %>
-  <% filled_count = @charm_slots.where.not(order_id: nil).order(:order_id).count %>
-  <% (5 - filled_count).times do |i| %>
-    <% charm_slot = empty_slots.first || CharmSlot.new %>
-    <%= render charm_slot %>
-  <% end %>
-
-  <% @charm_slots.where.not(order_id: nil).order(:order_id).each do |charm_slot| %>
-    <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
+  <% if request.path != charm_slots_path %>
+    <% empty_slots = @charm_slots.where(order_id: nil) %>
+    <% filled_count = @charm_slots.where.not(order_id: nil).order(:order_id).count %>
+    <% (5 - filled_count).times do |i| %>
+      <% charm_slot = empty_slots.first || CharmSlot.new %>
       <%= render charm_slot %>
+    <% end %>
+
+    <% @charm_slots.where.not(order_id: nil).order(:order_id).each do |charm_slot| %>
+      <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
+        <%= render charm_slot %>
+      <% end %>
     <% end %>
   <% end %>
 </div>

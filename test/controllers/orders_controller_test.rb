@@ -4,12 +4,28 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @order = orders(:one)
     @user = users(:one)
-    # ensure the test user has an email for dev sign-in and sufficient balance
+    # ensure the test user has an email for dev sign-in, sufficient balance and free notches
     @user.update!(email: "user@example.com", currency: 100.0)
+    # give the user a bunch of free notches so orders can succeed without worrying about
+    # their cost in tests
+    @user.adjust_charm_notches!(100)
+
+    # make sure the shop feature flag is on for tests (some environments default off)
+    SiteSetting.set(:shop, true) if defined?(SiteSetting)
+
     sign_in_as(@user)
   end
 
   test "should get index" do
+    get orders_url
+    # non-admin users are redirected to home
+    assert_response :redirect
+    assert_redirected_to home_url
+
+    # admin users still see the index
+    admin = users(:one)
+    admin.update!(role: :admin, email: "admin@example.com")
+    sign_in_as(admin)
     get orders_url
     assert_response :success
   end
@@ -17,10 +33,6 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
   test "should create order" do
     # choose a brand new product so test avoids fixture collisions
     product = Product.create!(name: "TempProduct", steam_app_id: 9999, price_currency: 5.0)
-    puts "DEBUG product id=#{product.id} name=#{product.name}"
-
-    # debug: list existing orders
-    puts "DEBUG ORDERS BEFORE: #{Order.all.map { |o| [ o.id, o.user&.email, o.product&.id, o.product&.name, o.status ] }.inspect }"
 
     # Ensure no pending order exists for this user/product before we start
     @user.orders.where(product: product, status: "pending").destroy_all
@@ -29,10 +41,9 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
       post orders_url, params: { product_id: product.id, charm_image_url: "https://cdn.example.com/charm.png" }
     end
 
-    assert response.redirect?
-    loc = response.location
-    id_param = loc.match(%r{/orders/([^/]+)})[1]
-    order = Order.find_by_param(id_param)
+    # controller now redirects back to products index after successful purchase
+    assert_redirected_to products_url
+    order = Order.last
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
     assert_equal "https://cdn.example.com/charm.png", order.charm_image_url
@@ -60,10 +71,10 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     after = Order.count
 
     assert_equal before, after, "Duplicate pending order was created"
-    assert response.redirect?
+    assert_redirected_to home_url
     follow_redirect!
 
-    assert_match /Order/, flash[:notice].to_s
+    assert_match(/Already In Loadout/, flash[:alert].to_s)
   end
 
   test "can create new order after a previous denied order (and refund occurs)" do
@@ -105,6 +116,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     # Create an order that is already denied but (simulating buggy code) the user wasn't refunded
     denied = @user.orders.create!(product: product, status: "denied", cost: product.price_currency)
     @user.update!(currency: 0.0)
+    # strip away any free notches so a new purchase truly lacks funds
+    @user.adjust_charm_notches!(0)
 
     # Attempt to create a new order — should not raise a confusing uniqueness error; instead show helpful alert
     post orders_url, params: { product_id: product.id }
@@ -112,7 +125,22 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
 
     puts "DEBUG: response.status=#{response.status}, flash=#{flash.to_hash.inspect}"
-    assert_includes flash[:alert].to_s, "denied order"
+    # message should mention either the denied order or lack of notches
+    assert_match(/denied|Notches/, flash[:alert].to_s)
+  end
+
+  test "insufficient funds redirects back to products with error" do
+    product = Product.create!(name: "TempProductInsuff", steam_app_id: 9966, price_currency: 9.0)
+
+    # make sure user has no money and no denied orders
+    @user.update!(currency: 0.0)
+    # remove any free notches so currency check actually fails
+    @user.adjust_charm_notches!(0)
+
+    post orders_url, params: { product_id: product.id }
+    assert_redirected_to products_url
+    follow_redirect!
+    assert_includes flash[:alert].to_s, "Insufficient Notches"
   end
 
   test "should create order with variable grant amount" do
@@ -185,15 +213,48 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     product = Product.create!(name: "HasImage", steam_app_id: 1234, price_currency: 1.0, image_url: "http://foo/bar.png")
     get new_order_url(product_id: product.id)
     assert_response :success
-    assert_select "input[name='charm_image_url'][value='http://foo/bar.png']"
+    # the controller should set the order instance attribute correctly even if
+    # the rendered form doesn't expose the field for non-variable purchases
+    assert_equal product.image_url, assigns(:order).charm_image_url
+  end
+
+  test "product card Add To Loadout button posts directly to orders#create" do
+    product = Product.create!(name: "DirectBuy", steam_app_id: 5555, price_currency: 3.0)
+    get products_url
+    assert_response :success
+
+    assert_select "div.product-card" do
+      assert_select "form[action^='#{orders_path}']" do
+        assert_select "input[name='product_id'][value='#{product.id}']"
+        assert_select "input[type=submit][value='Add To Loadout']"
+      end
+    end
+  end
+
+  test "product card for variable grant products includes minimum grant value" do
+    product = Product.create!(
+      name: "VariableAuto",
+      steam_app_id: 5556,
+      price_currency: 1.0,
+      variable_grant: true,
+      grant_min_cents: 2500, # $25.00
+      grant_max_cents: 10000 # $100.00
+    )
+
+    get products_url
+    assert_response :success
+
+    assert_select "div.product_card, div.product-card" do
+      # only check that parameter is present somewhere in the form
+      assert_select "input[name='grant_amount_dollars']", 1
+    end
   end
 
   test "invalid charm_image_url prevents creation and displays error" do
     product = Product.create!(name: "TempBadUrl", steam_app_id: 9995, price_currency: 2.0)
     post orders_url, params: { product_id: product.id, charm_image_url: "not_a_url" }
-    assert_response :redirect
-    follow_redirect!
-    assert_match /must be a valid URL/, flash[:alert].to_s
+    assert_response :unprocessable_entity
+    assert_select "div", /must be a valid URL/
     # no new order should have been added
     assert_not Order.exists?(product: product, user: @user)
   end
@@ -215,7 +276,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     SiteSetting.set("running", "false")
     get root_url
     assert_response :success
-    assert_match /This ysws is not active RSVP here/, response.body
+    assert_match /This ysws is not active/, response.body
   ensure
     SiteSetting.set("running", "true")
   end

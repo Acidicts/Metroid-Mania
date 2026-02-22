@@ -6,7 +6,7 @@ class OrdersController < ApplicationController
   # GET /orders or /orders.json
   def index
     if !current_user.admin?
-      redirect_to home_path and flash_warn("You have no orders") and return unless current_user.orders.count > 0
+      redirect_to home_path and return
     end
 
     @orders = current_user.orders.order(created_at: :desc)
@@ -78,8 +78,8 @@ class OrdersController < ApplicationController
       existing_pending = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
       puts "DEBUG OrdersController#create: existing_pending=#{existing_pending&.id.inspect} status=#{existing_pending&.status.inspect}"
       if existing_pending
-        flash_pass("Order already placed")
-        redirect_to existing_pending and return
+        flash_warn("Already In Loadout")
+        redirect_to home_path and return
       end
 
       puts "DEBUG OrdersController#create: current_user.currency=#{current_user.currency.inspect} product.price_currency=#{@product.price_currency.inspect}"
@@ -95,9 +95,11 @@ class OrdersController < ApplicationController
           # store cents on the order model
           order_attrs[:grant_amount_cents] = (params[:grant_amount_dollars].to_f * 100).round
         end
-        # custom charm image URL if provided
+        # custom charm image URL if provided; otherwise default to product image when one exists
         if params[:charm_image_url].present?
           order_attrs[:charm_image_url] = params[:charm_image_url]
+        elsif @product.image_url.present?
+          order_attrs[:charm_image_url] = @product.image_url
         end
 
         @order = current_user.orders.create!(order_attrs)
@@ -106,14 +108,14 @@ class OrdersController < ApplicationController
         Rails.logger.warn "OrdersController#create: caught #{e.class} - #{e.message.inspect}; attempting to locate existing pending order"
         existing = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
         if existing
-          flash_pass("Order already placed")
-          redirect_to existing and return
+          flash_warn("Already In Loadout")
+          redirect_to home_path and return
         end
       end
 
       if @order && @order.persisted?
         flash_pass("Order placed successfully!")
-        redirect_to @order and return
+        redirect_to products_path and return
       else
         @order = current_user.orders.build(
           product: @product,
@@ -122,15 +124,23 @@ class OrdersController < ApplicationController
         )
         @order.charm_image_url = params[:charm_image_url] if params[:charm_image_url].present?
 
-        # If creation failed due to insufficient funds and there's a denied order for the same product,
-        # surface a clearer message so users know a refund may be missing.
-        if @order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] : "denied")))
-            flash_warn("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
-            redirect_to products_path and return
+        # This branch is unlikely to be hit (create! either returns a persisted record
+        # or raises), but keep defensive handling in case the adapter behaves
+        # differently.  We mirror the logic from the RecordInvalid rescue below.
+        insuff = @order.errors[:base].any? { |m| m =~ /\AInsufficient/ }
+        if insuff &&
+           current_user.orders.exists?(product: @product,
+                                      status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] :
+                                                                      (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] :
+                                                                                                         "denied")))
+          flash_warn("Insufficient Notches — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
+        elsif insuff
+          flash_warn("Insufficient Notches")
         else
-            flash_error(@order.errors.full_messages.to_sentence)
-            redirect_to products_path and return
+          flash_warn(@order.errors.full_messages.to_sentence)
         end
+
+        redirect_to products_path and return
       end
     rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
       puts "DEBUG OrdersController#create: outer rescue caught #{e.class} - #{e.message.inspect}"
@@ -141,7 +151,7 @@ class OrdersController < ApplicationController
         existing = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
         if existing
           flash_info("Order already placed")
-          redirect_to existing and return
+          redirect_to products_path and return
         end
       end
 
@@ -152,16 +162,24 @@ class OrdersController < ApplicationController
       # Save failed due to validation (e.g. insufficient funds). Inspect the invalid record from the exception.
       invalid_order = e.record
 
-      # Check for denied order condition first, regardless of product match
-      if invalid_order.errors[:base].include?("Insufficient funds") && current_user.orders.exists?(product: @product, status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] : (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] : "denied")))
-        flash_warn("Insufficient funds — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
+      # Check for insufficient‑funds/free‑notches/denied‑order scenarios first
+      insuff = invalid_order.errors[:base].any? { |m| m =~ /\AInsufficient/ }
+      if insuff
+        if current_user.orders.exists?(product: @product,
+                                     status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] :
+                                                                             (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] :
+                                                                                                                "denied")))
+          flash_warn("Insufficient Notches — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
+        else
+          flash_warn("Insufficient Notches")
+        end
         redirect_to products_path and return
       elsif invalid_order.product_id == @product.id
         # re-render the checkout page with the invalid order so users can fix the input
         @order = invalid_order
         render :new, status: :unprocessable_entity
       else
-        flash_error(invalid_order.errors.full_messages.to_sentence)
+        flash_warn(invalid_order.errors.full_messages.to_sentence)
         redirect_to products_path and return
       end
     end

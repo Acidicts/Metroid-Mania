@@ -7,7 +7,7 @@
         <% end %>
         <div>
           <div style="font-weight:700; font-size:1.05rem;"><%= @order.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
-        <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.email %></div>
+        <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.slack_id %></div>
         <div style="margin-top:6px; color:#666; font-size:0.9rem;">Created: <%= l(@order.created_at, format: :short) %></div>
       </div>
 
@@ -24,6 +24,7 @@
           <% elsif @order.status == "denied" %>
             <%= button_to "Delete", delete_admin_order_path(@order), method: :post, data: { confirm: 'Delete denied order?' }, class: 'btn-retro-admin' %>
           <% end %>
+            <%= button_to "DM User", dm_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
         </div>
       </div>
     </div>
@@ -41,6 +42,18 @@
     </div>
   </div>
   <br>
+
+  <div class="order-status-dropdown" style="margin-top:18px; margin-bottom:12px;">
+    <strong>Change Status:</strong>
+    <%= form_with url: update_status_admin_order_path(@order), method: :post, style: 'display:inline-flex; gap:8px; align-items:center; margin-top:8px;' do |f| %>
+      <%= f.select :status,
+            Order::STATUS_VALUE_MAP.keys.map { |s| [s.humanize, s] },
+            { selected: @order.status.to_s },
+            class: 'admin-select', style: 'padding:6px 10px; border:2px solid var(--admin-700, #555); border-radius:4px; font-size:0.95rem;' %>
+      <%= f.submit 'Update Status', class: 'btn-retro-admin', style: 'cursor:pointer;' %>
+    <% end %>
+  </div>
+
   <%= link_to 'Back', admin_orders_path, class: 'btn-retro-admin' %>
 
     </div> <!-- admin-panel-show-order -->

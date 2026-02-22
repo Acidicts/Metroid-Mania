@@ -2,7 +2,7 @@ module Admin
   class OrdersController < Admin::ApplicationController
     before_action :require_admin
     # ensure @order is set for any admin actions that operate on a single order
-    before_action :set_order, only: [:show, :pend, :fulfill, :decline, :delete]
+    before_action :set_order, only: [ :show, :pend, :fulfill, :decline, :delete, :update_status, :dm ]
 
     # Gracefully handle missing orders in the admin UI so admins see a friendly message
     rescue_from ActiveRecord::RecordNotFound, with: :order_not_found
@@ -12,7 +12,7 @@ module Admin
 
       if params[:q].present?
         q = params[:q].to_s.strip
-        if q.start_with?('!')
+        if q.start_with?("!")
           @orders = Order.where(public_id: q)
         elsif q =~ /\A\d+\z/
           @orders = Order.where(id: q.to_i)
@@ -26,34 +26,56 @@ module Admin
     def show
     end
 
-    def pend
-      if @order.pending?
-        redirect_back fallback_location: admin_orders_path, alert: 'Order is already pending.'
+    def update_status
+      requested = params[:status].to_s.strip
+      db_val, canonical = normalize_status_for_db(requested)
+
+      if db_val.nil?
+        redirect_back fallback_location: admin_order_path(@order), alert: "Invalid status: #{requested}"
+        return
+      end
+
+      if @order.status.to_s == canonical.to_s
+        redirect_back fallback_location: admin_order_path(@order), alert: "Order is already #{canonical}."
         return
       end
 
       previous = @order.status
-      db_val = normalize_status_for_db('pending').first || (Order.respond_to?(:statuses) ? Order.statuses['pending'] : 'pending')
       @order.update!(status: db_val)
-      Audit.create!(user: current_user, project: nil, action: 'order_pended', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
-      redirect_back fallback_location: admin_orders_path, notice: 'Order status reverted to pending.'
+      Audit.create!(user: current_user, project: nil, action: "order_status_changed",
+                    details: { order_id: @order.id, order_public_id: @order.public_id,
+                               previous_status: canonical_status(previous), new_status: canonical })
+      redirect_back fallback_location: admin_order_path(@order), notice: "Order status updated to #{canonical}."
+    end
+
+    def pend
+      if @order.pending?
+        redirect_back fallback_location: admin_orders_path, alert: "Order is already pending."
+        return
+      end
+
+      previous = @order.status
+      db_val = normalize_status_for_db("pending").first || (Order.respond_to?(:statuses) ? Order.statuses["pending"] : "pending")
+      @order.update!(status: db_val)
+      Audit.create!(user: current_user, project: nil, action: "order_pended", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+      redirect_back fallback_location: admin_orders_path, notice: "Order status reverted to pending."
     end
 
     def fulfill
       if @order.shipped?
-        redirect_back fallback_location: admin_orders_path, alert: 'Order already fulfilled.'
+        redirect_back fallback_location: admin_orders_path, alert: "Order already fulfilled."
         return
       end
 
       if @order.product&.limited? && @order.product.stock.present? && @order.product.stock <= 0
-        redirect_back fallback_location: admin_orders_path, alert: 'Cannot fulfill order: product is out of stock.'
+        redirect_back fallback_location: admin_orders_path, alert: "Cannot fulfill order: product is out of stock."
         return
       end
 
       previous = @order.status
-      dbg = normalize_status_for_db('shipped')
+      dbg = normalize_status_for_db("shipped")
       puts "DEBUG normalize_status_for_db('shipped') => #{dbg.inspect}"
-      db_val = dbg.first || (Order.respond_to?(:statuses) ? Order.statuses['shipped'] : 'shipped')
+      db_val = dbg.first || (Order.respond_to?(:statuses) ? Order.statuses["shipped"] : "shipped")
       puts "DEBUG Admin::OrdersController#fulfill before=#{previous.inspect} db_val=#{db_val.inspect}"
       begin
         @order.update!(status: db_val)
@@ -66,13 +88,26 @@ module Admin
         @order.product.decrement!(:stock)
       end
 
-      Audit.create!(user: current_user, project: nil, action: 'order_fulfilled', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous), new_status: canonical_status(@order.status) })
-      redirect_back fallback_location: admin_orders_path, notice: 'Order marked as fulfilled.'
+      Audit.create!(user: current_user, project: nil, action: "order_fulfilled", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous), new_status: canonical_status(@order.status) })
+      redirect_back fallback_location: admin_orders_path, notice: "Order marked as fulfilled."
+    end
+
+    # Sends the admin to the Slack profile of the order's user.
+    # The `@order` is already loaded by set_order before_action.
+    def dm
+      # guard in case user or slack_id is missing
+      slack_id = @order.user&.slack_id
+      if slack_id.present?
+        # allow_other_host to bypass Rails open redirect protection for the Slack domain
+        redirect_to "https://hackclub.enterprise.slack.com/team/#{slack_id}", allow_other_host: true
+      else
+        redirect_back fallback_location: admin_order_path(@order), alert: "User does not have a Slack ID."
+      end
     end
 
     def delete
       unless @order.denied?
-        redirect_back fallback_location: admin_orders_path, alert: 'Only denied orders can be deleted.'
+        redirect_back fallback_location: admin_orders_path, alert: "Only denied orders can be deleted."
         return
       end
 
@@ -83,27 +118,27 @@ module Admin
         if @order.cost.present? && @order.cost.to_f > 0
           adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
           refund_exists = if adapter.include?("sqlite")
-            Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", 'order_refunded', @order.id.to_s).exists?
+            Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", "order_refunded", @order.id.to_s).exists?
           else
-            Audit.where("action = ? AND (details ->> 'order_id')::text = ?", 'order_refunded', @order.id.to_s).exists?
+            Audit.where("action = ? AND (details ->> 'order_id')::text = ?", "order_refunded", @order.id.to_s).exists?
           end
 
           unless refund_exists
             @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+            Audit.create!(user: current_user, project: nil, action: "order_refunded", details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           end
         end
 
-        Audit.create!(user: current_user, project: nil, action: 'order_deleted', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+        Audit.create!(user: current_user, project: nil, action: "order_deleted", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
         @order.destroy!
       end
 
-      redirect_back fallback_location: admin_orders_path, notice: 'Denied order deleted.'
+      redirect_back fallback_location: admin_orders_path, notice: "Denied order deleted."
     end
 
     def decline
       if @order.denied?
-        redirect_back fallback_location: admin_orders_path, alert: 'Order already declined.'
+        redirect_back fallback_location: admin_orders_path, alert: "Order already declined."
         return
       end
 
@@ -111,7 +146,7 @@ module Admin
 
       begin
         Order.transaction do
-          db_val = normalize_status_for_db('denied').first || (Order.respond_to?(:statuses) ? Order.statuses['denied'] : 'denied')
+          db_val = normalize_status_for_db("denied").first || (Order.respond_to?(:statuses) ? Order.statuses["denied"] : "denied")
 
           # Set order to denied
           @order.update!(status: db_val)
@@ -119,15 +154,15 @@ module Admin
           # Refund user (only if the order had a cost)
           if @order.cost.present? && @order.cost.to_f > 0
             @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+            Audit.create!(user: current_user, project: nil, action: "order_refunded", details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           else
-            Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+            Audit.create!(user: current_user, project: nil, action: "order_declined", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
           end
         end
 
         @order.charm_slot&.update!(order: nil)
 
-        redirect_back fallback_location: admin_orders_path, notice: 'Order declined and user refunded.'
+        redirect_back fallback_location: admin_orders_path, notice: "Order declined and user refunded."
       rescue ActiveRecord::RecordNotUnique => e
         # Defensive fallback in case of an unexpected uniqueness race — log and perform refund/audit without deleting
         Rails.logger.warn "Admin::OrdersController#decline: uniqueness race - #{e.class}: #{e.message}"
@@ -135,13 +170,13 @@ module Admin
         Order.transaction do
           if @order.cost.present? && @order.cost.to_f > 0
             @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: 'order_refunded', details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
+            Audit.create!(user: current_user, project: nil, action: "order_refunded", details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
           else
-            Audit.create!(user: current_user, project: nil, action: 'order_declined', details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
+            Audit.create!(user: current_user, project: nil, action: "order_declined", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
           end
         end
 
-        redirect_back fallback_location: admin_orders_path, notice: 'Order declined and user refunded.'
+        redirect_back fallback_location: admin_orders_path, notice: "Order declined and user refunded."
       end
     end
 
@@ -152,7 +187,7 @@ module Admin
     end
 
     def order_not_found
-      redirect_to admin_orders_path, alert: 'Order not found.'
+      redirect_to admin_orders_path, alert: "Order not found."
     end
 
     # Convert stored/raw status values into a canonical string used in audits and tests.
@@ -179,18 +214,18 @@ module Admin
       end
 
       # Fallback: if DB column is integer, try to map via statuses_for_select
-      col = Order.columns_hash['status'] rescue nil
+      col = Order.columns_hash["status"] rescue nil
       if col && col.type == :integer
         if raw.to_s =~ /\A\d+\z/
           # numeric DB value -> canonical key when possible
           if Order.respond_to?(:statuses)
             key = Order.statuses.key(raw.to_i) rescue nil
-            return [raw.to_i, key.to_s] if key
+            return [ raw.to_i, key.to_s ] if key
           elsif Order.const_defined?(:STATUS_VALUE_MAP)
             key = Order::STATUS_VALUE_MAP.invert[raw.to_i] rescue nil
-            return [raw.to_i, key.to_s] if key
+            return [ raw.to_i, key.to_s ] if key
           end
-          return [raw.to_i, raw.to_s]
+          return [ raw.to_i, raw.to_s ]
         end
 
         if Order.respond_to?(:statuses_for_select)
@@ -205,11 +240,11 @@ module Admin
               pair[1]
             end
 
-            return [db_val, pair[1].to_s]
+            return [ db_val, pair[1].to_s ]
           end
         end
 
-        return [nil, nil]
+        return [ nil, nil ]
       end
 
       raw.to_s
@@ -220,32 +255,32 @@ module Admin
     #  - canonical: canonical string key for comparison / user-facing checks
     # Returns [db_value, canonical] or [nil, nil] if invalid.
     def normalize_status_for_db(raw)
-      return [nil, nil] if raw.blank?
+      return [ nil, nil ] if raw.blank?
 
       if Order.respond_to?(:statuses)
         # model uses enum; accept either key or numeric index
         if raw =~ /\A\d+\z/
           key = Order.statuses.key(raw.to_i)
-          return [key, key] if key
-          return [nil, nil]
+          return [ key, key ] if key
+          return [ nil, nil ]
         end
-        return [raw.to_s, raw.to_s] if Order.statuses.keys.map(&:to_s).include?(raw.to_s)
-        return [nil, nil]
+        return [ raw.to_s, raw.to_s ] if Order.statuses.keys.map(&:to_s).include?(raw.to_s)
+        return [ nil, nil ]
       end
 
       # non-enum: detect column type and convert appropriately
-      col = Order.columns_hash['status'] rescue nil
+      col = Order.columns_hash["status"] rescue nil
       if col && col.type == :integer
         if raw =~ /\A\d+\z/
           # numeric DB value -> try to resolve canonical key
           if Order.respond_to?(:statuses)
             key = Order.statuses.key(raw.to_i) rescue nil
-            return [raw.to_i, key.to_s] if key
+            return [ raw.to_i, key.to_s ] if key
           elsif Order.const_defined?(:STATUS_VALUE_MAP)
             key = Order::STATUS_VALUE_MAP.invert[raw.to_i] rescue nil
-            return [raw.to_i, key.to_s] if key
+            return [ raw.to_i, key.to_s ] if key
           end
-          return [raw.to_i, raw.to_s]
+          return [ raw.to_i, raw.to_s ]
         end
 
         if Order.respond_to?(:statuses_for_select)
@@ -259,15 +294,15 @@ module Admin
               pair[1]
             end
 
-            return [db_val, pair[1].to_s]
+            return [ db_val, pair[1].to_s ]
           end
         end
 
-        return [nil, nil]
+        return [ nil, nil ]
       end
 
       # fallback to string column
-      [raw.to_s, raw.to_s]
+      [ raw.to_s, raw.to_s ]
     end
   end
 end

@@ -5,31 +5,48 @@
 <h1>Charms</h1>
 
 <div id="charm_slots">
-  <% (@charm_slots.where.not(order_id: nil).order(:order_id) || []).each do |charm_slot| %>
-    <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
-      <%= render charm_slot %>
+  <div style="display: inline-block; margin: 4px; align-items: center;">
+    <% (@charm_slots.where.not(order_id: nil).order(:order_id) || []).each do |charm_slot| %>
+      <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
+        <%= render charm_slot %>
+      <% end %>
     <% end %>
-  <% end %>
-  <% (5 - @charm_slots.where.not(order_id: nil).order(:order_id).count || 0).times do |i| %>
-    <% charm_slot = @charm_slots.where(order_id: nil).first %>
-    <%= render charm_slot %>
-  <% end %>
+    <% nonempty = @charm_slots.where.not(order_id: nil).order(:order_id) %>
+    <% empty = @charm_slots.where(order_id: nil) %>
+    <% extra = [0, 5 - nonempty.count].max %>
+    <% extra.times do |i| %>
+      <% charm_slot = empty.first %>
+      <%= render(charm_slot) if charm_slot %>
+    <% end %>
+  </div>
 </div>
 
 <div id="charm_notches">
   <p><strong>Notches:</strong></p>
-  <% (current_user.charm_notches.where(charm_slot: nil).count || 0).times do |i| %>
-    <% if asset_exists?("charm_notch_full.png") %>
-      <%= image_tag "charm_notch_full.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
-    <% else %>
-      <!-- fallback content or blank --><span class="notch-icon missing"></span>
+  <div style="display: inline-block; margin: 4px; align-items: center;">
+    <% if current_user %>
+      <% current_user.charm_notches.where.not(charm_slot: nil).count.to_i.times do %>
+        <% if asset_exists?("charm_notch_full.png") %>
+          <%= image_tag "charm_notch_full.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
+        <% else %>
+          <!-- fallback content or blank --><span class="notch-icon missing"></span>
+        <% end %>
+      <% end %>
+
+      <% current_user.charm_notches.where(charm_slot: nil).count.to_i.times do %>
+        <% if asset_exists?("charm_notch_empty.png") %>
+          <%= image_tag "charm_notch_empty.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
+        <% else %>
+          <!-- fallback content or blank --><span class="notch-icon missing"></span>
+        <% end %>
+      <% end %>
     <% end %>
-  <% end %>
-  <% (current_user.charm_notches.where.not(charm_slot: nil).count || 0).times do |i| %>
-    <% if asset_exists?("charm_notch_empty.png") %>
-      <%= image_tag "charm_notch_empty.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
-    <% else %>
-      <!-- fallback content or blank --><span class="notch-icon missing"></span>
-    <% end %>
+  </div>
+</div>
+
+<div id="actions" style="margin-top: 16px; display: inline-flex; gap: 16px;">
+  <%= button_to "Browse Charms", products_path, method: :get, class: 'btn-retro', form: { style: "display:inline" } %>
+  <% if current_user && CharmSlot.joins(:order).where(user: current_user, orders: { status: "pending" }).exists? %>
+    <%= button_to "Submit Loadout", submit_charm_slots_path, method: :post, class: 'btn-retro', form: { style: "display:inline" } %>
   <% end %>
 </div>

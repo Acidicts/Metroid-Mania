@@ -99,6 +99,11 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     post fulfill_admin_order_url(non_existent)
     assert_redirected_to admin_orders_url
     assert_match /Order not found/, flash[:alert]
+
+    # DM action should also gracefully handle missing orders
+    post dm_admin_order_url(non_existent)
+    assert_redirected_to admin_orders_url
+    assert_match /Order not found/, flash[:alert]
   end
 
   test "index search by public_id and id works" do
@@ -116,6 +121,16 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     get admin_orders_url(q: o1.id.to_s)
     assert_response :success
     assert_match o1.public_id, response.body
+  end
+
+  test "dm redirects to Slack profile of order user" do
+    # ensure user has a slack_id
+    @order.user.update!(slack_id: "U12345")
+
+    post dm_admin_order_url(@order)
+
+    # redirect_to allows other host so URL should match exactly
+    assert_redirected_to "https://hackclub.enterprise.slack.com/team/U12345"
   end
 
   test "charm_image_url shows up in admin index and show" do
