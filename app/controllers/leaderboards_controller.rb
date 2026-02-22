@@ -1,4 +1,5 @@
 class LeaderboardsController < ApplicationController
+  before_action :require_login
   def index
     # Cache the leaderboard for 5 minutes to reduce database load
     @users = Rails.cache.fetch("leaderboard_rankings", expires_in: 5.minutes) do
