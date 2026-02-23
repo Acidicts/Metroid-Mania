@@ -9,13 +9,14 @@ module Admin
       @shop = SiteSetting.find_or_initialize_by(key: "shop")
       @running = SiteSetting.find_or_initialize_by(key: "running")
       @disable_non_admin_logins = SiteSetting.find_or_initialize_by(key: "disable_non_admin_logins")
+      @disable_asset_project   = SiteSetting.find_or_initialize_by(key: "disable_asset_project")
     end
 
     def update
       # The form sends checkbox values as "1" when checked and omits them
       # otherwise. Iterate the keys we care about to keep the controller
       # easy to extend in future.
-      %w[shop running disable_non_admin_logins].each do |key|
+      %w[shop running disable_non_admin_logins disable_asset_project].each do |key|
         enabled = params.dig(:site_setting, key) == "1"
         SiteSetting.set(key, enabled ? "true" : "false")
       end

@@ -13,15 +13,18 @@ class Admin::SiteSettingsControllerTest < ActionDispatch::IntegrationTest
     patch admin_site_settings_url, params: { site_setting: {
       shop: "0",
       running: "0",
-      disable_non_admin_logins: "1"
+      disable_non_admin_logins: "1",
+      disable_asset_project: "1"
     } }
     assert_redirected_to admin_site_settings_url
     assert_not SiteSetting.enabled?("shop")
     assert_not SiteSetting.enabled?("running")
     assert SiteSetting.enabled?("disable_non_admin_logins")
+    assert SiteSetting.enabled?("disable_asset_project")
   ensure
     SiteSetting.set("shop", "true")
     SiteSetting.set("running", "true")
     SiteSetting.set("disable_non_admin_logins", "false")
+    SiteSetting.set("disable_asset_project", "false")
   end
 end

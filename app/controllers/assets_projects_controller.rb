@@ -1,6 +1,8 @@
 class AssetsProjectsController < ApplicationController
   before_action :require_login, except: %i[ index show ]
   before_action :set_assets_project, only: %i[ show edit update destroy ]
+  before_action :ensure_asset_project_enabled, except: %i[ index show ]
+  before_action :require_admin, only: %i[ index destroy ]
 
   # GET /assets_projects or /assets_projects.json
   def index

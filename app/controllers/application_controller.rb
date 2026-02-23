@@ -115,6 +115,13 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def ensure_asset_project_enabled
+    if feature_enabled?(:disable_asset_project) && !current_user&.admin?
+      flash_warn("Asset projects are disabled.")
+      redirect_to root_path and return
+    end
+  end
+
   def warn_if_app_url_mismatch
     app_url = ENV.fetch("APP_URL", "http://localhost:3000")
     begin
