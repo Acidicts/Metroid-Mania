@@ -51,10 +51,19 @@
         </div>
       </div>
 
-      <div class="admin-form-row">
+      <% if !current_user&.superadmin? %>
+        <style>
+          #admin-user-role-row .admin-form-control {
+            opacity: 0.5;
+            pointer-events: none;
+          }
+        </style>
+      <% end %>
+
+      <div class="admin-form-row" id="admin-user-role-row">
         <%= f.label :role, class: "admin-form-label" %>
         <div class="admin-form-control">
-          <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, disabled: @user.superadmin?, class: "admin-input #{'field-error' if f.object.errors[:role].any?}" %>
+          <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, class: "admin-input #{'field-error' if f.object.errors[:role].any?}" %>
           <% if f.object.errors[:role].any? %>
             <div class="field-error-text"><%= f.object.errors.full_messages_for(:role).join(', ') %></div>
           <% end %>
