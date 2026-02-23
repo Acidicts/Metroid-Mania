@@ -11,7 +11,6 @@
     </p>
     <p><strong>Shipped at:</strong> <%= @ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></p>
     <p><strong>Devlogged:</strong> <%= format_duration(@ship.devlogged_seconds.to_i) %></p>
-    <p><strong>Current Multiplier:</strong> <%= @ship.multiplier.present? ? @ship.multiplier : '-' %></p>
   </div>
 
   <%= render 'form', ship: @ship %>

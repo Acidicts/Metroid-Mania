@@ -198,14 +198,22 @@ class ProjectTest < ActiveSupport::TestCase
     owner = p.user
     owner.update!(currency: 0)
 
-    # ensure no preexisting ships
+    # ensure no preexisting ships or notches
+    owner.charm_notches.destroy_all
     p.ships.destroy_all
 
     devlogged_seconds = 60 * 120 # 2 hours
     ship = p.ship_and_award_credits!(admin_user: admin, rate: 5, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
 
-    assert_in_delta 10.0, ship.credits_awarded, 0.001
-    assert_in_delta 10.0, owner.reload.currency.to_f, 0.001
+    expected_credits = (devlogged_seconds.to_f / 3600.0) * 0.5
+    assert_in_delta expected_credits, ship.credits_awarded, 0.001
+    # currency still updated for backwards compatibility
+    assert_in_delta expected_credits, owner.reload.currency.to_f, 0.001
+    # and owner should have expected number of notches
+    assert_equal expected_credits.to_i, owner.reload.charm_notches.count
+    # ship should also expose its earned notches
+    assert_equal expected_credits.to_i, ship.charm_notches.count
+    assert_equal ship, owner.charm_notches.last.ship
     assert_equal ship, p.ships.order(:created_at).last
   end
 
@@ -222,20 +230,25 @@ class ProjectTest < ActiveSupport::TestCase
     # explicit zero should fall back to total_seconds
     amount_zero = p.award_credits!(10, seconds: 0)
     Rails.logger.debug("TEST: amount_zero=#{amount_zero.inspect} owner_currency_after_first=#{p.user.reload.currency.inspect}") if defined?(Rails)
-    assert_in_delta 120.0, amount_zero.to_f, 0.001, "award_credits! returned unexpected amount (checks total_seconds usage)"
+    assert_in_delta 6.0, amount_zero.to_f, 0.001, "award_credits! returned unexpected amount (checks total_seconds usage)"
 
     # explicit nil should also use total_seconds
     amount_nil = p.award_credits!(10, seconds: nil)
     Rails.logger.debug("TEST: amount_nil=#{amount_nil.inspect} owner_currency_after_second=#{p.user.reload.currency.inspect}") if defined?(Rails)
-    assert_in_delta 120.0, amount_nil.to_f, 0.001
+    assert_in_delta 6.0, amount_nil.to_f, 0.001
 
-    # after two awards the owner should have 240 total
-    assert_in_delta 240.0, owner.reload.currency.to_f, 0.001
+    # after two awards the owner should have 12 total
+    assert_in_delta 12.0, owner.reload.currency.to_f, 0.001
 
     # end-to-end via ship_and_award_credits! when devlogged_seconds is 0
     previous = owner.reload.currency.to_f
+    owner.charm_notches.destroy_all
     ship = p.ship_and_award_credits!(admin_user: admin, rate: 10, devlogged_seconds: 0, shipped_at: Time.current)
-    assert_in_delta 120.0, ship.credits_awarded.to_f, 0.001
+    expected = (p.total_seconds.to_f / 3600.0) * 0.5
+    assert_in_delta expected, ship.credits_awarded.to_f, 0.001
     assert_in_delta previous + ship.credits_awarded.to_f, owner.reload.currency.to_f, 0.001
+    # verify notches awarded on the ship
+    assert_equal ship.credits_awarded.to_f.to_i, owner.reload.charm_notches.count
+    assert_equal ship, owner.charm_notches.last.ship
   end
 end

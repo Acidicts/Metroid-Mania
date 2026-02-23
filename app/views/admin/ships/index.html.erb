@@ -8,7 +8,7 @@
       <th>Owner</th>
       <th>Shipped At</th>
       <th>Devlogged</th>
-      <th>Credits Awarded</th>
+      <th>Notches Awarded</th>
       <th>Processed By</th>
     </tr>
   </thead>
@@ -21,7 +21,6 @@
         <td><%= s.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></td>
         <td><%= format_duration(s.devlogged_seconds.to_i) %></td>
         <td><%= correct_credits(s.credits_awarded) %></td>
-        <td><%= s.multiplier.present? ? s.multiplier : '-' %></td>
         <td><%= s.user&.name %></td>
         <td>
           <%= link_to 'View', admin_ship_path(s), class: 'btn-admin btn-admin--muted' %>

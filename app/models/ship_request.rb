@@ -33,13 +33,11 @@ class ShipRequest < ApplicationRecord
       end
 
       credits = credits_awarded.present? ? credits_awarded : "-"
-      multiplier = respond_to?(:multiplier) && multiplier.present? ? multiplier : "-"
 
       content = <<~TEXT
         Time in ship: #{formatted_time}
         Requested at: #{requested_at || created_at}
-        Credits earned: #{credits}
-        Multiplier: #{multiplier}
+        Notches earned: #{credits}
       TEXT
 
       # Use the recorded devlogged seconds directly (seconds precision)
@@ -62,7 +60,6 @@ class ShipRequest < ApplicationRecord
       end
 
       credits = credits_awarded.present? ? credits_awarded : "-"
-      multiplier = respond_to?(:multiplier) && multiplier.present? ? multiplier : "-"
 
       # If a Ship has been created for this request, show Ship # and awarded credits
       ship = associated_ship
@@ -80,7 +77,6 @@ class ShipRequest < ApplicationRecord
         Time in ship: #{formatted_time}
         Requested at: #{requested_at || created_at}
         #{credits_line}
-        Multiplier: #{ciel(credits/formatted_time)}
       TEXT
 
       d.update_columns(title: title, content: new_content.strip, duration_seconds: devlogged_seconds.to_i)
@@ -89,7 +85,7 @@ class ShipRequest < ApplicationRecord
     end
 
     # Also propagate meaningful changes to an associated Ship (if it exists).
-    # e.g. if an admin edits credits_awarded, multiplier, or devlogged_seconds after approval,
+    # e.g. if an admin edits credits_awarded or devlogged_seconds after approval,
     # ensure the Ship row and owner currency stay in sync.
     propagate_changes_to_ship
   end
@@ -136,35 +132,7 @@ class ShipRequest < ApplicationRecord
     # Find recipient user if supplied (if nil, award to project.user inside Project#award_credits!)
     recipient = User.find_by(id: recipient_user_id) if recipient_user_id.present?
 
-    base_rate = rate
-
-    # If a multiplier is present, apply it to the chosen rate for this approval (do not permanently change project base rate)
-    if respond_to?(:multiplier) && multiplier.present? && base_rate.present?
-      effective_rate = base_rate.to_f * multiplier.to_f
-    else
-      effective_rate = base_rate
-    end
-
-    ship = project.ship_and_award_credits!(admin_user: admin_user, rate: effective_rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient)
-
-    # If this request carried a multiplier, persist that to the created Ship as well
-    if respond_to?(:multiplier) && multiplier.present?
-      begin
-        # persist multiplier without triggering ship callbacks (avoids double-calculation)
-        ship.update_columns(multiplier: multiplier, updated_at: Time.current)
-      rescue => e
-        Rails.logger.error "Failed to set multiplier on Ship ##{ship.id}: #{e.message}"
-      end
-    end
-
-    # If we temporarily applied an effective_rate that differs from the base, restore the project's stored credits_per_hour
-    if base_rate.present? && effective_rate.present? && effective_rate.to_f != base_rate.to_f
-      begin
-        project.update!(credits_per_hour: base_rate)
-      rescue => e
-        Rails.logger.error "Failed to restore project credits_per_hour after applying multiplier for ShipRequest ##{id}: #{e.message}"
-      end
-    end
+    ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient)
 
     # Link the request directly to the created Ship so future updates can operate on the same row.
     update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id)
@@ -228,13 +196,9 @@ class ShipRequest < ApplicationRecord
   # Propagate certain fields from a ShipRequest into its associated Ship when present.
   # - credits_awarded: adjusts owner currency by the delta and updates ship.credits_awarded
   # - devlogged_seconds: updates ship.devlogged_seconds
-  # - multiplier: persists multiplier on the ship
   def propagate_changes_to_ship
     ship = associated_ship
     return unless ship
-
-    # Ensure multiplier stays in sync when request/ship first meet or on load
-    sync_multiplier_with_ship
 
     attrs = {}
     if saved_change_to_credits_awarded?
@@ -243,19 +207,6 @@ class ShipRequest < ApplicationRecord
 
     if saved_change_to_devlogged_seconds?
       attrs[:devlogged_seconds] = devlogged_seconds.to_i
-    end
-
-    if respond_to?(:multiplier) && saved_change_to_multiplier?
-      attrs[:multiplier] = multiplier
-
-      # If the project has a credits_per_hour base rate, re-calculate the ship's credited amount
-      # so the multiplier is directly linked to credits_per_hour. Use the ship's devlogged_seconds if
-      # present, otherwise fall back to the request's stored seconds.
-      if project&.credits_per_hour.present?
-        seconds = (ship&.devlogged_seconds || devlogged_seconds || 0).to_f
-        computed_credits = (project.credits_per_hour.to_f * multiplier.to_f * (seconds / 3600.0))
-        attrs[:credits_awarded] = computed_credits.round(6)
-      end
     end
 
     return if attrs.empty?
@@ -286,31 +237,6 @@ class ShipRequest < ApplicationRecord
       end
     rescue => e
       Rails.logger.error "Failed to propagate changes to Ship ##{ship.id}: #{e.message}"
-    end
-  end
-
-  # Ensure multiplier is synchronized between this request and its associated Ship (if present).
-  # Preference & rules:
-  # - If the ship has a multiplier but the request doesn't, copy ship -> request.
-  # - If the request has a multiplier but ship doesn't, copy request -> ship (will trigger ship recalculation).
-  # - If both exist but differ, prefer the Ship value and copy it into the request.
-  def sync_multiplier_with_ship
-    ship = associated_ship
-    return unless ship
-
-    begin
-      if ship.multiplier.present? && (multiplier.blank? || multiplier.to_f != ship.multiplier.to_f)
-        # Ship has authoritative multiplier; persist it to the request
-        update!(multiplier: ship.multiplier)
-        return
-      end
-
-      if multiplier.present? && (ship.multiplier.blank? || ship.multiplier.to_f != multiplier.to_f)
-        # Request had multiplier that ship lacks; set on ship so it recalculates
-        ship.update!(multiplier: multiplier)
-      end
-    rescue => e
-      Rails.logger.error "Failed to sync multiplier for ShipRequest ##{id} and Ship ##{ship&.id}: #{e.message}"
     end
   end
 end

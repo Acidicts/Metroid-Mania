@@ -8,6 +8,8 @@ class CharmSlotsController < ApplicationController
   # action which was exposed as a route, but we now keep it internal only).
   def index
     if logged_in? && !admin?
+      # reconcile notches before displaying slots so the count matches shipped time
+      current_user.reconcile_charm_notches!
       # avoid collision with the `charm_slots` integer column on User
       @charm_slots = CharmSlot.where(user: current_user).includes(:order)
     else

@@ -14,10 +14,6 @@
     <%= f.datetime_select :shipped_at, default: ship.shipped_at || Time.current %>
   </div>
 
-  <div>
-    <%= f.label :multiplier, 'Multiplier' %><br>
-    <%= f.number_field :multiplier, value: ship.multiplier, step: 0.01, placeholder: '1.0' %>
-  </div>
 
   <div>
     <%= label_tag :credits_per_hour, 'Credits per hour (for recalculation)' %><br>

@@ -22,10 +22,6 @@
         <span class="nb-stat-value"><%= (ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)).present? ? format_credits(ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)) : "-" %></span>
       </div>
       <div class="nb-stat">
-        <span class="nb-stat-label">Multiplier</span>
-        <span class="nb-stat-value"><%= ship_request.respond_to?(:multiplier) && ship_request.multiplier.present? ? ship_request.multiplier : "-" %></span>
-      </div>
-      <div class="nb-stat">
         <span class="nb-stat-label">Devlogs</span>
         <span class="nb-stat-value"><%= ship_request.devlogs.where.not(user_id: nil).count %></span>
       </div>

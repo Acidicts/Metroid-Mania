@@ -1,5 +1,6 @@
 class CharmNotch < ApplicationRecord
   belongs_to :user
+  belongs_to :ship, optional: true
   belongs_to :charm_slot, optional: true, default: nil
 
   # ensure we never save a notch pointing at a slot with a missing order

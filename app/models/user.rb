@@ -47,12 +47,79 @@ class User < ApplicationRecord
     end
   end
 
+  def user_charm_notches
+    charm_notches.where(user: self)
+  end
+
   # The number of notches that are available for use.  Notches always
   # belong to a `CharmSlot`, but a slot may be tied to an order (meaning the
   # notch has already been spent).  Free notches are therefore those associated
   # with slots that have no order.
   def free_notches
     CharmNotch.where(user_id: id, charm_slot_id: nil).count
+  end
+
+  # Ensure charm notches accurately reflect hours earned by shipped projects.
+  # This is triggered when a user views their slots; it will:
+  # 1. destroy any notches that are unbound (ship_id nil) or refer to missing ships
+  #    (admin-created notches were historically marked with ship_id = -1).
+  # 2. walk the user's ships in chronological order, converting 2h periods into
+  #    one notch each and carrying leftover time forward across ships.
+  # 3. add or remove notches (excluding admin-created ones) to match the computed
+  #    total.  New notches are attributed to the latest ship.
+  #
+  # Returns the final desired notch count (excluding admin notches).
+  def reconcile_charm_notches!
+    # step 1: remove orphans
+    # remove notches not tied to any existing ship
+    charm_notches.where(ship_id: nil).destroy_all
+    charm_notches.left_joins(:ship).where(ships: { id: nil }).destroy_all
+
+    # a user earns notches based on ships made against their projects, not the
+    # ships the user themselves created.  Build a scope for those "owned" ships
+    # so we can reuse it throughout the algorithm.
+    owned_ships = Ship.joins(:project)
+                      .where(projects: { user_id: id })
+                      .order(:shipped_at)
+
+    carry_hours = 0.0
+    desired_by_ship = {}
+    owned_ships.each do |s|
+      hrs = (s.devlogged_seconds.to_f / 3600.0) + carry_hours
+      count = (hrs / 2.0).floor
+      desired_by_ship[s.id] = count
+      carry_hours = hrs - count * 2.0
+    end
+
+    desired = desired_by_ship.values.sum
+
+    # compare with existing notches (ignoring admin-created ship_id=-1 records)
+    existing = charm_notches.where.not(ship_id: -1).count
+    diff = desired - existing
+
+    if diff > 0
+      # add missing notches on a per-ship basis
+      existing_by_ship = charm_notches.where.not(ship_id: -1).group(:ship_id).count
+      desired_by_ship.each do |ship_id, target|
+        current = existing_by_ship[ship_id] || 0
+        to_add = target - current
+        if to_add > 0
+          # safe to look up within owned_ships, which defined the desired counts
+          ship = owned_ships.find { |s| s.id == ship_id }
+          to_add.times { charm_notches.create!(ship: ship, charm_slot: nil) }
+        end
+      end
+    elsif diff < 0
+      # remove excess notches, preferring most recent ships first so older earned notches stay
+      to_remove = -diff
+      charm_notches.where.not(ship_id: -1)
+                   .joins(:ship)
+                   .order("ships.shipped_at DESC")
+                   .limit(to_remove)
+                   .destroy_all
+    end
+
+    desired
   end
 
   # Adjust the number of *free* (unassigned) charm notches the user has.  The

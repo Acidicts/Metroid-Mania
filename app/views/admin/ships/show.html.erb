@@ -4,7 +4,6 @@
   <p><strong>Shipped at:</strong> <%= @ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></p>
   <p><strong>Devlogged seconds:</strong> <%= @ship.devlogged_seconds %> (<%= format_duration(@ship.devlogged_seconds.to_i) %>)</p>
   <p><strong>Credits awarded:</strong> <%= @ship.credits_awarded %></p>
-  <p><strong>Multiplier:</strong> <%= @ship.multiplier.present? ? @ship.multiplier : '-' %></p>
   <p><strong>Processed by:</strong> <%= @ship.user&.name || @ship.user&.email %></p>
 
   <p style="margin-top:8px">

@@ -16,6 +16,7 @@ class Project < ApplicationRecord
   # GitHub repos) and use short timeouts so they don't slow normal requests.
   validate :readme_url_must_be_reachable
   validate :github_repository_must_have_readme
+  validate :ship_total_notches, on: :update
 
 
   # Store multiple Hackatime project names in the text `hackatime_ids` column as YAML.
@@ -29,6 +30,22 @@ class Project < ApplicationRecord
       YAML.safe_load(raw) || []
     rescue
       raw.to_s.split(",").map(&:strip)
+    end
+  end
+
+  def ship_total_notches
+    for ship in ships
+      ship_time = ship.devlogged_seconds.to_i
+      expected_amount = ((ship_time.to_f / 3600.0) * 0.5).to_f.floor()
+      if ship.charm_notches.count > expected_amount
+        ship.charm_notches.where.not(charm_slot_id: nil).limit(ship.charm_notches.count - expected_amount).each do |n|
+          n.destroy!
+        end
+      elsif ship.charm_notches.count < expected_amount
+        (expected_amount - ship.charm_notches.count).to_i.times do
+          CharmNotch.create!(user: ship.user, ship: ship, charm_slot: nil)
+        end
+      end
     end
   end
 
@@ -370,7 +387,9 @@ class Project < ApplicationRecord
     Rails.logger.debug("award_credits!: rate=#{rate.inspect} seconds_arg=#{seconds.inspect} total_seconds=#{total_seconds.inspect} using_secs=#{secs.inspect} recipient=#{recipient.try(:id)}") if defined?(Rails)
 
     hours = secs.to_f / 3600.0
-    amount = rate.to_f * hours
+    amount = 0.5 * hours
+
+    amount = amount.floor(2) # round down to nearest cent
 
     target = recipient.present? ? recipient : user
 
@@ -390,6 +409,11 @@ class Project < ApplicationRecord
   # This method is idempotent for the same shipped_at timestamp (will raise if a ship with identical
   # shipped_at and credits_awarded already exists), but will create distinct Ship rows for separate shipments.
   def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current, recipient_user: nil)
+    # ensure ActiveRecord knows about the current DB schema (multiplier column may
+    # have been removed by a migration while the server was running).  This avoids
+    # inserting a non‑existent column and crashing requests.
+    Ship.reset_column_information
+
     transaction do
       # persist the rate when supplied
       if rate.present?
@@ -405,10 +429,9 @@ class Project < ApplicationRecord
       used_seconds = devlogged_seconds.present? ? devlogged_seconds.to_i : total_seconds.to_i
 
       amount = nil
-      if rate.present?
-        # Pass through recipient_user to award_credits!
-        amount = award_credits!(rate, seconds: used_seconds, recipient: recipient_user)
-      end
+
+      # Pass through recipient_user to award_credits! (still used for legacy currency)
+      amount = award_credits!(0.5, seconds: used_seconds, recipient: recipient_user)
 
       # Ensure stored credits_awarded is numeric (0.0 when no award) so admin UI shows a value
       stored_credits = amount.present? ? amount : 0.0
@@ -416,9 +439,23 @@ class Project < ApplicationRecord
       # Create the Ship using the used_seconds (so the DB row reflects what was paid)
       ship = ships.create!(user: admin_user, shipped_at: shipped_at, devlogged_seconds: used_seconds, credits_awarded: stored_credits)
 
+      # Award charm notches corresponding to the credited amount.  We convert the
+      # floating-point `amount` to an integer count via `to_i` (dropping any
+      # fractional credit).  Notches are created through the ship association so
+      # the relationship is set automatically.  They remain unassigned to any slot.
+      if amount.present?
+        notch_count = amount.to_f.to_i
+        if notch_count > 0
+          target = recipient_user.present? ? recipient_user : user
+          notch_count.times do
+            CharmNotch.create!(user: target, charm_slot: nil, ship: ship)
+          end
+        end
+      end
+
       # Record audit for credit awarding when applicable, reflecting the used hours and recipient
       if amount.present?
-        details = { amount: amount, rate: rate, hours: (used_seconds.to_f / 3600.0) }
+        details = { amount: amount, rate: 0.5, hours: (used_seconds.to_f / 3600.0) }
         details[:recipient_user_id] = recipient_user.id if recipient_user.present?
         Audit.create!(user: admin_user, project: self, action: "credit_awarded", details: details)
       end

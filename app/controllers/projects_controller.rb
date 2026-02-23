@@ -12,7 +12,7 @@ class ProjectsController < ApplicationController
 
     @projects = current_user.active_projects.includes(:user)
     @assets = current_user.assets_projects.includes(:user)
-    @enabled = ensure_asset_project_enabled
+    @enabled = asset_project_enabled?
   end
 
   # GET /projects/1 or /projects/1.json

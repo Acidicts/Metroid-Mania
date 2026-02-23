@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_22_190000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_24_120000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -97,9 +97,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_190000) do
   create_table "charm_notches", force: :cascade do |t|
     t.integer "charm_slot_id"
     t.datetime "created_at", null: false
+    t.integer "ship_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["charm_slot_id"], name: "index_charm_notches_on_charm_slot_id"
+    t.index ["ship_id"], name: "index_charm_notches_on_ship_id"
     t.index ["user_id"], name: "index_charm_notches_on_user_id"
   end
 
@@ -226,7 +228,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_190000) do
     t.float "credits_awarded"
     t.float "credits_per_hour"
     t.integer "devlogged_seconds"
-    t.float "multiplier"
     t.integer "processed_by_id"
     t.integer "project_id", null: false
     t.datetime "requested_at"
@@ -245,7 +246,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_190000) do
     t.float "credits_awarded"
     t.integer "devlogged_seconds"
     t.text "hackatime_ids_snapshot"
-    t.float "multiplier"
     t.integer "project_id", null: false
     t.datetime "shipped_at"
     t.datetime "updated_at", null: false
@@ -304,6 +304,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_22_190000) do
   add_foreign_key "audits", "projects"
   add_foreign_key "audits", "users"
   add_foreign_key "charm_notches", "charm_slots"
+  add_foreign_key "charm_notches", "ships"
   add_foreign_key "charm_notches", "users"
   add_foreign_key "charm_slots", "orders"
   add_foreign_key "charm_slots", "users"

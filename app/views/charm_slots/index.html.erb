@@ -51,15 +51,15 @@
         <% if asset_exists?("charm_notch_full.png") %>
           <%= image_tag "charm_notch_full.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
         <% else %>
-          <!-- fallback content or blank --><span class="notch-icon missing"></span>
+          <!-- fallback content or blank --><span class="notch-icon missing">missing da image - full</span>
         <% end %>
       <% end %>
-
+    
       <% current_user.charm_notches.where(charm_slot: nil).count.to_i.times do %>
         <% if asset_exists?("charm_notch_empty.png") %>
           <%= image_tag "charm_notch_empty.png", width: 64, height: 64, alt: "Notch Icon", class: "notch-icon" %>
         <% else %>
-          <!-- fallback content or blank --><span class="notch-icon missing"></span>
+          <!-- fallback content or blank --><span class="notch-icon missing">missing da image - empty</span>
         <% end %>
       <% end %>
     <% end %>

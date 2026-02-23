@@ -14,7 +14,6 @@
   <%= link_to "New project", new_project_path, style: "margin-top: 20px; display: inline-block;" %>
   <% if @enabled %>
     <h2>Assets Projects</h2>
-    <%= @enabled %>
     <div class="project-grid">
       <% @assets.each do |asset| %>
         <% if asset.title != "Deleted Project" %>

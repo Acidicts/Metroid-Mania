@@ -122,6 +122,10 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def asset_project_enabled?
+    !feature_enabled?(:disable_asset_project) || current_user&.admin?
+  end
+
   def warn_if_app_url_mismatch
     app_url = ENV.fetch("APP_URL", "http://localhost:3000")
     begin

@@ -16,6 +16,7 @@ class Admin::ShipRequestsControllerTest < ActionDispatch::IntegrationTest
 
     recipient = users(:two)
     recipient.update!(currency: 0)
+    recipient.charm_notches.destroy_all
 
     existing_ship_ids = Ship.where(project: @project).pluck(:id)
 
@@ -31,11 +32,13 @@ class Admin::ShipRequestsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil ship, "expected a Ship created for project"
     assert_redirected_to admin_ship_path(ship)
 
-    expected_amount = ((req.devlogged_seconds.to_f / 3600.0) * 10)
+    expected_amount = ((req.devlogged_seconds.to_f / 3600.0) * 0.5)
     assert_in_delta expected_amount, ship.credits_awarded.to_f, 0.001
 
     # credits were awarded to the selected recipient (not necessarily the owner)
     assert_in_delta expected_amount, recipient.reload.currency.to_f, 0.001
+    assert_equal expected_amount.to_i, recipient.charm_notches.count
+    assert_equal ship, recipient.charm_notches.last.ship
 
     assert_audit_created(action: "approve_ship_request", project: @project, user: @admin)
   end

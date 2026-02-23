@@ -3,7 +3,9 @@
 one:
   user: one
   charm_slot: one
+  ship: one
 
 two:
   user: two
   charm_slot: two
+  ship: two

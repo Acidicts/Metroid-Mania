@@ -1,6 +1,6 @@
 module ApplicationHelper
   def format_credits(amount)
-    "#{amount.to_f.ceil} Units"
+    "#{amount.to_f.floor} Units"
   end
 
   def order_by_public_id(public_id)
