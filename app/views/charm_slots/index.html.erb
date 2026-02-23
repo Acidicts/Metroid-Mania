@@ -2,18 +2,40 @@
 
 <% content_for :title, "Charm slots" %>
 
-<h1>Charms</h1>
 
 <div id="charm_slots">
+  <h1>Submitted Charms</h1>
   <div style="display: inline-block; margin: 4px; align-items: center;">
     <% (@charm_slots.where.not(order_id: nil).order(:order_id) || []).each do |charm_slot| %>
       <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
-        <%= render charm_slot %>
+        <% if charm_slot.submitted? %>
+          <%= render charm_slot %>
+        <% end %>
       <% end %>
     <% end %>
     <% nonempty = @charm_slots.where.not(order_id: nil).order(:order_id) %>
     <% empty = @charm_slots.where(order_id: nil) %>
     <% extra = [0, 5 - nonempty.count].max %>
+    <% extra.times do |i| %>
+      <% charm_slot = empty.first %>
+      <%= render(charm_slot) if charm_slot %>
+    <% end %>
+  </div>
+</div>
+
+<div id="charm_slots">
+  <h1>Charms</h1>
+  <div style="display: inline-block; margin: 4px; align-items: center;">
+    <% num = 0 %>
+    <% (@charm_slots.where.not(order_id: nil).order(:order_id) || []).each do |charm_slot| %>
+      <% if !charm_slot.submitted? %>
+        <%= render charm_slot %>
+        <% num += 1 %>
+      <% end %>
+    <% end %>
+    <% nonempty = num %>
+    <% empty = @charm_slots.where(order_id: nil) %>
+    <% extra = [0, 5 - num].max %>
     <% extra.times do |i| %>
       <% charm_slot = empty.first %>
       <%= render(charm_slot) if charm_slot %>
