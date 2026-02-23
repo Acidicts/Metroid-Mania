@@ -2,6 +2,7 @@ class OrdersController < ApplicationController
   before_action :require_login
   before_action :ensure_shop_enabled, only: %i[ new create ]
   before_action :set_order, only: %i[ show update ]
+  before_action :ensure_user_not_fraudulent, only: %i[ index show ]
 
   # GET /orders or /orders.json
   def index

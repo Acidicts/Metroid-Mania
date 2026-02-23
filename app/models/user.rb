@@ -20,6 +20,18 @@ class User < ApplicationRecord
 
   enum :role, { user: 0, admin: 1, superadmin: 2 }, default: :user
 
+  # if an admin marks someone as fraudulent, we record who did it for auditing
+  belongs_to :flagged_for_fraud_by, class_name: "User", optional: true
+
+  # convenience accessor for display
+  def flagged_for_fraud_by_name
+    flagged_for_fraud_by&.name
+  end
+
+  def flagged_for_fraud?
+    flagged_for_fraud
+  end
+
   # Scope to exclude the system placeholder user
   scope :not_system, -> { where.not(provider: "system", uid: "deleted_user") }
 

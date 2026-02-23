@@ -1,6 +1,7 @@
 class ShipRequestsController < ApplicationController
   before_action :require_login
   before_action :set_project
+  before_action :ensure_user_not_fraudulent, only: %i[ index show new create ]
 
   def index
     @ship_requests = @project.ship_requests.order(requested_at: :desc)

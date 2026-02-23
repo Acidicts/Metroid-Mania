@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_24_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_24_123000) do
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -279,6 +279,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_120000) do
     t.float "credit_offset", default: 0.0, null: false
     t.float "currency"
     t.string "email"
+    t.boolean "flagged_for_fraud"
+    t.integer "flagged_for_fraud_by_id"
     t.boolean "font_on", default: true, null: false
     t.string "hackatime_api_key"
     t.datetime "hackatime_synced_at"
@@ -292,6 +294,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_120000) do
     t.string "uid"
     t.datetime "updated_at", null: false
     t.string "verification_status"
+    t.index ["flagged_for_fraud_by_id"], name: "index_users_on_flagged_for_fraud_by_id"
     t.index ["hackatime_trust_status"], name: "index_users_on_hackatime_trust_status"
     t.index ["slack_id"], name: "index_users_on_slack_id"
     t.index ["uid"], name: "index_users_on_uid"
@@ -325,4 +328,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_120000) do
   add_foreign_key "ships", "projects"
   add_foreign_key "ships", "users"
   add_foreign_key "spritesheets", "assets_items"
+  add_foreign_key "users", "users", column: "flagged_for_fraud_by_id"
 end

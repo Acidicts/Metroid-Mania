@@ -113,6 +113,16 @@ module Admin
           @user.recalculate_currency!
         end
 
+        # record who flagged/cleared the fraud status if it changed
+        if base_params.key?(:flagged_for_fraud)
+          if @user.flagged_for_fraud?
+            # only set if not already recorded or changed by a different admin
+            @user.update_column(:flagged_for_fraud_by_id, current_user.id) if @user.flagged_for_fraud_by_id != current_user.id
+          else
+            @user.update_column(:flagged_for_fraud_by_id, nil) if @user.flagged_for_fraud_by_id.present?
+          end
+        end
+
         flash_pass("User updated")
         redirect_to admin_users_path
       else
@@ -177,11 +187,14 @@ module Admin
       return {} unless params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)
 
       permitted = {}
-      if (current_user&.superadmin? || current_user&.admin?)
+      if current_user&.superadmin? || current_user&.admin?
         # Allow admins to adjust contact and identity fields
         permitted[:name] = params[:user][:name] if params[:user].key?(:name)
         permitted[:email] = params[:user][:email] if params[:user].key?(:email)
         permitted[:slack_id] = params[:user][:slack_id] if params[:user].key?(:slack_id)
+
+        # new boolean column we added for fraud flagging
+        permitted[:flagged_for_fraud] = params[:user][:flagged_for_fraud] if params[:user].key?(:flagged_for_fraud)
 
         # Allow role changes only when role param present
         permitted[:role] = params[:user][:role] if params[:user][:role].present?

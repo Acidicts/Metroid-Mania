@@ -57,6 +57,31 @@
             opacity: 0.5;
             pointer-events: none;
           }
+
+          <% if !@user.flagged_for_fraud? %>
+            #admin-user-fraud-row .admin-form-control {
+              opacity: 0.5;
+              pointer-events: none;
+            }
+          <% elsif !current_user.admin? %>
+            #admin-user-fraud-row .admin-form-control {
+              opacity: 0.5;
+              pointer-events: none;
+            }
+          <% end %>
+
+          /* make the checkbox a bit smaller and add spacing when displayed inline */
+          #admin-user-fraud-row .admin-form-control {
+            display: flex;
+            align-items: center;
+          }
+
+          #user_flagged_for_fraud {
+            pointer-events: auto;
+            height:1rem;
+            width:1rem;
+            margin-right:0.5rem;
+          }
         </style>
       <% end %>
 
@@ -66,6 +91,22 @@
           <%= f.select :role, User.roles.keys.map { |r| [r.humanize, r] }, class: "admin-input #{'field-error' if f.object.errors[:role].any?}" %>
           <% if f.object.errors[:role].any? %>
             <div class="field-error-text"><%= f.object.errors.full_messages_for(:role).join(', ') %></div>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="admin-form-row" id="admin-user-fraud-row">
+        <%= f.label :flagged_for_fraud, "Flagged for fraud", class: "admin-form-label" %>
+        <div class="admin-form-control">
+
+          <%= f.check_box :flagged_for_fraud, id:"user_flagged_for_fraud", class: "admin-checkbox #{'field-error' if f.object.errors[:flagged_for_fraud].any?}" %>
+          <%# when flagged we show who did it immediately to the right %>
+          <% if @user.flagged_for_fraud? %>
+            <span class="fraud-flagged-by">Flagged by: <%= @user.flagged_for_fraud_by_name || "(unknown)" %></span>
+          <% end %>
+
+          <% if f.object.errors[:flagged_for_fraud].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:flagged_for_fraud).join(', ') %></div>
           <% end %>
         </div>
       </div>

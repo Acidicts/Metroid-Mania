@@ -337,6 +337,20 @@ input:focus, textarea:focus, select:focus {
   font-weight: 700;
 }
 
+.no-style {
+  all: unset;
+  display: inline-block;
+}
+
+/* badge for fraud state: resets inherited styles and applies its own look */
+.fraud-badge {
+  color: #fff;
+  background: var(--red);
+  border: 2px solid var(--main-800);
+  border-radius: 6px;
+}
+
+
 /* Links */
 a {
   color: var(--accent1);

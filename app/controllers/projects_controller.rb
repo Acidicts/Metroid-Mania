@@ -2,6 +2,7 @@ class ProjectsController < ApplicationController
   before_action :require_login, except: [ :index, :show ]
   before_action :set_project, only: %i[ show edit update destroy ship ]
   before_action :authorize_owner!, only: %i[ edit update destroy ]
+  before_action :ensure_user_not_fraudulent, only: %i[ edit update ship ]
 
   # GET /projects or /projects.json
   def index

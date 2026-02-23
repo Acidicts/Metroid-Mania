@@ -8,6 +8,13 @@ class ApplicationController < ActionController::Base
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
   before_action :load_charm_slots
 
+  def ensure_user_not_fraudulent
+    if current_user&.flagged_for_fraud?
+      flash[:alert] = "Your account has been flagged for fraud. Please contact Orgs for any questions."
+      redirect_to root_path and return
+    end
+  end
+
   # DB-backed feature flag helper (falls back to ENV_<NAME>_ENABLED)
   def feature_enabled?(name)
     if defined?(SiteSetting)

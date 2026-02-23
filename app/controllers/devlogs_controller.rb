@@ -2,6 +2,7 @@ class DevlogsController < ApplicationController
   before_action :set_project
   before_action :set_devlog, only: %i[ show edit update destroy ]
   before_action :ensure_editable, only: %i[ edit update destroy ]
+  before_action :ensure_user_not_fraudulent, only: %i[ index show new edit create update destroy ]
 
   # GET /projects/:project_id/devlogs
   def index

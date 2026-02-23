@@ -11,6 +11,14 @@ module ApplicationHelper
     Order.find_by(id: id)&.public_id
   end
 
+  def credits_total(project)
+    project.ships.sum(:credits_awarded).to_f.floor
+  end
+
+  def is_flagged_for_fraud(user)
+    user.flagged_for_fraud?
+  end
+
   def format_duration(seconds, include_days: false)
     # ie: 2h 3m 4s
     # ie. 37h 15m (if include_days is false)

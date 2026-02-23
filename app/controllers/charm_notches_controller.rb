@@ -1,5 +1,6 @@
 class CharmNotchesController < ApplicationController
   before_action :set_charm_notch, only: %i[ show edit update destroy ]
+  before_action :ensure_user_not_fraudulent, only: %i[ index show ]
 
   # GET /charm_notches or /charm_notches.json
   def index

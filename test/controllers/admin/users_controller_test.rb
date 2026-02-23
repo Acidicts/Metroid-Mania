@@ -70,6 +70,49 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     assert_select "input#user_charm_notches[value='1']"
   end
 
+  test "edit form shows fraud checkbox" do
+    sign_in_as(@admin, password: "password")
+    # ensure flag is false initially
+    @user.update!(flagged_for_fraud: false, flagged_for_fraud_by: nil)
+
+    get edit_admin_user_url(@user)
+    assert_response :success
+    # checkbox should exist and not be checked
+    assert_select "input#user_flagged_for_fraud[type=checkbox]" do |elements|
+      # when the flag is false the checkbox should not have a checked attribute
+      assert_nil elements.first[:checked]
+    end
+
+    # now mark the user as fraudulent and reload form; we simulate an admin marking them
+    @user.update!(flagged_for_fraud: true, flagged_for_fraud_by: @admin)
+    get edit_admin_user_url(@user)
+    assert_response :success
+    assert_select "input#user_flagged_for_fraud[checked]"
+    # the page should show who flagged the user
+    assert_select ".fraud-flagged-by", text: /Flagged by:.*#{Regexp.escape(@admin.name)}/
+  end
+
+  test "admin can toggle flagged_for_fraud" do
+    sign_in_as(@admin, password: "password")
+
+    patch admin_user_url(@user), params: { user: { flagged_for_fraud: "1" } }
+    assert_redirected_to admin_users_url
+    @user.reload
+    assert_equal true, @user.flagged_for_fraud
+    assert_equal @admin.id, @user.flagged_for_fraud_by_id
+
+    # after flagging we should see the flagger on the edit page
+    get edit_admin_user_url(@user)
+    assert_response :success
+    assert_select ".fraud-flagged-by", text: /Flagged by:.*#{Regexp.escape(@admin.name)}/
+
+    patch admin_user_url(@user), params: { user: { flagged_for_fraud: "0" } }
+    assert_redirected_to admin_users_url
+    @user.reload
+    assert_equal false, @user.flagged_for_fraud
+    assert_nil @user.flagged_for_fraud_by_id
+  end
+
   test "negative charm notches value shows error and does not change" do
     sign_in_as(@admin, password: "password")
 

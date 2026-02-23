@@ -52,6 +52,16 @@ class UserTest < ActiveSupport::TestCase
     assert u.valid?
   end
 
+  test "flagged_for_fraud_by_name returns nil when unset and name when set" do
+    admin = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "a@example.dev", name: "Admin")
+    user = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "u@example.dev")
+    assert_nil user.flagged_for_fraud_by_name
+
+    user.flagged_for_fraud = true
+    user.flagged_for_fraud_by = admin
+    assert_equal "Admin", user.flagged_for_fraud_by_name
+  end
+
   test "loading a user creates any missing charm slot records" do
     u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev", charm_slots: 2)
     # newly created record doesn't trigger after_find yet

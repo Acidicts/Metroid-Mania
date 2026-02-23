@@ -1,7 +1,8 @@
 <div class="user-profile-container">
   <% cache([@user, @slack_profile, @projects.maximum(:updated_at)], expires_in: 5.minutes) do %>
   <div class="user-profile-header">
-    <h1>
+    <div style="display:flex; align-items:center; gap:0.75rem; flex-wrap:wrap;">
+    <h1 style="margin:0;">
       <% if @slack_profile && @slack_profile[:image].present? %>
         <%= image_tag @slack_profile[:image], alt: "#{@user.name} avatar", width: 48, height: 48, style: "border-radius:999px; vertical-align:middle; margin-right:8px;" %>
       <% else %>
@@ -12,6 +13,11 @@
         <img src="https://icons.hackclub.com/api/icons/red/admin" style="height:3rem; width:auto; position:relative; bottom:-0.75rem;" alt="admin badge" class="nb-admin-badge" title="Admin">
       <% end %>
     </h1>
+    <% if @user.flagged_for_fraud? && (current_user&.admin? || @user == current_user) %>
+      <img src="https://icons.hackclub.com/api/icons/red/forbidden" style="height:2.5rem; width:auto;" alt="fraud badge" title="Fraudulent">
+      <span class="fraud-badge">Flagged for Fraud</span>
+    <% end %>
+    </div>
     <% if @user.name != "Deleted User" %>
       <div class="user-info">
         <div class="info-item">
@@ -27,8 +33,8 @@
           <span class="info-value"><%= @total_ships_count || user_total_ships(@user) %></span>
         </div>
         <div class="info-item">
-          <span class="info-label">Total Charm Slots</span>
-          <span class="info-value" style="font-family: monospace;"><%= @user.charm_slots.count %></span>
+          <span class="info-label">Total Charm Notches</span>
+          <span class="info-value" style="font-family: monospace;"><%= @user.charm_notches.count %></span>
         </div>
       </div>
       <div class="profile-actions">
@@ -61,8 +67,8 @@
                 <span class="stat-label">Devlogs</span>
               </div>
               <div class="stat">
-                <span class="stat-value"><%= average_credits_per_hour(project) %></span>
-                <span class="stat-label">Avg Credits/Hr</span>
+                <span class="stat-value"><%= credits_total(project) %></span>
+                <span class="stat-label">Total Credits</span>
               </div>
             </div>
             <div style="margin-top: 0.75rem;">

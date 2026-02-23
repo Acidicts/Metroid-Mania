@@ -1,6 +1,7 @@
 class AssetsItemsController < ApplicationController
   before_action :require_login, except: %i[ index show ]
   before_action :set_assets_item, only: %i[ show edit update destroy ]
+  before_action :ensure_user_not_fraudulent, only: %i[ index show ]
 
   # GET /assets_items or /assets_items.json
   def index
