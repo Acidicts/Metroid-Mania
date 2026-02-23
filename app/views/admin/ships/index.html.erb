@@ -20,7 +20,7 @@
         <td><%= s.project&.user&.name || s.project&.user&.email || '-' %></td>
         <td><%= s.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></td>
         <td><%= format_duration(s.devlogged_seconds.to_i) %></td>
-        <td><%= correct_credits(s.credits_awarded) %></td>
+        <td><%= format_credits(s.credits_awarded) %></td>
         <td><%= s.user&.name %></td>
         <td>
           <%= link_to 'View', admin_ship_path(s), class: 'btn-admin btn-admin--muted' %>
