@@ -29,4 +29,9 @@ class CharmNotch < ApplicationRecord
       Rails.logger.info("charm_slot.order_id: #{charm_slot.order_id}")
     end
   end
+
+  def submitted?
+    order = charm_slot&.order
+    order.present? && (order.submitted? || order.fulfilled?)
+  end
 end

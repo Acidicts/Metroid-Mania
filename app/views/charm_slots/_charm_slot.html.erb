@@ -20,6 +20,35 @@
   .charm-slot-link:hover {
     border-color: rgb(0, 123, 255, 0.3); /* Change to your desired hover color */
   }
+
+  /* checkmark and submitted indicator styles */
+  .checkmark {
+    position: relative;
+    top: 0;
+    color: #ffffff;
+    background-color: #25b900;
+    border-radius: 50%;
+    padding: 2px;
+    cursor: pointer;
+  }
+
+  .submitted-indicator {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 100%;
+    margin-left: 4px;
+    color: #ffffff;
+    background-color: #25b900;
+    border-radius: 4px;
+    padding: 2px 4px;
+    white-space: nowrap;
+    font-size: 0.75em;
+  }
+
+  .checkmark:hover + .submitted-indicator {
+    display: inline-block;
+  }
 </style>
 
 <div id="<%= dom_id charm_slot %>" class="charm-slot">
@@ -32,10 +61,36 @@
           <a href="<%= order_path(charm_slot.order) %>" title="<%= charm_slot.order.name.split(" - ").first %>" class="charm-slot-link">
             <img height="96px" width="96px" src="<%= charm_slot.order.charm_image_url_for_display %>" alt="Charm image" />
           </a>
-          <%= link_to remove_charm_slot_path(charm_slot), method: :patch, class: "remove-charm-slot-link", title: "Remove Charm" do %>
-            <span style="position:relative; top:0">&times;</span>
+          <% if !charm_slot.submitted? %>
+            <%= link_to remove_charm_slot_path(charm_slot), method: :patch, class: "remove-charm-slot-link", title: "Remove Charm" do %>
+              <span style="position:relative; top:0">&times;</span>
+            <% end %>
+          <% else %>
+            <span id="checkmark-<%= charm_slot.id %>" style="position:relative; top:0; color: #ffffff; background-color: #25b900; border-radius: 50%; padding: 2px; cursor: pointer;">&checkmark;</span>
+            <span id="submitted-indicator-<%= charm_slot.id %>" style="display: none;">Submitted</span>
+            <script>
+              // Add a green checkmark overlay to indicate submission
+              const checkmark = document.getElementById("checkmark-<%= charm_slot.id %>");
+              const indicator = document.getElementById("submitted-indicator-<%= charm_slot.id %>");
+              
+              indicator.style.position = "absolute";
+              indicator.style.top = "0";
+              indicator.style.left = "0";
+              indicator.style.color = "#ffffff";
+              indicator.style.backgroundColor = "#25b900";
+              indicator.style.borderRadius = "50%";
+              indicator.style.padding = "2px";
+              
+              checkmark.addEventListener("mouseenter", function() {
+                indicator.style.display = "inline-block";
+              });
+              
+              checkmark.addEventListener("mouseleave", function() {
+                indicator.style.display = "none";
+              });
+            </script>
           <% end %>
-        </div>
+          </div>
       <% else %>
         <a href="<%= order_path(charm_slot.order) %>" title="<%= charm_slot.order.name.split(" - ").first %>" class="charm-slot-link">
           <img height="48px" width="48px" src="<%= charm_slot.order.charm_image_url_for_display %>" alt="Charm image" />
