@@ -306,6 +306,38 @@
             </div>
           </div>
 
+          <div id="search_bar_input_container" style="position:relative; display:inline-flex; align-items:center; margin-left:12px; align-self:center;">
+            <%= form_with url: projects_path, method: :get, local: true do |form| %>
+              <%= form.text_field :q, id: "search_input", placeholder: "Search projects, users or #tag...", class: "search-input" %>
+            <% end %>
+          </div>
+
+          <img id="search-icon" src="https://icons.hackclub.com/api/icons/red/search" style="width:32px; height:32px; margin-left:12px; opacity:0.8;" alt="Search icon" onclick="document.getElementById('search_input').focus();" class="search-icon">
+
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              var searchIcon = document.getElementById('search-icon');
+              var searchInput = document.getElementById('search_input');
+
+              // Show the search input when the search icon is clicked
+              searchIcon.addEventListener('click', function() {
+                if (searchInput.style.display === 'block') {
+                  searchInput.style.display = 'none';
+                } else {
+                  searchInput.style.display = 'block';
+                  searchInput.focus();
+                }
+              });
+
+              searchInput.style.display = 'none'; // Ensure the search icon is visible
+
+              // Hide the search input when it loses focus
+              searchInput.addEventListener('blur', function() {
+                searchInput.classList.remove('visible');
+              });
+            });
+          </script>
+
           <noscript>
             <form action="<%= logout_path %>" method="post" style="display:inline">
               <input type="hidden" name="_method" value="delete" />

@@ -13,6 +13,37 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "searching projects via query parameter" do
+    # make sure we have at least one project with a recognizable name
+    @project.update!(name: "UniqueSearchName123")
+
+    get projects_url, params: { q: "UniqueSearch" }
+    assert_response :success
+    assert_match /UniqueSearchName123/, @response.body
+
+    # exact name query should redirect to the project show
+    # even if multiple projects share the same name, we take the first match
+    get projects_url, params: { q: "UniqueSearchName123" }
+    assert_redirected_to project_url(@project)
+
+    # search by owner display name should also return the project
+    get projects_url, params: { q: @project.user.display_name }
+    assert_response :success
+    assert_match /UniqueSearchName123/, @response.body
+
+    # test tag search with prefix
+    tag = ProjectTag.create!(tag: "DemoTag")
+    @project.update!(project_tag: tag)
+    get projects_url, params: { q: "#demotag" }
+    assert_response :success
+    assert_match /UniqueSearchName123/, @response.body
+
+    # searching for nonsense should return none
+    get projects_url, params: { q: "nope" }
+    assert_response :success
+    assert_no_match /UniqueSearchName123/, @response.body
+  end
+
   test "redirects to home when not logged in" do
     # ensure no user is signed in
     delete logout_url rescue nil

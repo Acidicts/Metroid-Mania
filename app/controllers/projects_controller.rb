@@ -11,7 +11,31 @@ class ProjectsController < ApplicationController
       redirect_to home_path, flash: { warn: "Please sign in to view projects." } and return
     end
 
-    @projects = current_user.active_projects.includes(:user)
+    # start with the user's active projects; if a `q` param is present,
+    # apply more sophisticated filtering.
+    # we also need to look at associated user display names and the
+    # project's single tag (the new dropdown-based tagging system).
+    # include user association for eager loading and join for searching
+    @projects = current_user.active_projects
+                     .includes(:user)
+                     .left_joins(:user, :project_tag)
+
+    if params[:q].present?
+      raw = params[:q].to_s.strip
+      if raw.start_with?("#")
+        # exact tag match when prefixed with '#'
+        tagname = raw[1..].downcase
+        @projects = @projects.where("LOWER(project_tags.tag_string) = ?", tagname)
+      else
+        q = raw.downcase
+        if Project.where(name: q).any?
+          p = Project.where(name: q).first
+
+          redirect_to project_path(p) and return
+        end
+      end
+    end
+
     @assets = current_user.assets_projects.includes(:user)
     @enabled = asset_project_enabled?
   end
