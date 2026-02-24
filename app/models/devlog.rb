@@ -13,8 +13,21 @@ class Devlog < ApplicationRecord
 
   has_many :comments, dependent: :destroy
 
+  # whenever a user adds a devlog we may have changed their total hours,
+  # so re‑run the achievement evaluator for the associated user.
+  after_commit :award_achievements_to_user, on: :create
+
+  # Returns the authoritative duration in seconds, falling back to legacy minutes when needed.
+  # This method is used widely in views and other models, so it must be public.
+  def duration_seconds_total
+    return duration_seconds if duration_seconds.present?
+    return duration_minutes.to_i * 60 if duration_minutes.present?
+    nil
+  end
+
   # Indicates whether a given user may edit this devlog. System-generated devlogs
-  # (those tied to a ShipRequest) are never editable.
+  # (those tied to a ShipRequest) are never editable.  This helper is used in
+  # controllers and views and therefore must be public as well.
   def editable_by?(u)
     return false if u.nil?
     return true if u.admin? || u.superadmin?
@@ -25,11 +38,10 @@ class Devlog < ApplicationRecord
     user == u
   end
 
-  # Returns the authoritative duration in seconds, falling back to legacy minutes when needed.
-  def duration_seconds_total
-    return duration_seconds if duration_seconds.present?
-    return duration_minutes.to_i * 60 if duration_minutes.present?
-    nil
+  private
+
+  def award_achievements_to_user
+    user&.evaluate_achievements!
   end
 
   private

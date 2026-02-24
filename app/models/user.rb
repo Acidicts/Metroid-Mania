@@ -10,6 +10,8 @@ class User < ApplicationRecord
   has_many :assets_items, dependent: :nullify
   has_many :charm_slots, dependent: :nullify
   has_many :charm_notches, dependent: :nullify
+  has_many :user_achievements, dependent: :destroy
+  has_many :achievements, through: :user_achievements
 
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
@@ -63,6 +65,22 @@ class User < ApplicationRecord
     charm_notches.where(user: self)
   end
 
+  def charm_slots_orders
+    slots = self.charm_slots.where.not(order_id: nil)
+    orders = []
+    for slot in slots
+      if slot.order.status == "submitted" || slot.order.status == "fulfilled"
+        orders.append(slot.order)
+      end
+    end
+    orders
+  end
+
+  def total_devlogged_hours
+    devlogs = Devlog.where(user_id: self.id)
+    devlogs.sum(&:duration_seconds_total) / 3600.0
+  end
+
   # The number of notches that are available for use.  Notches always
   # belong to a `CharmSlot`, but a slot may be tied to an order (meaning the
   # notch has already been spent).  Free notches are therefore those associated
@@ -74,18 +92,41 @@ class User < ApplicationRecord
   # Ensure charm notches accurately reflect hours earned by shipped projects.
   # This is triggered when a user views their slots; it will:
   # 1. destroy any notches that are unbound (ship_id nil) or refer to missing ships
-  #    (admin-created notches were historically marked with ship_id = -1).
+  #    *except* those manually granted by an admin (`admin_granted = true`).
   # 2. walk the user's ships in chronological order, converting 2h periods into
   #    one notch each and carrying leftover time forward across ships.
-  # 3. add or remove notches (excluding admin-created ones) to match the computed
-  #    total.  New notches are attributed to the latest ship.
+  # 3. add or remove notches (excluding admin-granted records) to match the
+  #    computed total.  New notches are attributed to the latest ship.
   #
   # Returns the final desired notch count (excluding admin notches).
   def reconcile_charm_notches!
+    # Historically, admin‑granted notches were marked by setting `ship_id = -1`
+    # or (after the 2026 migration) `admin_granted = true`.  A common complaint
+    # has been that older admin notches began disappearing when users viewed
+    # their charm slots because they lacked the new flag.  The reconciliation
+    # routine runs on that page, so we take the opportunity here to convert any
+    # existing free notches into the new format if we detect a likely admin
+    # origin.  The simplest heuristic is: if the user currently has one or more
+    # empty charm slots (created automatically when an admin added notches),
+    # then every free notch is probably an admin grant and should be preserved.
+    # This update runs once per call and is idempotent.
+    if charm_slots.where(order_id: nil).exists?
+      charm_notches.where(ship_id: nil, admin_granted: false)
+                   .update_all(admin_granted: true)
+    end
+
     # step 1: remove orphans
-    # remove notches not tied to any existing ship
-    charm_notches.where(ship_id: nil).destroy_all
-    charm_notches.left_joins(:ship).where(ships: { id: nil }).destroy_all
+    # remove notches not tied to any existing ship.  Historically admin
+    # notches were indicated by ship_id = -1; after the migration we instead
+    # mark them with `admin_granted = true`.  Either way they should be
+    # preserved here so that administrators can manually grant them without
+    # reconciliation wiping them out.  We therefore only destroy records that
+    # are *not* admin-granted.
+    charm_notches.where(ship_id: nil, admin_granted: false).destroy_all
+    charm_notches.where.not(ship_id: -1).where(admin_granted: false)
+                 .left_joins(:ship)
+                 .where(ships: { id: nil })
+                 .destroy_all
 
     # a user earns notches based on ships made against their projects, not the
     # ships the user themselves created.  Build a scope for those "owned" ships
@@ -105,13 +146,16 @@ class User < ApplicationRecord
 
     desired = desired_by_ship.values.sum
 
-    # compare with existing notches (ignoring admin-created ship_id=-1 records)
-    existing = charm_notches.where.not(ship_id: -1).count
+    # compare with existing notches (ignoring admin-created records).  In
+    # addition to the old ship_id=-1 marker we also skip any row that has the
+    # new `admin_granted` flag.
+    existing = charm_notches.non_admin.count
     diff = desired - existing
 
     if diff > 0
-      # add missing notches on a per-ship basis
-      existing_by_ship = charm_notches.where.not(ship_id: -1).group(:ship_id).count
+      # add missing notches on a per-ship basis.  New notches should never be
+      # marked admin_granted because they represent earned hours.
+      existing_by_ship = charm_notches.non_admin.group(:ship_id).count
       desired_by_ship.each do |ship_id, target|
         current = existing_by_ship[ship_id] || 0
         to_add = target - current
@@ -124,7 +168,7 @@ class User < ApplicationRecord
     elsif diff < 0
       # remove excess notches, preferring most recent ships first so older earned notches stay
       to_remove = -diff
-      charm_notches.where.not(ship_id: -1)
+      charm_notches.non_admin
                    .joins(:ship)
                    .order("ships.shipped_at DESC")
                    .limit(to_remove)
@@ -141,7 +185,7 @@ class User < ApplicationRecord
   # already assigned to slots are untouched).  Negative targets are not
   # permitted and will raise `ArgumentError` so callers can propagate an error
   # message back to the form if necessary.
-  def adjust_charm_notches!(target)
+  def adjust_charm_notches!(target, admin: false)
     # coerce numeric-ish values to integer; decimals/drop fractions silently
     target = target.to_f.to_i
     if target < 0
@@ -154,17 +198,22 @@ class User < ApplicationRecord
     if target > current
       # add new free notches; each notch needs a slot with no order.  To keep
       # things simple we create a fresh slot for each notch.  Any existing free
-      # slots are ignored because there's no capacity concept.
+      # slots are ignored because there's no capacity concept.  When called from
+      # the admin UI we mark the created records so they won't be removed later.
       (target - current).times do
         slot = charm_slots.create!
-        charm_notches.create!(charm_slot: nil)
+        charm_notches.create!(charm_slot: nil, admin_granted: admin)
       end
     else
-      # remove excess *free* (unlinked) notches first.  The public API of this
-      # method promises to operate only on unassigned records, so there's no need
-      # to touch notches already bound to a slot.
+      # remove excess *free* (unlinked) notches first.  When this method is
+      # triggered by the admin controller we allow deletion of admin-granted
+      # records so that the form remains a true "set the total" operation.  In
+      # other contexts we leave admin-granted notches untouched.
       to_remove = current - target
-      removable = CharmNotch.where(user_id: id, charm_slot_id: nil).limit(to_remove)
+
+      removable_scope = CharmNotch.where(user_id: id, charm_slot_id: nil)
+      removable_scope = removable_scope.where(admin_granted: false) unless admin
+      removable = removable_scope.limit(to_remove)
       removable.destroy_all
 
       # clean up any empty slots that no longer have notches and are unassigned
@@ -231,6 +280,14 @@ class User < ApplicationRecord
 
   def system_user?
     provider == "system" && uid == "deleted_user"
+  end
+
+  # Walk every defined achievement and grant any the user now qualifies for.
+  #
+  # This method is idempotent and safe to call frequently; the underlying
+  # `Achievement#check_and_grant!` will skip already-awarded badges.
+  def evaluate_achievements!
+    Achievement.find_each { |ach| ach.check_and_grant!(self) }
   end
 
   before_destroy do

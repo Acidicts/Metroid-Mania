@@ -39,4 +39,30 @@ class CharmNotchTest < ActiveSupport::TestCase
     assert notch.valid?
     assert_equal @filled_slot, notch.charm_slot
   end
+
+  test "creating a notch reevaluates achievements for the user" do
+    # ensure there's an achievement minimum that will trigger
+    ach = Achievement.create!(title: "Min notches 1", requirement_type: "min_notches", requirement_value: 1)
+    @user.achievements.delete_all
+
+    assert_not @user.achievements.include?(ach)
+    # creating a notch should fire the callback and award the badge
+    @user.charm_notches.create!(user: @user)
+    assert @user.achievements.reload.include?(ach)
+  end
+
+  test "destroying a notch still leaves existing achievements" do
+    # once awarded, achievements are not revoked when the underlying
+    # condition later drops below the threshold
+    ach = Achievement.create!(title: "Min notches 1", requirement_type: "min_notches", requirement_value: 1)
+    @user.achievements.delete_all
+    @user.charm_notches.create!(user: @user)
+    @user.achievements.reload
+    assert @user.achievements.include?(ach)
+
+    # destroy the notch - achievement remains
+    @user.charm_notches.last.destroy
+    @user.achievements.reload
+    assert @user.achievements.include?(ach)
+  end
 end

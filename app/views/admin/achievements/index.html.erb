@@ -1,0 +1,50 @@
+<div class="admin-panel">
+  <div class="admin-panel-header">
+    <h1>Achievements</h1>
+    <%= link_to "New Achievement", new_admin_achievement_path, class: "admin-btn" %>
+  </div>
+
+  <% if notice.present? %>
+    <p class="flash-notice"><%= notice %></p>
+  <% end %>
+
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Title</th>
+          <th>Description</th>
+          <th>Requirement</th>
+          <th class="col-shrink">Value</th>
+          <th class="col-shrink">Earners</th>
+          <th class="col-shrink">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @achievements.each do |achievement| %>
+          <tr>
+            <td>
+              <% if achievement.image_url.present? %>
+                <img src="<%= achievement.image_url %>" alt="" style="height:24px;vertical-align:middle;margin-right:6px;">
+              <% end %>
+              <%= achievement.title %>
+            </td>
+            <td><%= truncate(achievement.description, length: 80) %></td>
+            <td><%= achievement.requirement_type&.humanize || "—" %></td>
+            <td class="col-shrink"><%= achievement.requirement_value || "—" %></td>
+            <td class="col-shrink"><%= achievement.user_achievements.size %></td>
+            <td class="col-shrink">
+              <%= link_to "Edit", edit_admin_achievement_path(achievement), class: "admin-btn admin-btn-sm" %>
+              <%= button_to "Delete", admin_achievement_path(achievement), method: :delete,
+                        data: { confirm: "Delete #{achievement.title}?" },
+                    class: "admin-btn admin-btn-sm admin-btn-danger" %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @achievements.empty? %>
+          <tr><td colspan="6" style="text-align:center;">No achievements yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,39 @@
+<div class="admin-panel">
+  <h1>Edit Achievement</h1>
+  <%= render "form", achievement: @achievement %>
+
+  <hr style="margin-top:2rem;">
+  <h2>Earners (<%= @achievement.user_achievements.count %>)</h2>
+  <% if @achievement.users.any? %>
+    <div class="admin-table-wrapper">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Email</th>
+            <th class="col-shrink">Unlocked At</th>
+            <th class="col-shrink">Revoke</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @achievement.user_achievements.includes(:user).order(:unlocked_at).each do |ua| %>
+            <tr>
+              <td><%= link_to ua.user.name.presence || "(no name)", edit_admin_user_path(ua.user) %></td>
+              <td><%= ua.user.email %></td>
+              <td class="col-shrink"><%= ua.unlocked_at&.strftime("%Y-%m-%d %H:%M") || "—" %></td>
+              <td class="col-shrink">
+                <%= button_to "Revoke", admin_achievement_path(@achievement),
+                      method: :delete,
+                      params: { revoke_user_id: ua.user_id },
+                      data: { confirm: "Revoke this achievement from #{ua.user.email}?" },
+                      class: "admin-btn admin-btn-sm admin-btn-danger" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  <% else %>
+    <p>No users have earned this achievement yet.</p>
+  <% end %>
+</div>

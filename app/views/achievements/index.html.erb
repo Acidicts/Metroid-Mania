@@ -1,0 +1,12 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Achievements" %>
+
+<h1>Achievements</h1>
+
+<div id="achievements">
+  <% @achievements.each do |achievement| %>
+    <% achievement.earned_by?(current_user) %>
+    <%= render achievement %>
+  <% end %>
+</div>

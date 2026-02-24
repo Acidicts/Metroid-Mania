@@ -10,9 +10,9 @@ namespace :charm do
     end
 
     users.find_each do |u|
-      before = u.charm_notches.where.not(ship_id: -1).count
+      before = u.charm_notches.non_admin.count
       desired = u.reconcile_charm_notches!
-      after = u.charm_notches.where.not(ship_id: -1).count
+      after = u.charm_notches.non_admin.count
       puts "User #{u.id} (#{u.email.presence || 'no-email'}): #{before} -> #{after} desired=#{desired}"
     end
   end

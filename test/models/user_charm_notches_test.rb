@@ -51,45 +51,95 @@ class UserCharmNotchesTest < ActiveSupport::TestCase
     assert_equal 2, @user.charm_notches.count
   end
 
-    test "reconcile generates notches from single ship hours" do
-      @user.charm_notches.destroy_all
-      @user.ships.destroy_all
-      project = projects(:one)
-      ship = @user.ships.create!(project: project, user: @user, shipped_at: Time.current, devlogged_seconds: 195_949, credits_awarded: 0)
+  test "reconcile does not destroy admin-granted notches" do
+    @user.charm_notches.destroy_all
+    # create an explicit admin notch using the new flag
+    @user.charm_notches.create!(charm_slot: nil, admin_granted: true)
 
-      desired = @user.reconcile_charm_notches!
-      expected = ((ship.devlogged_seconds.to_f / 3600.0) / 2.0).floor
-      assert_equal expected, desired
-      assert_equal expected, @user.charm_notches.count
-    end
+    # running reconciliation with no ships should leave the record untouched
+    desired = @user.reconcile_charm_notches!
+    assert_equal 0, desired
+    assert_equal 1, @user.charm_notches.admin_only.count,
+                 "admin notch should survive reconciliation"
+  end
 
-    test "reconcile assigns notches to each ship proportionally" do
-      @user.charm_notches.destroy_all
-      @user.ships.destroy_all
-      project = projects(:one)
+  test "adjusting free notches does not delete admin-granted freebies" do
+    @user.charm_notches.destroy_all
+    # add an admin free notch plus a normal one
+    @user.charm_notches.create!(charm_slot: nil, admin_granted: true)
+    @user.adjust_charm_notches!(1)
+    # current free notches is 2 but one is admin; shrinking target should only
+    # remove the non-admin one
+    @user.adjust_charm_notches!(0)
+    assert_equal 1, @user.charm_notches.admin_only.count
+    assert_equal 0, @user.charm_notches.non_admin.count
+  end
 
-      ship1 = @user.ships.create!(project: project, user: @user,
-                                  shipped_at: 2.days.ago,
-                                  devlogged_seconds: 5.hours.to_i,
-                                  credits_awarded: 0)
-      ship2 = @user.ships.create!(project: project, user: @user,
-                                  shipped_at: 1.day.ago,
-                                  devlogged_seconds: 3.hours.to_i,
-                                  credits_awarded: 0)
+  test "legacy admin notches (no flag) survive reconciliation when slots exist" do
+    @user.charm_notches.destroy_all
+    @user.charm_slots.destroy_all
 
-      # compute expected counts the same way the model will
-      carry = 0.0
-      exp1 = ((ship1.devlogged_seconds.to_f / 3600.0 + carry) / 2.0).floor
-      carry = (ship1.devlogged_seconds.to_f / 3600.0 + carry) - exp1 * 2.0
-      exp2 = ((ship2.devlogged_seconds.to_f / 3600.0 + carry) / 2.0).floor
+    # simulate an old admin grant: create slot and notch but do not set flag
+    @user.charm_slots.create!
+    @user.charm_notches.create!(charm_slot: nil)
 
-      @user.reload
-      desired = @user.reconcile_charm_notches!
+    # the notch starts unflagged, so naive reconciliation would remove it
+    desired = @user.reconcile_charm_notches!
+    # desired counts only non-admin notches; in this scenario there are none
+    assert_equal 0, desired
 
-      assert_equal(exp1 + exp2, desired)
-      assert_equal exp1, @user.charm_notches.where(ship: ship1).count
-      assert_equal exp2, @user.charm_notches.where(ship: ship2).count
-    end
+    # after reconciliation the record should be converted to admin_granted and kept
+    assert_equal 1, @user.charm_notches.admin_only.count
+    assert_equal 0, @user.charm_notches.non_admin.count
+  end
+
+  test "reconcile deletes stray free notches when no empty slots" do
+    @user.charm_notches.destroy_all
+    @user.charm_slots.destroy_all
+
+    @user.charm_notches.create!(charm_slot: nil)
+    assert_equal 1, @user.charm_notches.count
+
+    @user.reconcile_charm_notches!
+    assert_equal 0, @user.charm_notches.count,
+                 "unflagged free notches should be cleaned up when there are no slots"
+  end
+
+  test "admin flag is applied when controller requests it" do
+    @user.charm_notches.destroy_all
+    @user.adjust_charm_notches!(2, admin: true)
+    assert_equal 2, @user.charm_notches.admin_only.count
+
+    # reducing without admin param should not remove the admin-granted ones
+    @user.adjust_charm_notches!(0)
+    assert_equal 2, @user.charm_notches.admin_only.count
+    assert_equal 0, @user.charm_notches.non_admin.count
+
+    # now reduce using admin flag; this should delete the admin-granted
+    # notches because the admin is explicitly requesting a total change.
+    @user.adjust_charm_notches!(1, admin: true)
+    assert_equal 1, @user.charm_notches.admin_only.count
+    assert_equal 1, @user.free_notches
+  end
+
+  test "admin adjustment overrides existing free notches rather than accumulating" do
+    @user.charm_notches.destroy_all
+    # simulate earned notches (non-admin) that should be replaced
+    2.times { @user.charm_notches.create!(charm_slot: nil) }
+    assert_equal 2, @user.free_notches
+
+    # setting to a higher value creates only the difference
+    @user.adjust_charm_notches!(5, admin: true)
+    assert_equal 5, @user.free_notches
+
+    # setting to a lower value removes the excess
+    @user.adjust_charm_notches!(1, admin: true)
+    assert_equal 1, @user.free_notches
+
+    # idempotency: repeating the same target does not change the count
+    @user.adjust_charm_notches!(1, admin: true)
+    assert_equal 1, @user.free_notches
+  end
 
     test "reconcile credits project owner when another user ships" do
       @user.charm_notches.destroy_all

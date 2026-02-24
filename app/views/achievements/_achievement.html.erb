@@ -1,0 +1,40 @@
+<style>
+  .achievement-card {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    width: 20%;
+    height: 250px;
+    align-items: center;
+  }
+  .achievement-card div {
+    position: relative;
+  }
+</style>
+
+<div id="<%= dom_id achievement %>" class="achievement-card">
+  <div>
+    <% if achievement.image_url.present? %>
+      <img src="<%= achievement.image_url %>" alt="<%= achievement.title %>" style="width:auto;height:65%;margin-bottom:5px;">
+    <% end %>
+  </div>
+
+  <div>
+    <strong><%= achievement.title %></strong>
+  </div>
+
+  <div>
+    <%= achievement.description %>
+  </div>
+
+  <div>
+    <% if current_user && achievement.users.exists?(current_user.id) %>
+      <span style="color: white; background-color: green; border-radius: 8px; padding: 4px; font-size: 1rem; width: 1rem; height: 1rem;">&check; Earned</span>
+    <% else %>
+      <span style="color: white; background-color: red; border-radius: 8px; padding: 4px; font-size: 1rem; width: 1rem; height: 1rem;">&cross;; To Earn</span>
+    <% end %>
+  </div>
+
+</div>

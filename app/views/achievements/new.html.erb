@@ -1,0 +1,11 @@
+<% content_for :title, "New achievement" %>
+
+<h1>New achievement</h1>
+
+<%= render "form", achievement: @achievement %>
+
+<br>
+
+<div>
+  <%= link_to "Back to achievements", achievements_path %>
+</div>

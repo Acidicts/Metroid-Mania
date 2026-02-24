@@ -1,0 +1,130 @@
+<%= form_with(model: [:admin, achievement], class: "admin-form", html: { multipart: true }) do |f| %>
+  <% if achievement.errors.any? %>
+    <div class="flash-alert">
+      <ul>
+        <% achievement.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :title %>
+    <%= f.text_field :title, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, rows: 3, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :image_url, "Image URL" %>
+    <%= f.text_field :image_url, class: "form-control", placeholder: "https://..." %>
+    <% if achievement.image_url.present? %>
+      <img id="image-preview" src="<%= achievement.image_url %>" alt="Preview" style="margin-top:8px;height:48px;">
+    <% else %>
+      <img id="image-preview" src="" alt="" style="display:none;margin-top:8px;height:48px;">
+    <% end %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :image_upload, "Upload, paste, or drop an image" %>
+    <%= file_field_tag :image_upload, accept: "image/*", class: "form-control-file" %>
+    <div id="image-paste-area" class="image-paste-area" style="border:1px dashed #ccc;padding:10px;margin-top:5px;min-height:50px;">
+      Paste or drop image here (or use file field above)
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function(){
+      var fileInput = document.querySelector('input[name="image_upload"]');
+      var urlField = document.querySelector('input[name="achievement[image_url]"]');
+      var preview = document.getElementById('image-preview');
+      var pasteArea = document.getElementById('image-paste-area');
+
+      function uploadFile(file) {
+        var fd = new FormData();
+        fd.append('file', file);
+        fetch('<%= admin_cdn_upload_path %>', {
+          method: 'POST',
+          body: fd,
+          credentials: 'same-origin',
+          headers: {
+            'X-CSRF-Token': document.querySelector('meta[name=csrf-token]').content
+          }
+        }).then(function(res){ return res.json(); })
+        .then(function(data){
+          if(data && data.url){
+            urlField.value = data.url;
+            if(preview){
+              preview.src = data.url;
+              preview.style.display = '';
+            }
+          }
+        }).catch(function(e){
+          console.error('CDN upload failed', e);
+        });
+      }
+
+      if(fileInput){
+        fileInput.addEventListener('change', function(e){
+          if(e.target.files && e.target.files[0]){
+            uploadFile(e.target.files[0]);
+          }
+        });
+      }
+      if(pasteArea){
+        // paste handling
+        pasteArea.addEventListener('paste', function(e){
+          var items = (e.clipboardData || e.originalEvent.clipboardData).items;
+          for(var i=0; i<items.length; i++){
+            var item = items[i];
+            if(item.type.indexOf('image') !== -1){
+              var blob = item.getAsFile();
+              uploadFile(blob);
+              e.preventDefault();
+              return;
+            }
+          }
+        });
+        // drag & drop handling
+        pasteArea.addEventListener('dragover', function(e){
+          e.preventDefault();
+          pasteArea.classList.add('drag-over');
+        });
+        pasteArea.addEventListener('dragleave', function(e){
+          pasteArea.classList.remove('drag-over');
+        });
+        pasteArea.addEventListener('drop', function(e){
+          e.preventDefault();
+          pasteArea.classList.remove('drag-over');
+          var dt = e.dataTransfer;
+          if(dt && dt.files && dt.files.length){
+            uploadFile(dt.files[0]);
+          }
+        });
+      }
+    });
+  </script>
+
+  <div class="form-group">
+    <%= f.label :requirement_type, "Requirement Type" %>
+    <%= f.select :requirement_type,
+          [["— none —", nil]] + Achievement::REQUIREMENT_TYPES.map { |t| [t.humanize, t] },
+          {},
+          class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :requirement_value, "Requirement Value (threshold)" %>
+    <%= f.number_field :requirement_value, step: "any", min: 0, class: "form-control",
+          placeholder: "e.g. 5 for 5 notches, 100.5 for 100.5 hours" %>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "admin-btn" %>
+    <%= link_to "Cancel", admin_achievements_path, class: "admin-btn admin-btn-secondary" %>
+  </div>
+<% end %>

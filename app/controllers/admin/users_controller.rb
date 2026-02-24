@@ -88,7 +88,9 @@ module Admin
         # partially applying notches when the main update fails.
         if @charm_notches_param.present?
           begin
-            @user.adjust_charm_notches!(@charm_notches_param)
+            # adjustments originating from the admin UI should mark new notches
+            # as admin-granted so they won't be inadvertently removed.
+            @user.adjust_charm_notches!(@charm_notches_param, admin: true)
           rescue ArgumentError => e
             # revert any changes made by earlier callbacks and surface error
             @user.reload

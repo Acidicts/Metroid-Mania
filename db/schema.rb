@@ -10,7 +10,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_24_123000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_24_182801) do
+  create_table "achievements", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.string "image_url"
+    t.string "requirement_type"
+    t.decimal "requirement_value"
+    t.string "title"
+    t.datetime "updated_at", null: false
+  end
+
   create_table "action_mailbox_inbound_emails", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "message_checksum", null: false
@@ -95,6 +105,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_123000) do
   end
 
   create_table "charm_notches", force: :cascade do |t|
+    t.boolean "admin_granted", default: false, null: false
     t.integer "charm_slot_id"
     t.datetime "created_at", null: false
     t.integer "ship_id"
@@ -272,6 +283,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_123000) do
     t.index ["assets_item_id"], name: "index_spritesheets_on_assets_item_id"
   end
 
+  create_table "user_achievements", force: :cascade do |t|
+    t.integer "achievement_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "unlocked_at"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["achievement_id"], name: "index_user_achievements_on_achievement_id"
+    t.index ["user_id", "achievement_id"], name: "index_user_achievements_on_user_id_and_achievement_id", unique: true
+    t.index ["user_id"], name: "index_user_achievements_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.float "amount_spent", default: 0.0, null: false
     t.integer "charm_slots", default: 0, null: false
@@ -328,5 +350,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_123000) do
   add_foreign_key "ships", "projects"
   add_foreign_key "ships", "users"
   add_foreign_key "spritesheets", "assets_items"
+  add_foreign_key "user_achievements", "achievements"
+  add_foreign_key "user_achievements", "users"
   add_foreign_key "users", "users", column: "flagged_for_fraud_by_id"
 end

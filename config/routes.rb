@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :achievements
   resources :charm_notches
   # legacy path used by older clients; redirect to index to avoid hitting
   # the show action with id = "loadout".
@@ -106,6 +107,9 @@ Rails.application.routes.draw do
     post "projects/bulk_update", to: "projects_bulk#create", as: "bulk_update_admin_projects"
 
     resources :audits, only: [ :index ]
+
+    resources :achievements
+    post "cdn_upload", to: "cdn_uploads#create"
 
     # Site settings (feature toggles)
     get "site_settings", to: "site_settings#index"

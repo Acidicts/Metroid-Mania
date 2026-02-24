@@ -50,12 +50,45 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
 
     patch admin_user_url(@user), params: { user: { charm_notches: 3 } }
     assert_redirected_to admin_users_url
-    assert_equal 3, @user.reload.free_notches
+    @user.reload
+    assert_equal 3, @user.free_notches
+    # new notches should be flagged as admin-granted
+    assert_equal 3, @user.charm_notches.admin_only.count
 
-    # reducing the value should delete unassigned notches
+    # reducing the value should delete unassigned *non-admin* notches only
     patch admin_user_url(@user), params: { user: { charm_notches: 1 } }
     assert_redirected_to admin_users_url
-    assert_equal 1, @user.reload.free_notches
+    @user.reload
+    assert_equal 1, @user.free_notches
+    assert_equal 1, @user.charm_notches.admin_only.count
+  end
+
+  test "admin setting charm notches replaces existing free notches instead of appending" do
+    sign_in_as(@admin, password: "password")
+
+    # seed the user with a couple of non-admin free notches
+    @user.charm_notches.destroy_all
+    @user.charm_slots.destroy_all
+    2.times { @user.charm_notches.create!(charm_slot: nil) }
+    assert_equal 2, @user.free_notches
+
+    # bump up via admin; the total should become exactly the supplied value
+    patch admin_user_url(@user), params: { user: { charm_notches: 4 } }
+    assert_redirected_to admin_users_url
+    @user.reload
+    assert_equal 4, @user.free_notches
+
+    # repeating the same target shouldn't add any more notches
+    patch admin_user_url(@user), params: { user: { charm_notches: 4 } }
+    assert_redirected_to admin_users_url
+    @user.reload
+    assert_equal 4, @user.free_notches
+
+    # lowering the target should trim the correct number of notches
+    patch admin_user_url(@user), params: { user: { charm_notches: 1 } }
+    assert_redirected_to admin_users_url
+    @user.reload
+    assert_equal 1, @user.free_notches
   end
 
   test "edit form displays current free notches count" do
