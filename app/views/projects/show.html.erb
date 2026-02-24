@@ -18,7 +18,7 @@
       </div>    
 
       <div style="margin-top:12px">
-        <h1 class="project-title"><%= @project.name %></h1>
+        <h1 class="project-title" style="display: inline-block"><%= @project.name %> <span style="all:unset; color:var(--accent2); font-size:0.8em; background-color:var(--main-900); padding:2px 6px; border-radius:4px; text-shadow:none;"><%= @project.project_tag&.tag %></span></h1>
         <div class="kv" style="margin-bottom:8px">
           <div class="label">By</div>
           <div class="value"><%= link_to @project.user.display_name, user_profile_path(@project.user) %></div>

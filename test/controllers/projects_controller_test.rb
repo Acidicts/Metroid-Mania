@@ -30,12 +30,43 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
 
   test "should create project" do
     assert_difference("Project.count") do
-      post projects_url, params: { project: { hackatime_ids: [ "NewProjectForCreate" ], name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
+      post projects_url, params: {
+        project: {
+          hackatime_ids: [ "NewProjectForCreate" ],
+          name: @project.name,
+          repository_url: @project.repository_url,
+          status: @project.status,
+          total_seconds: @project.total_seconds,
+          user_id: @project.user_id,
+          project_tag_id: project_tags(:one).id
+        }
+      }
     end
 
-    assert_redirected_to project_url(Project.last)
-    assert_equal "unshipped", Project.last.status
-    assert_equal false, Project.last.shipped
+    created = Project.last
+    assert_redirected_to project_url(created)
+    assert_equal "unshipped", created.status
+    assert_equal false, created.shipped
+    assert_equal project_tags(:one).id, created.project_tag_id
+  end
+
+  test "can create project without a tag" do
+    assert_difference("Project.count") do
+      post projects_url, params: {
+        project: {
+          hackatime_ids: [ "NewProjectForCreate" ],
+          name: "Untitled",
+          repository_url: "x",
+          status: "unshipped",
+          total_seconds: 0,
+          user_id: users(:one).id
+          # no project_tag_id param
+        }
+      }
+    end
+
+    created = Project.last
+    assert_nil created.project_tag_id
   end
 
   test "should show project" do
@@ -70,8 +101,18 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     @project.ships.destroy_all
     @project.update!(shipped: false, shipped_at: nil)
 
-    patch project_url(@project), params: { project: { name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id } }
+    new_tag = project_tags(:two)
+    patch project_url(@project), params: { project: { name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id, project_tag_id: new_tag.id } }
     assert_redirected_to project_url(@project)
+    assert_equal new_tag.id, @project.reload.project_tag_id
+  end
+
+  test "can clear project_tag when updating" do
+    @project.ships.destroy_all
+    @project.update!(project_tag_id: project_tags(:one).id, shipped: false, shipped_at: nil)
+    patch project_url(@project), params: { project: { project_tag_id: nil, name: @project.name } }
+    assert_redirected_to project_url(@project)
+    assert_nil @project.reload.project_tag_id
   end
 
   test "can remove hackatime projects by clearing selection" do

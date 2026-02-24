@@ -1,0 +1,41 @@
+<div class="admin-panel">
+  <div class="admin-panel-header">
+    <h1>Project Tags</h1>
+    <%= link_to "New Project Tag", new_admin_project_tag_path, class: "admin-btn" %>
+  </div>
+
+  <% if notice.present? %>
+    <p class="flash-notice"><%= notice %></p>
+  <% end %>
+
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th>Tag</th>
+          <th>Projects Using</th>
+          <th class="col-shrink">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @project_tags.each do |project_tag| %>
+          <tr>
+            <td>
+              <%= project_tag.tag %>
+            </td>
+            <td><%= project_tag.tagged_projects.size %></td>
+            <td class="col-shrink">
+              <%= link_to "Edit", edit_admin_project_tag_path(project_tag), class: "admin-btn admin-btn-sm" %>
+              <%= button_to "Delete", admin_project_tag_path(project_tag), method: :delete,
+                        data: { confirm: "Delete #{project_tag.tag}?" },
+                    class: "admin-btn admin-btn-sm admin-btn-danger" %>
+            </td>
+          </tr>
+        <% end %>
+        <% if @project_tags.empty? %>
+          <tr><td colspan="1" style="text-align:center;">No project tags yet.</td></tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</div>

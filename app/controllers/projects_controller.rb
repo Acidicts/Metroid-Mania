@@ -228,7 +228,7 @@ class ProjectsController < ApplicationController
     # Only allow a list of trusted parameters through.
     def project_params
       # `remove_image` is handled explicitly in the controller (it is NOT a model attribute).
-      permitted = [ :name, :description, :repository_url, :readme_url, :image, :hackatime_id, :status, :total_seconds, { hackatime_ids: [] } ]
+      permitted = [ :name, :description, :repository_url, :readme_url, :image, :hackatime_id, :status, :total_seconds, :project_tag_id, { hackatime_ids: [] } ]
       # only admin users may set featured flag via the form
       permitted << :featured if current_user&.admin?
       pp = params.require(:project).permit(*permitted)

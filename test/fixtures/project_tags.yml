@@ -1,0 +1,12 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  project: one
+  tag_string: MyString
+
+two:
+  project: two
+  tag_string: MyString
+
+global:
+  tag_string: GlobalTag

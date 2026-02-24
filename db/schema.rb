@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_24_182801) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_24_214000) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -208,6 +208,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_182801) do
     t.boolean "variable_grant", default: false, null: false
   end
 
+  create_table "project_tags", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "project_id"
+    t.string "tag_string"
+    t.datetime "updated_at", null: false
+    t.index ["project_id"], name: "index_project_tags_on_project_id"
+  end
+
   create_table "projects", force: :cascade do |t|
     t.datetime "approved_at"
     t.datetime "created_at", null: false
@@ -218,6 +226,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_182801) do
     t.string "hackatime_id"
     t.text "hackatime_ids"
     t.string "name"
+    t.integer "project_tag_id"
     t.string "readme_url"
     t.string "repository_url"
     t.datetime "ship_requested_at"
@@ -343,6 +352,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_182801) do
   add_foreign_key "orders", "users"
   add_foreign_key "posts", "projects"
   add_foreign_key "posts", "users"
+  add_foreign_key "project_tags", "projects"
   add_foreign_key "projects", "users"
   add_foreign_key "ship_requests", "projects"
   add_foreign_key "ship_requests", "users"

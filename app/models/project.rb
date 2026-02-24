@@ -1,5 +1,13 @@
 class Project < ApplicationRecord
   belongs_to :user
+
+  # tag association: each project can optionally be linked to a single
+  # ProjectTag record (chosen from the admin-maintained list).
+  #
+  # we also expose a simple `tags` reader so existing views that previously
+  # expected a comma-separated list will continue to work without blowing up.
+  belongs_to :project_tag, optional: true
+
   has_many :devlogs, dependent: :destroy
   has_many :ships, dependent: :destroy
   has_many :ship_requests, dependent: :destroy
@@ -21,6 +29,32 @@ class Project < ApplicationRecord
 
   # Store multiple Hackatime project names in the text `hackatime_ids` column as YAML.
   # Provide simple accessor helpers so the model behaves like an Array.
+  def tags
+    # provide a minimal compatibility layer for callers that expect an array
+    # of strings.  switching to a single `project_tag_id` field means there is
+    # only ever zero or one value but the old form code joined the array, so
+    # returning an array keeps existing templates functional until they're
+    # updated.  we avoid any database queries here (thanks to eager loading in
+    # controllers) and simply delegate to the association.
+    project_tag ? [ project_tag.tag ] : []
+  end
+
+  # setter is mostly to make mass-assignment of the old `tags` field
+  # behave sanely during transition.  it will pick the first supplied tag
+  # name and, if a matching ProjectTag exists, associate it; otherwise a new
+  # record scoped to this project is created.  this is intentionally simple
+  # because the new UI never calls it.
+  def tags=(vals)
+    arr = Array(vals).flat_map { |v| v.to_s.split(",") }.map(&:strip).reject(&:blank?)
+    if arr.any?
+      name = arr.first
+      self.project_tag = ProjectTag.find_by(tag_string: name) ||
+                         ProjectTag.create!(tag: name, project: self)
+    else
+      self.project_tag = nil
+    end
+  end
+
   def hackatime_ids
     raw = read_attribute(:hackatime_ids)
     return [] if raw.nil? || raw == ""

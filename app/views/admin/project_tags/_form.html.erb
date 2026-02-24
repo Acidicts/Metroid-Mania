@@ -1,0 +1,27 @@
+<%= form_with(model: [:admin, project_tag], local: true, class: "admin-form") do |f| %>
+  <% if project_tag.errors.any? %>
+    <div class="flash-alert">
+      <ul>
+        <% project_tag.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :tag, "Tag" %>
+    <%= f.text_field :tag, class: "form-control", autofocus: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :project_id, "Project (optional)" %>
+    <%= f.collection_select :project_id, Project.order(:name), :id, :name, include_blank: true, class: "form-control" %>
+    <p class="admin-hint"><em>scope the tag to a specific project or leave blank for a global tag.</em></p>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "admin-btn" %>
+    <%= link_to "Cancel", admin_project_tags_path, class: "admin-btn admin-btn-secondary" %>
+  </div>
+<% end %>
