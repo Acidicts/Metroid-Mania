@@ -3,7 +3,7 @@ class SpritesheetsController < ApplicationController
   before_action :set_assets_item
   before_action :set_spritesheet, only: %i[ show edit update destroy download ]
   before_action :ensure_asset_project_enabled
-  before_action :ensure_user_not_fraudulent, only => %i[ new create edit update destroy ]
+  before_action :ensure_user_not_fraudulent, only: %i[ new create edit update destroy ]
 
   # GET /assets_items/:assets_item_id/spritesheets/new
   # GET /assets_projects/:assets_project_id/assets_items/:assets_item_id/spritesheets/new
