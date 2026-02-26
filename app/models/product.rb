@@ -28,9 +28,14 @@ class Product < ApplicationRecord
   attribute :show, :boolean, default: true
   attribute :notch_cost, :integer, default: 1
 
-  attribute :achievement_boolean, :boolean, default: false
+  # legacy column name is `achievement_bool`; provide a friendlier alias so
+  # code (and forms) can refer to `achievement_boolean`.  The database still
+  # stores the value in `achievement_bool` and the migration that adds the
+  # column is named accordingly.
+  alias_attribute :achievement_boolean, :achievement_bool
 
   validate :notch_cost_is_int
+  validate :achievement_configuration
 
   def notch_cost_is_int
     if notch_cost.present? && !notch_cost.is_a?(Integer)
@@ -47,13 +52,18 @@ class Product < ApplicationRecord
     save
   end
 
+  # Determine whether a given user may purchase this product.
+  #
+  # - If `achievement_boolean` is false the product is always unlocked.
+  # - When the flag is true but there is no associated achievement the product
+  #   should be considered locked (this used to return true, which meant
+  #   checking "require achievement" with no achievement had no effect).
+  # - Otherwise we delegate to `Achievement#unlocked_by?` which checks the
+  #   user's earned achievements. `nil` users are treated as locked.
   def is_unlocked(user)
     return true unless achievement_boolean
-    if achievement
-      achievement.unlocked_by?(user)
-    else
-      true
-    end
+    return false if achievement.blank?
+    achievement.unlocked_by?(user)
   end
 
   # Returns the dollar value (float) for stored grant_amount_cents when used as an admin-configured default
@@ -126,6 +136,17 @@ class Product < ApplicationRecord
   end
 
   private
+
+  # Custom validation used when the admin sets the "require achievement"
+  # checkbox in the product form.  The check box and the associated
+  # `achievement_id` field are independent, so it's possible to check the
+  # box and leave the dropdown blank.  That configuration should be
+  # rejected instead of silently behaving as if there were no requirement.
+  def achievement_configuration
+    if achievement_boolean && achievement.blank?
+      errors.add(:achievement, "must be selected when requiring an unlock")
+    end
+  end
 
   def grant_range_consistency
     if grant_min_cents && grant_max_cents && grant_min_cents > grant_max_cents

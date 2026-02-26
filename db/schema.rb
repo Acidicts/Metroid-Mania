@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_24_214000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_26_214952) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -186,6 +186,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_214000) do
   end
 
   create_table "products", force: :cascade do |t|
+    t.boolean "achievement_bool", default: false
+    t.integer "achievement_id"
     t.float "cost_credits"
     t.datetime "created_at", null: false
     t.float "credits_per_dollar"
@@ -206,6 +208,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_214000) do
     t.integer "stock", default: 0
     t.datetime "updated_at", null: false
     t.boolean "variable_grant", default: false, null: false
+    t.index ["achievement_id"], name: "index_products_on_achievement_id"
   end
 
   create_table "project_tags", force: :cascade do |t|
@@ -352,6 +355,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_24_214000) do
   add_foreign_key "orders", "users"
   add_foreign_key "posts", "projects"
   add_foreign_key "posts", "users"
+  add_foreign_key "products", "achievements"
   add_foreign_key "project_tags", "projects"
   add_foreign_key "projects", "users"
   add_foreign_key "ship_requests", "projects"

@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile
+  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile, :user_has_prize?, :prize_order_for
   helper MarkdownHelper
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
@@ -23,6 +23,31 @@ class ApplicationController < ActionController::Base
       val = ENV.fetch("#{name.to_s.upcase}_ENABLED", "true")
       %w[1 true yes on].include?(val.to_s.downcase)
     end
+  end
+
+  def user_has_prize?(user)
+    return false if user.nil?
+
+    # we explicitly join the products table and match case‑insensitively so that
+    # we detect both "prize" and legacy "Prize" records without relying on
+    # the existence of the canonical product.  this keeps the banner working
+    # even if the prize product has been deleted or renamed later.
+    Order.joins(:product)
+         .where(user: user, status: "pending")
+         .where("lower(products.name) = ?", "prize")
+         .exists?
+  end
+
+  # Return the pending prize order for a given user, or +nil+ if none exists.
+  # This is primarily used by views so they can build a link without duplicating
+  # the query logic.
+  def prize_order_for(user)
+    return nil if user.nil?
+
+    Order.joins(:product)
+         .where(user: user, status: "pending")
+         .where("lower(products.name) = ?", "prize")
+         .first
   end
 
   # Graceful handling for unique constraint races (e.g., duplicate pending orders)

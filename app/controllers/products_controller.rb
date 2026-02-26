@@ -128,7 +128,9 @@ class ProductsController < ApplicationController
         :grant_amount_cents,
         :grant_amount_dollars,
         :image_url,
-        :notch_cost
+        :notch_cost,
+        :achievement_boolean,
+        :achievement_id
       )
     end
 end

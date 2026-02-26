@@ -115,6 +115,24 @@ class WeeklyGoalServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test "prize_product normalizes existing records with different casing" do
+    # simulate a legacy product that was created with capital P
+    legacy = Product.find_or_create_by!(name: "Prize") do |p|
+      p.notch_cost = 0
+      p.stock      = 0
+      p.show       = false
+      p.price_currency = 0
+    end
+
+    # calling the helper should return the same record and downcase its name
+    prod = WeeklyGoalService.prize_product
+    assert_equal legacy.id, prod.id
+    assert_equal "prize", prod.name
+
+    # there should only be one product record afterwards
+    assert_equal 1, Product.where("lower(name) = ?", "prize").count
+  end
+
   test "issued order status is pending so admin can review and ship" do
     travel_to Time.zone.parse("2026-02-17 12:00") do
       devlog_for(users(:one))

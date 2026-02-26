@@ -36,4 +36,16 @@ class AchievementTest < ActiveSupport::TestCase
       ach.check_and_grant!(user)
     end
   end
+
+  test "unlocked_by? predicate functions correctly" do
+    user = users(:one)
+    ach = achievements(:one)
+
+    user.achievements.delete_all
+    assert_not ach.unlocked_by?(user)
+    assert_not ach.unlocked_by?(nil)
+
+    user.achievements << ach
+    assert ach.unlocked_by?(user)
+  end
 end

@@ -350,8 +350,6 @@
       </nav>
     </header>
 
-    <%= render 'shared/flash' %>
-
     <% unless feature_enabled?(:running) %>
       <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
         This ysws is not active – RSVP <a href="https://metroidmania.fillout.com/rsvp">here</a>. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
@@ -363,6 +361,14 @@
         Store is currently disabled. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
       </div>
     <% end %>
+
+    <% if user_has_prize?(current_user) %>
+      <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+        You have won the weekly goal prize. <%= link_to "View your prize", prize_order_for(current_user) %> <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+      </div>
+    <% end %>
+
+    <%= render 'shared/flash' %>
 
     <main class="retro-container" role="main" style="padding-top:18px; padding-bottom:18px;">
       <%= yield %>

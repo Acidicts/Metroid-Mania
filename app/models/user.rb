@@ -406,6 +406,7 @@ class User < ApplicationRecord
     placeholder.stock = 0
     placeholder.limited = false
     placeholder.price_currency = 0.0
+    placeholder.show = false
     # leave credits_per_dollar nil so validation allows it
     placeholder.save!(validate: false) if placeholder.new_record? || placeholder.changed?
 

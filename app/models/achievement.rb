@@ -44,6 +44,17 @@ class Achievement < ApplicationRecord
     end
   end
 
+  # A simple query method used by {Product#is_unlocked}.  Exercises the
+  # has_many-through association rather than requiring callers to load
+  # `user_achievements` manually.
+  #
+  # Passing a `nil` user will always return false so that unauthenticated
+  # visitors can't accidentally unlock a requirement.
+  def unlocked_by?(user)
+    return false if user.nil?
+    users.exists?(id: user.id)
+  end
+
   # Grant this achievement to a specific user if the requirement is met.
   # Safe to call multiple times — won't double-grant.
   def check_and_grant!(user)

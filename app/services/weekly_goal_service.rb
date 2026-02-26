@@ -31,14 +31,23 @@ class WeeklyGoalService
     # The product has zero notch cost and is hidden from the public storefront
     # so it doesn't appear as something regular users can buy.
     def prize_product
-      Product.find_or_create_by!(name: "prize") do |p|
-        p.description = "Weekly community goal prize – awarded automatically"
-        p.notch_cost  = 0
-        p.stock       = 0
-        p.limited     = false
-        p.show        = false
-        p.price_currency = 0
+    # search case‑insensitively to avoid duplicate products when someone
+    # manually creates "Prize" instead of "prize".  `first_or_create!`
+    # with a raw SQL condition handles both existing and missing records.
+    Product.where("lower(name) = ?", "prize").first_or_create! do |p|
+      p.name        = "prize"   # ensure correct casing when inserting
+      p.description = "Weekly community goal prize – awarded automatically"
+      p.notch_cost  = 0
+      p.stock       = 0
+      p.limited     = false
+      p.show        = false
+      p.price_currency = 0
+    end.tap do |p|
+      # normalize the name of any existing row so future queries stay simple
+      if p.name != "prize"
+        p.update!(name: "prize")
       end
+    end
     rescue => e
       Rails.logger.error("WeeklyGoalService: could not find/create prize product – #{e.message}")
       nil

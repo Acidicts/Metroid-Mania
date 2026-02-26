@@ -13,8 +13,12 @@
         <% if product.variable_grant? %>
           <% order_params[:grant_amount_dollars] = product.grant_min_dollars %>
         <% end %>
-        <%= button_to "Add To Loadout", orders_path(order_params), method: :post,
-                      class: 'btn-retro buy-button', form: { "data-turbo" => false } %>
+        <% if product.is_unlocked(current_user) %>
+          <%= button_to "Add To Loadout", orders_path(order_params), method: :post,
+                        class: 'btn-retro buy-button', form: { "data-turbo" => false } %>
+        <% else %>
+          <button class="btn-retro buy-button disabled" disabled>Locked</button>
+        <% end %>
         <% if admin? %>
           <div style="margin-top:8px;">
             <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
