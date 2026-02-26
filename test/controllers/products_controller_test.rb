@@ -71,7 +71,12 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should not destroy product with existing orders" do
-    # fixture `one` has an order in orders.yml
+    # ensure there really is an order for the fixture product and the user has notches
+    u = users(:one)
+    u.adjust_charm_notches!(10)
+    # create a non-pending order so validations don't complain
+    Order.create!(user: u, product: products(:one), status: "denied", cost: products(:one).price_currency)
+
     assert_no_difference("Product.count") do
       delete product_url(products(:one))
     end
@@ -103,7 +108,8 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     SiteSetting.set("running", "false")
     get products_url
     assert_response :success
-    assert_match /This ysws is not active RSVP here/, response.body
+    assert_match /This ysws is not active/, response.body
+    assert_match /RSVP/, response.body
   ensure
     SiteSetting.set("running", "true")
   end

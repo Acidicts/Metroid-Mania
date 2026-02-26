@@ -38,7 +38,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
     assert_match /UniqueSearchName123/, @response.body
 
-    # searching for nonsense should return none
+    # searching for nonsense should return no hits
     get projects_url, params: { q: "nope" }
     assert_response :success
     assert_no_match /UniqueSearchName123/, @response.body

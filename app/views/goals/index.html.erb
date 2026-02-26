@@ -1,0 +1,43 @@
+<div class="admin-page">
+  <h1>Community Goals</h1>
+
+  <h2 style="margin-top:0; font-size:1rem; color:#6b7280;">
+    Week of <%= @week_start.strftime("%a %b %-d") %> &ndash; <%= @week_end.strftime("%a %b %-d, %Y") %>
+  </h2>
+
+  <div style="margin-bottom:6px; display:flex; justify-content:space-between; font-weight:600;">
+    <span>Weekly devlog time goal</span>
+    <span><%= human_duration(@week_total) %> / <%= human_duration(@threshold) %></span>
+  </div>
+
+  <div style="background:#e5e7eb; width:100%; height:24px; border-radius:6px; overflow:hidden; border:1px solid #d1d5db;">
+    <div style="background:<%= @percentage >= 100 ? '#16a34a' : '#4ade80' %>; height:100%; width:<%= @percentage %>%; display:flex; align-items:center; justify-content:center; transition:width 0.4s ease;">
+      <% if @percentage >= 10 %>
+        <span style="color:#fff; font-weight:700; font-size:0.85rem;"><%= @percentage %>%</span>
+      <% end %>
+    </div>
+  </div>
+
+  <% if @percentage >= 100 %>
+    <p style="margin-top:12px; color:#16a34a; font-weight:600;">&#x1F3C6; Goal reached! A random contributor will receive a free prize order.</p>
+  <% else %>
+    <p style="margin-top:8px; color:#6b7280;">
+      <%= human_duration(@threshold - @week_total) %> still needed this week.
+      Reach <strong><%= human_duration(@threshold) %></strong> total by Sunday and a random contributor wins a <strong>free prize order</strong>!
+    </p>
+  <% end %>
+
+  <% if @last_awarded_at.present? %>
+    <p style="margin-top:16px; font-size:0.9rem; color:#6b7280;">
+      Last prize awarded: <%= @last_awarded_at.strftime("%A, %B %-d %Y at %H:%M UTC") %>.
+    </p>
+  <% end %>
+
+  <%# Admin helpers: allow manual triggering of the weekly prize %>
+  <% if current_user&.admin? %>
+    <div style="margin-top:24px;">
+      <%= button_to "Issue weekly goal prize", award_goals_path, method: :post, data: { confirm: "Are you sure you want to run the normal award check?" } %>
+      <%= button_to "Force issue prize", force_award_goals_path, method: :post, data: { confirm: "Forcibly select a winner regardless of threshold or prior awards?" } %>
+    </div>
+  <% end %>
+</div>

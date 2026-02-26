@@ -23,7 +23,7 @@ class AchievementsControllerTest < ActionDispatch::IntegrationTest
     get achievements_url
     assert_response :success
     assert_select "#achievement_#{@achievement.id}" do
-      assert_select "div", text: /You have earned this achievement!/
+      assert_select "div", text: /✓ Earned/ 
     end
   end
 

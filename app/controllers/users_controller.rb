@@ -11,9 +11,10 @@ class UsersController < ApplicationController
 
     # Load user's ships including ships with no project (so we can render 'Project removed'), but
     # exclude ships that belong to deleted projects
+    # include all ships regardless of project deletion status; the view
+    # logic will render a helpful message if the associated project is gone
     @ships = @user.ships
                   .left_joins(:project)
-                  .where('projects.deleted_at IS NULL OR ships.project_id IS NULL')
                   .includes(:project)
                   .order(shipped_at: :desc)
 

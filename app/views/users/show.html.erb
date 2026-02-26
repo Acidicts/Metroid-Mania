@@ -99,7 +99,11 @@
             <% cache([ship, ship.project]) do %>
               <div class="ship-item">
                 <div class="ship-info">
-                  <strong>Project:</strong> <%= ship.project&.name || 'Project removed' %>
+                  <strong>Project:</strong> <%= if ship.project.nil? || ship.project.deleted_at.present? 
+                      'Project removed'
+                    else
+                      ship.project.name
+                    end %>
                   • <%= ship.shipped_at.strftime("%b %d, %Y") if ship.shipped_at %>
                 </div>
               </div>

@@ -8,6 +8,7 @@
         <div>
           <div style="font-weight:700; font-size:1.05rem;"><%= @order.name %> <span class="order-item-badge" style="font-size:0.9rem; padding:3px 8px;"><%= @order.cost %></span></div>
         <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.slack_id %></div>
+        <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">User-id: <%= @order.user.id %></div>
         <div style="margin-top:6px; color:#666; font-size:0.9rem;">Created: <%= l(@order.created_at, format: :short) %></div>
       </div>
 

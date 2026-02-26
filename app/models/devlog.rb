@@ -13,6 +13,34 @@ class Devlog < ApplicationRecord
 
   has_many :comments, dependent: :destroy
 
+  # whenever a user adds a devlog we may have changed the global weekly
+  # total; check whether the community goal was reached.  This mirrors the
+  # achievement evaluation callback above but is a cross-user side effect.
+  after_commit :check_weekly_goal, on: :create
+
+  # Sum duration for user-authored devlogs whose log_date falls within a
+  # Date (or Time) range.  Ship-request system entries are excluded because
+  # their duration represents project history, not work done this week.
+  def self.total_duration_seconds(range)
+    start_date = range.first.respond_to?(:to_date) ? range.first.to_date : range.first
+    end_date   = range.last.respond_to?(:to_date)  ? range.last.to_date  : range.last
+    where(ship_request_id: nil)
+      .where(log_date: start_date..end_date)
+      .sum("COALESCE(duration_seconds, duration_minutes * 60)")
+  end
+
+  private
+
+  # after_commit callback defined above; extract to its own method so that
+  # tests can stub/check the behaviour more easily.
+  # Guarded from running during test DB creates via after_commit only running
+  # outside transactions; service tests call the method directly.
+  def check_weekly_goal
+    WeeklyGoalService.check_and_award!
+  end
+
+  public
+
   # whenever a user adds a devlog we may have changed their total hours,
   # so re‑run the achievement evaluator for the associated user.
   after_commit :award_achievements_to_user, on: :create
@@ -43,8 +71,6 @@ class Devlog < ApplicationRecord
   def award_achievements_to_user
     user&.evaluate_achievements!
   end
-
-  private
 
   def ensure_duration_seconds
     if duration_seconds.blank? && duration_minutes.present?

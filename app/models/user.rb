@@ -4,6 +4,9 @@ class User < ApplicationRecord
   # Active (non-deleted) projects owned by this user
   has_many :active_projects, -> { where(deleted_at: nil) }, class_name: "Project"
   has_many :orders, dependent: :nullify
+  # history of devlog entries authored by the user (not all records have a
+  # user due to legacy/system-generated devlogs)
+  has_many :devlogs, dependent: :nullify
   has_many :ships, dependent: :nullify
   has_many :ship_requests, dependent: :nullify
   has_many :assets_projects, dependent: :nullify

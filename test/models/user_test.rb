@@ -38,17 +38,21 @@ class UserTest < ActiveSupport::TestCase
 
   test "charm_slots defaults to zero and validates nonnegative integer" do
     u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
-    assert_equal 0, u.charm_slots
+    # association should start empty
+    assert_equal 0, u.charm_slots.count
 
-    u.charm_slots = -1
+    # use raw attribute assignment to exercise numeric validations (association
+    # setter would treat the value as a collection)
+    # write directly to the column to avoid hitting the association setter
+    u.write_attribute(:charm_slots, -1)
     assert_not u.valid?
     assert_includes u.errors[:charm_slots], "must be greater than or equal to 0"
 
-    u.charm_slots = 1.5
+    u.write_attribute(:charm_slots, 1.5)
     assert_not u.valid?
     assert_includes u.errors[:charm_slots], "must be an integer"
 
-    u.charm_slots = 3
+    u.write_attribute(:charm_slots, 3)
     assert u.valid?
   end
 
@@ -63,8 +67,8 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "loading a user creates any missing charm slot records" do
-    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev", charm_slots: 2)
-    # newly created record doesn't trigger after_find yet
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
+    u.update_column(:charm_slots, 2)
     assert_equal 0, u.charm_slots.count
 
     # reload from database should trigger the callback and create slots
@@ -76,14 +80,14 @@ class UserTest < ActiveSupport::TestCase
   end
 
   test "subsequent loads only create the gap not duplicate existing slots" do
-    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev", charm_slots: 1)
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
+    u.update_column(:charm_slots, 1)
     u2 = User.find(u.id)
-    assert_equal 1, u2.charm_slots.count
-
-    u2.update!(charm_slots: 3)
     # bumping the attribute doesn't immediately add slots until reload
     assert_equal 1, u2.charm_slots.count
 
+    # increase the column again and reload; only the new gap should be filled
+    u.update_column(:charm_slots, 3)
     u3 = User.find(u.id)
     assert_equal 3, u3.charm_slots.count
   end

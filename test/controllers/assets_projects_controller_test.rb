@@ -2,13 +2,19 @@ require "test_helper"
 
 class AssetsProjectsControllerTest < ActionDispatch::IntegrationTest
   setup do
+    # ensure asset projects are enabled during the tests; individual tests
+    # may toggle this flag but default should allow update/destroy paths
+    SiteSetting.set("disable_asset_project", "false")
+
     @assets_project = assets_projects(:one)
     sign_in_as(users(:one))
   end
 
   test "should get index" do
     get assets_projects_url
-    assert_redirected_to projects_url
+    # regular users are not allowed to list asset projects; controller sends
+    # them back to root
+    assert_redirected_to root_url
   end
 
   test "should get new" do
@@ -40,6 +46,10 @@ class AssetsProjectsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "should destroy assets_project" do
+    # asset projects are only deletable by admins, so sign in as one here
+    admin = users(:admin)
+    sign_in_as(admin)
+
     assert_difference("AssetsProject.count", -1) do
       delete assets_project_url(@assets_project)
     end

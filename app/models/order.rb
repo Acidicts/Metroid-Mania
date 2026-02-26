@@ -42,6 +42,22 @@ class Order < ApplicationRecord
     end
   end
 
+  # assign a sensible cost value when not provided so refunds and audits behave
+  # correctly.  This mirrors the controller logic but lives here so that any
+  # direct `Order.create!` call (e.g. in tests or rake tasks) also gets a cost.
+  before_validation :set_default_cost, on: :create
+
+  def set_default_cost
+    return if cost.present?
+    return if product.blank?
+
+    if product.variable_grant? && grant_amount_cents.present?
+      self.cost = product.credits_for_dollars(grant_amount_cents.to_f / 100.0).to_f
+    else
+      self.cost = product.price_currency.to_f
+    end
+  end
+
   # Overhaul uses charm notches instead of credits, so validate against user's currency but display free notches on the leaderboard.
   # validate :user_has_enough_currency, on: :create, if: -> { status.blank? || status == "pending" }
   #
@@ -166,11 +182,12 @@ class Order < ApplicationRecord
   end
 
   def user_has_enough_free_notches
-    return if product.blank?
+    return if product.blank? || user.blank?
 
-    required = product.notch_cost
+    required = product.notch_cost.to_i
+    available = user.free_notches.to_i
 
-    if user.free_notches < required
+    if available < required
       errors.add(:base, "Insufficient free notches")
     end
   end
@@ -221,7 +238,7 @@ class Order < ApplicationRecord
       user.reload
 
       required = product.notch_cost.to_i
-      if required > user.free_notches
+      if required > user.free_notches.to_i
         # If the cost has changed or another order drained the account while
         # we were waiting, gracefully abort rather than raising an exception.
         Rails.logger.warn("Order #{id} not charged: insufficient free notches after lock")

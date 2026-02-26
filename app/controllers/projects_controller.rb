@@ -28,11 +28,15 @@ class ProjectsController < ApplicationController
         @projects = @projects.where("LOWER(project_tags.tag_string) = ?", tagname)
       else
         q = raw.downcase
-        if Project.where(name: q).any?
-          p = Project.where(name: q).first
+        # case-insensitive exact-match redirect
+        if Project.where("LOWER(name) = ?", q).any?
+          p = Project.where("LOWER(name) = ?", q).first
 
           redirect_to project_path(p) and return
         end
+
+        # otherwise treat as a substring search across project name and owner
+        @projects = @projects.where("LOWER(projects.name) LIKE :q OR LOWER(users.name) LIKE :q", q: "%#{q}%")
       end
     end
 

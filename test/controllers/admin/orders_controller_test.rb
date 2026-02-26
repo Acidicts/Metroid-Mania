@@ -4,6 +4,7 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
   setup do
     @admin = users(:one)
     @admin.update!(role: :admin, email: "admin-orders@example.com", password: "password")
+    @admin.adjust_charm_notches!(100)
     sign_in_as(@admin, password: "password")
 
     @order = orders(:one)
@@ -66,12 +67,13 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "decline can refund a previously fulfilled order" do
-    prod = Product.create!(name: "PostFulfillRefund", steam_app_id: 99, price_currency: 5.0, cost_credits: 50.0)
+    prod = Product.create!(name: "PostFulfillRefund", steam_app_id: 99, price_currency: 5.0, cost_credits: 50.0, notch_cost: 0)
     u = users(:one)
-    # Seed user with funds so they can make and hold the order; it will be deducted on create
+    # Seed user with funds and notches so they can make and hold the order; it will be deducted on create
     u.update!(currency: 100.0)
+    u.adjust_charm_notches!(100)
 
-    o = u.orders.create!(product: prod)
+    o = u.orders.create!(product: prod, cost: prod.price_currency, cost: prod.price_currency)
 
     # Mark it fulfilled (shipped)
     post fulfill_admin_order_url(o)
@@ -107,9 +109,10 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "index search by public_id and id works" do
-    prod = Product.create!(name: "SearchTest", steam_app_id: 77, price_currency: 2.0)
+    prod = Product.create!(name: "SearchTest", steam_app_id: 77, price_currency: 2.0, notch_cost: 0)
     u = users(:one)
     u.update!(currency: 100.0)
+    u.adjust_charm_notches!(100)
     o1 = u.orders.create!(product: prod)
 
     # search by public_id
@@ -134,11 +137,12 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "charm_image_url shows up in admin index and show" do
-    prod = Product.create!(name: "ImgTest", steam_app_id: 88, price_currency: 3.0, image_url: "http://prod/image")
+    prod = Product.create!(name: "ImgTest", steam_app_id: 88, price_currency: 3.0, image_url: "http://prod/image", notch_cost: 0)
     u = users(:one)
     u.update!(currency: 100.0)
+    u.adjust_charm_notches!(100)
     img_url = "https://cdn.example.com/charm.png"
-    o = u.orders.create!(product: prod, charm_image_url: img_url)
+    o = u.orders.create!(product: prod, charm_image_url: img_url, cost: prod.price_currency)
 
     get admin_orders_url
     assert_response :success

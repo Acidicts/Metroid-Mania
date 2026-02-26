@@ -62,4 +62,17 @@ class DevlogTest < ActiveSupport::TestCase
     assert_not devlog.editable_by?(owner)
     assert devlog.editable_by?(admin_user)
   end
+
+  test "check_weekly_goal delegates to WeeklyGoalService" do
+    devlog = Devlog.new(project: projects(:one), user: users(:one))
+    called = false
+    orig = WeeklyGoalService.method(:check_and_award!)
+    WeeklyGoalService.define_singleton_method(:check_and_award!) { called = true }
+    begin
+      devlog.send(:check_weekly_goal)
+    ensure
+      WeeklyGoalService.define_singleton_method(:check_and_award!, orig)
+    end
+    assert called, "Expected check_weekly_goal to delegate to WeeklyGoalService.check_and_award!"
+  end
 end

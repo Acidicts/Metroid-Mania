@@ -14,13 +14,15 @@ class Admin::SiteSettingsControllerTest < ActionDispatch::IntegrationTest
       shop: "0",
       running: "0",
       disable_non_admin_logins: "1",
-      disable_asset_project: "1"
+      disable_asset_project: "1",
+      weekly_goal_threshold_seconds: "12345"
     } }
     assert_redirected_to admin_site_settings_url
     assert_not SiteSetting.enabled?("shop")
     assert_not SiteSetting.enabled?("running")
     assert SiteSetting.enabled?("disable_non_admin_logins")
     assert SiteSetting.enabled?("disable_asset_project")
+    assert_equal "12345", SiteSetting.get("weekly_goal_threshold_seconds")
   ensure
     SiteSetting.set("shop", "true")
     SiteSetting.set("running", "true")

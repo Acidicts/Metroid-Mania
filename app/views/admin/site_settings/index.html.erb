@@ -26,6 +26,20 @@
       <span style="color:#6b7280; margin-left:8px;">When enabled the asset project functionality will be turned off.</span>
     </div>
 
+    <h2>Weekly devlog goal</h2>
+    <div style="margin-bottom:12px;">
+      <label for="site_setting_weekly_goal_threshold_seconds" style="font-weight:600; margin-right:8px;">Threshold (seconds)</label>
+      <%= text_field_tag 'site_setting[weekly_goal_threshold_seconds]', SiteSetting.get('weekly_goal_threshold_seconds') || WeeklyGoalService::THRESHOLD_SECONDS, id: 'site_setting_weekly_goal_threshold_seconds', size: 8 %>
+      <span style="color:#6b7280; margin-left:8px;">Total seconds required to hit the weekly goal (default 360000 = 100h). When reached, a random contributor receives a free \"prize\" order.</span>
+    </div>
+
+    <h2>Community goals</h2>
+    <div style="margin-bottom:12px;">
+      <label for="site_setting_disable_community_goals" style="font-weight:600; margin-right:8px;">Disable Community Goals</label>
+      <%= check_box_tag 'site_setting[disable_community_goals]', '1', SiteSetting.enabled?('disable_community_goals', default: false), id: 'site_setting_disable_community_goals' %>
+      <span style="color:#6b7280; margin-left:8px;">When enabled community goals functionality will be turned off.</span>
+    </div>
+
     <%= submit_tag 'Save', class: 'btn-retro' %>
   <% end %>
 </div>

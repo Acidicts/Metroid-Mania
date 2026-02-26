@@ -46,8 +46,18 @@ class OrderTest < ActiveSupport::TestCase
   end
 
   test "charm_image_url validation allows valid urls and rejects bad ones" do
-    o = Order.new
+    # build a minimally valid order so validation failures are attributable to
+    # the URL field and not missing associations/attributes
+    user = users(:one)
+    user.adjust_charm_notches!(10)
+    # avoid conflicting with fixture order (one has pending order for user one),
+    # use a different product so uniqueness validation passes
+    product = products(:two)
+    o = Order.new(user: user, product: product)
     o.charm_image_url = "https://example.com/foo.png"
+    unless o.valid?
+      puts "DEBUG order errors: #{o.errors.full_messages.inspect}"
+    end
     assert o.valid?
 
     o.charm_image_url = "not a url"

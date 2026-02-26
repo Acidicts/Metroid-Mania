@@ -1,4 +1,14 @@
 module ApplicationHelper
+  # convert a duration in seconds to a compact human string like "3h 12m".
+  def human_duration(seconds)
+    return "0h" if seconds.nil? || seconds.to_i <= 0
+    total = seconds.to_i
+    hrs = total / 3600
+    mins = (total % 3600) / 60
+    str = "#{hrs}h"
+    str += " #{mins}m" if mins > 0
+    str
+  end
   def format_credits(amount)
     "#{amount.to_f.floor} #{credit_label}"
   end

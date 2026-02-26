@@ -1,4 +1,13 @@
 Rails.application.routes.draw do
+  # basic CRUD paths for community goals (only index/new/edit actions
+  # exist at the moment; more can be added later).  Using `resources` ensures
+  # the usual path helpers such as `goals_path` are available.
+  resources :goals, only: [ :index, :new, :edit ] do
+    collection do
+      post :award
+      post :force_award
+    end
+  end
   resources :achievements
   resources :charm_notches
   # legacy path used by older clients; redirect to index to avoid hitting
