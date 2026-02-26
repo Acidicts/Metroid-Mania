@@ -119,10 +119,31 @@
         </div>
       </div>
 
-      <div class="form-actions">
-        <%= form.submit class: "btn-primary" %>
-      </div>
+      <div class="apf-section">
+        <div class="apf-section-title">Achievement</div>
+
+        <label class="checkbox-card form-group">
+          <%= form.check_box :achievement_boolean, { id: "achievement_boolean_checkbox" }, "1", "0" %>
+          <div>
+            <%= form.label :achievement_boolean, "Require achievement unlock to purchase" %>
+            <div class="field-hint">When checked, only users who have unlocked the associated achievement can purchase this product.</div>
+          </div>
+        </label>
+
+        <% if product.achievement %>
+          <div class="current-achievement" aria-live="polite">
+            <p class="form-note">Current associated achievement:</p>
+            <p><strong><%= product.achievement.title %></strong></p>
+          </div>
+        <% end %>
+
+        <div class="form-group">
+          <%= form.label :achievement_id, "Associated achievement (optional)" %>
+          <%= form.collection_select :achievement_id, Achievement.all, :id, :title, { include_blank: true }, { class: "form-input" } %>
+        </div>
     </div>
+
+      
 
     <aside class="sidebar-column">
       <div class="apf-section">
@@ -139,6 +160,9 @@
         </div>
       </div>
     </aside>
+    <div class="form-actions">
+        <%= form.submit class: "btn-primary" %>
+    </div>
   </div>
 
   <script>

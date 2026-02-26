@@ -4,6 +4,11 @@ class Product < ApplicationRecord
   # already, but having an AR-level restriction allows us to show a
   # sensible validation error instead of raising a constraint exception.
   has_many :orders, dependent: :restrict_with_error
+  # each product may optionally be tied to an achievement. we store the
+  # foreign key on `products.achievement_id`, so this is a `belongs_to`
+  # association. earlier versions mistakenly used `has_one` which looked for
+  # `achievements.product_id` and caused SQL errors when loading records.
+  belongs_to :achievement, optional: true
 
   # Helpers/constants
   DEFAULT_MIN_GRANT_CENTS = 10_00
@@ -23,6 +28,8 @@ class Product < ApplicationRecord
   attribute :show, :boolean, default: true
   attribute :notch_cost, :integer, default: 1
 
+  attribute :achievement_boolean, :boolean, default: false
+
   validate :notch_cost_is_int
 
   def notch_cost_is_int
@@ -38,6 +45,15 @@ class Product < ApplicationRecord
   def set_image_from_url(url)
     self.image_url = url
     save
+  end
+
+  def is_unlocked(user)
+    return true unless achievement_boolean
+    if achievement
+      achievement.unlocked_by?(user)
+    else
+      true
+    end
   end
 
   # Returns the dollar value (float) for stored grant_amount_cents when used as an admin-configured default
