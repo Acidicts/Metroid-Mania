@@ -122,6 +122,13 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def ensure_goals_enabled
+    if feature_enabled?(:disable_community_goals) || current_user&.admin?
+      flash_warn("Community goals are disabled.")
+      redirect_to root_path and return
+    end
+  end
+
   def ensure_asset_project_enabled
     if feature_enabled?(:disable_asset_project) && !current_user&.admin?
       flash_warn("Asset projects are disabled.")

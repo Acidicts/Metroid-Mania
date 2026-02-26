@@ -1,5 +1,6 @@
 class GoalsController < ApplicationController
   before_action :require_admin, only: %i[award force_award]
+  before_action :ensure_goals_enabled, only: %i[ index ]
 
   def index
     @week_start  = WeeklyGoalService.week_start
