@@ -16,6 +16,33 @@ class Project < ApplicationRecord
   # Attach a representative image for the project (Active Storage)
   has_one_attached :image
 
+  # Provide a unified "image_url" reader so views (and metadata tags) can
+  # consume either the legacy URL-style attribute (if present) or an
+  # ActiveStorage attachment.  Previously the show template referenced
+  # `@project.image_url` directly which raised a NoMethodError because the
+  # projects table has never contained such a column.  Defining this method
+  # keeps the interface stable and automatically generates a full URL for a
+  # blob when an image is attached.  Controllers/tests may still assign
+  # `project.image_url = "…"` during the transition; any non‑persisted
+  # value will be returned verbatim if present.
+  def image_url
+    # prefer an explicit attribute if one exists (unlikely today but harmless)
+    if has_attribute?(:image_url) && self[:image_url].present?
+      return self[:image_url]
+    end
+
+    # fall back to ActiveStorage blob URL when attached
+    return nil unless image.respond_to?(:attached?) && image.attached?
+
+    # rails_blob_url requires request details such as host/port/protocol.
+    # The convenient source is the application's default_url_options, which
+    # are populated from config/environments/* and already include the
+    # port in development.  We simply pass the entire hash so the blob URL
+    # mirrors whatever the rest of the app will generate for `url_for`.
+    opts = Rails.application.config.action_mailer.default_url_options.slice(:host, :port, :protocol)
+    Rails.application.routes.url_helpers.rails_blob_url(image, **opts)
+  end
+
   validates :name, presence: true
   validates :repository_url, presence: true
 

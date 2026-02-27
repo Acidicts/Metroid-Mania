@@ -192,6 +192,41 @@ class ProjectTest < ActiveSupport::TestCase
     assert_match /Project has a banner image/, md
     assert_match /\[x\]/, md
   end
+
+  test "image_url returns nil when no attachment" do
+    p = Project.new
+    assert_nil p.image_url
+  end
+
+  test "image_url includes port when default_url_options specify one" do
+    p = Project.new
+    # stub an attached blob to avoid needing real ActiveStorage setup
+    blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "port.png", content_type: "image/png")
+    p.image.attach(blob)
+
+    # temporarily set a port in default_url_options
+    orig = Rails.application.config.action_mailer.default_url_options.dup
+    Rails.application.config.action_mailer.default_url_options[:host] = "localhost"
+    Rails.application.config.action_mailer.default_url_options[:port] = 4000
+
+    begin
+      url = p.image_url
+      assert_match %r{localhost:4000}, url, "expected blob URL to include configured port"
+    ensure
+      Rails.application.config.action_mailer.default_url_options = orig
+    end
+  end
+
+  test "image_url generates blob URL for attached image" do
+    p = projects(:one)
+    # attach a tiny blob; using test helper to create sample PNG
+    blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "foo.png", content_type: "image/png")
+    p.image.attach(blob)
+
+    url = p.image_url
+    assert_match %r{https?://}, url, "expected full URL for blob"
+    assert_includes url, blob.signed_id.to_s
+  end
   test "ship_and_award_credits! awards credits and records them on the ship atomically" do
     p = projects(:one)
     admin = users(:one)

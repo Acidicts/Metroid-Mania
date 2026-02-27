@@ -39,19 +39,13 @@
 </style>
 
 <div id="<%= dom_id project %>" class="project-card project-preview">
-  <% if project.image.attached? %>
-    <div class="project-media project-media--thumb" style="height:240px; max-height:240px; ">
-        <% if project.respond_to?(:image_url) && project.image_url.present? %>
-          <img src="<%= project.image_url %>" alt="<%= project.name %>" loading="lazy">
-        <% elsif project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached? %>
-          <%= image_tag(project.image, alt: project.name, loading: "lazy") %>
-        <% else %>
-          <img src="https://placehold.co/240x240" alt="<%= project.name %>" loading="lazy">
-        <% end %>
-    </div>
-  <% else %>
-    <div class="project-media project-media--thumb" style="height:240px; max-height:240px; background: var(--accent-gradient); border-radius: 5%;"></div>
-  <% end %>
+  <div class="project-media project-media--thumb" style="height:240px; max-height:240px; ">
+    <% if project.image_url.present? %>
+      <img src="<%= project.image_url %>" alt="<%= project.name %>" loading="lazy">
+    <% else %>
+      <div style="height:100%; width:100%; background: var(--accent-gradient); border-radius: 5%;"></div>
+    <% end %>
+  </div>
 
   <div class="project-content">
     <!-- status ribbon positioned at top-left of the card -->

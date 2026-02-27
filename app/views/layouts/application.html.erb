@@ -1,242 +1,242 @@
-<style>
-  /* Prevent horizontal overflow across the viewport */
-  html, body { overflow-x: hidden; }
-
-  /* reduce navbar vertical spacing (override public/styles.css) */
-  .retro-navbar {
-    padding: 6px 12px !important;
-    gap: 8px !important;
-  }
-  .retro-navbar a {
-    padding: 2px 6px !important;
-    line-height: 1 !important;
-    font-size: 1.1rem !important; /* slightly smaller text helps reduce height */
-  }
-  /* shrink avatar image to match tighter bar */
-  .profile-link img {
-    height: 32px !important;
-    width: 32px !important;
-    margin-right: 4px !important;
-  }
-
-  /* Mobile menu icon (hidden on wide screens) */
-  .menu-icon {
-    display: none;
-    cursor: pointer;
-    /* reduce margin to shrink header height */
-    margin: 6px;
-    -webkit-tap-highlight-color: transparent;
-    background: transparent;
-    border: none;
-  }
-
-  /* bars */
-  .menu-icon span {
-    display: block;
-    width: 28px;
-    height: 5px;
-    background-color: black;
-    margin: 6px 0;
-    border-radius: 3px;
-    transition: transform 250ms ease, opacity 250ms ease;
-  }
-
-  /* transform into an X when open */
-  .menu-icon.open span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
-  .menu-icon.open span:nth-child(2) { opacity: 0; }
-  .menu-icon.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
-
-  /* common hover styles for profile icon (apply to all screen sizes) */
-  .profile-link {
-    margin-top: 6px;
-    transition: transform 220ms ease, opacity 220ms ease;
-    /* shrink vertical spacing around avatar */
-    line-height: 1;
-    background: var(--main-800);
-    padding: 4px 8px;
-    display: inline-flex;
-    align-items: center;
-  }
-
-  .profile-link span {
-    padding-left: 4px
-  }
-
-  .profile-link img {
-    transition: transform 220ms ease, opacity 220ms ease;
-    display: block; /* ensure scaling origin is correct */
-  }
-
-  .profile-link:hover {
-    transform: translateY(-2px);
-  }
-
-  .profile-link:hover img {
-    transform: scale(1.1);
-    opacity: 0.9;
-  }
-
-  /* dropdown menu attached to profile picture */
-  .profile-menu {
-    position: relative;
-    display: inline-block;
-  }
-
-  .profile-dropdown {
-    /* keep layout present so we can animate opacity/transform */
-    visibility: hidden;
-    position: absolute;
-    right: 0;
-    /* reduce gap so mouse can move from link into menu without losing hover */
-    top: calc(100% + 2px);
-    background: white;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    list-style: none;
-    margin: 0;
-    padding: 4px 0;
-    min-width: 140px; /* a bit wider so links are easier to tap */
-    z-index: 50;
-    opacity: 0;
-    transform: translateY(-8px);
-    transition: opacity 180ms ease, transform 180ms ease;
-  }
-
-  .profile-dropdown li {
-    padding: 0;
-  }
-
-  .profile-dropdown li a {
-    display: block;
-    padding: 10px 16px; /* more generous hit area for easier selection */
-    width: 100%;
-    box-sizing: border-box;
-    color: #333;
-    text-decoration: none;
-  }
-
-  .profile-dropdown li a:hover {
-    background: #f4f4f4;
-  }
-
-  /* hovered state: show & animate */
-  .profile-menu:hover .profile-dropdown {
-    visibility: visible;
-    opacity: 1;
-    transform: translateY(0);
-    transition-delay: 0s;
-    /* enlarge hoverable area slightly to cover any remaining tiny gap */
-    pointer-events: auto;
-  }
-
-  /* non-hover state: hide after animation completes */
-  .profile-menu:not(:hover) .profile-dropdown {
-    visibility: hidden;
-    transition-delay: 180ms; /* wait for fade out before hiding */
-  }
-
-  @media (max-width: 600px) {
-    /* allow the menu button to sit above the header so it isn't clipped */
-    header { position: relative; overflow: visible; }
-    .retro-navbar a, .retro-navbar button, #sign_out_btn {
-      font-size: 0.9rem;
-      /* reduce vertical padding */
-      padding: 4px 10px;
-    }
-
-    /* ensure items not covered by the absolute top-left icon */
-    .retro-navbar {
-      display: flex;
-      flex-direction: column;
-      max-height: 0;
-      overflow: hidden;
-      background: var(--bg);
-      transition: max-height 320ms cubic-bezier(.2,.8,.2,1), padding-top 320ms ease, visibility 0ms linear 320ms;
-      padding-top: 12px;
-      padding-right: 56px;
-    }
-
-    /* center links in the dropdown and keep them away from the hamburger */
-    .retro-navbar a,
-    .retro-navbar button:not(.menu-icon),
-    .retro-navbar .btn-retro,
-    .retro-navbar #sign_out_btn {
-      display: block;
-      width: calc(100% - 72px);
-      max-width: 440px;
-      margin: 6px auto;
-      text-align: center;
-    }
-
-    /* when expanded show nav items - cap to viewport height so content stays on screen */
-    .retro-navbar.expanded {
-      /* leave room for header and some padding */
-      max-height: calc(100vh - 64px);
-      padding-top: 18px;
-      padding-right: 56px;
-      background: var(--main-900);
-      visibility: visible;
-      transition-delay: 0s;
-      overflow-y: auto; /* allow the menu itself to scroll if content exceeds available space */
-      -webkit-overflow-scrolling: touch;
-    }
-
-    /* smooth color transitions for nav items */
-    .retro-navbar a, .retro-navbar button, .retro-navbar .btn-retro, .retro-navbar #sign_out_btn {
-      transition: color 220ms ease, opacity 220ms ease;
-    }
-
-    /* when collapsed: muted links to signal inactive state */
-    .retro-navbar:not(.expanded) a,
-    .retro-navbar:not(.expanded) button,
-    .retro-navbar:not(.expanded) .btn-retro,
-    .retro-navbar:not(.expanded) #sign_out_btn {
-      color: rgba(0,0,0,0.78);
-      opacity: 0.95;
-    }
-
-    /* when expanded: ensure links are light to contrast with dark background */
-    .retro-navbar.expanded a,
-    .retro-navbar.expanded button,
-    .retro-navbar.expanded .btn-retro,
-    .retro-navbar.expanded #sign_out_btn {
-      color: var(--accent3);
-      opacity: 1;
-    }
-
-    /* show the menu icon on small screens and lock to top-left */
-    .menu-icon {
-      display: block;
-      position: absolute;
-      top: 24px;
-      right: 4px;
-      z-index: 60;
-      padding: 6px;
-      background: rgba(255,255,255,0.92); /* visible on dark headers */
-      border-radius: 8px;
-      box-shadow: 0 3px 10px rgba(0,0,0,0.12);
-    }
-
-    /* when the nav is open, prevent the page body from scrolling */
-    body.nav-open {
-      position: fixed;
-      width: 100%;
-      overflow: hidden;
-    }
-
-    /* focus styles for accessibility */
-    .menu-icon:focus {
-      outline: 3px solid rgba(0,0,0,0.12);
-      outline-offset: 2px;
-      border-radius: 6px;
-    }
-  }
-</style>
 
 <!DOCTYPE html>
 <html>
   <head>
+    <style>
+      /* Prevent horizontal overflow across the viewport */
+      html, body { overflow-x: hidden; }
+
+      /* reduce navbar vertical spacing (override public/styles.css) */
+      .retro-navbar {
+        padding: 6px 12px !important;
+        gap: 8px !important;
+      }
+      .retro-navbar a {
+        padding: 2px 6px !important;
+        line-height: 1 !important;
+        font-size: 1.1rem !important; /* slightly smaller text helps reduce height */
+      }
+      /* shrink avatar image to match tighter bar */
+      .profile-link img {
+        height: 32px !important;
+        width: 32px !important;
+        margin-right: 4px !important;
+      }
+
+      /* Mobile menu icon (hidden on wide screens) */
+      .menu-icon {
+        display: none;
+        cursor: pointer;
+        /* reduce margin to shrink header height */
+        margin: 6px;
+        -webkit-tap-highlight-color: transparent;
+        background: transparent;
+        border: none;
+      }
+
+      /* bars */
+      .menu-icon span {
+        display: block;
+        width: 28px;
+        height: 5px;
+        background-color: black;
+        margin: 6px 0;
+        border-radius: 3px;
+        transition: transform 250ms ease, opacity 250ms ease;
+      }
+
+      /* transform into an X when open */
+      .menu-icon.open span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
+      .menu-icon.open span:nth-child(2) { opacity: 0; }
+      .menu-icon.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
+
+      /* common hover styles for profile icon (apply to all screen sizes) */
+      .profile-link {
+        margin-top: 6px;
+        transition: transform 220ms ease, opacity 220ms ease;
+        /* shrink vertical spacing around avatar */
+        line-height: 1;
+        background: var(--main-800);
+        padding: 4px 8px;
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .profile-link span {
+        padding-left: 4px
+      }
+
+      .profile-link img {
+        transition: transform 220ms ease, opacity 220ms ease;
+        display: block; /* ensure scaling origin is correct */
+      }
+
+      .profile-link:hover {
+        transform: translateY(-2px);
+      }
+
+      .profile-link:hover img {
+        transform: scale(1.1);
+        opacity: 0.9;
+      }
+
+      /* dropdown menu attached to profile picture */
+      .profile-menu {
+        position: relative;
+        display: inline-block;
+      }
+
+      .profile-dropdown {
+        /* keep layout present so we can animate opacity/transform */
+        visibility: hidden;
+        position: absolute;
+        right: 0;
+        /* reduce gap so mouse can move from link into menu without losing hover */
+        top: calc(100% + 2px);
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        list-style: none;
+        margin: 0;
+        padding: 4px 0;
+        min-width: 140px; /* a bit wider so links are easier to tap */
+        z-index: 50;
+        opacity: 0;
+        transform: translateY(-8px);
+        transition: opacity 180ms ease, transform 180ms ease;
+      }
+
+      .profile-dropdown li {
+        padding: 0;
+      }
+
+      .profile-dropdown li a {
+        display: block;
+        padding: 10px 16px; /* more generous hit area for easier selection */
+        width: 100%;
+        box-sizing: border-box;
+        color: #333;
+        text-decoration: none;
+      }
+
+      .profile-dropdown li a:hover {
+        background: #f4f4f4;
+      }
+
+      /* hovered state: show & animate */
+      .profile-menu:hover .profile-dropdown {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+        transition-delay: 0s;
+        /* enlarge hoverable area slightly to cover any remaining tiny gap */
+        pointer-events: auto;
+      }
+
+      /* non-hover state: hide after animation completes */
+      .profile-menu:not(:hover) .profile-dropdown {
+        visibility: hidden;
+        transition-delay: 180ms; /* wait for fade out before hiding */
+      }
+
+      @media (max-width: 600px) {
+        /* allow the menu button to sit above the header so it isn't clipped */
+        header { position: relative; overflow: visible; }
+        .retro-navbar a, .retro-navbar button, #sign_out_btn {
+          font-size: 0.9rem;
+          /* reduce vertical padding */
+          padding: 4px 10px;
+        }
+
+        /* ensure items not covered by the absolute top-left icon */
+        .retro-navbar {
+          display: flex;
+          flex-direction: column;
+          max-height: 0;
+          overflow: hidden;
+          background: var(--bg);
+          transition: max-height 320ms cubic-bezier(.2,.8,.2,1), padding-top 320ms ease, visibility 0ms linear 320ms;
+          padding-top: 12px;
+          padding-right: 56px;
+        }
+
+        /* center links in the dropdown and keep them away from the hamburger */
+        .retro-navbar a,
+        .retro-navbar button:not(.menu-icon),
+        .retro-navbar .btn-retro,
+        .retro-navbar #sign_out_btn {
+          display: block;
+          width: calc(100% - 72px);
+          max-width: 440px;
+          margin: 6px auto;
+          text-align: center;
+        }
+
+        /* when expanded show nav items - cap to viewport height so content stays on screen */
+        .retro-navbar.expanded {
+          /* leave room for header and some padding */
+          max-height: calc(100vh - 64px);
+          padding-top: 18px;
+          padding-right: 56px;
+          background: var(--main-900);
+          visibility: visible;
+          transition-delay: 0s;
+          overflow-y: auto; /* allow the menu itself to scroll if content exceeds available space */
+          -webkit-overflow-scrolling: touch;
+        }
+
+        /* smooth color transitions for nav items */
+        .retro-navbar a, .retro-navbar button, .retro-navbar .btn-retro, .retro-navbar #sign_out_btn {
+          transition: color 220ms ease, opacity 220ms ease;
+        }
+
+        /* when collapsed: muted links to signal inactive state */
+        .retro-navbar:not(.expanded) a,
+        .retro-navbar:not(.expanded) button,
+        .retro-navbar:not(.expanded) .btn-retro,
+        .retro-navbar:not(.expanded) #sign_out_btn {
+          color: rgba(0,0,0,0.78);
+          opacity: 0.95;
+        }
+
+        /* when expanded: ensure links are light to contrast with dark background */
+        .retro-navbar.expanded a,
+        .retro-navbar.expanded button,
+        .retro-navbar.expanded .btn-retro,
+        .retro-navbar.expanded #sign_out_btn {
+          color: var(--accent3);
+          opacity: 1;
+        }
+
+        /* show the menu icon on small screens and lock to top-left */
+        .menu-icon {
+          display: block;
+          position: absolute;
+          top: 24px;
+          right: 4px;
+          z-index: 60;
+          padding: 6px;
+          background: rgba(255,255,255,0.92); /* visible on dark headers */
+          border-radius: 8px;
+          box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+        }
+
+        /* when the nav is open, prevent the page body from scrolling */
+        body.nav-open {
+          position: fixed;
+          width: 100%;
+          overflow: hidden;
+        }
+
+        /* focus styles for accessibility */
+        .menu-icon:focus {
+          outline: 3px solid rgba(0,0,0,0.12);
+          outline-offset: 2px;
+          border-radius: 6px;
+        }
+      }
+    </style>
     <% if current_user&.font_on? %>
       <link rel="preconnect" href="https://fonts.googleapis.com">
       <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -253,6 +253,29 @@
     <meta name="mobile-web-app-capable" content="yes">
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
+
+    <%# inject Open Graph / Twitter tags when controllers set them via
+        `content_for` (see projects/show and other potential pages) %>
+    <% if content_for?(:og_title) %>
+      <meta property="og:title" content="<%= strip_tags(content_for(:og_title)) %>">
+    <% end %>
+    <%# include the canonical URL if it's available (e.g. projects show) %>
+    <% if request && request.original_url.present? %>
+      <meta property="og:url" content="<%= request.original_url %>">
+    <% end %>
+    <%# description tag should always be present; fall back to a generic
+        message when none was provided. each `content_for` call in views now
+        guarantees a string but this double‑checks anyway. %>
+    <meta property="og:description" content="<%= strip_tags(content_for(:og_description).presence || "Metroid Mania project") %>">
+    <% if content_for?(:og_image) %>
+      <meta property="og:image" content="<%= strip_tags(content_for(:og_image)) %>">
+    <% end %>
+    <% if content_for?(:twitter_card) %>
+      <meta name="twitter:card" content="<%= strip_tags(content_for(:twitter_card)) %>">
+    <% end %>
+    <% if content_for?(:og_author) %>
+      <meta property="og:author" content="<%= strip_tags(content_for(:og_author)) %>">
+    <% end %>
 
     <%= yield :head %>
 

@@ -1,4 +1,17 @@
-<div class="product-card">
+<style>
+  .locked {
+    opacity: 0.5;
+    background-image: repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 4px,
+      rgba(128, 128, 128, 0.2) 4px,
+      rgba(128, 128, 128, 0.2) 8px
+    );
+  }
+</style>
+
+<div class="product-card <%= product.is_unlocked(current_user) ? '' : 'locked' %>">
       <img src="<%= product.image_url %>" width="96px" height="96px" alt="<%= product.name %> image" class="product-image" loading="lazy">
       <div class="product-content">
         <h3><%= product.name %></h3>

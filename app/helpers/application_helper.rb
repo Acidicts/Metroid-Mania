@@ -182,4 +182,31 @@ module ApplicationHelper
       "#" # Or a safe fallback URL
     end
   end
+
+  # Return the most appropriate URL for displaying a project's banner image.
+  #
+  # * If an ActiveStorage attachment exists, `url_for` is used so the generated
+  #   link respects the current request (host/port/protocol) rather than the
+  #   static `default_url_options`.  This is crucial for crawlers like Slack
+  #   which follow the OG metadata; using the request ensures we don't hand
+  #   them a `localhost` URL when the site is accessed via a real hostname.
+  # * Otherwise, fall back to the legacy `project.image_url` accessor, and
+  #   finally to a generic placeholder.
+  def project_banner_url(project)
+    if project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached?
+      # ActiveStorage blob URLs need to be absolute for external crawlers.
+      # Prefer using the current request's base URL when available.
+      if defined?(request) && request.present?
+        Rails.application.routes.url_helpers.rails_blob_url(project.image, host: request.base_url)
+      else
+        # fallback to url_for which may produce a relative path but is usable
+        # in non-request contexts (e.g. background jobs or console).
+        url_for(project.image)
+      end
+    elsif project.respond_to?(:image_url) && project.image_url.present?
+      project.image_url
+    else
+      "https://placehold.co/800x450"
+    end
+  end
 end

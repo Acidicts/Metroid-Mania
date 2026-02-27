@@ -1,4 +1,20 @@
-<!-- Mobile styles moved to `app/assets/stylesheets/application.css` -->
+<% content_for :title, @project.name %>
+<% content_for :og_title, @project.name %>
+<%# Provide a usable description for social previews.  If the project has no
+    description we emit a generic placeholder so crawlers don't skip the tag.
+    `truncate` is used to limit length for OG specs.
+%>
+<% content_for :og_description, (
+     @project.description.presence ||
+     "No description provided yet – check the project page for details."
+   ).to_s.truncate(200) %>
+<%# Open Graph image must be a URL string; prefer the project's image_url helper, falling
+    back to a generic placeholder if nothing has been attached.  Previously we
+    passed the ActiveStorage attachment object itself which produced empty meta
+    tags and broke link previews. %>
+<% content_for :og_image, project_banner_url(@project) %>
+<% content_for :twitter_card, "summary_large_image" %>
+<% content_for :og_author, @project.user&.display_name %>
 
 
 
@@ -8,13 +24,12 @@
   <section class="project-hero" style="margin-top:18px;">
     <div class="hero-left">
       <div class="project-media">
-        <% if @project.respond_to?(:image_url) && @project.image_url.present? %>
-          <img class="project-media__img" src="<%= @project.image_url %>" alt="<%= @project.name %>">
-        <% elsif @project.respond_to?(:image) && @project.image.respond_to?(:attached?) && @project.image.attached? %>
-          <%= image_tag(@project.image, alt: @project.name, class: "project-media__img") %>
-        <% else %>
-          <img class="project-media__img" src="https://placehold.co/800x450" alt="<%= @project.name %>">
-        <% end %>
+        <%# Use helper so that blob URLs are generated in the context of the
+            current HTTP request.  `Project#image_url` is still useful for
+            places without a request (migrations, jobs etc) but the view
+            needs something request-aware for external crawlers. %>
+        <% displayed_url = project_banner_url(@project) %>
+        <img class="project-media__img" src="<%= displayed_url %>" alt="<%= @project.name %>">
       </div>    
 
       <div style="margin-top:12px">
