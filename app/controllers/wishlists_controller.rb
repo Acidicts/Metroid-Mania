@@ -114,4 +114,3 @@ class WishlistsController < ApplicationController
     params.expect(wishlist: [ :user_id, product_ids: [] ])
     end
 end
-
