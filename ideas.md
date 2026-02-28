@@ -41,10 +41,10 @@ Based on current functionality and potential extensions:
 ## Gamification
 9. **Streaks** – 4–6 hours
 10. **Seasonal / Timed Challenges** – 6–8 hours
-11. **XP / Leveling System** – 6–10 hours
+11. ~~**XP / Leveling System** – 6–10 hours~~
 
 ## Store & Economy
-12. **Wishlist** – 1–2 hours
+12. ~~**Wishlist** – 1–2 hours~~
 13. **Gift / Transfer Credits** – 3–4 hours
 14. **Limited-Time / Flash Sales** – 2–3 hours
 
