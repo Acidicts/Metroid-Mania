@@ -27,6 +27,9 @@ class User < ApplicationRecord
 
   # if an admin marks someone as fraudulent, we record who did it for auditing
   belongs_to :flagged_for_fraud_by, class_name: "User", optional: true
+  attribute :fraud_reason, :string, default: nil
+
+  validate :ensure_fraud_reason, on: :update
 
   # convenience accessor for display
   def flagged_for_fraud_by_name
@@ -35,6 +38,12 @@ class User < ApplicationRecord
 
   def flagged_for_fraud?
     flagged_for_fraud
+  end
+
+  def ensure_fraud_reason
+    if !flagged_for_fraud?
+      self.fraud_reason = nil
+    end
   end
 
   # Scope to exclude the system placeholder user

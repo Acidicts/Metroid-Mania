@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_26_214952) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_28_121114) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -316,6 +316,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_26_214952) do
     t.boolean "flagged_for_fraud"
     t.integer "flagged_for_fraud_by_id"
     t.boolean "font_on", default: true, null: false
+    t.string "fraud_reason"
     t.string "hackatime_api_key"
     t.datetime "hackatime_synced_at"
     t.string "hackatime_trust_status"

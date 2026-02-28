@@ -111,6 +111,16 @@
         </div>
       </div>
 
+      <div class="admin-form-row" id="admin-user-fraud-reason-row" style="display:inline-flex">
+        <% if @user.flagged_for_fraud? %>
+          <%= f.label :fraud_reason, "Reason for fraud flag", class: "admin-form-label" %>
+          <%= f.text_field :fraud_reason, value: @user.fraud_reason, class: "admin-input #{'field-error' if f.object.errors[:fraud_reason].any?}" %>
+          <% if f.object.errors[:fraud_reason].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:fraud_reason).join(', ') %></div>
+          <% end %>
+        <% end %>
+      </div>
+
       <% if current_user&.admin? || current_user&.superadmin? %>
           <%# display number of free notches instead of credits; previous code
             %

@@ -197,6 +197,7 @@ module Admin
 
         # new boolean column we added for fraud flagging
         permitted[:flagged_for_fraud] = params[:user][:flagged_for_fraud] if params[:user].key?(:flagged_for_fraud)
+        permitted[:fraud_reason] = params[:user][:fraud_reason] if params[:user].key?(:fraud_reason)
 
         # Allow role changes only when role param present
         permitted[:role] = params[:user][:role] if params[:user][:role].present?
