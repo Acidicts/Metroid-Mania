@@ -45,4 +45,39 @@ class CharmNotchesControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to charm_notches_url
   end
+
+  # donation-specific tests --------------------------------------------------
+  test "should donate charm notch when available" do
+    donor = users(:one)
+    recipient = users(:two)
+    sign_in_as donor
+
+    # donor has at least one free notch
+    available = CharmNotch.create!(user: donor, charm_slot: nil)
+
+    assert_difference("Audit.count", 1) do
+      post donate_charm_notches_path(recipient)
+    end
+
+    assert_redirected_to user_profile_path(recipient)
+    assert_equal recipient, available.reload.user
+    assert_match(/donated successfully/, flash[:notice].to_s)
+  end
+
+  test "should warn when no available notches to donate" do
+    donor = users(:one)
+    recipient = users(:two)
+    sign_in_as donor
+
+    post donate_charm_notches_path(recipient)
+    assert_redirected_to user_profile_path(recipient)
+    assert_match(/no available charm notches/i, flash[:warning].to_s)
+  end
+
+  test "donate action requires login" do
+    # no signed in user at all
+    post donate_charm_notches_path(users(:two))
+    assert_redirected_to root_path
+    assert_match(/must be logged in/i, flash[:warning].to_s)
+  end
 end

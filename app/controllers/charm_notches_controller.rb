@@ -1,6 +1,7 @@
 class CharmNotchesController < ApplicationController
   before_action :set_charm_notch, only: %i[ show edit update destroy ]
   before_action :ensure_user_not_fraudulent, only: %i[ index show ]
+  before_action :require_login, only: %i[ donate ]
 
   # GET /charm_notches or /charm_notches.json
   def index
@@ -18,6 +19,24 @@ class CharmNotchesController < ApplicationController
 
   # GET /charm_notches/1/edit
   def edit
+  end
+
+  # POST /charm_notches/donate/:user_id
+  # accepts a `user_id` route parameter identifying the recipient of the donation.
+  # Designed to be invoked via `button_to` from the user profile page.
+  def donate
+    @user = User.find(params[:user_id])
+
+    available_notches = current_user.charm_notches.where(charm_slot_id: nil)
+    if available_notches.empty?
+      flash_warn("You have no available charm notches to donate.")
+      redirect_to user_profile_path(@user) and return
+    end
+
+    available_notches.first.update!(user: @user)
+    flash_pass("Charm notch donated successfully!")
+    Audit.create!(action: "donate_charm_notch", user: current_user, details: { recipient_id: @user.id })
+    redirect_to user_profile_path(@user)
   end
 
   # POST /charm_notches or /charm_notches.json

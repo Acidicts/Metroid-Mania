@@ -1,16 +1,23 @@
 <div id="charm_slots">
+  <%# Only show pending slots in the header loadout.  The controller now filters
+      @charm_slots to pending orders but we guard again here just in case this
+      partial is ever reused elsewhere. %>
   <% if request.path != charm_slots_path %>
-    <% empty_slots = @charm_slots.where(order_id: nil) %>
-    <% filled_count = @charm_slots.where.not(order_id: nil).order(:order_id).count %>
-    <% (5 - filled_count).times do |i| %>
-      <% charm_slot = empty_slots.first || CharmSlot.new %>
-      <%= render partial: 'charm_slots/charm_slot', locals: { charm_slot: charm_slot } %>
+    <% pending_slots = @charm_slots.select { |s| s.order&.pending? } %>
+    <% empty_slots = 5 - pending_slots.count %>
+
+
+    <% if CharmSlot.where(order_id: nil).count == 0 %>
+      <% empty_slot = CharmSlot.new %>
+    <% else %>
+      <% empty_slot = CharmSlot.where(order_id: nil).first %>
     <% end %>
 
-    <% @charm_slots.where.not(order_id: nil).order(:order_id).each do |charm_slot| %>
-      <% unless !charm_slot.order_id.present? && @charm_slots.count < 5 %>
-        <%= render partial: 'charm_slots/charm_slot', locals: { charm_slot: charm_slot } %>
-      <% end %>
+    <% empty_slots.times do %>
+      <%= render empty_slot %>
+    <% end %>
+    <% pending_slots.each do |charm_slot| %>
+      <%= render partial: 'charm_slots/charm_slot', locals: { charm_slot: charm_slot } %>
     <% end %>
   <% end %>
 </div>

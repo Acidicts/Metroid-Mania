@@ -19,7 +19,13 @@ Rails.application.routes.draw do
     end
   end
   resources :achievements
-  resources :charm_notches
+  resources :charm_notches do
+    # allow users to donate an un‑slotted charm notch to another user. this
+    # is not tied to a specific notch record, so the route lives on the
+    # collection. the helper takes a user argument so the profile button can
+    # simply pass `@user`.
+    post :donate, on: :collection, path: "donate/:user_id", as: "donate"
+  end
   # legacy path used by older clients; redirect to index to avoid hitting
   # the show action with id = "loadout".
   get "charm_slots/loadout", to: redirect("/charm_slots")

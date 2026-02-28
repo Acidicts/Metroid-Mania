@@ -41,6 +41,9 @@
       <div class="profile-actions">
         <%= link_to "Edit Profile", profile_path, class: "btn-profile" %>
         <%= link_to "Back to Leaderboard", leaderboard_path, class: "btn-profile" %>
+        <% if logged_in? && current_user != @user %>
+          <%= button_to "Donate Charm Notches", donate_charm_notches_path(@user), class: "btn-profile", style:"font-size:1.2rem; font-family: 'Pixelify Sans';" %>
+        <% end %>
       </div>
   </div>
   <% end %>

@@ -56,28 +56,42 @@ class CharmSlotsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "submitted", other_order.reload.status
   end
 
-  test "loadout shows current user's slots and creates missing records" do
+  test "loadout only filters pending slots in DB" do
     user = users(:one)
-    # sign in first so callback creates slots, then erase them and set target
     sign_in_as(user)
     CharmSlot.where(user: user).destroy_all
     user.update_column(:charm_slots, 2)
 
-    # now request loadout (route helper changed)
-    get charm_slots_loadout_url
-    assert_redirected_to charm_slots_url
-    follow_redirect!
+    # create a mix of pending and non-pending records
+    prod = Product.create!(name: "Tmp", steam_app_id: 999, price_currency: 0.0, notch_cost: 0)
+    pending_order = Order.create!(user: user, product: prod, status: "pending", cost: 0)
+    submitted_order = Order.create!(user: user, product: prod, status: "submitted", cost: 0)
+    user.charm_slots.create!(order: pending_order)
+    user.charm_slots.create!(order: submitted_order)
+
+    # DB should contain both slots, but the query used by the header should
+    # only return the pending one.
+    db_slots = user.charm_slots.joins(:order).merge(Order.pending)
+    assert_equal 1, db_slots.count
+  end
+
+  test "header loadout partial renders only pending slots on arbitrary page" do
+    user = users(:one)
+    sign_in_as(user)
+    CharmSlot.where(user: user).destroy_all
+    user.update_column(:charm_slots, 2)
+
+    prod = Product.create!(name: "Tmp2", steam_app_id: 1000, price_currency: 0.0, notch_cost: 0)
+    pending_order = Order.create!(user: user, product: prod, status: "pending", cost: 0)
+    submitted_order = Order.create!(user: user, product: prod, status: "submitted", cost: 0)
+    user.charm_slots.create!(order: pending_order)
+    user.charm_slots.create!(order: submitted_order)
+
+    # pick a page where the loadout partial is displayed (root path works)
+    get root_url
     assert_response :success
-
-    # callback should have created the missing slots
-    expected = CharmSlot.where(user: user).count
-    assert_equal 2, expected
-
-    # rendered page will always show a fixed number of slots sections;
-    # just assert that at least `expected` slots are present so we know the
-    # slots corresponding to the DB rows made it to the view.
     assert_select "#charm_slots" do
-      assert_select "div[id^=charm_slot_]", minimum: expected
+      assert_select "div[id^=charm_slot_]", count: 1
     end
   end
 

@@ -59,6 +59,11 @@ class OrdersController < ApplicationController
   # POST /orders or /orders.json
   def create
     @product = Product.find(params[:product_id])
+    #
+    if current_user.orders.exists?(product: @product)
+      redirect_to products_path and flash_warn("Order Already Exists")
+      return
+    end
 
     begin
       # Debug: log existing orders for this user/product (helps diagnose intermittant test failures)

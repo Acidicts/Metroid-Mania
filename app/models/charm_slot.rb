@@ -17,6 +17,10 @@ class CharmSlot < ApplicationRecord
     end
   end
 
+  def order_status
+    order&.status
+  end
+
   def submitted?
     order.present? && (order.submitted? || order.fulfilled?)
   end
