@@ -110,6 +110,15 @@
     
     </p>
 
+    <% if defined?(@product) && (sale = @product.active_sale) %>
+      <div class="flash-pass" style="margin-bottom:12px;">
+        Sale: save <%= sale.discount_notches %> notches
+        <% if sale.product && sale.quantity %>
+          when you purchase <%= sale.quantity %> <%= sale.product.name.pluralize %>
+        <% end %>
+      </div>
+    <% end %>
+
     <% if @product.variable_grant? %>
       <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :product_id, @product.id %>

@@ -286,6 +286,17 @@ a { font-size: 1.2rem;}
   border-radius: 25%;
 }
 
+/* the wishlist button uses an SVG via <img> that relies on currentColor for its fill; the
+   base button rule sets color:transparent to hide text, which also makes the icon vanish.
+   restore a sensible color for any image inside so the SVG is visible and give it a
+   definite size since the parent sets font-size:0 (1em would collapse to 0). */
+.btn-retro.wishlist-button img,
+.wishlist-button img {
+  color: #000; /* dark icon; adjust as needed */
+  width: 1.2rem; /* explicit dimensions override any em-based inline styling */
+  height: 1.2rem;
+}
+
 /* align product action buttons inline */
 .product-actions {
   display: inline-flex;

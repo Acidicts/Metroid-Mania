@@ -1,0 +1,53 @@
+<%= form_with(model: [:admin, sale], local: true, class: "admin-form") do |f| %>
+  <% if sale.errors.any? %>
+    <div class="flash-alert">
+      <ul>
+        <% sale.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="form-group">
+    <%= f.label :name %>
+    <%= f.text_field :name, class: "form-control", autofocus: true %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :description %>
+    <%= f.text_area :description, rows: 3, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :product_id, "Product (optional)" %>
+    <%= f.collection_select :product_id, Product.order(:name), :id, :name, include_blank: true, class: "form-control" %>
+    <p class="admin-hint"><em>leave blank to make this a site‑wide sale; specify a product to limit it.</em></p>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :quantity, "Quantity (for product-specific sale)" %>
+    <%= f.number_field :quantity, min: 1, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :starts_at %>
+    <%= f.datetime_select :starts_at, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :ends_at %>
+    <%= f.datetime_select :ends_at, include_blank: true, class: "form-control" %>
+  </div>
+
+  <div class="form-group">
+    <%= f.label :discount_notches, "Discount (notches)" %>
+    <%= f.number_field :discount_notches, min: 0, class: "form-control" %>
+    <p class="admin-hint"><em>number of notches to subtract from the normal price when the sale applies.</em></p>
+  </div>
+
+  <div class="form-actions">
+    <%= f.submit class: "admin-btn" %>
+    <%= link_to "Cancel", admin_sales_path, class: "admin-btn admin-btn-secondary" %>
+  </div>
+<% end %>

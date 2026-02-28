@@ -1,0 +1,38 @@
+<div class="admin-panel">
+  <h1>Sales</h1>
+  <%= link_to "New Sale", new_admin_sale_path, class: "admin-btn" %>
+
+  <table class="admin-table" style="margin-top:16px">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Product / Qty</th>
+        <th>Starts At</th>
+        <th>Ends At</th>
+        <th>Discount (notches)</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @sales.each do |s| %>
+        <tr>
+          <td><%= link_to s.name, admin_sale_path(s) %></td>
+          <td>
+            <% if s.product %>
+              <%= s.product.name %> (×<%= s.quantity %>)
+            <% else %>
+              &mdash;
+            <% end %>
+          </td>
+          <td><%= s.starts_at&.strftime("%b %-d, %Y %l:%M %p") %></td>
+          <td><%= s.ends_at&.strftime("%b %-d, %Y %l:%M %p") %></td>
+          <td><%= s.discount_notches %></td>
+          <td>
+            <%= link_to 'Edit', edit_admin_sale_path(s), class: 'btn-admin' %>
+            <%= link_to 'Delete', admin_sale_path(s), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn-admin btn-admin--muted', style: 'margin-left:8px' %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+</div>

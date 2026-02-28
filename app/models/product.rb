@@ -27,6 +27,8 @@ class Product < ApplicationRecord
   attribute :description, :string, default: ""
   attribute :show, :boolean, default: true
   attribute :notch_cost, :integer, default: 1
+  attribute :sale_discount, :integer, default: 0
+  attribute :sale_date, :date, default: nil
 
   # legacy column name is `achievement_bool`; provide a friendlier alias so
   # code (and forms) can refer to `achievement_boolean`.  The database still
@@ -126,6 +128,27 @@ class Product < ApplicationRecord
       self.price_currency = price_data["final"] / 100.0
       save
     end
+  end
+
+  # Return the first active sale for this product.
+  # If `quantity` is provided, restrict to sales matching that quantity.
+  # A `nil` quantity will match any product-specific sale regardless of amount.
+  def active_sale(quantity = nil)
+    scope = Sale.active.where(product_id: id)
+    scope = scope.where(quantity: quantity) if quantity
+    scope.first
+  end
+
+  # Compute the effective notch cost after applying any active sale discount.
+  # Returns an integer >= 0.
+  def effective_notch_cost(quantity: nil)
+    base = notch_cost.to_i
+    if (s = active_sale(quantity))
+      discounted = base - s.discount_notches.to_i
+      return 0 if discounted < 0
+      return discounted
+    end
+    base
   end
 
   def destroy!

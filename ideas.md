@@ -45,7 +45,7 @@ Based on current functionality and potential extensions:
 
 ## Store & Economy
 12. ~~**Wishlist** – 1–2 hours~~
-13. **Gift / Transfer Credits** – 3–4 hours
+13. ~~**Gift / Transfer Credits** – 3–4 hours~~
 14. **Limited-Time / Flash Sales** – 2–3 hours
 
 ## Admin & Analytics
@@ -54,7 +54,7 @@ Based on current functionality and potential extensions:
 17. **Webhook / Slack Bot Notifications** – 4–6 hours
 
 ## Quality of Life
-18. **Markdown Preview for Devlogs** – 1–2 hours
+18. ~~**Markdown Preview for Devlogs** – 1–2 hours~~
 19. **Search Improvements** – 3–5 hours
 20. **Dark/Light Theme Toggle** – 1–2 hours
 

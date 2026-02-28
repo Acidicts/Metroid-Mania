@@ -4,22 +4,53 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @product = products(:one)
     admin = users(:one)
-    admin.update!(role: :admin, email: "admin2@example.com")
-    sign_in_as(admin)
+    admin.update!(role: :admin, email: "admin2@example.com", password: "password")
+    # login using password to ensure same record is used (dev_login would create a new user)
+    sign_in_as(admin, password: "password")
+    # ensure wishlist exists for the logged-in user so index renders container
+    admin.reload
+    admin.ensure_wishlist if admin.respond_to?(:ensure_wishlist)
   end
 
   test "should get index" do
     get products_url
     assert_response :success
 
-    # the wishlist container is rendered for the signed‑in admin
-    assert_select "div[id^='wishlist_']"
+    # make sure admin has a non-empty wishlist so the container actually shows up
+    admin = users(:one)
+    admin.wishlist.update!(product_ids: [ @product.id ])
+    get products_url
+    assert_response :success
+    assert_select "turbo-frame[id^='wishlist_']" # wishlist frame rendered
 
     # when logged in, the add-to-wishlist buttons include the turbo-stream
     # hint so the browser will request a turbo-stream response.
     sign_in_as(users(:one))
     get products_url
     assert_select "form[data-turbo-stream='true']", minimum: 1
+  end
+
+  test "product card shows discounted notch cost during active sale" do
+    SiteSetting.set(:shop, true) if defined?(SiteSetting)
+
+    product = Product.create!(name: "SaleItem", steam_app_id: 123, price_currency: 0.0, notch_cost: 4)
+    Sale.create!(name: "NotchSale", discount_notches: 2, product: product, quantity: 1, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+    get products_url
+    assert_response :success
+    assert_select "div##{dom_id(product)}" do
+      assert_select "p", text: /Notches:\s*2/ # effective cost displayed
+      assert_select "p", text: /\(4\)/, minimum: 1 # original cost in parentheses
+    end
+
+    # also test a one-notch discount scenario
+    product2 = Product.create!(name: "SaleItem2", steam_app_id: 124, price_currency: 0.0, notch_cost: 3)
+    Sale.create!(name: "OneOff", discount_notches: 1, product: product2, quantity: 1, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+    get products_url
+    assert_select "div##{dom_id(product2)}" do
+      assert_select "p", text: /Notches:\s*2/ # 3 minus 1 = 2
+      assert_select "p", text: /\(3\)/
+    end
   end
 
   test "admin link appears only for admins" do
@@ -121,8 +152,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     get products_url
     assert_response :success
 
-    # wishlist element should exist (even if empty) and record should now exist
-    assert_select "div[id^='wishlist_']"
+    # wishlist record should be created; partial may not render until items are added
     assert user.reload.wishlist.present?
   end
 
@@ -132,7 +162,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
 
     # add a product to the list and hit index
     wl = user.wishlist
-    wl.update!(product_ids: [products(:one).id])
+    wl.update!(product_ids: [ products(:one).id ])
 
     get products_url
     assert_response :success

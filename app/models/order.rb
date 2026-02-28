@@ -46,6 +46,7 @@ class Order < ApplicationRecord
   # correctly.  This mirrors the controller logic but lives here so that any
   # direct `Order.create!` call (e.g. in tests or rake tasks) also gets a cost.
   before_validation :set_default_cost, on: :create
+  before_validation :set_default_notch_cost, on: :create
 
   def set_default_cost
     return if cost.present?
@@ -56,6 +57,19 @@ class Order < ApplicationRecord
     else
       self.cost = product.price_currency.to_f
     end
+  end
+
+  # record the number of notches that will be charged, accounting for any active sale
+  def set_default_notch_cost
+    return if notch_cost.present?
+    return if product.blank?
+
+    required = product.notch_cost.to_i
+    if product.present? && (sale = product.active_sale)
+      required -= sale.discount_notches.to_i
+      required = 0 if required < 0
+    end
+    self.notch_cost = required
   end
 
   # Overhaul uses charm notches instead of credits, so validate against user's currency but display free notches on the leaderboard.
@@ -170,6 +184,13 @@ class Order < ApplicationRecord
     return unless charm_slot
 
     required = product.notch_cost.to_i
+
+    # apply any active sale discount (notches) for this product
+    if product.present? && (sale = product.active_sale)
+      required -= sale.discount_notches.to_i
+      required = 0 if required < 0
+    end
+
     assigned = CharmNotch.where(user_id: user_id, charm_slot_id: charm_slot_id).count
 
     if assigned != required
@@ -185,6 +206,10 @@ class Order < ApplicationRecord
     return if product.blank? || user.blank?
 
     required = product.notch_cost.to_i
+    if product.present? && (sale = product.active_sale)
+      required -= sale.discount_notches.to_i
+      required = 0 if required < 0
+    end
     available = user.free_notches.to_i
 
     if available < required
@@ -237,7 +262,16 @@ class Order < ApplicationRecord
       # reload user associations now that we have the lock
       user.reload
 
-      required = product.notch_cost.to_i
+      # use stored notch_cost if available, otherwise compute
+      required = notch_cost.present? ? notch_cost.to_i : product.notch_cost.to_i
+      # fallback compute variant if notch_cost nil (shouldn't happen)
+      if required.nil? || required == 0
+        required = product.notch_cost.to_i
+        if product.present? && (sale = product.active_sale)
+          required -= sale.discount_notches.to_i
+          required = 0 if required < 0
+        end
+      end
       if required > user.free_notches.to_i
         # If the cost has changed or another order drained the account while
         # we were waiting, gracefully abort rather than raising an exception.

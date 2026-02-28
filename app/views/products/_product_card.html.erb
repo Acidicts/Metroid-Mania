@@ -16,7 +16,14 @@
       <div class="product-content">
         <h3><%= product.name %></h3>
         <p style="word-wrap: break-word; overflow-wrap: break-word;"><%= simple_format(product.description) %></p>
-        <p style="word-wrap: break-word; overflow-wrap: break-word;">Notches: <span style="font-family: Comfortaa, monospace;"><%= product.notch_cost %></span></p>
+        <% base_cost = product.notch_cost.to_i %>
+        <% effective = product.effective_notch_cost %>
+        <p style="word-wrap: break-word; overflow-wrap: break-word;">
+          Notches: <span style="font-family: Comfortaa, monospace;"><%= effective %></span>
+          <% if effective != base_cost %>
+            <span style="text-decoration: line-through; color:#888; margin-left:6px; font-size:0.9em;">(<%= base_cost %>)</span>
+          <% end %>
+        </p>
         <p style="word-wrap: break-word; overflow-wrap: break-word;">Stock: <% if product.limited? %><%= product.stock %><% else %><em>Unlimited</em><% end %></p>
 
         <%# When the user clicks the button we create the order immediately instead of
@@ -39,7 +46,7 @@
                           form: { data: { turbo: true, turbo_stream: true } } do %>
               <%= image_tag "https://icons.hackclub.com/api/icons/0x203c56/view-close-small",
                             alt: "Add to wishlist",
-                            style: "transform: rotate(45deg); width:1.2em; height:1.2em;" %>
+                            style: "transform: rotate(45deg); width:1.2rem; height:1.2rem;" %>
             <% end %>
           <% end %>
         </div>

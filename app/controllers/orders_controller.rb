@@ -59,10 +59,20 @@ class OrdersController < ApplicationController
   # POST /orders or /orders.json
   def create
     @product = Product.find(params[:product_id])
-    #
-    if current_user.orders.exists?(product: @product)
-      redirect_to products_path and flash_warn("Order Already Exists")
-      return
+
+    # compute the database value for 'pending' status so we can compare directly
+    pending_db_val = if Order.respond_to?(:statuses)
+      Order.statuses["pending"]
+    elsif Order.const_defined?(:STATUS_VALUE_MAP)
+      Order::STATUS_VALUE_MAP["pending"]
+    else
+      "pending"
+    end
+
+    # block early if there's already a pending order (avoid later uniqueness rescue)
+    if current_user.orders.where(product: @product, status: pending_db_val).exists?
+      flash_warn("Already In Loadout")
+      redirect_to products_path and return
     end
 
     begin

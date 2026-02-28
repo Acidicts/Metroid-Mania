@@ -96,6 +96,7 @@ Rails.application.routes.draw do
   namespace :admin do
     # use a resourceful route so path helpers like `admin_project_tags_path` are defined
     resources :project_tags
+    resources :sales
 
     root to: "dashboard#index"
     get "dashboard", to: "dashboard#index"

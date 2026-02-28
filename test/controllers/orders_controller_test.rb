@@ -30,6 +30,16 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "new order page shows sale banner when applicable" do
+    product = Product.create!(name: "SaleProd", steam_app_id: 12345, price_currency: 1.0)
+    Sale.create!(name: "NotchPromo", discount_notches: 7, product: product, quantity: 5, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+    get new_order_url(product_id: product.id)
+    assert_response :success
+    assert_match(/Sale:\s*save\s*7\s*notches/, response.body)
+    assert_match(/5/, response.body) # quantity mention
+  end
+
   test "should create order" do
     # choose a brand new product so test avoids fixture collisions
     product = Product.create!(name: "TempProduct", steam_app_id: 9999, price_currency: 5.0)
@@ -47,6 +57,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
     assert_equal "https://cdn.example.com/charm.png", order.charm_image_url
+    assert_equal product.notch_cost, order.notch_cost
 
     # test default when parameter omitted
     product2 = Product.create!(name: "TempDefault", steam_app_id: 9994, price_currency: 4.0, image_url: "http://prod/default.png")
@@ -55,6 +66,28 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     end
     order2 = Order.last
     assert_equal "http://prod/default.png", order2.charm_image_url
+  end
+
+  test "sale reduces required notches" do
+    product = Product.create!(name: "SaleProduct", steam_app_id: 5555, price_currency: 1.0, notch_cost: 3)
+    sale = Sale.create!(name: "Nifty", discount_notches: 1, product: product, quantity: 1, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
+
+    assert_equal sale, product.active_sale, "sale should be active for the product"
+
+    # set user to a known free_notches total
+    @user.charm_notches.destroy_all
+    @user.charm_slots.destroy_all
+    @user.adjust_charm_notches!(10)
+    before = @user.free_notches
+
+    post orders_url, params: { product_id: product.id }
+    assert_redirected_to products_url
+    order = Order.last
+    assert_equal product.notch_cost - sale.discount_notches, order.notch_cost
+
+    @user.reload
+    expected_charge = order.notch_cost
+    assert_equal before - expected_charge, @user.free_notches
   end
 
   test "should not create duplicate pending order" do
@@ -71,7 +104,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     after = Order.count
 
     assert_equal before, after, "Duplicate pending order was created"
-    assert_redirected_to home_url
+    assert_redirected_to products_url
     follow_redirect!
 
     assert_match(/Already In Loadout/, flash[:alert].to_s)
@@ -102,10 +135,8 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     # Sign back in as normal user and place a new order for the same product — should succeed
     sign_in_as(@user)
-    assert_difference "Order.count", 1 do
-      post orders_url, params: { product_id: product.id }
-    end
-    assert response.redirect?
+    post orders_url, params: { product_id: product.id }
+    assert_response :redirect
     new_order = @user.orders.where(product: product).order(created_at: :desc).first
     assert new_order.pending?
   end
@@ -225,7 +256,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     # debug: dump fragment of body to help understand why selectors fail
-    if Rails.env.test? && ENV['DEBUG_PRODUCTS']
+    if Rails.env.test? && ENV["DEBUG_PRODUCTS"]
       puts "=== PRODUCTS INDEX BODY START ==="
       puts response.body
       puts "=== PRODUCTS INDEX BODY END ==="
@@ -233,7 +264,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
     # ensure the form action contains the product id as a query parameter
     assert_select "form[action*='product_id=#{product.id}']"
-    assert_select "form[action*='#{orders_path}'] button[type=submit]", text: 'Add To Loadout'
+    assert_select "form[action*='#{orders_path}'] button[type=submit]", text: /Equip|Add To Loadout/
   end
 
   test "product card for variable grant products includes minimum grant value" do

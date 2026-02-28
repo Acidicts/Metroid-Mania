@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_201444) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_28_223023) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -160,6 +160,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_201444) do
     t.float "cost"
     t.datetime "created_at", null: false
     t.integer "grant_amount_cents"
+    t.integer "notch_cost"
     t.float "price_usd"
     t.integer "product_id", null: false
     t.string "public_id"
@@ -202,6 +203,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_201444) do
     t.string "name"
     t.integer "notch_cost"
     t.float "price_currency"
+    t.integer "sale_discount"
+    t.date "sale_time"
     t.boolean "show", default: true
     t.integer "steam_app_id"
     t.integer "steam_price_cents"
@@ -243,6 +246,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_201444) do
     t.index ["deleted_at"], name: "index_projects_on_deleted_at"
     t.index ["user_id", "deleted_at"], name: "index_projects_on_user_id_and_deleted_at"
     t.index ["user_id"], name: "index_projects_on_user_id"
+  end
+
+  create_table "sales", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.integer "discount_notches", default: 0, null: false
+    t.datetime "ends_at", precision: nil
+    t.string "name", null: false
+    t.integer "product_id"
+    t.integer "quantity", default: 1, null: false
+    t.datetime "starts_at", precision: nil
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_sales_on_product_id"
   end
 
   create_table "ship_requests", force: :cascade do |t|
@@ -377,6 +393,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_201444) do
   add_foreign_key "products", "achievements"
   add_foreign_key "project_tags", "projects"
   add_foreign_key "projects", "users"
+  add_foreign_key "sales", "products"
   add_foreign_key "ship_requests", "projects"
   add_foreign_key "ship_requests", "users"
   add_foreign_key "ship_requests", "users", column: "processed_by_id"
