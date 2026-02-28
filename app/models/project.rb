@@ -34,13 +34,10 @@ class Project < ApplicationRecord
     # fall back to ActiveStorage blob URL when attached
     return nil unless image.respond_to?(:attached?) && image.attached?
 
-    # rails_blob_url requires request details such as host/port/protocol.
-    # The convenient source is the application's default_url_options, which
-    # are populated from config/environments/* and already include the
-    # port in development.  We simply pass the entire hash so the blob URL
-    # mirrors whatever the rest of the app will generate for `url_for`.
-    opts = Rails.application.config.action_mailer.default_url_options.slice(:host, :port, :protocol)
-    Rails.application.routes.url_helpers.rails_blob_url(image, **opts)
+    # don't attempt to create/upload the URL just for display; callers invoking
+    # this reader (especially views) shouldn't trigger network activity or
+    # writes.  an update validation handles persistence when a blob is added.
+    project_banner_url(self)
   end
 
   validates :name, presence: true
@@ -53,6 +50,45 @@ class Project < ApplicationRecord
   validate :github_repository_must_have_readme
   validate :ship_total_notches, on: :update
 
+  validate :ensure_has_image_url,
+           on: :update,
+           if: -> { self[:image_url].blank? }
+
+  # After saving, if the ActiveStorage image was changed we need to clear any
+  # stored `image_url` so it doesn't continue pointing at the previous image.
+  # The callback uses a separate update to avoid interfering with the original
+  # transaction, and guards on the attachment/blob change to prevent looping.
+  after_save :reset_image_url_if_image_changed
+
+
+  def ensure_has_image_url
+    return true if !self[:image_url].blank?
+    return false if !self.image.attached?
+    displayed_url = project_banner_url(self)
+    response = CdnService.upload_from_url(displayed_url)
+
+    url = response.respond_to?(:[]) ? response["url"] : nil
+    unless url.present?
+      # upload failed or CDN not configured; skip without blowing up.
+      Rails.logger.warn("ensure_has_image_url: upload_from_url returned #{response.inspect}") if defined?(Rails)
+      return false
+    end
+
+    self.image_url = url
+    save!(validate: false)
+  end
+
+  def reset_image_url!
+    self[:image_url] = nil
+    save!(validate: true)
+  end
+
+  # helper used by after_save callback above
+  def reset_image_url_if_image_changed
+    if saved_change_to_image_attachment? || saved_change_to_image_blob?
+      reset_image_url!
+    end
+  end
 
   # Store multiple Hackatime project names in the text `hackatime_ids` column as YAML.
   # Provide simple accessor helpers so the model behaves like an Array.
@@ -192,6 +228,30 @@ class Project < ApplicationRecord
   validate :prevent_removal_of_hackatime_if_time_used, on: :update
 
   private
+
+    # Return an appropriate banner URL for a project.  This mirrors the
+    # helper implementation so the model can call it without pulling in view
+    # helpers or relying on a request object.  When no request is available,
+    # prefer a configured default host to avoid exposing relative URLs to
+    # external services such as the CDN upload.
+    def project_banner_url(project)
+      if project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached?
+        if defined?(request) && request.present?
+          Rails.application.routes.url_helpers.rails_blob_url(project.image, host: request.base_url)
+        else
+          host = Rails.application.routes.default_url_options[:host]
+          if host.present?
+            Rails.application.routes.url_helpers.rails_blob_url(project.image, host: host)
+          else
+              Rails.application.routes.url_helpers.rails_blob_path(project.image, only_path: true)
+          end
+        end
+      elsif project.respond_to?(:image_url) && project.image_url.present?
+        project.image_url
+      else
+        "https://placehold.co/800x450"
+      end
+    end
 
   def hackatime_ids_unique_across_projects
     return if hackatime_ids.blank?

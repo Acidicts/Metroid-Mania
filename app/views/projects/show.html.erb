@@ -12,7 +12,7 @@
     back to a generic placeholder if nothing has been attached.  Previously we
     passed the ActiveStorage attachment object itself which produced empty meta
     tags and broke link previews. %>
-<% content_for :og_image, project_banner_url(@project) %>
+<% content_for :og_image, @project.image_url %>
 <% content_for :twitter_card, "summary_large_image" %>
 <% content_for :og_author, @project.user&.display_name %>
 
@@ -28,7 +28,7 @@
             current HTTP request.  `Project#image_url` is still useful for
             places without a request (migrations, jobs etc) but the view
             needs something request-aware for external crawlers. %>
-        <% displayed_url = project_banner_url(@project) %>
+        <% displayed_url = @project.image_url %>
         <img class="project-media__img" src="<%= displayed_url %>" alt="<%= @project.name %>">
       </div>    
 

@@ -204,16 +204,16 @@ class ProjectTest < ActiveSupport::TestCase
     blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "port.png", content_type: "image/png")
     p.image.attach(blob)
 
-    # temporarily set a port in default_url_options
-    orig = Rails.application.config.action_mailer.default_url_options.dup
-    Rails.application.config.action_mailer.default_url_options[:host] = "localhost"
-    Rails.application.config.action_mailer.default_url_options[:port] = 4000
+    # temporarily set a host/port in route defaults so project_banner_url uses it
+    orig_routes = Rails.application.routes.default_url_options.dup
+    Rails.application.routes.default_url_options[:host] = "localhost"
+    Rails.application.routes.default_url_options[:port] = 4000
 
     begin
       url = p.image_url
       assert_match %r{localhost:4000}, url, "expected blob URL to include configured port"
     ensure
-      Rails.application.config.action_mailer.default_url_options = orig
+      Rails.application.routes.default_url_options = orig_routes
     end
   end
 
@@ -223,9 +223,36 @@ class ProjectTest < ActiveSupport::TestCase
     blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "foo.png", content_type: "image/png")
     p.image.attach(blob)
 
-    url = p.image_url
-    assert_match %r{https?://}, url, "expected full URL for blob"
-    assert_includes url, blob.signed_id.to_s
+    # ensure we have a host configured so an absolute URL is generated
+    orig_routes = Rails.application.routes.default_url_options.dup
+    Rails.application.routes.default_url_options[:host] = "example.com"
+
+    begin
+      url = p.image_url
+      assert_match %r{https?://}, url, "expected full URL for blob"
+      assert_includes url, blob.signed_id.to_s
+    ensure
+      Rails.application.routes.default_url_options = orig_routes
+    end
+  end
+
+  test "ensure_has_image_url handles CDN failure gracefully" do
+    p = projects(:one)
+    blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "bar.png", content_type: "image/png")
+    p.image.attach(blob)
+
+    [ nil, {}, { "not_url" => "x" } ].each do |fake|
+      # manually stub and restore because CdnService.stub isn't available
+      orig = CdnService.method(:upload_from_url)
+      CdnService.define_singleton_method(:upload_from_url) { |_url| fake }
+      begin
+        assert_equal false, p.ensure_has_image_url,
+                     "should return false when CDN upload doesn't provide a URL (got #{fake.inspect})"
+        assert_nil p[:image_url]
+      ensure
+        CdnService.define_singleton_method(:upload_from_url, orig)
+      end
+    end
   end
   test "ship_and_award_credits! awards credits and records them on the ship atomically" do
     p = projects(:one)

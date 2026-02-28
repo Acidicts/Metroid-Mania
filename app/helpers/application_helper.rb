@@ -199,9 +199,17 @@ module ApplicationHelper
       if defined?(request) && request.present?
         Rails.application.routes.url_helpers.rails_blob_url(project.image, host: request.base_url)
       else
-        # fallback to url_for which may produce a relative path but is usable
-        # in non-request contexts (e.g. background jobs or console).
-        url_for(project.image)
+        # try default host first; local view context may still have a value even
+        # when `request` is not available (e.g. during preview rendering).
+        host = Rails.application.routes.default_url_options[:host]
+        if host.present?
+          Rails.application.routes.url_helpers.rails_blob_url(project.image, host: host)
+        else
+          # no host; fall back to path-only which is safe but might confuse
+          # external crawlers. This branch is rarely hit in a controller/view
+          # context because a host is usually set.
+          Rails.application.routes.url_helpers.rails_blob_path(project.image, only_path: true)
+        end
       end
     elsif project.respond_to?(:image_url) && project.image_url.present?
       project.image_url
