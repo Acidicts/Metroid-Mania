@@ -61,39 +61,39 @@ module ApplicationHelper
   # Check whether a logical asset exists in the current asset configuration.
   # Works with Sprockets (development) and Propshaft (production), with fallbacks.
   def asset_exists?(logical_path)
-    # 1) Look for a source file under app/assets (images, javascripts, stylesheets).
-    #    This works in development and for simple deployments where assets aren't
-    #    precompiled.  We check the generic `app/assets` tree because the logical
-    #    path doesn't indicate the subfolder.
-    return true if Rails.root.join("app", "assets", logical_path).exist?
+    # 1) Look for a source file anywhere under app/assets.  The original
+    #    implementation only checked the top-level directory, which meant images
+    #    kept inside `app/assets/images` were never found in development.  By
+    #    searching recursively we can avoid precompiling just to satisfy the
+    #    `asset_exists?` predicate.
+    patterns = [
+      Rails.root.join("app", "assets", "**", logical_path).to_s,
+      # some gems (e.g. stimulus-rails) put assets under `app/javascript`
+      Rails.root.join("app", "javascript", "**", logical_path).to_s
+    ]
+    return true if patterns.any? { |pat| Dir.glob(pat).any? }
 
     # 2) If a runtime asset environment is present (Sprockets in dev or a
-    #    Propshaft environment), ask it.  Propshaft::Environment#find_asset will
-    #    raise when the logical path is missing, so swallow that and return false.
-    if defined?(Rails.application.assets) && Rails.application.assets.respond_to?(:find_asset)
+    #    Propshaft assembly), ask it.  Propshaft::Assembly doesn't implement
+    #    `find_asset`, so the check guards against that.  When an asset is missing
+    #    Propshaft will raise, so rescue and fall through.
+    if defined?(Rails.application.assets) &&
+       Rails.application.assets.respond_to?(:find_asset)
       begin
         return Rails.application.assets.find_asset(logical_path).present?
-      rescue Propshaft::MissingAssetError
-        return false
+      rescue Propshaft::MissingAssetError, Sprockets::FileNotFound
+        # known failures – just continue to the next check
       end
     end
 
-    # 3) Inspect the Propshaft manifest produced by `rails assets:precompile`.
-    manifest_path = Rails.root.join("public", "assets", "manifest.json")
-    if manifest_path.exist?
-      begin
-        manifest = JSON.parse(manifest_path.read)
-        return manifest.key?(logical_path)
-      rescue => e
-        Rails.logger.debug "asset_exists? manifest parse failed: #{e.message}"
-      end
-    end
-
-    # 4) Last‑ditch: look for any file with a matching basename in public/assets.
+    # 3) Look in the precompiled manifest (Rails < 8 used manifest.json, newer
+    #    versions name it `manifest-<digest>.json` or even `.js`).  We'll check
+    #    for any file containing the basename to be tolerant of whatever naming
+    #    scheme the compiler chose.
     assets_dir = Rails.root.join("public", "assets")
     if assets_dir.exist?
       basename = File.basename(logical_path, File.extname(logical_path))
-      return Dir.glob(assets_dir.join("#{basename}*")) .any?
+      return Dir.glob(assets_dir.join("#{basename}*")).any?
     end
 
     false
@@ -110,6 +110,19 @@ module ApplicationHelper
   def correct_credits(amount)
     return 0 if amount.nil?
     amount.ceil
+  end
+
+  # Return an asset URL only if the given logical path actually exists.
+  # We call `asset_exists?` first (which is now more forgiving) and then
+  # attempt the normal helper; Propshaft/Sprockets will raise when the file
+  # isn't in the load path, so rescue and return nil in that case.
+  def asset_url_safe(logical_path)
+    return unless asset_exists?(logical_path)
+    begin
+      asset_url(logical_path)
+    rescue Propshaft::MissingAssetError, Sprockets::FileNotFound
+      nil
+    end
   end
 
   def get_all_credits(project)
