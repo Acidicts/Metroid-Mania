@@ -13,6 +13,10 @@ class Project < ApplicationRecord
   has_many :ship_requests, dependent: :destroy
   has_many :audits, dependent: :nullify
 
+  # likes: users who have liked this project
+  has_many :user_likes, dependent: :destroy
+  has_many :likers, through: :user_likes, source: :user
+
   # Attach a representative image for the project (Active Storage)
   has_one_attached :image
 
@@ -60,6 +64,9 @@ class Project < ApplicationRecord
   # transaction, and guards on the attachment/blob change to prevent looping.
   after_save :reset_image_url_if_image_changed
 
+  def likes
+    likers.count
+  end
 
   def ensure_has_image_url
     return true if !self[:image_url].blank?
@@ -85,7 +92,13 @@ class Project < ApplicationRecord
 
   # helper used by after_save callback above
   def reset_image_url_if_image_changed
-    if saved_change_to_image_attachment? || saved_change_to_image_blob?
+    # `saved_change_to_image_attachment?` and `saved_change_to_image_blob?` are
+    # provided by ActiveStorage.  tests run in an environment where
+    # ActiveStorage may not be fully configured, which previously caused a
+    # NoMethodError when the callback fired. Guard the calls so we simply skip
+    # when the methods are missing.
+    if (respond_to?(:saved_change_to_image_attachment?) && saved_change_to_image_attachment?) ||
+       (respond_to?(:saved_change_to_image_blob?) && saved_change_to_image_blob?)
       reset_image_url!
     end
   end

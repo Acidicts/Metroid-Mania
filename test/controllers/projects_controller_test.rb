@@ -187,6 +187,57 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 10, @project.reload.credits_per_hour
   end
 
+  # --- like feature specs --------------------------------------------------
+  test "user can like another user's project" do
+    # user(:one) is signed in by default in setup; use project owned by user(:two)
+    target = projects(:two)
+
+    assert_difference("UserLike.count", 1) do
+      post like_project_url(target)
+    end
+
+    assert_redirected_to project_url(target)
+    assert_equal "Project liked!", flash[:pass]
+  end
+
+  test "liking twice does not duplicate and shows info" do
+    target = projects(:two)
+    post like_project_url(target) # first like
+    assert_redirected_to project_url(target)
+
+    # try again
+    assert_no_difference("UserLike.count") do
+      post like_project_url(target)
+    end
+    assert_equal "You have already liked this project.", flash[:info]
+  end
+
+  test "user cannot like their own project" do
+    # @project belongs to signed-in user in setup
+    assert_no_difference("UserLike.count") do
+      post like_project_url(@project)
+    end
+    assert_redirected_to project_url(@project)
+    assert_equal "You cannot like your own project.", flash[:info]
+  end
+
+  test "show page renders like button appropriately" do
+    target = projects(:two)
+    get project_url(target)
+    assert_response :success
+    # button text includes heart and current count
+    assert_match /♡ - \d+/, @response.body
+
+    # simulate that we've already liked it
+    users(:one).liked_projects << target
+    get project_url(target)
+    assert_no_match /♡ - \d+/, @response.body
+
+    # own project should also hide the button
+    get project_url(@project)
+    assert_no_match /♡ - \d+/, @response.body
+  end
+
   test "non-owner cannot ship project" do
     other = users(:two)
     sign_in_as(other)

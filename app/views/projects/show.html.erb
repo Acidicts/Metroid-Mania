@@ -53,6 +53,19 @@
           <% if @project.readme_url.present? %>
             <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>
           <% end %>
+          <% if current_user.not_liked_project(@project.id) %>
+            <%= button_to '♡ - ' + @project.likers.count.to_s,
+                          like_project_path(@project),
+                          method: :post,
+                          class: 'btn-retro btn-retro--outline'
+            %>
+          <% else %>
+            <%= button_to '❤️ - ' + @project.likers.count.to_s,
+                            unlike_project_path(@project),
+                            method: :post,
+                            class: 'btn-retro btn-retro--outline'
+              %>
+            <% end %>
         </div>
       </div>
     </div>

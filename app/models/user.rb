@@ -16,6 +16,10 @@ class User < ApplicationRecord
   has_many :user_achievements, dependent: :destroy
   has_many :achievements, through: :user_achievements
 
+  # likes the user has made on projects
+  has_many :user_likes, dependent: :destroy
+  has_many :liked_projects, through: :user_likes, source: :project
+
   # every user owns a single wishlist.  We create one automatically so callers
   # can safely call `current_user.wishlist` without guarding for nil.
   has_one :wishlist, dependent: :destroy
@@ -52,6 +56,10 @@ class User < ApplicationRecord
     # Persist the computed value so other code can rely on the `xp` column.
     self.xp = xp_minutes
     xp_minutes
+  end
+
+  def not_liked_project(project_id)
+    !liked_projects.exists?(project_id) && Project.exists?(project_id) && (Project.find(project_id).user_id != self.id)
   end
 
   # convenience accessor for display

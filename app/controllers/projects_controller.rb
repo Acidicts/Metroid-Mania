@@ -112,6 +112,40 @@ class ProjectsController < ApplicationController
     load_hackatime_projects
   end
 
+  def like
+    @project = Project.find(params[:id])
+
+    # Guard against self-likes and duplicates; the view already hides the
+    # link, but we also sanity-check here in case someone issues a raw POST.
+    if @project.user_id == current_user.id
+      flash_info("You cannot like your own project.")
+    elsif current_user.liked_projects.include?(@project)
+      flash_info("You have already liked this project.")
+    else
+      current_user.liked_projects << @project
+      flash_pass("Project liked!")
+    end
+
+    redirect_to project_path(@project)
+  end
+
+  def unlike
+    @project = Project.find(params[:id])
+
+    # Guard against self-likes and duplicates; the view already hides the
+    # link, but we also sanity-check here in case someone issues a raw POST.
+    if @project.user_id == current_user.id
+      flash_info("You cannot like your own project.")
+    elsif current_user.liked_projects.include?(@project)
+      current_user.liked_projects.delete(@project)
+      flash_pass("Project unliked!")
+    else
+      flash_info("You haven't liked this project.")
+    end
+
+    redirect_to project_path(@project)
+  end
+
   # POST /projects or /projects.json
   def create
     # Normalize hackatime_ids param (ensure empty array when not provided)

@@ -11,7 +11,7 @@ Based on current functionality and potential extensions:
 | 5 | Project Collaboration | 8–12 hours | [#83](https://github.com/Acidicts/Metroid-Mania/issues/83) | ☐ |
 | 6 | Project Milestones | 3–5 hours | [#84](https://github.com/Acidicts/Metroid-Mania/issues/84) | ☐ |
 | 7 | Project Showcase / Gallery | 3–4 hours | [#85](https://github.com/Acidicts/Metroid-Mania/issues/85) | ☐ |
-| 8 | Project Voting / Likes | 2–3 hours | [#86](https://github.com/Acidicts/Metroid-Mania/issues/86) | ☐ |
+| 8 | Project Voting / Likes | 2–3 hours | [#86](https://github.com/Acidicts/Metroid-Mania/issues/86) | ☑ |
 | 9 | Streaks | 4–6 hours | [#88](https://github.com/Acidicts/Metroid-Mania/issues/88) | ☐ |
 | 10 | Seasonal / Timed Challenges | 6–8 hours | [#89](https://github.com/Acidicts/Metroid-Mania/issues/89) | ☐ |
 | 11 | XP / Leveling System | 6–10 hours | [#90](https://github.com/Acidicts/Metroid-Mania/issues/90) | ☑ |

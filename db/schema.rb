@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_181529) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_28_201444) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -306,6 +306,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_181529) do
     t.index ["user_id"], name: "index_user_achievements_on_user_id"
   end
 
+  create_table "user_likes", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.integer "project_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["project_id"], name: "index_user_likes_on_project_id"
+    t.index ["user_id"], name: "index_user_likes_on_user_id"
+  end
+
   create_table "users", force: :cascade do |t|
     t.float "amount_spent", default: 0.0, null: false
     t.integer "charm_slots", default: 0, null: false
@@ -376,6 +385,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_181529) do
   add_foreign_key "spritesheets", "assets_items"
   add_foreign_key "user_achievements", "achievements"
   add_foreign_key "user_achievements", "users"
+  add_foreign_key "user_likes", "projects"
+  add_foreign_key "user_likes", "users"
   add_foreign_key "users", "users", column: "flagged_for_fraud_by_id"
   add_foreign_key "wishlists", "users"
 end

@@ -74,6 +74,14 @@ Rails.application.routes.draw do
   end
   resources :products
   resources :projects do
+    member do
+      post :like
+      post :unlike
+      # graceful fallback when JS is unavailable or link is accessed directly.
+      get :like, to: redirect("/projects/%{id}")
+      get :unlike, to: redirect("/projects/%{id}")
+    end
+
     resources :devlogs
     resources :ship_requests, only: [ :new, :create, :show, :index ]
   end
