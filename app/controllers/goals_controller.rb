@@ -17,6 +17,7 @@ class GoalsController < ApplicationController
 
   # POST /goals/award
   def award
+    redirect_to goals_path and return unless current_user.admin?
     order = WeeklyGoalService.check_and_award!
     if order
       flash_pass("Weekly goal prize issued (order ##{order.id}).")
@@ -30,6 +31,7 @@ class GoalsController < ApplicationController
   # forcibly pick a random eligible contributor, ignoring thresholds and
   # prior awards.  Useful for admins when the automated process fails.
   def force_award
+    redirect_to goals_path and return unless current_user.admin?
     order = WeeklyGoalService.force_award!
     if order
       flash_pass("Weekly goal prize forcibly issued (order ##{order.id}).")

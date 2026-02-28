@@ -1,0 +1,48 @@
+<style>
+  .product-preview {
+    margin-bottom: 6px;
+    max-width:132px;
+    height: 60px;
+    background: #f9f9f9;
+    padding: 4px 8px; 
+    border-radius: 4px;
+    display: inline-flex; 
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(0,0,0,0.06);
+    text-decoration: none;
+    color: inherit;
+  }
+  .product-preview:hover {
+    background: #c7c7c7;
+  }
+</style>
+
+<%= turbo_frame_tag dom_id(wishlist) do %>
+    <% if wishlist.product_ids.any? %>
+      <div style="background: #ffffff; padding: 8px; border-radius: 6px; border: 1px solid rgba(0,0,0,0.06);">
+      <strong>Wishlist:</strong>
+      <ul style="list-style:none; padding:0; margin:0;">
+        <% wishlist.products.each do |product| %>
+          <li style="display:inline-block; margin-right:8px; position:relative;">
+            <a class="product-preview" href="#<%= dom_id(product) %>">
+              <img src="<%= product.image_url %>" width="48px" height="48px" alt="<%= product.name %> image" class="product-image" loading="lazy" style="vertical-align: middle; margin-right: 8px;">
+              <span style="font-size:14px;"><%= product.name %></span>
+            </a>
+            <%= button_to remove_product_wishlist_path(wishlist, product_id: product.id),
+                  method: :post,
+                  title: 'Remove from wishlist',
+                  form: { data: { turbo: true, turbo_stream: true } },
+                  style: "all:unset; position:absolute; top:2px; right:2px;" do %>
+              <%= image_tag "https://icons.hackclub.com/api/icons/0x203c56/view-close-small",
+                            alt: "Remove from wishlist",
+                            style: "width:1.2em; height:1.2em;" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+<% end %>
+

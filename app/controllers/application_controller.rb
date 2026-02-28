@@ -109,6 +109,15 @@ class ApplicationController < ActionController::Base
     end
   end
 
+  def require_ownership_or_admin(obj)
+    return true if admin?
+    # expects @wishlist to be set by a before_action in the controller; if not, this will raise an error which is fine since it indicates a bug in the controller setup.
+    unless obj.user_id == current_user.id
+      flash_warn("Not authorized")
+      redirect_to root_path and return
+    end
+  end
+
   def require_superadmin
     if !current_user.superadmin?
       flash_warn("Not authorized")

@@ -228,6 +228,87 @@ a { font-size: 1.2rem;}
   animation: btn-bob 2.3s infinite ease-in;
   cursor: pointer;
   animation: btn-bob 2.3s infinite ease-in;
+}
+
+/* wishlist icon button – clean, minimal circular variant */
+.btn-retro.wishlist-button {
+  font-size: 0;      /* hide text */
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 120ms ease, border-color 120ms ease, transform 120ms ease;
+}
+
+.wishlist-icon {
+  display: inline-block;
+  color: #e74c3c;
+  font-size: 1.2rem;
+  line-height: 1;
+  transform: rotate(45deg);
+}
+
+.btn-retro.wishlist-button:hover {
+  background: #f7f7f7;
+  border-color: #bbb;
+  transform: translateY(-1px);
+}
+
+.btn-retro.wishlist-button:active {
+  background: #eee;
+  border-color: #aaa;
+  transform: scale(0.95);
+}
+
+.wishlist-button {
+  all: unset;
+  font-size: 0;      /* hide text */
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  background: #ffffff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+  color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms ease;
+  align-self: center;
+  border-radius: 25%;
+}
+
+/* align product action buttons inline */
+.product-actions {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  /* ensure child forms also center their contents */
+}
+
+.product-actions form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+  vertical-align: middle;
+  margin-top: 4px;
+}
+
+/* rails button_to wraps the button in a form; ensure forms don't force line break */
+.product-actions form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
   text-decoration: none;
 }
 

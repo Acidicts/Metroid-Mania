@@ -79,6 +79,17 @@ class UserTest < ActiveSupport::TestCase
     assert u2.charm_slots.all? { |s| s.order.nil? }
   end
 
+  test "wishlist association exists and is built automatically" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "w#{SecureRandom.hex(4)}@example.dev")
+    # after create the wishlist should exist and be tied to the user
+    assert u.wishlist.present?, "expected new user to have a wishlist"
+    assert_equal u.id, u.wishlist.user_id
+
+    # accessing wishlist should always return a persisted record
+    u.wishlist.destroy!
+    assert u.reload.wishlist.persisted?
+  end
+
   test "subsequent loads only create the gap not duplicate existing slots" do
     u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
     u.update_column(:charm_slots, 1)

@@ -16,6 +16,12 @@ class User < ApplicationRecord
   has_many :user_achievements, dependent: :destroy
   has_many :achievements, through: :user_achievements
 
+  # every user owns a single wishlist.  We create one automatically so callers
+  # can safely call `current_user.wishlist` without guarding for nil.
+  has_one :wishlist, dependent: :destroy
+
+  after_create :ensure_wishlist
+
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
   attribute :hackatime_trust_status, :string
@@ -75,6 +81,13 @@ class User < ApplicationRecord
 
   def user_charm_notches
     charm_notches.where(user: self)
+  end
+
+  # override accessor so that a nil association will be replaced with a new
+  # record.  This mirrors the behaviour of `ensure_wishlist` and keeps view
+  # conditionals simple.
+  def wishlist
+    super || create_wishlist
   end
 
   def charm_slots_orders
@@ -479,4 +492,11 @@ class User < ApplicationRecord
   end
 
   private
+
+  # callback used to make sure every user has a wishlist record.  defined
+  # here at the end so earlier public methods retain their default visibility.
+  def ensure_wishlist
+    create_wishlist unless wishlist
+  end
+
 end

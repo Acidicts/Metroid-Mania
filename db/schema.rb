@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_121114) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_28_135000) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -335,6 +335,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_121114) do
     t.index ["uid"], name: "index_users_on_uid"
   end
 
+  create_table "wishlists", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.json "product_ids", default: [], null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_wishlists_on_user_id"
+  end
+
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "assets_items", "assets_projects"
   add_foreign_key "assets_items", "users"
@@ -368,4 +376,5 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_121114) do
   add_foreign_key "user_achievements", "achievements"
   add_foreign_key "user_achievements", "users"
   add_foreign_key "users", "users", column: "flagged_for_fraud_by_id"
+  add_foreign_key "wishlists", "users"
 end

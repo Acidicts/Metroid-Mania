@@ -1,4 +1,14 @@
 Rails.application.routes.draw do
+  # wishlist_items feature removed; routes cleaned up
+  # users interact with wishlists via custom member actions for adding/removing
+  # products.  The helper names are intentionally descriptive so views can
+  # remain readable.
+  resources :wishlists do
+    member do
+      post :add_product
+      post :remove_product
+    end
+  end
   # basic CRUD paths for community goals (only index/new/edit actions
   # exist at the moment; more can be added later).  Using `resources` ensures
   # the usual path helpers such as `goals_path` are available.

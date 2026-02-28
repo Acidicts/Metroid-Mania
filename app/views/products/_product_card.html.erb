@@ -11,7 +11,7 @@
   }
 </style>
 
-<div class="product-card <%= product.is_unlocked(current_user) ? '' : 'locked' %>">
+<div id="<%= dom_id product %>" class="product-card <%= product.is_unlocked(current_user) ? '' : 'locked' %>">
       <img src="<%= product.image_url %>" width="96px" height="96px" alt="<%= product.name %> image" class="product-image" loading="lazy">
       <div class="product-content">
         <h3><%= product.name %></h3>
@@ -26,13 +26,25 @@
         <% if product.variable_grant? %>
           <% order_params[:grant_amount_dollars] = product.grant_min_dollars %>
         <% end %>
-        <% if product.is_unlocked(current_user) %>
-          <%= button_to "Add To Loadout", orders_path(order_params), method: :post,
-                        class: 'btn-retro buy-button', form: { "data-turbo" => false } %>
-        <% else %>
-          <button class="btn-retro buy-button disabled" disabled>Locked</button>
-        <% end %>
-        <% if admin? %>
+        <div class="product-actions">
+          <% if product.is_unlocked(current_user) %>
+            <%= button_to "Equip", orders_path(order_params), method: :post,
+                          class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout", form: { "data-turbo" => false } %>
+          <% else %>
+            <button class="btn-retro buy-button disabled" disabled>Locked</button>
+          <% end %>
+          <% if current_user %>
+            <%= button_to add_product_wishlist_path(current_user.wishlist, product_id: product.id), method: :post,
+                          class: 'wishlist-button', title: 'Add to wishlist',
+                          form: { data: { turbo: true, turbo_stream: true } } do %>
+              <%= image_tag "https://icons.hackclub.com/api/icons/0x203c56/view-close-small",
+                            alt: "Add to wishlist",
+                            style: "transform: rotate(45deg); width:1.2em; height:1.2em;" %>
+            <% end %>
+          <% end %>
+        </div>
+        
+        <% if current_user&.admin? %>
           <div style="margin-top:8px;">
             <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
             <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin', style: 'margin-left:6px' %>

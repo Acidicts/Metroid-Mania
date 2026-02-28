@@ -11,6 +11,27 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   test "should get index" do
     get products_url
     assert_response :success
+
+    # the wishlist container is rendered for the signed‑in admin
+    assert_select "div[id^='wishlist_']"
+
+    # when logged in, the add-to-wishlist buttons include the turbo-stream
+    # hint so the browser will request a turbo-stream response.
+    sign_in_as(users(:one))
+    get products_url
+    assert_select "form[data-turbo-stream='true']", minimum: 1
+  end
+
+  test "admin link appears only for admins" do
+    # first, visit as admin (already signed in by setup)
+    get products_url
+    assert_select "a", text: /New product/ # rails' assert_select can match link
+
+    # now sign in as regular user and confirm link is absent
+    sign_in_as(users(:two))
+    get products_url
+    assert_response :success
+    assert_select "a", text: /New product/, count: 0
   end
 
   test "should get new" do
@@ -91,6 +112,36 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   ensure
     SiteSetting.set("shop", "true")
+  end
+
+  test "non-admin user with no wishlist can view index" do
+    # previously this path would blow up when rendering the partial.
+    user = users(:two)
+    sign_in_as(user)
+    get products_url
+    assert_response :success
+
+    # wishlist element should exist (even if empty) and record should now exist
+    assert_select "div[id^='wishlist_']"
+    assert user.reload.wishlist.present?
+  end
+
+  test "wishlist links scroll to products" do
+    user = users(:one)
+    sign_in_as(user)
+
+    # add a product to the list and hit index
+    wl = user.wishlist
+    wl.update!(product_ids: [products(:one).id])
+
+    get products_url
+    assert_response :success
+
+    # there should be an anchor pointing at the product card id
+    assert_select "a[href='##{dom_id(products(:one))}']"
+
+    # removal button should be present as well (action may include query params)
+    assert_select "form[action^='#{remove_product_wishlist_path(wl)}']"
   end
 
   test "non-admin is blocked from index when shop disabled" do

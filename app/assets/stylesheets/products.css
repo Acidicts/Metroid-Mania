@@ -7,6 +7,7 @@
 }
 
 .product-card {
+  position: relative; /* needed for absolute-positioned actions */
   border: 1px solid #e0e0e0;
   padding: 12px;
   width: 300px;
@@ -102,7 +103,13 @@
 .badge-info { background: rgba(74,122,150,0.12); color: var(--palette-3, #4a7a96); border: 1px solid rgba(74,122,150,0.18); }
 
 /* Actions — pixel / 3D buttons tuned to the screenshot */
-.product-actions { margin-top: 12px; display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.product-actions { margin: 0; display: inline-flex; gap: 12px; align-items: center; /* keep buttons inline */ flex-wrap: nowrap; 
+  /* anchor to bottom right of card */
+  position: relative;
+  bottom: 8px;
+  right: 8px;
+}
+.product-actions form { display: inline-flex; margin:0; padding:0; align-items:center; }
 .product-actions .btn-retro--primary {
   background: linear-gradient(180deg,#4a90e2,#2f6fb0);
   color: white;

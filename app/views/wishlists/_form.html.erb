@@ -1,0 +1,28 @@
+<%= form_with(model: wishlist) do |form| %>
+  <% if wishlist.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(wishlist.errors.count, "error") %> prohibited this wishlist from being saved:</h2>
+
+      <ul>
+        <% wishlist.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :user_id, style: "display: block" %>
+    <%= form.text_field :user_id %>
+  </div>
+
+  <div>
+    <%= form.label :product_ids, "Products", style: "display: block" %>
+    <%# allow selecting multiple products by name; Rails will submit wishlist[product_ids][] %>
+    <%= form.collection_select :product_ids, Product.all, :id, :name, {}, multiple: true %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>

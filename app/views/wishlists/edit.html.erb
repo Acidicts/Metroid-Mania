@@ -1,0 +1,12 @@
+<% content_for :title, "Editing wishlist" %>
+
+<h1>Editing wishlist</h1>
+
+<%= render "form", wishlist: @wishlist %>
+
+<br>
+
+<div>
+  <%= link_to "Show this wishlist", @wishlist %> |
+  <%= link_to "Back to wishlists", wishlists_path %>
+</div>

@@ -1,0 +1,16 @@
+<%#
+  A small summary link to the current user's wishlist.  This partial is rendered
+  from the product index (and could be used elsewhere) so it needs to be
+  defensive: the helper accessor for `wishlist` will create a record on demand
+  (see User#wishlist override) which keeps the view logic simple.
+%>
+
+<% if current_user %>
+  <% wl = current_user.wishlist %> <!-- accessor ensures record exists -->
+
+  <div id="wishlist-preview" style="margin-bottom:12px;">
+    <%= link_to wishlist_path(wl), class: 'btn-retro btn-retro--small' do %>
+      Wishlist (<%= wl.product_ids.size %>)
+    <% end %>
+  </div>
+<% end %>
