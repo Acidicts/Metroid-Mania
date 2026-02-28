@@ -21,7 +21,7 @@ Based on current functionality and potential extensions:
 | 15 | Admin Analytics Dashboard | 6–10 hours | [#96](https://github.com/Acidicts/Metroid-Mania/issues/96) | ☐ |
 | 16 | Export / Reports | 3–5 hours | [#97](https://github.com/Acidicts/Metroid-Mania/issues/97) | ☐ |
 | 17 | Webhook / Slack Bot Notifications | 4–6 hours | [#76](https://github.com/Acidicts/Metroid-Mania/issues/76) | ☐ |
-| 18 | Markdown Preview for Devlogs | 1–2 hours | (none yet) | ☐ |
+| 18 | Markdown Preview for Devlogs | 1–2 hours | (none yet) | ☑ |
 | 19 | Search Improvements | 3–5 hours | [#98](https://github.com/Acidicts/Metroid-Mania/issues/98) | ☐ |
 | 20 | Dark/Light Theme Toggle | 1–2 hours | [#99](https://github.com/Acidicts/Metroid-Mania/issues/99) | ☐ |
 
