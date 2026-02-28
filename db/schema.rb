@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_135000) do
+ActiveRecord::Schema[8.1].define(version: 2026_02_28_181529) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -329,6 +329,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_135000) do
     t.string "uid"
     t.datetime "updated_at", null: false
     t.string "verification_status"
+    t.integer "xp", default: 0, null: false
     t.index ["flagged_for_fraud_by_id"], name: "index_users_on_flagged_for_fraud_by_id"
     t.index ["hackatime_trust_status"], name: "index_users_on_hackatime_trust_status"
     t.index ["slack_id"], name: "index_users_on_slack_id"

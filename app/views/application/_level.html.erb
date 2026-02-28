@@ -1,0 +1,45 @@
+<style>
+    /* circular level progress indicator */
+    #level-container {
+        --size: 32px;
+        --progress: 0%; /* overridden inline via style attr */
+        font-family: monospace;
+        font-size: 0.8em;
+        width: var(--size);
+        height: var(--size);
+        border-radius: 50%;
+        background: conic-gradient(
+            blue var(--progress),
+            grey 0
+        );
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0; /* no extra padding, inner circle will provide space */
+    }
+
+    #level {
+        background-color: white;
+        border-radius: 50%;
+        width: calc(var(--size) - 8px);
+        height: calc(var(--size) - 8px);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: black;
+        font-family: monospace;
+        font-size: 0.8em;
+    }
+</style>
+
+<%# calculate progress decimal and convert to percentage %>
+<% progress = current_user.get_level_progress_dec %>
+<% percent = (progress * 100).round %>
+
+<div style="all:unset; margin-left:6px; display:inline-flex; align-items:center; gap:4px;" title="Level <%= current_user.get_level.first %> with <%= percent %>% progress to next level">
+    <div id="level-container" style="--progress: <%= percent %>%;">
+        <div id="level">
+            <%= current_user.get_level.first %>
+        </div>
+    </div>
+</div>

@@ -28,6 +28,7 @@ class User < ApplicationRecord
   attribute :region, :string
   # Store how many charm slots a user has; defaults to zero so new users start with none
   attribute :charm_slots, :integer, default: 0
+  attribute :xp, :integer, default: 0
 
   enum :role, { user: 0, admin: 1, superadmin: 2 }, default: :user
 
@@ -36,10 +37,46 @@ class User < ApplicationRecord
   attribute :fraud_reason, :string, default: nil
 
   validate :ensure_fraud_reason, on: :update
+  validate :get_xp
+
+  def get_xp
+    # XP is based on the amount of time that has been devlogged against
+    # projects owned by this user.  Previously we attempted to call
+    # `project.devlogged_seconds`, which is a field on *ships* rather than
+    # projects, and therefore raised a NoMethodError.  Use the existing
+    # helper on Project that sums all user-created devlogs instead.
+    xp_minutes = projects.inject(0) do |sum, project|
+      sum + (project.total_devlogged_seconds.to_i / 60)
+    end
+
+    # Persist the computed value so other code can rely on the `xp` column.
+    self.xp = xp_minutes
+    xp_minutes
+  end
 
   # convenience accessor for display
   def flagged_for_fraud_by_name
     flagged_for_fraud_by&.name
+  end
+
+  def get_level
+    xp = get_xp
+    lvl = 1
+
+    while xp >= lvl * 100
+      xp -= lvl * 100
+      lvl += 1
+    end
+
+    # return [current_level, xp_into_this_level]
+    [ lvl, xp ]
+  end
+
+  def get_level_progress_dec
+    lvl, xp_into = get_level
+    # compute fraction of current tier completed
+    denom = lvl * 100.0
+    denom.zero? ? 0.0 : (xp_into.to_f / denom).round(2)
   end
 
   def flagged_for_fraud?
@@ -498,5 +535,4 @@ class User < ApplicationRecord
   def ensure_wishlist
     create_wishlist unless wishlist
   end
-
 end

@@ -21,7 +21,7 @@ class Achievement < ApplicationRecord
 
   # Supported requirement types.
   # requirement_value holds the threshold (any number).
-  REQUIREMENT_TYPES = %w[min_notches min_charms min_hours].freeze
+  REQUIREMENT_TYPES = %w[min_notches min_charms min_hours min_level].freeze
 
   validates :requirement_type, inclusion: { in: REQUIREMENT_TYPES }, allow_nil: true
   validates :requirement_value, numericality: { greater_than_or_equal_to: 0 }, allow_nil: true
@@ -39,6 +39,8 @@ class Achievement < ApplicationRecord
       user.charm_slots_orders.count >= threshold
     when "min_hours"
       user.total_devlogged_hours.to_f >= threshold
+    when "min_level"
+      user.get_level >= threshold
     else
       false
     end
