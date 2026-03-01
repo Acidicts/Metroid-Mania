@@ -34,6 +34,77 @@
         border: none;
       }
 
+      /* --------- search bar + suggestions --------- */
+      .search-input {
+        width: 180px;
+        padding: 4px 8px;
+        border: 1px solid #aaa;
+        border-radius: 4px;
+        transition: width 200ms ease;
+      }
+
+      .search-input:focus {
+        width: 240px;
+        outline: none;
+        border-color: #888;
+      }
+
+      .search-bar-container {
+        position: relative; /* for suggestion dropdown positioning */
+        display: inline-flex;
+        align-items: center;
+      }
+
+      .search-suggestions {
+        position: absolute;
+        top: calc(100% + 2px);
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 100;
+        display: none;
+      }
+
+      .search-suggestions.visible {
+        display: block;
+      }
+
+      .search-suggestions li {
+        padding: 6px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* ensure suggestion text uses theme color */
+      .search-suggestions li span:not(.badge) {
+        color: var(--main-700);
+      }
+
+      .search-suggestions li:hover,
+      .search-suggestions li.active {
+        background: #f0f0f0;
+      }
+
+      /* badges indicating suggestion type */
+      .search-suggestions .badge {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: white;
+      }
+      .search-suggestions .badge-project { background: #4a90e2; }
+      .search-suggestions .badge-user    { background: #7bca00; }
+      .search-suggestions .badge-tag     { background: #d35400; }
+
+
       /* bars */
       .menu-icon span {
         display: block;
@@ -329,10 +400,11 @@
             </div>
           </div>
 
-          <div id="search_bar_input_container" style="position:relative; display:inline-flex; align-items:center; margin-left:12px; align-self:center;">
+          <div id="search_bar_input_container" class="search-bar-container" style="margin-left:12px; align-self:center;">
             <%= form_with url: projects_path, method: :get, local: true do |form| %>
               <%= form.text_field :q, id: "search_input", placeholder: "Search projects, users or #tag...", class: "search-input" %>
             <% end %>
+            <ul id="search_suggestions" class="search-suggestions" aria-label="Search suggestions"></ul>
           </div>
 
           <img id="search-icon" src="https://icons.hackclub.com/api/icons/red/search" style="width:32px; height:32px; margin-left:12px; opacity:0.8;" alt="Search icon" onclick="document.getElementById('search_input').focus();" class="search-icon">
@@ -341,8 +413,10 @@
             document.addEventListener('DOMContentLoaded', function() {
               var searchIcon = document.getElementById('search-icon');
               var searchInput = document.getElementById('search_input');
+              var suggestionBox = document.getElementById('search_suggestions');
+              var searchForm = searchInput && searchInput.closest('form');
 
-              // Show the search input when the search icon is clicked
+              // show / hide input on icon click (mobile friendly)
               searchIcon.addEventListener('click', function() {
                 if (searchInput.style.display === 'block') {
                   searchInput.style.display = 'none';
@@ -352,11 +426,55 @@
                 }
               });
 
-              searchInput.style.display = 'none'; // Ensure the search icon is visible
+              searchInput.style.display = 'none'; // start hidden for icon
 
-              // Hide the search input when it loses focus
+              // collapse when losing focus (allow click on suggestions first)
               searchInput.addEventListener('blur', function() {
-                searchInput.classList.remove('visible');
+                setTimeout(function() {
+                  suggestionBox.classList.remove('visible');
+                }, 150);
+              });
+
+              // helper for creating suggestion item
+              function makeSuggestionItem(item) {
+                var li = document.createElement('li');
+                var badge = document.createElement('span');
+                badge.className = 'badge badge-' + item.type;
+                badge.textContent = item.type;
+                var textSpan = document.createElement('span');
+                textSpan.textContent = item.text;
+                li.appendChild(badge);
+                li.appendChild(textSpan);
+                li.addEventListener('mousedown', function(e) {
+                  // mousedown so input doesn't blur before click
+                  searchInput.value = item.text;
+                  suggestionBox.classList.remove('visible');
+                  if (searchForm) searchForm.submit();
+                });
+                return li;
+              }
+
+              // debounce helper
+              var debounceTimeout;
+              function fetchSuggestions(q) {
+                if (!q) {
+                  suggestionBox.classList.remove('visible');
+                  return;
+                }
+                fetch('/projects/suggestions?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+                  .then(function(res) { return res.json(); })
+                  .then(function(arr) {
+                    suggestionBox.innerHTML = '';
+                    arr.forEach(function(item) { suggestionBox.appendChild(makeSuggestionItem(item)); });
+                    if (arr.length) suggestionBox.classList.add('visible');
+                    else suggestionBox.classList.remove('visible');
+                  })
+                  .catch(function() { suggestionBox.classList.remove('visible'); });
+              }
+
+              searchInput.addEventListener('input', function() {
+                clearTimeout(debounceTimeout);
+                debounceTimeout = setTimeout(function() { fetchSuggestions(searchInput.value); }, 200);
               });
             });
           </script>

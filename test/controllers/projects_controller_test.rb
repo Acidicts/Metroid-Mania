@@ -44,6 +44,37 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_no_match /UniqueSearchName123/, @response.body
   end
 
+  test "suggestions endpoint returns JSON and handles fuzziness" do
+    # session should carry the signed-in user from setup
+    assert_equal users(:one).id, session[:user_id], "expected user to be logged in"
+
+    @project.update!(name: "FuzzyName")
+    other = users(:two)
+    other.update!(name: "Alice Example")
+
+    # request with a near miss
+    get "/projects/suggestions", params: { q: "Fuzyn" }
+    unless @response.status == 200
+      puts "suggestions body (status=#{@response.status}): #{ @response.body.inspect }"
+    end
+    assert_response :success
+    arr = JSON.parse(@response.body)
+    assert arr.any? { |i| i["text"] == "FuzzyName" && i["type"] == "project" }
+
+    # tag suggestion
+    tag = ProjectTag.create!(tag: "cool")
+    @project.update!(project_tag: tag)
+    get "/projects/suggestions", params: { q: "#coo" }
+    assert_response :success
+    arr = JSON.parse(@response.body)
+    assert arr.any? { |i| i["text"] == "#cool" && i["type"] == "tag" }
+
+    # blank query returns empty set
+    get "/projects/suggestions", params: { q: "" }
+    assert_response :success
+    assert_equal [], JSON.parse(@response.body)
+  end
+
   test "redirects to home when not logged in" do
     # ensure no user is signed in
     delete logout_url rescue nil

@@ -80,6 +80,12 @@ Rails.application.routes.draw do
   end
   resources :products
   resources :projects do
+    collection do
+      # lightweight JSON endpoint used by the global search box for live
+      # suggestions. returns a handful of project names, user names, and tags.
+      get :suggestions
+    end
+
     member do
       post :like
       post :unlike

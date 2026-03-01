@@ -44,6 +44,70 @@ class ProjectsController < ApplicationController
     @enabled = asset_project_enabled?
   end
 
+  # GET /projects/suggestions.json?q=foo
+  # returns a small array of candidate strings (project names, user names, tags)
+  # using a lightweight fuzzy match so typos / grammar mishaps still return
+  # reasonable results. JavaScript glue in the layout consumes the JSON.
+  def suggestions
+    term = params[:q].to_s.strip.downcase
+    suggestions = []
+
+    unless term.blank?
+      # tags (always shown with leading '#'). simple substring match.
+      tag_term = term.sub(/^#/, "")
+      tags = ProjectTag.pluck(:tag_string).select { |t| t.downcase.include?(tag_term) }
+      suggestions.concat(tags.map { |t| { text: "##{t}", type: "tag" } })
+
+      # pick some project names and user names via fuzzy sorting
+      fuzzy_search(Project, :name, term, 5).each { |n| suggestions << { text: n, type: "project" } }
+      fuzzy_search(User, :name, term, 5).each    { |n| suggestions << { text: n, type: "user" } }
+    end
+
+    # dedupe on text and limit
+    render json: suggestions.uniq { |item| item[:text] }.first(10)
+  end
+
+  # helper methods – keep them private so they can't be routed to
+  private
+
+  # return up to `limit` strings for the given model+field that are closest to
+  # the provided lowercase `term`, using Levenshtein distance. The list of
+  # candidates is pulled from the database; we avoid loading enormous tables by
+  # raising the limit on pluck to a reasonable value (2000) but the results are
+  # deduped later.
+  def fuzzy_search(model, field, term, limit)
+    names = model.limit(2000).pluck(field).map(&:to_s).uniq
+    names.sort_by { |n| levenshtein(n.downcase, term) }.first(limit)
+  end
+
+  # simple Levenshtein implementation copied from wikipedia pseudo‑code; good
+  # enough for small strings.
+  def levenshtein(a, b)
+    m = a.length
+    n = b.length
+    return n if m == 0
+    return m if n == 0
+
+    d = Array.new(m + 1) { |i| Array.new(n + 1) }
+    (0..m).each { |i| d[i][0] = i }
+    (0..n).each { |j| d[0][j] = j }
+
+    (1..m).each do |i|
+      (1..n).each do |j|
+        cost = (a[i - 1] == b[j - 1] ? 0 : 1)
+        d[i][j] = [
+          d[i - 1][j] + 1,       # deletion
+          d[i][j - 1] + 1,       # insertion
+          d[i - 1][j - 1] + cost # substitution
+        ].min
+      end
+    end
+
+    d[m][n]
+  end
+
+  public
+
   # GET /projects/1 or /projects/1.json
   def show
     # If the project is linked to Hackatime, gather per-project breakdown for display
