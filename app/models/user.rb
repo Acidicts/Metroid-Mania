@@ -67,6 +67,17 @@ class User < ApplicationRecord
     flagged_for_fraud_by&.name
   end
 
+  def has_streak
+    devlogs = Devlog.where(user_id: self.id)
+    streak = 0
+    current_date = Date.current
+    while devlogs.where("created_at >= ? AND created_at < ?", current_date.beginning_of_day, current_date.end_of_day).exists?
+      streak += 1
+      current_date -= 1.day
+    end
+    streak
+  end
+
   def get_level
     xp = get_xp
     lvl = 1

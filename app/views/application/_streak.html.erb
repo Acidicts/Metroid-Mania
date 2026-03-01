@@ -1,0 +1,43 @@
+<% streak = 30 %>
+<% if streak > 0 && streak < 7 %>
+    <% color = "orange" %>
+    <% rgb = "255, 165, 0" %>
+<% elsif streak >= 7 && streak < 30 %>
+    <% color = "red" %>
+    <% rgb = "255, 50, 0" %>
+<% elsif streak > 30 %>
+    <% color = "#338eda" %>
+    <% rgb = "51, 142, 218" %>
+    <% streak = "30+"%>
+    <% rgb = "255, 50, 0" %>
+<% elsif streak == 30 %>
+    <% color = "#338eda" %>
+    <% rgb = "51, 142, 218" %>
+    <% streak = 30%>
+<% else %>
+    <% color = "black" %>
+    <% rgb = "0, 0, 0" %>
+<% end %>
+
+<style>
+    #streak {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        border: 2px solid <%= color %>;
+        padding: 4px;
+        border-radius: 10%;
+        background: rgba(<%= rgb %>, 0.3);
+    }
+</style>
+
+<div style="all:unset; margin-left:6px; display:inline-flex; align-items:center; gap:4px;" title="<%= streak %> Day Streak">
+    <div id="streak">
+        <%= render partial: "streak_icon", locals: { color: color } %>
+        <% if streak.is_a?(String) && streak == "30+" %>
+            <span style="text-shadow: 0 0 0 black; font-size:0.8rem">30+</span>
+        <% else %>
+            <span style="text-shadow: 0 0 0 black; font-size:0.8rem"><%= streak %></span>
+        <% end %>
+    </div>
+</div>
