@@ -3,6 +3,7 @@ module Admin
     before_action :require_admin
     before_action :set_ship_request, only: [ :show, :approve, :reject ]
 
+
     def index
       # Exclude ship requests that belong to deleted projects
       @ship_requests = ShipRequest.joins(:project).where(projects: { deleted_at: nil }).order(requested_at: :desc)
@@ -19,8 +20,10 @@ module Admin
       recipient_user_id = params[:recipient_user_id].presence
 
       if @ship_request.pending?
-        ship = @ship_request.approve!(admin_user: current_user, credits_per_hour: credits, recipient_user_id: recipient_user_id)
-        Audit.create!(user: current_user, project: @ship_request.project, action: "approve_ship_request", details: { ship_request_id: @ship_request.id, credits_per_hour: credits, recipient_user_id: recipient_user_id, ship_id: ship.id })
+        # allow multiplier override
+        multi = params[:multiplier].presence
+        ship = @ship_request.approve!(admin_user: current_user, credits_per_hour: credits, recipient_user_id: recipient_user_id, multiplier: multi)
+        Audit.create!(user: current_user, project: @ship_request.project, action: "approve_ship_request", details: { ship_request_id: @ship_request.id, credits_per_hour: credits, recipient_user_id: recipient_user_id, multiplier: multi, ship_id: ship.id })
         flash_pass("Ship request approved and shipped.")
         redirect_to admin_ship_path(ship)
       else

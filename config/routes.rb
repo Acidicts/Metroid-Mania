@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :challenges
   # wishlist_items feature removed; routes cleaned up
   # users interact with wishlists via custom member actions for adding/removing
   # products.  The helper names are intentionally descriptive so views can
@@ -152,6 +153,7 @@ Rails.application.routes.draw do
     resources :audits, only: [ :index ]
 
     resources :achievements
+    resources :challenges
     post "cdn_upload", to: "cdn_uploads#create"
 
     # Site settings (feature toggles)

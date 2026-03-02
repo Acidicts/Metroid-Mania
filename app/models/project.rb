@@ -30,6 +30,12 @@ class Project < ApplicationRecord
   # `project.image_url = "…"` during the transition; any non‑persisted
   # value will be returned verbatim if present.
   def image_url
+    # return any transient value that was assigned via the writer when no
+    # database column exists (see image_url= below).
+    if defined?(@image_url_cache) && @image_url_cache.present?
+      return @image_url_cache
+    end
+
     # prefer an explicit attribute if one exists (unlikely today but harmless)
     if has_attribute?(:image_url) && self[:image_url].present?
       return self[:image_url]
@@ -42,6 +48,16 @@ class Project < ApplicationRecord
     # this reader (especially views) shouldn't trigger network activity or
     # writes.  an update validation handles persistence when a blob is added.
     project_banner_url(self)
+  end
+
+  # writer supports assignment even when there is no column by caching the
+  # value; callers can still read it via the reader above.
+  def image_url=(val)
+    if has_attribute?(:image_url)
+      write_attribute(:image_url, val)
+    else
+      @image_url_cache = val
+    end
   end
 
   validates :name, presence: true
@@ -81,8 +97,10 @@ class Project < ApplicationRecord
       return false
     end
 
+    # only persist when the attribute exists; otherwise we merely cache the
+    # value so the reader can return it until the next save.
     self.image_url = url
-    save!(validate: false)
+    save!(validate: false) if has_attribute?(:image_url)
   end
 
   def reset_image_url!
@@ -249,15 +267,28 @@ class Project < ApplicationRecord
     # external services such as the CDN upload.
     def project_banner_url(project)
       if project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached?
-        if defined?(request) && request.present?
-          Rails.application.routes.url_helpers.rails_blob_url(project.image, host: request.base_url)
-        else
-          host = Rails.application.routes.default_url_options[:host]
-          if host.present?
-            Rails.application.routes.url_helpers.rails_blob_url(project.image, host: host)
+        # avoid generating URLs for newly-built blobs (not yet persisted); Rails
+        # will raise ArgumentError in that case.  Treat as no image instead.
+        if project.image.blob && !project.image.blob.persisted?
+          Rails.logger.warn("project_banner_url: image blob not persisted, returning placeholder") if defined?(Rails)
+          return "https://placehold.co/800x450"
+        end
+
+        begin
+          if defined?(request) && request.present?
+            Rails.application.routes.url_helpers.rails_blob_url(project.image, host: request.base_url)
           else
-              Rails.application.routes.url_helpers.rails_blob_path(project.image, only_path: true)
+            host = Rails.application.routes.default_url_options[:host]
+            if host.present?
+              Rails.application.routes.url_helpers.rails_blob_url(project.image, host: host)
+            else
+                Rails.application.routes.url_helpers.rails_blob_path(project.image, only_path: true)
+            end
           end
+        rescue ArgumentError => e
+          # fallback when we can't generate a signed id (new record)
+          Rails.logger.warn("project_banner_url: #{e.class} #{e.message}") if defined?(Rails)
+          "https://placehold.co/800x450"
         end
       elsif project.respond_to?(:image_url) && project.image_url.present?
         project.image_url
@@ -542,7 +573,7 @@ class Project < ApplicationRecord
   # Returns the created Ship.
   # This method is idempotent for the same shipped_at timestamp (will raise if a ship with identical
   # shipped_at and credits_awarded already exists), but will create distinct Ship rows for separate shipments.
-  def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current, recipient_user: nil)
+  def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current, recipient_user: nil, multiplier: nil)
     # ensure ActiveRecord knows about the current DB schema (multiplier column may
     # have been removed by a migration while the server was running).  This avoids
     # inserting a non‑existent column and crashing requests.
@@ -570,15 +601,44 @@ class Project < ApplicationRecord
       # Ensure stored credits_awarded is numeric (0.0 when no award) so admin UI shows a value
       stored_credits = amount.present? ? amount : 0.0
 
-      # Create the Ship using the used_seconds (so the DB row reflects what was paid)
-      ship = ships.create!(user: admin_user, shipped_at: shipped_at, devlogged_seconds: used_seconds, credits_awarded: stored_credits)
+      # Prepare attributes for the new ship, include multiplier if provided
+      ship_attrs = {
+        user: admin_user,
+        shipped_at: shipped_at,
+        devlogged_seconds: used_seconds,
+        credits_awarded: stored_credits
+      }
+      # multiplier belongs on the Ship, not the Project.  The column may or may
+      # not exist depending on migrations, so set it unconditionally and then
+      # update again after creation if necessary.
+      ship_attrs[:multiplier] = multiplier.to_f if multiplier.present?
 
-      # Award charm notches corresponding to the credited amount.  We convert the
-      # floating-point `amount` to an integer count via `to_i` (dropping any
-      # fractional credit).  Notches are created through the ship association so
-      # the relationship is set automatically.  They remain unassigned to any slot.
+      ship = ships.create!(ship_attrs)
+      if multiplier.present? && ship.has_attribute?(:multiplier)
+        ship.update!(multiplier: multiplier.to_f)
+      end
+
+      # Award charm notches corresponding to the credited amount.  Fractional
+      # notches are floored and the leftover time (in seconds) is carried over
+      # to the next ship via `notch_remainder_seconds` on the project.
+      #
+      # 1 notch = 2 hours = 7200 seconds of devlogged work.
       if amount.present?
-        notch_count = amount.to_f.to_i
+        # Include any remainder seconds carried over from a previous ship.
+        remainder = notch_remainder_seconds.to_f
+        notch_seconds = used_seconds.to_f + remainder
+        raw_notches = notch_seconds / 7200.0
+        notch_count = raw_notches.floor
+        new_remainder = notch_seconds - (notch_count * 7200)
+
+        # apply multiplier when present
+        if multiplier.present?
+          notch_count = (notch_count * multiplier.to_f).floor
+        end
+
+        # persist the new remainder for the next ship
+        update_column(:notch_remainder_seconds, new_remainder)
+
         if notch_count > 0
           target = recipient_user.present? ? recipient_user : user
           notch_count.times do

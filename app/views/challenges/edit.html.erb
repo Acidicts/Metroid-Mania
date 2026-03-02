@@ -1,0 +1,12 @@
+<% content_for :title, "Editing challenge" %>
+
+<h1>Editing challenge</h1>
+
+<%= render "form", challenge: @challenge %>
+
+<br>
+
+<div>
+  <%= link_to "Show this challenge", @challenge %> |
+  <%= link_to "Back to challenges", challenges_path %>
+</div>

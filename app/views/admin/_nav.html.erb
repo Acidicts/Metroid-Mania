@@ -15,6 +15,7 @@
       <li class="nav-item"><%= link_to admin_audits_path, class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">📝</span><span class="nav-label">Audits</span><% end %></li>
       <li class="nav-item"><%= link_to admin_project_tags_path, class: (controller.controller_name == 'project_tags' ? 'active' : '') do %><span class="nav-icon">🏷️</span><span class="nav-label">Project Tags</span><% end %></li>
       <li class="nav-item"><%= link_to admin_achievements_path, class: (controller.controller_name == 'achievements' ? 'active' : '') do %><span class="nav-icon">🏆</span><span class="nav-label">Achievements</span><% end %></li>
+      <li class="nav-item"><%= link_to admin_challenges_path, class: (controller.controller_name == 'challenges' ? 'active' : '') do %><span class="nav-icon">🎯</span><span class="nav-label">Challenges</span><% end %></li>
       <li class="nav-item"><%= link_to admin_site_settings_path, class: (controller.controller_name == 'site_settings' ? 'active' : '') do %><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span><% end %></li>
       <li class="nav-item"><%= link_to admin_sales_path, class: (controller.controller_name == 'sales' ? 'active' : '') do %><span class="nav-icon">💰</span><span class="nav-label">Sales</span><% end %></li>
       <li class="nav-item"><%= link_to ENV['APP_URL'], class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">🔙</span><span class="nav-label">Main Page</span><% end %></li>

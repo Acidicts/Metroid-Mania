@@ -19,25 +19,25 @@ module Admin
         per_credits = params["credits_for_#{p.id}"].presence || credits
 
         if per_status.present?
-          if per_status == 'approved'
-            p.update!(status: 'approved', approved_at: Time.current, shipped: false, credits_per_hour: per_credits)
+          if per_status == "approved"
+            p.update!(status: "approved", approved_at: Time.current, shipped: false, credits_per_hour: per_credits)
 
             # award credits if provided — record them on a Ship so awarded credits are bound to the ship snapshot
             if per_credits.present?
-              p.ship_and_award_credits!(admin_user: current_user, rate: per_credits, devlogged_seconds: p.total_seconds.to_i, shipped_at: Time.current)
+              p.ship_and_award_credits!(admin_user: current_user, rate: per_credits, devlogged_seconds: p.total_seconds.to_i, shipped_at: Time.current, multiplier: params[:multiplier])
             end
           else
             p.update!(status: per_status, approved_at: nil, shipped: false, credits_per_hour: per_credits)
           end
 
-          Audit.create!(user: current_user, project: p, action: 'bulk_set_status', details: { previous_status: previous_status, new_status: per_status, previous_credits: previous_credits, credits_per_hour: per_credits })
+          Audit.create!(user: current_user, project: p, action: "bulk_set_status", details: { previous_status: previous_status, new_status: per_status, previous_credits: previous_credits, credits_per_hour: per_credits })
         elsif per_credits.present?
           p.update!(credits_per_hour: per_credits)
           # award immediately if project is already approved (record on a Ship)
-          if p.status == 'approved'
-            p.ship_and_award_credits!(admin_user: current_user, rate: per_credits, devlogged_seconds: p.total_seconds.to_i, shipped_at: Time.current)
+          if p.status == "approved"
+            p.ship_and_award_credits!(admin_user: current_user, rate: per_credits, devlogged_seconds: p.total_seconds.to_i, shipped_at: Time.current, multiplier: params[:multiplier])
           end
-          Audit.create!(user: current_user, project: p, action: 'bulk_set_credits', details: { previous_credits: previous_credits, credits_per_hour: per_credits })
+          Audit.create!(user: current_user, project: p, action: "bulk_set_credits", details: { previous_credits: previous_credits, credits_per_hour: per_credits })
         end
       end
 

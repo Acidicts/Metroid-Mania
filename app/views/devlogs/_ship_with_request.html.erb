@@ -31,7 +31,13 @@
 
     <% hours = (ship.devlogged_seconds.to_i / 3600.0).round(2) %>
     <% credits_display = ship.credits_awarded.to_f > 0 ? format_credits(ship.credits_awarded) : (ship_request.credits_awarded.present? ? format_credits(ship_request.credits_awarded) : "-") %>
-    <% multiplier_display = "-" %>
+    <% multiplier_display = if ship_request.multiplier.present?
+                                 ship_request.multiplier
+                               elsif ship.respond_to?(:multiplier) && ship.multiplier.present?
+                                 ship.multiplier
+                               else
+                                 "-"
+                               end %>
     <% devlogs_count = ship_request.devlogs.where.not(user_id: nil).count %>
 
     <div class="nb-stats">
@@ -42,6 +48,10 @@
       <div class="nb-stat">
         <span class="nb-stat-label">Credits</span>
         <span class="nb-stat-value"><%= credits_display %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Multiplier</span>
+        <span class="nb-stat-value"><%= multiplier_display %></span>
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Devlogs</span>

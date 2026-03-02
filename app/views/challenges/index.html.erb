@@ -1,0 +1,16 @@
+<p style="color: green"><%= notice %></p>
+
+<% content_for :title, "Challenges" %>
+
+<h1>Challenges</h1>
+
+<div id="challenges">
+  <% @challenges.each do |challenge| %>
+    <%= render challenge %>
+    <p>
+      <%= link_to "Show this challenge", challenge %>
+    </p>
+  <% end %>
+</div>
+
+<%= link_to "New challenge", new_challenge_path %>

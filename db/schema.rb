@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_02_28_223023) do
+ActiveRecord::Schema[8.1].define(version: 2026_03_02_210000) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -102,6 +102,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_223023) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["project_id"], name: "index_audits_on_project_id"
     t.index ["user_id"], name: "index_audits_on_user_id"
+  end
+
+  create_table "challenges", force: :cascade do |t|
+    t.boolean "active"
+    t.datetime "created_at", null: false
+    t.text "description"
+    t.datetime "end_at"
+    t.float "multiplier"
+    t.integer "reward_notches"
+    t.datetime "start_at"
+    t.string "title"
+    t.string "type"
+    t.datetime "updated_at", null: false
   end
 
   create_table "charm_notches", force: :cascade do |t|
@@ -232,6 +245,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_223023) do
     t.string "hackatime_id"
     t.text "hackatime_ids"
     t.string "name"
+    t.float "notch_remainder_seconds", default: 0.0, null: false
     t.integer "project_tag_id"
     t.string "readme_url"
     t.string "repository_url"
@@ -267,6 +281,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_223023) do
     t.float "credits_awarded"
     t.float "credits_per_hour"
     t.integer "devlogged_seconds"
+    t.float "multiplier", default: 1.0, null: false
     t.integer "processed_by_id"
     t.integer "project_id", null: false
     t.datetime "requested_at"
@@ -285,6 +300,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_02_28_223023) do
     t.float "credits_awarded"
     t.integer "devlogged_seconds"
     t.text "hackatime_ids_snapshot"
+    t.float "multiplier"
     t.integer "project_id", null: false
     t.datetime "shipped_at"
     t.datetime "updated_at", null: false

@@ -112,6 +112,29 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_audit_created(action: "credit_awarded", project: @project, user: @admin)
   end
 
+  test "approve respects multiplier parameter and multiplies notches" do
+    sign_in_as(@admin, password: "password")
+
+    @project.update!(status: "pending", ship_requested_at: Time.current, shipped: false)
+    post project_devlogs_url(@project), params: { devlog: { title: "More work", content: "Work", duration_minutes: 60 } }
+
+    owner = @project.user
+    owner.update!(currency: 0)
+    owner.charm_notches.destroy_all
+
+    existing_ship_ids = Ship.where(project: @project).pluck(:id)
+    post approve_admin_project_url(@project), params: { credits_per_hour: 5, multiplier: 2.5 }
+    assert_redirected_to admin_dashboard_url
+
+    ship = Ship.where(project: @project).where.not(id: existing_ship_ids).first
+    assert_not_nil ship
+    assert_equal 2.5, ship.multiplier.to_f
+
+    expected_amount = ((ship.devlogged_seconds.to_f / 3600.0) * 0.5)
+    expected_notches = (expected_amount.to_i * 2.5).to_i
+    assert_equal expected_notches, owner.reload.charm_notches.count
+  end
+
   test "ship awards credits when project already has a rate" do
     sign_in_as(@admin, password: "password")
 

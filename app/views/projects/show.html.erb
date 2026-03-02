@@ -169,7 +169,9 @@
         </div>
 
         <div class="featured-actions" style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-          <%= ship_request_action_buttons(@project) %>
+          <span title="Time Carried Over <%= format_duration(@project.notch_remainder_seconds) %>">
+            <%= ship_request_action_buttons(@project) %>
+          </span>
 
           <%= link_to 'Edit', edit_project_path(@project), class: 'btn-retro' %>
         </div>

@@ -11,7 +11,13 @@
 
     <% hours = (ship.devlogged_seconds.to_i / 3600.0).round(2) %>
     <% credits_display = ship.credits_awarded.to_f > 0 ? format_credits(ship.credits_awarded) : "-" %>
-    <% multiplier_display = "-" %>
+    <% multiplier_display = if req && req.multiplier.present?
+                                 req.multiplier
+                               elsif ship.respond_to?(:multiplier) && ship.multiplier.present?
+                                 ship.multiplier
+                               else
+                                 "-"
+                               end %>
     <% devlogs_count = req ? req.devlogs.where.not(user_id: nil).count : 0 %>
 
     <div class="nb-stats">
@@ -20,8 +26,12 @@
         <span class="nb-stat-value"><%= hours %></span>
       </div>
       <div class="nb-stat">
-        <span class="nb-stat-label">Credits</span>
-        <span class="nb-stat-value"><%= credits_display %></span>
+        <span class="nb-stat-label">Notches</span>
+        <span class="nb-stat-value"><%= ship.charm_notches.count %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Multiplier</span>
+        <span class="nb-stat-value"><%= multiplier_display %></span>
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Devlogs</span>

@@ -197,6 +197,37 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Deleted Project", @project.name
   end
 
+  test "updating project with new image triggers ensure_has_image_url without error" do
+    # stub CDN service to return predictable URL and capture call
+    called = false
+    orig = CdnService.method(:upload_from_url)
+    CdnService.define_singleton_method(:upload_from_url) do |url|
+      called = true
+      { "url" => "http://cdn.example.com/banners/123.png" }
+    end
+
+    file = Tempfile.new([ "img", ".png" ])
+    file.binmode
+    file.write("fakepngdata")
+    file.rewind
+
+    patch project_url(@project), params: { project: { name: @project.name, image: fixture_file_upload(file.path, "image/png") } }
+    file.close
+    file.unlink
+
+    assert_redirected_to project_url(@project)
+    @project.reload
+    assert called, "expected CDN upload to be invoked"
+    assert @project.image.attached?
+
+    # reload will clear any transient cache, so we can't assert persisted value
+    # (projects table has no image_url column).  ensure_has_image_url should have
+    # run without raising, which is the point of this test.
+
+    # restore stub
+    CdnService.define_singleton_method(:upload_from_url, orig)
+  end
+
   test "owner can request ship and admin approves to ship" do
     # Owner creates a devlog (initial work)
     post project_devlogs_url(@project), params: { devlog: { title: "Initial work", content: "Done", duration_minutes: 20 } }

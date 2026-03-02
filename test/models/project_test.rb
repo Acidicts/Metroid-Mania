@@ -254,6 +254,27 @@ class ProjectTest < ActiveSupport::TestCase
       end
     end
   end
+
+  test "project_banner_url returns placeholder when blob not persisted" do
+    p = projects(:one)
+    blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "temp.png", content_type: "image/png")
+    p.image.attach(blob)
+
+    # simulate unsaved blob state by overriding persisted?
+    blob.define_singleton_method(:persisted?) { false }
+
+    url = p.send(:project_banner_url, p)
+    assert_equal "https://placehold.co/800x450", url
+  end
+
+  test "image_url writer stores attribute" do
+    p = projects(:one)
+    p.image_url = "http://foo"
+    # DB has no column, so raw attribute access returns nil
+    assert_nil p[:image_url]
+    # reader should still return the cached value
+    assert_equal "http://foo", p.image_url
+  end
   test "ship_and_award_credits! awards credits and records them on the ship atomically" do
     p = projects(:one)
     admin = users(:one)
@@ -271,12 +292,73 @@ class ProjectTest < ActiveSupport::TestCase
     assert_in_delta expected_credits, ship.credits_awarded, 0.001
     # currency still updated for backwards compatibility
     assert_in_delta expected_credits, owner.reload.currency.to_f, 0.001
-    # and owner should have expected number of notches
+    # and owner should have expected number of notches (multiplier default 1)
     assert_equal expected_credits.to_i, owner.reload.charm_notches.count
     # ship should also expose its earned notches
     assert_equal expected_credits.to_i, ship.charm_notches.count
     assert_equal ship, owner.charm_notches.last.ship
     assert_equal ship, p.ships.order(:created_at).last
+  end
+
+  test "multipliers affect notch count and are stored" do
+    p = projects(:one)
+    admin = users(:one)
+    owner = p.user
+    owner.update!(currency: 0)
+
+    owner.charm_notches.destroy_all
+    p.ships.destroy_all
+
+    devlogged_seconds = 60 * 120 # 2 hours (ensures at least one notch before multiplier)
+    multiplier = 3.0
+    ship = p.ship_and_award_credits!(admin_user: admin, rate: 5, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, multiplier: multiplier)
+
+    expected_credits = (devlogged_seconds.to_f / 3600.0) * 0.5
+    assert_in_delta expected_credits, ship.credits_awarded, 0.001
+    assert_equal multiplier, ship.multiplier.to_f
+
+    expected_notches = (expected_credits.to_i * multiplier).to_i
+    assert_equal expected_notches, owner.reload.charm_notches.count
+    assert_equal expected_notches, ship.charm_notches.count
+    assert_equal ship, owner.charm_notches.last.ship
+  end
+
+  test "notch remainder carries over across ships" do
+    p = projects(:one)
+    admin = users(:one)
+    owner = p.user
+    owner.update!(currency: 0)
+    owner.charm_notches.destroy_all
+    p.ships.destroy_all
+    p.update_column(:notch_remainder_seconds, 0)
+
+    # Ship 1: 1.5 hours = 5400 seconds → 0 notches (need 2h for 1 notch), 5400s remainder
+    ship1 = p.ship_and_award_credits!(admin_user: admin, rate: 5, devlogged_seconds: 5400, shipped_at: 1.hour.ago)
+    p.reload
+    assert_equal 0, ship1.charm_notches.count, "1.5h is not enough for a notch"
+    assert_in_delta 5400.0, p.notch_remainder_seconds, 0.01, "remainder should carry 5400s forward"
+
+    # Ship 2: 1 hour = 3600 seconds → combined with 5400s remainder = 9000s = 2.5h → 1 notch, 1800s remainder
+    ship2 = p.ship_and_award_credits!(admin_user: admin, rate: 5, devlogged_seconds: 3600, shipped_at: Time.current)
+    p.reload
+    assert_equal 1, ship2.charm_notches.count, "1h + 1.5h carry-over = 2.5h → 1 notch"
+    assert_in_delta 1800.0, p.notch_remainder_seconds, 0.01, "remainder should carry 1800s (0.5h) forward"
+  end
+
+  test "notch remainder carries over with multiplier" do
+    p = projects(:one)
+    admin = users(:one)
+    owner = p.user
+    owner.update!(currency: 0)
+    owner.charm_notches.destroy_all
+    p.ships.destroy_all
+    p.update_column(:notch_remainder_seconds, 0)
+
+    # 3 hours = 10800s → 1 raw notch (2h), 3600s remainder, with 2x multiplier → 2 notches
+    ship = p.ship_and_award_credits!(admin_user: admin, rate: 5, devlogged_seconds: 10800, shipped_at: Time.current, multiplier: 2.0)
+    p.reload
+    assert_equal 2, ship.charm_notches.count, "1 raw notch × 2.0 multiplier = 2 notches"
+    assert_in_delta 3600.0, p.notch_remainder_seconds, 0.01, "1h remainder carried forward"
   end
 
   test "award_credits! falls back to total_seconds when seconds argument is 0 or nil" do

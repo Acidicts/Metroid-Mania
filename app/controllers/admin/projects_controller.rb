@@ -1,9 +1,9 @@
 module Admin
   class ProjectsController < Admin::ApplicationController
     before_action :require_admin
-    before_action :set_project, only: [:show, :approve, :reject, :ship, :unship, :set_status, :force_ship, :destroy]
+    before_action :set_project, only: [ :show, :approve, :reject, :ship, :unship, :set_status, :force_ship, :destroy ]
     # Prevent acting on projects that have been soft-deleted
-    before_action :ensure_not_deleted, only: [:show, :approve, :reject, :ship, :unship, :set_status, :force_ship]
+    before_action :ensure_not_deleted, only: [ :show, :approve, :reject, :ship, :unship, :set_status, :force_ship ]
 
     def index
       @projects = Project.active.where.not(name: "Deleted Project").order(created_at: :desc)
@@ -18,83 +18,83 @@ module Admin
       previous_status = @project.status
 
       unless @project.eligible_for_admin_ship?
-        redirect_back fallback_location: admin_dashboard_path, alert: 'Project cannot be shipped: it needs at least 15 minutes of devlogged work since creation or last ship.'
+        redirect_back fallback_location: admin_dashboard_path, alert: "Project cannot be shipped: it needs at least 15 minutes of devlogged work since creation or last ship."
         return
       end
 
       # If there is a pending ShipRequest, approve that instead (preserves linked devlogs)
-      pending_request = @project.ship_requests.where(status: 'pending').order(requested_at: :asc).first
+      pending_request = @project.ship_requests.where(status: "pending").order(requested_at: :asc).first
 
       if pending_request
         ship = pending_request.approve!(admin_user: current_user, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour)
-        @project.update!(status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil)
-        Audit.create!(user: current_user, project: @project, action: 'approve', details: { previous_status: previous_status, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour, ship_request_id: pending_request.id, ship_id: ship.id })
-        redirect_back fallback_location: admin_dashboard_path, notice: 'Ship request approved and marked as shipped.'
+        @project.update!(status: "shipped", approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil)
+        Audit.create!(user: current_user, project: @project, action: "approve", details: { previous_status: previous_status, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour, ship_request_id: pending_request.id, ship_id: ship.id })
+        redirect_back fallback_location: admin_dashboard_path, notice: "Ship request approved and marked as shipped."
         return
       end
 
       # Fallback: no pending ShipRequest found — preserve previous behavior (compute devlogs since baseline)
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
-      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
+      devlogged_seconds = @project.devlogs.where("created_at >= ?", baseline).sum(:duration_seconds)
       # treat zero as absent so model can fall back to `total_seconds`
       devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
       # Approve and mark as shipped. Only persist a new rate when explicitly supplied (don't wipe existing rate).
-      attrs = { status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil }
+      attrs = { status: "shipped", approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil }
       attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
       @project.update!(attrs)
 
-      Audit.create!(user: current_user, project: @project, action: 'approve', details: { previous_status: previous_status, credits_per_hour: credits })
+      Audit.create!(user: current_user, project: @project, action: "approve", details: { previous_status: previous_status, credits_per_hour: credits })
 
       # Log computed values to stdout before awarding credits to help debug award failures
       puts "DEBUG Admin::ProjectsController#approve: computed credits=#{credits.inspect} params_credits=#{params[:credits_per_hour].inspect} baseline=#{baseline.inspect} devlogged_seconds=#{devlogged_seconds.inspect} project_total_seconds=#{@project.total_seconds.inspect}"
 
       # Atomically award credits (when provided) and create the Ship snapshot
-      ship = @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
+      ship = @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, multiplier: params[:multiplier])
 
       puts "DEBUG Admin::ProjectsController#approve: ship created id=#{ship.id} devlogged_seconds=#{ship.devlogged_seconds.inspect} credits_awarded=#{ship.credits_awarded.inspect} owner_currency_after=#{@project.user.reload.currency.inspect}"
 
-      redirect_back fallback_location: admin_dashboard_path, notice: 'Project approved and marked as shipped.'
+      redirect_back fallback_location: admin_dashboard_path, notice: "Project approved and marked as shipped."
     end
 
     def reject
       previous_status = @project.status
-      @project.update!(status: 'rejected', shipped: false, approved_at: nil, ship_requested_at: nil)
+      @project.update!(status: "rejected", shipped: false, approved_at: nil, ship_requested_at: nil)
 
-      Audit.create!(user: current_user, project: @project, action: 'reject', details: { previous_status: previous_status })
+      Audit.create!(user: current_user, project: @project, action: "reject", details: { previous_status: previous_status })
 
-      redirect_back fallback_location: admin_dashboard_path, notice: 'Project rejected.'
+      redirect_back fallback_location: admin_dashboard_path, notice: "Project rejected."
     end
 
     # POST /admin/projects/:id/ship
     def ship
       unless @project.eligible_for_admin_ship?
-        redirect_back fallback_location: admin_dashboard_path, alert: 'Project cannot be shipped: it needs at least 15 minutes of devlogged work since creation or last ship.'
+        redirect_back fallback_location: admin_dashboard_path, alert: "Project cannot be shipped: it needs at least 15 minutes of devlogged work since creation or last ship."
         return
       end
 
       # Create ship snapshot and mark as shipped; award credits when the project has a rate.
       # If this ship is in response to an owner's request, calculate devlogs since request; otherwise since last ship/creation
       baseline = @project.ship_requested_at || @project.shipped_at || @project.created_at
-      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
+      devlogged_seconds = @project.devlogs.where("created_at >= ?", baseline).sum(:duration_seconds)
       # treat zero as absent so model can fall back to `total_seconds`
       devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
       credits = @project.credits_per_hour
-      @project.update!(status: 'shipped', approved_at: Time.current, shipped: true, shipped_at: Time.current)
+      @project.update!(status: "shipped", approved_at: Time.current, shipped: true, shipped_at: Time.current)
 
       # Use the model method which atomically creates the Ship row and awards credits (no-ops if rate is nil).
-      @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
+      @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, multiplier: params[:multiplier])
 
-      Audit.create!(user: current_user, project: @project, action: 'ship', details: { previous_status: @project.status, credits_per_hour: credits })
-      redirect_back fallback_location: admin_dashboard_path, notice: 'Project shipped.'
+      Audit.create!(user: current_user, project: @project, action: "ship", details: { previous_status: @project.status, credits_per_hour: credits })
+      redirect_back fallback_location: admin_dashboard_path, notice: "Project shipped."
     end
 
     # POST /admin/projects/:id/unship
     def unship
-      @project.update!(shipped: false, status: 'unshipped', shipped_at: nil)
-      Audit.create!(user: current_user, project: @project, action: 'unship', details: {})
-      redirect_back fallback_location: admin_dashboard_path, notice: 'Project marked as unshipped.'
+      @project.update!(shipped: false, status: "unshipped", shipped_at: nil)
+      Audit.create!(user: current_user, project: @project, action: "unship", details: {})
+      redirect_back fallback_location: admin_dashboard_path, notice: "Project marked as unshipped."
     end
 
     def destroy
@@ -118,23 +118,23 @@ module Admin
 
         # Anonymize and clear hackatime linkage so others can use those ids
         # Use update_columns to bypass validations so soft-delete always succeeds
-        @project.update_columns(deleted_at: Time.current, status: 'deleted', name: 'Deleted Project', hackatime_ids: nil)
+        @project.update_columns(deleted_at: Time.current, status: "deleted", name: "Deleted Project", hackatime_ids: nil)
 
-        Audit.create!(user: current_user, project: @project, action: 'delete', details: { reclaimed_credits: total_awarded })
+        Audit.create!(user: current_user, project: @project, action: "delete", details: { reclaimed_credits: total_awarded })
       end
 
-      redirect_back fallback_location: admin_dashboard_path, notice: 'Project deleted.'
+      redirect_back fallback_location: admin_dashboard_path, notice: "Project deleted."
     end
 
     def ensure_not_deleted
       return unless @project.deleted?
-      redirect_back fallback_location: admin_projects_path, alert: 'Project has been deleted.'
+      redirect_back fallback_location: admin_projects_path, alert: "Project has been deleted."
     end
 
     # POST /admin/projects/:id/force_ship
     def force_ship
       baseline = @project.ship_baseline
-      devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
+      devlogged_seconds = @project.devlogs.where("created_at >= ?", baseline).sum(:duration_seconds)
       # treat zero as absent so model can fall back to `total_seconds`
       devlogged_seconds = nil if devlogged_seconds.to_i <= 0
 
@@ -146,17 +146,17 @@ module Admin
       if params[:credits_per_hour].present?
         previous_credits = @project.credits_per_hour
         @project.update!(credits_per_hour: params[:credits_per_hour].presence)
-        Audit.create!(user: current_user, project: @project, action: 'set_credits', details: { previous_credits: previous_credits, credits_per_hour: params[:credits_per_hour].presence })
+        Audit.create!(user: current_user, project: @project, action: "set_credits", details: { previous_credits: previous_credits, credits_per_hour: params[:credits_per_hour].presence })
       end
 
       # Mark project as shipped and create the Ship snapshot (award credits inside)
-      @project.update!(status: 'shipped', shipped: true, shipped_at: Time.current, credits_per_hour: credits)
+      @project.update!(status: "shipped", shipped: true, shipped_at: Time.current, credits_per_hour: credits)
 
       # Atomically create the Ship and award credits when applicable
-      @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current)
+      @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, multiplier: params[:multiplier])
 
-      Audit.create!(user: current_user, project: @project, action: 'force_ship', details: { credits_per_hour: credits })
-      redirect_back fallback_location: admin_dashboard_path, notice: 'Project force-shipped by admin.'
+      Audit.create!(user: current_user, project: @project, action: "force_ship", details: { credits_per_hour: credits })
+      redirect_back fallback_location: admin_dashboard_path, notice: "Project force-shipped by admin."
     end
 
     # POST /admin/projects/:id/set_status
@@ -170,21 +170,21 @@ module Admin
       previous_status = @project.status
 
       case new_status
-      when 'shipped'
+      when "shipped"
         credits = params[:credits_per_hour].presence || @project.credits_per_hour
-        attrs = { status: 'shipped', shipped: true, shipped_at: Time.current, approved_at: Time.current }
+        attrs = { status: "shipped", shipped: true, shipped_at: Time.current, approved_at: Time.current }
         attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
         @project.update!(attrs)
 
         # award credits when applicable
         baseline = @project.ship_baseline
-        devlogged_seconds = @project.devlogs.where('created_at >= ?', baseline).sum(:duration_seconds)
+        devlogged_seconds = @project.devlogs.where("created_at >= ?", baseline).sum(:duration_seconds)
         # treat zero as absent so model can fall back to `total_seconds`
         devlogged_seconds = nil if devlogged_seconds.to_i <= 0
-        @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: @project.shipped_at || Time.current)
+        @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: @project.shipped_at || Time.current, multiplier: params[:multiplier])
 
-      when 'pending'
-        attrs = { status: 'pending', approved_at: nil, shipped: false }
+      when "pending"
+        attrs = { status: "pending", approved_at: nil, shipped: false }
         attrs[:credits_per_hour] = params[:credits_per_hour].presence if params[:credits_per_hour].present?
         @project.update!(attrs)
       else
@@ -193,7 +193,7 @@ module Admin
         @project.update!(attrs)
       end
 
-      Audit.create!(user: current_user, project: @project, action: 'set_status', details: { previous_status: previous_status, new_status: new_status, credits_per_hour: params[:credits_per_hour].presence })
+      Audit.create!(user: current_user, project: @project, action: "set_status", details: { previous_status: previous_status, new_status: new_status, credits_per_hour: params[:credits_per_hour].presence })
 
       redirect_back fallback_location: admin_dashboard_path, notice: "Project status updated to #{new_status}."
     end

@@ -1,0 +1,21 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  title: MyString
+  description: MyText
+  reward_notches: 1
+  start_at: 2026-03-01 20:57:29
+  end_at: 2026-03-01 20:57:29
+  active: false
+  multiplier: 1.5
+  type: multiplier
+
+two:
+  title: MyString
+  description: MyText
+  reward_notches: 1
+  start_at: 2026-03-01 20:57:29
+  end_at: 2026-03-01 20:57:29
+  active: false
+  multiplier: 1.5
+  type: multiplier

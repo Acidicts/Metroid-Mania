@@ -11,7 +11,7 @@ module Admin
     end
 
     def show
-      # no multiplier syncing required
+      # multiplier is stored on ships; admins may edit it when updating a ship below.
     end
 
     def edit
@@ -19,7 +19,7 @@ module Admin
 
     def update
       # permit editing these fields
-      permitted = params.require(:ship).permit(:devlogged_seconds, :credits_awarded, :shipped_at, :credits_per_hour, :recalculate)
+      permitted = params.require(:ship).permit(:devlogged_seconds, :credits_awarded, :shipped_at, :credits_per_hour, :multiplier, :recalculate)
 
       # optionally recalculate credits based on credits_per_hour param or project's rate
       if permitted[:recalculate].present? && permitted[:recalculate].to_s != "0"

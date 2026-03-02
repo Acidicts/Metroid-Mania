@@ -6,6 +6,7 @@
   <p><strong>Requester:</strong> <%= @ship_request.user&.name || @ship_request.user&.email %></p>
   <p><strong>Devlogged:</strong> <%= format_duration(@ship_request.devlogged_seconds.to_i) %></p>
   <p><strong>Credits per hour:</strong> <%= @ship_request.credits_per_hour.presence || 'not set' %></p>
+  <p><strong>Multiplier:</strong> <%= @ship_request.multiplier.to_f %></p>
   <p><strong>Status:</strong> <span class="status-badge <%= @ship_request.pending? ? 'status-pending' : (@ship_request.status == 'rejected' ? 'status-denied' : 'status-fulfilled') %>"><%= @ship_request.status.to_s.humanize %></span></p>
 
   <p><strong>Credits awarded:</strong>
@@ -26,6 +27,10 @@
           <div>
             <%= f.label :credits_per_hour, 'Credits per hour (optional)' %><br>
             <%= f.number_field :credits_per_hour, value: @ship_request.credits_per_hour, step: 0.01, min: 0, style: 'width:160px;' %>
+          </div>
+          <div style="margin-top:8px;">
+            <%= f.label :multiplier, 'Multiplier (optional)' %><br>
+            <%= f.number_field :multiplier, value: @ship_request.multiplier, step: 0.01, min: 0.0, style: 'width:160px;' %>
           </div>
           <div style="margin-top:8px;">
             <%= f.label :recipient_user_id, 'Award credits to user (optional)' %><br>

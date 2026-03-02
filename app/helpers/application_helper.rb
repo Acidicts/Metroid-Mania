@@ -41,10 +41,10 @@ module ApplicationHelper
     secs = seconds % 60
 
     parts = []
-    parts << "#{days}d" if include_days && days > 0
-    parts << "#{hours}h" if hours > 0 || parts.any?
-    parts << "#{minutes}m" if minutes > 0 || parts.any?
-    parts << "#{secs}s" if secs > 0
+    parts << "#{days.floor}d" if include_days && days > 0
+    parts << "#{hours.floor}h" if hours > 0 || parts.any?
+    parts << "#{minutes.floor}m" if minutes > 0 || parts.any?
+    parts << "#{secs.floor}s" if secs > 0
 
     parts.join(" ")
   end

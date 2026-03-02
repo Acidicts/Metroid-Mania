@@ -8,6 +8,13 @@ class ShipRequest < ApplicationRecord
 
   STATUSES = %w[pending approved rejected].freeze
 
+  # multiplier corresponds to the active challenge factor when the request was
+  # created.  when a ship is approved the value is copied to the ship row as
+  # well so the UI and audits can display what bonus applied.  default of 1.0
+  # matches the original migration.
+  attribute :multiplier, :float, default: 1.0
+  validates :multiplier, numericality: { greater_than: 0 }, allow_nil: true
+
   validates :status, inclusion: { in: STATUSES }
 
   after_commit :recalculate_project_status, on: [ :create, :update, :destroy ]
@@ -120,7 +127,7 @@ class ShipRequest < ApplicationRecord
 
   # Approve this request: create the Ship (via project helper which awards credits)
   # Returns the created Ship record
-  def approve!(admin_user:, credits_per_hour: nil, recipient_user_id: nil)
+  def approve!(admin_user:, credits_per_hour: nil, recipient_user_id: nil, multiplier: nil)
     raise "cannot approve non-pending request" unless pending?
 
     # Compute the devlogged seconds if not already stored
@@ -132,10 +139,17 @@ class ShipRequest < ApplicationRecord
     # Find recipient user if supplied (if nil, award to project.user inside Project#award_credits!)
     recipient = User.find_by(id: recipient_user_id) if recipient_user_id.present?
 
-    ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient)
+    # ship record will be created via project helper
+    # pass multiplier through so ship, notches, and audits can reflect it
+    applied_multiplier = multiplier.presence || self.multiplier || 1.0
+    ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient, multiplier: applied_multiplier)
+
+    # record multiplier on the request and (redundantly) ensure ship has it
+    self.multiplier = applied_multiplier
+    ship.update!(multiplier: applied_multiplier) if ship.has_attribute?(:multiplier)
 
     # Link the request directly to the created Ship so future updates can operate on the same row.
-    update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id)
+    update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id, multiplier: applied_multiplier)
 
     # ensure project status reflects this approved ship
     project.recalculate_status!
@@ -207,6 +221,10 @@ class ShipRequest < ApplicationRecord
 
     if saved_change_to_devlogged_seconds?
       attrs[:devlogged_seconds] = devlogged_seconds.to_i
+    end
+
+    if saved_change_to_multiplier?
+      attrs[:multiplier] = multiplier.to_f
     end
 
     return if attrs.empty?

@@ -53,12 +53,15 @@ class ShipRequestsController < ApplicationController
     devlogs_to_link = @project.devlogs.where("created_at >= ?", baseline).where(ship_request_id: nil)
     devlogged_seconds = devlogs_to_link.sum(:duration_seconds)
 
+    Challenge.all.validate()
+    multiplier = Challenge.where(type: "multiplier", active: true).maximum(:multiplier) || 1.0
+
     ActiveRecord::Base.transaction do
-      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: "pending")
+      req = @project.ship_requests.create!(user: current_user, requested_at: Time.current, devlogged_seconds: devlogged_seconds, status: "pending", multiplier: multiplier)
       devlogs_to_link.update_all(ship_request_id: req.id)
 
       @project.update!(status: "pending", ship_requested_at: Time.current)
-      Audit.create!(user: current_user, project: @project, action: "ship_request", details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds })
+      Audit.create!(user: current_user, project: @project, action: "ship_request", details: { requested_at: req.requested_at, devlogged_seconds: req.devlogged_seconds, multiplier: multiplier })
     end
 
     flash_pass("Ship request submitted and awaiting admin approval")

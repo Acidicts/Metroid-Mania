@@ -1,0 +1,10 @@
+<p style="color: green"><%= notice %></p>
+
+<%= render @challenge %>
+
+<div>
+  <%= link_to "Edit this challenge", edit_challenge_path(@challenge) %> |
+  <%= link_to "Back to challenges", challenges_path %>
+
+  <%= button_to "Destroy this challenge", @challenge, method: :delete %>
+</div>

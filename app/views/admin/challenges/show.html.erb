@@ -1,0 +1,34 @@
+<h1><%= @challenge.title %></h1>
+
+<p>
+  <strong>Description:</strong>
+  <%= simple_format(@challenge.description) %>
+</p>
+
+<p>
+  <strong>Reward notches:</strong>
+  <%= @challenge.reward_notches %>
+</p>
+
+<p>
+  <strong>Multiplier:</strong>
+  <%= @challenge.multiplier %>
+</p>
+
+<p>
+  <strong>Active:</strong>
+  <%= @challenge.active? %>
+</p>
+
+<p>
+  <strong>Start at:</strong>
+  <%= @challenge.start_at %>
+</p>
+
+<p>
+  <strong>End at:</strong>
+  <%= @challenge.end_at %>
+</p>
+
+<%= link_to "Edit", edit_admin_challenge_path(@challenge) %> |
+<%= link_to "Back", admin_challenges_path %>

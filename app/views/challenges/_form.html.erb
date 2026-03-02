@@ -1,0 +1,57 @@
+<%= form_with(model: challenge) do |form| %>
+  <% if challenge.errors.any? %>
+    <div style="color: red">
+      <h2><%= pluralize(challenge.errors.count, "error") %> prohibited this challenge from being saved:</h2>
+
+      <ul>
+        <% challenge.errors.each do |error| %>
+          <li><%= error.full_message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= form.label :title, style: "display: block" %>
+    <%= form.text_field :title %>
+  </div>
+
+  <div>
+    <%= form.label :description, style: "display: block" %>
+    <%= form.textarea :description %>
+  </div>
+
+  <div>
+    <%= form.label :reward_notches, style: "display: block" %>
+    <%= form.number_field :reward_notches %>
+  </div>
+
+  <div>
+    <%= form.label :start_at, style: "display: block" %>
+    <%= form.datetime_field :start_at %>
+  </div>
+
+  <div>
+    <%= form.label :end_at, style: "display: block" %>
+    <%= form.datetime_field :end_at %>
+  </div>
+
+  <div>
+    <%= form.label :active, style: "display: block" %>
+    <%= form.checkbox :active %>
+  </div>
+
+  <div>
+    <%= form.label :multiplier, style: "display: block" %>
+    <%= form.text_field :multiplier %>
+  </div>
+
+  <div>
+    <%= form.label :type, style: "display: block" %>
+    <%= form.text_field :type %>
+  </div>
+
+  <div>
+    <%= form.submit %>
+  </div>
+<% end %>
