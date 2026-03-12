@@ -128,7 +128,7 @@ module ApplicationHelper
   def get_all_credits(project)
     total = 0
     project.ships.each do |ship|
-      total += ship.credits_awarded.to_f
+      total += ship.charm_notches.count
     end
     total
   end

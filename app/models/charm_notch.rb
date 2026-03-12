@@ -38,6 +38,14 @@ class CharmNotch < ApplicationRecord
   # automatically whenever a record is created or destroyed.
   after_commit :evaluate_user_achievements, on: [ :create, :destroy ]
 
+  validate :has_ship
+
+  def has_ship
+    if self.ship_id.nil? && !admin_granted
+      self.destroy
+    end
+  end
+
   private
 
   def evaluate_user_achievements

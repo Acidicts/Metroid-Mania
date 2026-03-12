@@ -20,6 +20,8 @@ class Project < ApplicationRecord
   # Attach a representative image for the project (Active Storage)
   has_one_attached :image
 
+  validate :del_charm_notches_if_destroy, on: :update, if: -> { self.name.downcase == "deleted project" }
+
   # Provide a unified "image_url" reader so views (and metadata tags) can
   # consume either the legacy URL-style attribute (if present) or an
   # ActiveStorage attachment.  Previously the show template referenced
@@ -29,6 +31,21 @@ class Project < ApplicationRecord
   # blob when an image is attached.  Controllers/tests may still assign
   # `project.image_url = "…"` during the transition; any non‑persisted
   # value will be returned verbatim if present.
+  #
+  def del_charm_notches_if_destroy
+    for ship in ships
+      ship.charm_notches.destroy_all
+    end
+  end
+
+  def charm_notches_count
+    notchs = 0
+    for ship in ships
+      notchs += ship.charm_notches.count
+    end
+    notchs
+  end
+
   def image_url
     # return any transient value that was assigned via the writer when no
     # database column exists (see image_url= below).
