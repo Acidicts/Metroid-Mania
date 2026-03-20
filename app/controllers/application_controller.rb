@@ -68,22 +68,21 @@ class ApplicationController < ActionController::Base
     @current_user
   end
 
-  def slack_profile
-    return @slack_profile if defined?(@slack_profile)
+  def slack_profile(user)
+    return nil unless user&.slack_id.present?
 
-    user = current_user
-    if user&.slack_id.present?
-      @slack_profile = Rails.cache.fetch("slack_profile_#{user.slack_id}", expires_in: 1.hour) do
-        begin
-          profile = SlackService.new.users_info([ user.slack_id ]).first
-          profile.present? ? profile : nil
-        rescue => e
-          Rails.logger.error("ApplicationController#slack_profile Slack fetch error for #{user.id}: #{e.message}")
-          nil
-        end
+    @slack_profiles ||= {}
+    return @slack_profiles[user.slack_id] if @slack_profiles.key?(user.slack_id)
+
+    @slack_profiles[user.slack_id] = Rails.cache.fetch("slack_profile_#{user.slack_id}", expires_in: 1.hour) do
+      begin
+        profile = SlackService.new.users_info([ user.slack_id ]).first
+        profile.present? ? profile : nil
+      rescue => e
+        Rails.logger.error("ApplicationController#slack_profile Slack fetch error for #{user.id}: #{e.message}")
+        nil
       end
     end
-    @slack_profile
   end
 
   def logged_in?

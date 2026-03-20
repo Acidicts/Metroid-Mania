@@ -385,8 +385,8 @@
             <%= render 'charm_slots/loadout' %>
             <div class="profile-menu">
               <a href="<%= user_profile_path(current_user) %>" class="profile-link">
-                <% if slack_profile && slack_profile[:image].present? %>
-                  <%= image_tag slack_profile[:image], alt: "#{current_user.name} avatar", style: "height:40px; width:40px; border-radius:999px; vertical-align:middle; margin-right:8px;" %>
+                <% if slack_profile(current_user) && slack_profile(current_user)[:image].present? %>
+                  <%= image_tag slack_profile(current_user)[:image], alt: "#{current_user.name} avatar", style: "height:40px; width:40px; border-radius:999px; vertical-align:middle; margin-right:8px;" %>
                 <% end %>
                 <span><%= current_user.name %></span>
               </a>
