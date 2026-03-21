@@ -53,19 +53,25 @@
           <% if @project.readme_url.present? %>
             <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>
           <% end %>
-          <% if current_user.not_liked_project(@project.id) %>
-            <%= button_to '♡ - ' + @project.likers.count.to_s,
-                          like_project_path(@project),
-                          method: :post,
-                          class: 'btn-retro btn-retro--outline'
-            %>
-          <% else %>
-            <%= button_to '❤️ - ' + @project.likers.count.to_s,
-                            unlike_project_path(@project),
+          <% if logged_in? %>
+            <% if current_user.not_liked_project(@project.id) %>
+              <%= button_to '♡ - ' + @project.likers.count.to_s,
+                            like_project_path(@project),
                             method: :post,
                             class: 'btn-retro btn-retro--outline'
               %>
+            <% else %>
+              <%= button_to '❤️ - ' + @project.likers.count.to_s,
+                              unlike_project_path(@project),
+                              method: :post,
+                              class: 'btn-retro btn-retro--outline'
+                %>
             <% end %>
+          <% else %>
+            <button class="btn-retro btn-retro--outline" disabled title="Sign in to like projects">
+              ♡ - <%= @project.likers.count %>
+            </button>
+          <% end %>
         </div>
       </div>
     </div>
