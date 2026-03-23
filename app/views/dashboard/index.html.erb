@@ -1,0 +1,286 @@
+<% content_for :title, "Metroid Mania" %>
+<% content_for :og_title, "Metroid Mania" %>
+<% content_for :og_description, "A YSWS about making Metroidvania Games" %>
+<% if (banner_url = asset_url_safe('metroidmania_banner.png')) %>
+  <% content_for :og_image, banner_url %>
+<% else %>
+  <% content_for :og_image, "https://placehold.co/1200x630" %>
+<% end %>
+<% content_for :twitter_card, "summary_large_image" %>
+<% content_for :og_author, "Alex Hayes - A Member of Hack-Club" %>
+
+<% content_for :styles do %>
+  <style>
+    body.home .home-placeholder { display: block; }
+
+    .home-hero {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 48px 16px 32px;
+      text-align: center;
+    }
+
+    .home-hero h1 {
+      font-size: 2.25rem;
+      margin: 0;
+      letter-spacing: 0.6px;
+    }
+
+    .home-hero .lead {
+      color: #4b5563;
+      max-width: 700px;
+      margin: 0;
+    }
+
+    .home-actions {
+      margin-top: 16px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .home-actions .btn-retro,
+    .home-actions .btn-retro--outline {
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+
+    .login-btn {
+      font-size: 1rem;
+      color: black;
+      background: #ec3750;
+      border: 2px solid var(--main-800);
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 6px;
+    }
+
+    /* Features section */
+    .features {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 24px auto 8px;
+      max-width: 1000px;
+      flex-wrap: wrap;
+    }
+
+    .feature {
+      background: linear-gradient(180deg, #fff, #fbfaf9);
+      border: 3px dashed rgba(0,0,0,0.2);
+      padding: 14px;
+      width: 300px;
+      border-radius: 8px;
+      text-align: left;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+      transition: all 0.2s ease;
+    }
+
+    .feature:hover {
+      background: linear-gradient(180deg, #fff, #fbfaf9);
+      border: 3px dashed rgba(0,0,0,0.2);
+      padding: 14px;
+      width: 300px;
+      border-radius: 8px;
+      text-align: left;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
+      transform: translateY(-2px);
+    }
+
+    .feature h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .feature p { margin: 0; color: #475569; font-size: 0.95rem; }
+
+    /* Featured projects */
+    .featured-projects { margin: 32px auto; max-width: 1100px; padding: 0 16px 32px; }
+    .featured-projects h2 { margin-bottom: 12px; text-align: center; }
+
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .project-card {
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(0,0,0,0.06);
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px;
+    }
+
+    .project-card img { max-width: 100%; height: 140px; object-fit: cover; border-radius: 6px; }
+    .project-card h3 { margin: 0; font-size: 1rem; }
+    .project-card p { margin: 0; color: #475569; font-size: 0.9rem; }
+
+    @media (max-width: 920px) {
+      .projects-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 560px) {
+      .home-hero h1 { font-size: 1.6rem; }
+      .home-actions { gap: 8px; }
+      .projects-grid { grid-template-columns: 1fr; }
+      .feature { width: 80%;}
+    }
+
+    /* Orgs (Slack profiles) */
+    .orgs { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
+    .org-card { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06); background: #fff; }
+    .org-card img { border-radius: 999px; width:48px; height:48px; object-fit:cover; }
+    .org-name { font-weight:600; }
+    .org-title { font-size:0.9rem; color:#374151; }
+    .org-pronouns { font-size:0.85rem; color:#6b7280; }
+
+    #meet-the-orgs {
+      margin-top: 32px;
+      display : flex;
+      flex-direction: column;
+    }
+
+    #orgs-list {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 12px;
+    }
+
+    .org-card{
+      cursor: pointer;
+    }
+
+    .btn-discreet {
+      margin-top: 8px;
+      padding-top: 10px;
+      background: none;
+      border: none;
+      color: #8f8f8f;
+      text-decoration: underline;
+      padding: 0;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+  </style>
+<% end %>
+
+<div class="home-hero">
+  <h1>Metroid-Mania</h1>
+
+  <% if logged_in? %>
+    <p class="lead">Hi, <%= current_user.name %>! You have: <span style="font-family: Comfortaa, monospace;"><%= current_user.free_notches %> free charm notches</span></p>
+    <% if current_user.free_notches == 0 %>
+      <p class="lead">You have no free charm notches. Get Coding to earn some!</p>
+    <% end %>
+
+    <div class="home-actions">
+      <%= link_to "My Projects", projects_path, class: 'btn-retro' %>
+      <% if feature_enabled?(:shop) %>
+        <%= link_to "Merchant", products_path, class: 'btn-retro' %>
+      <% end %>
+      <%= link_to "Leaderboard", leaderboards_path, class: 'btn-retro' %>
+      <%= link_to "My Charms", charm_slots_loadout_path, class: 'btn-retro' %>
+      <%= link_to "My Achievements", achievements_path, class: 'btn-retro' %>
+      <% if admin? %>
+        <%= link_to "Admin Dashboard", admin_dashboard_path, class: 'btn-retro' %>
+      <% end %>
+    </div>
+    <div class="home-actions">
+      <%= link_to "Community Goals", goals_path, class: 'btn-retro' %>
+    </div>
+
+    <div class="features" role="region" aria-label="Key features">
+      <div class="feature">
+        <h3>Build Games</h3>
+        <p>Create game projects, track and link Hackatime projects.</p>
+        <%= link_to "Start Building", new_project_path, class: 'btn-discreet' %>
+      </div>
+      <div class="feature">
+        <h3>Equip Charms</h3>
+        <p>Visit the merchant to equip charms to get prizes.</p>
+        <% if feature_enabled?(:shop) %>
+          <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
+        <% end %>
+      </div>
+      <div class="feature">
+        <h3>Boost Your Rewards</h3>
+        <p>Let an admin give you a feature to implement for bonus charm slot.</p>
+        <% if feature_enabled?(:shop) %>
+          <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
+        <% end %>
+      </div>
+    </div>
+
+  <% else %>
+    <p class="lead">Welcome to Metroid-Mania, the Hack Club YSWS where you build Metroidvania games!</p>
+
+    <div class="home-actions">
+      <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" style="font-family: 'Phantom Sans';font-size:2rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login with Hack Club</button>
+    </div>
+
+    <div class="features" role="region" aria-label="Why join">
+      <div class="feature">
+        <h3>Create & Share</h3>
+        <p>Start a Metroidvania Game in any language, show your progress in devlogs, and share with the Hack Club community.</p>
+      </div>
+      <div class="feature">
+        <h3>Learn Together</h3>
+        <p>Find collaborators and learn from other builders on the leaderboard.</p>
+      </div>
+      <div class="feature">
+        <h3>Participate</h3>
+        <p>Earn prizes, get feedback, and ship polished Metroidvania games.</p>
+      </div>
+    </div>
+
+  <% end %>
+
+  <% if ORG_SLACK_IDS.any? %>
+    <div id="meet-the-orgs" role="list" aria-label="Organizers">
+      <h2>Organizers</h2>
+      <div id="orgs-list">
+        <% if @orgs.present? %>
+          <% @orgs.each do |org| %>
+            <div class="org-card" role="listitem" data-slack-id="<%= org[:id] %>">
+              <% if org[:image].present? %>
+                <%= image_tag org[:image], alt: "#{org[:name]} avatar", width: 48, height: 48 %>
+              <% else %>
+                <div style="width:48px; height:48px; border-radius:999px; background:#f3f4f6;"></div>
+              <% end %>
+              <div class="org-info">
+                <div class="org-name"><%= org[:display_name].presence || org[:name] %></div>
+                <% if org[:pronouns].present? %>
+                  <div class="org-pronouns"><%= org[:pronouns] %></div>
+                <% end %>
+                <% if org[:title].present? %>
+                  <div class="org-pronouns"><%= org[:title] %></div>
+                <% end %>
+              </div>
+            </div>
+          <% end %>
+        <% else %>
+          <!-- No orgs configured -->
+        <% end %>
+      </div>
+    </div>
+    <script>
+      document.addEventListener("DOMContentLoaded", function() {
+        const orgCards = document.querySelectorAll(".org-card");
+        orgCards.forEach(card => {
+          card.addEventListener("click", function() {
+            const slackId = this.dataset.slackId || this.getAttribute('data-slack-id');
+            if (!slackId) return;
+            const slackUrl = `https://hackclub.slack.com/team/${slackId}`;
+            window.open(slackUrl, "_blank");
+          });
+        });
+      });
+    </script>
+  <% end %>
+</div>

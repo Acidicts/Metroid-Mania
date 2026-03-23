@@ -1,286 +1,460 @@
-<% content_for :title, "Metroid Mania" %>
-<% content_for :og_title, "Metroid Mania" %>
-<% content_for :og_description, "A YSWS about making Metroidvania Games" %>
-<% if (banner_url = asset_url_safe('metroidmania_banner.png')) %>
-  <% content_for :og_image, banner_url %>
-<% else %>
-  <% content_for :og_image, "https://placehold.co/1200x630" %>
-<% end %>
-<% content_for :twitter_card, "summary_large_image" %>
-<% content_for :og_author, "Alex Hayes - A Member of Hack-Club" %>
+<style>
+    @import url('https://fonts.googleapis.com/css2?family=Aldrich&family=Space+Grotesk:wght@400;500;700&display=swap');
 
-<% content_for :styles do %>
-  <style>
-    body.home .home-placeholder { display: block; }
-
-    .home-hero {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 12px;
-      padding: 48px 16px 32px;
-      text-align: center;
+    :root {
+        --bg-1: #050611;
+        --bg-2: #0f1230;
+        --bg-3: #22072f;
+        --text-1: #eff4ff;
+        --text-2: #b8c3e8;
+        --line: rgba(114, 232, 255, 0.36);
+        --cyan: #72e8ff;
+        --lime: #b6ff6b;
+        --rose: #ff4db8;
+        --gold: #ffd66c;
+        --panel: rgba(12, 18, 52, 0.76);
     }
 
-    .home-hero h1 {
-      font-size: 2.25rem;
-      margin: 0;
-      letter-spacing: 0.6px;
+    h3 {
+        all:unset;
     }
 
-    .home-hero .lead {
-      color: #4b5563;
-      max-width: 700px;
-      margin: 0;
+    h3 {
+        all:unset;
+        color: var(--text-2);
     }
 
-    .home-actions {
-      margin-top: 16px;
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      justify-content: center;
+    .ysws-landing {
+        position: relative;
+        isolation: isolate;
+        overflow: hidden;
+        min-height: min(900px, calc(100svh - 1.5rem));
+        display: grid;
+        grid-template-rows: auto auto 1fr auto;
+        gap: 0.75rem;
+        padding: clamp(0.85rem, 1.4vw, 1.25rem);
+        border-radius: 18px;
+        color: var(--text-1);
+        background:
+            radial-gradient(circle at 15% 18%, rgba(255, 77, 184, 0.23), transparent 34%),
+            radial-gradient(circle at 80% 32%, rgba(114, 232, 255, 0.2), transparent 36%),
+            linear-gradient(130deg, var(--bg-1), var(--bg-2) 52%, var(--bg-3));
+        font-family: 'Space Grotesk', 'Segoe UI', sans-serif;
     }
 
-    .home-actions .btn-retro,
-    .home-actions .btn-retro--outline {
-      padding: 10px 14px;
-      border-radius: 6px;
-      font-weight: 600;
+    .ysws-landing::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 26px 26px;
+        mask-image: radial-gradient(circle at center, black 28%, transparent 92%);
+        z-index: -1;
     }
 
-    .login-btn {
-      font-size: 1rem;
-      color: black;
-      background: #ec3750;
-      border: 2px solid var(--main-800);
-      cursor: pointer;
-      padding: 10px 14px;
-      border-radius: 6px;
+    .ysws-landing::after {
+        content: "";
+        position: absolute;
+        width: 62vmax;
+        height: 62vmax;
+        right: -28vmax;
+        bottom: -34vmax;
+        border-radius: 50%;
+        background: radial-gradient(circle, rgba(182, 255, 107, 0.22), transparent 68%);
+        filter: blur(18px);
+        pointer-events: none;
+        z-index: -1;
     }
 
-    /* Features section */
-    .features {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin: 24px auto 8px;
-      max-width: 1000px;
-      flex-wrap: wrap;
+    .ysws-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.2rem;
     }
 
-    .feature {
-      background: linear-gradient(180deg, #fff, #fbfaf9);
-      border: 3px dashed rgba(0,0,0,0.2);
-      padding: 14px;
-      width: 300px;
-      border-radius: 8px;
-      text-align: left;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
-      transition: all 0.2s ease;
+    .ysws-brand {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.65rem;
+        font-family: 'Aldrich', 'Trebuchet MS', sans-serif;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        font-size: 0.93rem;
     }
 
-    .feature:hover {
-      background: linear-gradient(180deg, #fff, #fbfaf9);
-      border: 3px dashed rgba(0,0,0,0.2);
-      padding: 14px;
-      width: 300px;
-      border-radius: 8px;
-      text-align: left;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.04);
-      transform: translateY(-2px);
+    .ysws-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        background: var(--lime);
+        box-shadow: 0 0 12px rgba(182, 255, 107, 0.88);
     }
 
-    .feature h3 { margin: 0 0 8px; font-size: 1.05rem; }
-    .feature p { margin: 0; color: #475569; font-size: 0.95rem; }
-
-    /* Featured projects */
-    .featured-projects { margin: 32px auto; max-width: 1100px; padding: 0 16px 32px; }
-    .featured-projects h2 { margin-bottom: 12px; text-align: center; }
-
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+    .ysws-pill {
+        border: 1px solid rgba(182, 255, 107, 0.52);
+        background: rgba(182, 255, 107, 0.08);
+        color: #eaffcf;
+        border-radius: 999px;
+        padding: 0.35rem 0.85rem;
+        font-size: 0.82rem;
     }
 
-    .project-card {
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid rgba(0,0,0,0.06);
-      background: #fff;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      padding: 12px;
+    .ysws-hero {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: clamp(0.8rem, 1.8vw, 1.3rem);
+        align-items: stretch;
     }
 
-    .project-card img { max-width: 100%; height: 140px; object-fit: cover; border-radius: 6px; }
-    .project-card h3 { margin: 0; font-size: 1rem; }
-    .project-card p { margin: 0; color: #475569; font-size: 0.9rem; }
-
-    @media (max-width: 920px) {
-      .projects-grid { grid-template-columns: repeat(2, 1fr); }
+    .ysws-canvas {
+        position: relative;
+        border-radius: 14px;
+        overflow: hidden;
+        min-height: clamp(210px, 29vh, 320px);
+        border: 1px solid var(--line);
+        box-shadow: 0 0 0 1px rgba(114, 232, 255, 0.25) inset, 0 24px 48px rgba(3, 6, 20, 0.55);
     }
 
-    @media (max-width: 560px) {
-      .home-hero h1 { font-size: 1.6rem; }
-      .home-actions { gap: 8px; }
-      .projects-grid { grid-template-columns: 1fr; }
-      .feature { width: 80%;}
+    .ysws-canvas img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: saturate(1.15) contrast(1.08);
     }
 
-    /* Orgs (Slack profiles) */
-    .orgs { display: flex; gap: 12px; align-items: center; justify-content: center; margin-top: 18px; flex-wrap: wrap; }
-    .org-card { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 8px; border: 1px solid rgba(0,0,0,0.06); background: #fff; }
-    .org-card img { border-radius: 999px; width:48px; height:48px; object-fit:cover; }
-    .org-name { font-weight:600; }
-    .org-title { font-size:0.9rem; color:#374151; }
-    .org-pronouns { font-size:0.85rem; color:#6b7280; }
-
-    #meet-the-orgs {
-      margin-top: 32px;
-      display : flex;
-      flex-direction: column;
+    .ysws-canvas::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: rgba(5, 7, 20, 0.48);
+        -webkit-mask-image: linear-gradient(38deg, #000 0%, #000 24%, transparent 34%, transparent 76%, #000 86%, #000 100%);
+        mask-image: linear-gradient(38deg, #000 0%, #000 24%, transparent 34%, transparent 76%, #000 86%, #000 100%);
     }
 
-    #orgs-list {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 12px;
+    .ysws-canvas::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background: linear-gradient(135deg, rgba(114, 232, 255, 0.2), rgba(255, 77, 184, 0.16));
+        mix-blend-mode: screen;
     }
 
-    .org-card{
-      cursor: pointer;
+    .ysws-panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: clamp(0.9rem, 1.6vw, 1.2rem);
+        backdrop-filter: blur(4px);
+        box-shadow: 0 0 0 1px rgba(114, 232, 255, 0.2) inset, 0 24px 42px rgba(8, 12, 30, 0.6);
     }
 
-    .btn-discreet {
-      margin-top: 8px;
-      padding-top: 10px;
-      background: none;
-      border: none;
-      color: #8f8f8f;
-      text-decoration: underline;
-      padding: 0;
-      font-size: 1rem;
-      cursor: pointer;
+    .ysws-kicker {
+        margin: 0;
+        color: var(--gold);
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        font-size: 0.77rem;
+        font-weight: 700;
     }
-  </style>
-<% end %>
 
-<div class="home-hero">
-  <h1>Metroid-Mania</h1>
+    .ysws-title {
+        margin: 0.25rem 0 0;
+        font-family: 'Aldrich', 'Segoe UI', sans-serif;
+        font-size: clamp(1.85rem, 3.8vw, 2.8rem);
+        line-height: 0.98;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        text-shadow: 0 0 18px rgb(114, 231, 255);
+    }
 
-  <% if logged_in? %>
-    <p class="lead">Hi, <%= current_user.name %>! You have: <span style="font-family: Comfortaa, monospace;"><%= current_user.free_notches %> free charm notches</span></p>
-    <% if current_user.free_notches == 0 %>
-      <p class="lead">You have no free charm notches. Get Coding to earn some!</p>
-    <% end %>
+    .ysws-copy {
+        margin: 0.65rem 0 0;
+        color: var(--text-2);
+        font-size: 0.96rem;
+        line-height: 1.45;
+        max-width: 44ch;
+    }
 
-    <div class="home-actions">
-      <%= link_to "My Projects", projects_path, class: 'btn-retro' %>
-      <% if feature_enabled?(:shop) %>
-        <%= link_to "Merchant", products_path, class: 'btn-retro' %>
-      <% end %>
-      <%= link_to "Leaderboard", leaderboards_path, class: 'btn-retro' %>
-      <%= link_to "My Charms", charm_slots_loadout_path, class: 'btn-retro' %>
-      <%= link_to "My Achievements", achievements_path, class: 'btn-retro' %>
-      <% if admin? %>
-        <%= link_to "Admin Dashboard", admin_dashboard_path, class: 'btn-retro' %>
-      <% end %>
-    </div>
-    <div class="home-actions">
-      <%= link_to "Community Goals", goals_path, class: 'btn-retro' %>
-    </div>
+    .ysws-cta-row {
+        margin-top: 0.8rem;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.55rem;
+        align-items: center;
+    }
 
-    <div class="features" role="region" aria-label="Key features">
-      <div class="feature">
-        <h3>Build Games</h3>
-        <p>Create game projects, track and link Hackatime projects.</p>
-        <%= link_to "Start Building", new_project_path, class: 'btn-discreet' %>
-      </div>
-      <div class="feature">
-        <h3>Equip Charms</h3>
-        <p>Visit the merchant to equip charms to get prizes.</p>
-        <% if feature_enabled?(:shop) %>
-          <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
-        <% end %>
-      </div>
-      <div class="feature">
-        <h3>Boost Your Rewards</h3>
-        <p>Let an admin give you a feature to implement for bonus charm slot.</p>
-        <% if feature_enabled?(:shop) %>
-          <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
-        <% end %>
-      </div>
-    </div>
+    .ysws-cta {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.62rem 1rem;
+        border-radius: 10px;
+        text-decoration: none;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        font-size: 0.92rem;
+        transition: transform 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+    }
 
-  <% else %>
-    <p class="lead">Welcome to Metroid-Mania, the Hack Club YSWS where you build Metroidvania games!</p>
+    .ysws-cta-primary {
+        background: linear-gradient(100deg, var(--lime), #fff18c);
+        color: #102308;
+        box-shadow: 0 10px 28px rgba(182, 255, 107, 0.42);
+    }
 
-    <div class="home-actions">
-      <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" style="font-family: 'Phantom Sans';font-size:2rem; color:black; background:#ec3750; border:2px solid var(--main-800); cursor:pointer;" class="btn-retro pixelify-sans">Login with Hack Club</button>
-    </div>
+    .ysws-cta-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 36px rgba(182, 255, 107, 0.55);
+    }
 
-    <div class="features" role="region" aria-label="Why join">
-      <div class="feature">
-        <h3>Create & Share</h3>
-        <p>Start a Metroidvania Game in any language, show your progress in devlogs, and share with the Hack Club community.</p>
-      </div>
-      <div class="feature">
-        <h3>Learn Together</h3>
-        <p>Find collaborators and learn from other builders on the leaderboard.</p>
-      </div>
-      <div class="feature">
-        <h3>Participate</h3>
-        <p>Earn prizes, get feedback, and ship polished Metroidvania games.</p>
-      </div>
-    </div>
+    .ysws-cta-secondary {
+        border: 1px solid rgba(114, 232, 255, 0.65);
+        color: var(--cyan);
+        background: rgba(114, 232, 255, 0.08);
+    }
 
-  <% end %>
+    .ysws-cta-secondary:hover {
+        transform: translateY(-2px);
+        background: rgba(114, 232, 255, 0.15);
+    }
 
-  <% if ORG_SLACK_IDS.any? %>
-    <div id="meet-the-orgs" role="list" aria-label="Organizers">
-      <h2>Organizers</h2>
-      <div id="orgs-list">
-        <% if @orgs.present? %>
-          <% @orgs.each do |org| %>
-            <div class="org-card" role="listitem" data-slack-id="<%= org[:id] %>">
-              <% if org[:image].present? %>
-                <%= image_tag org[:image], alt: "#{org[:name]} avatar", width: 48, height: 48 %>
-              <% else %>
-                <div style="width:48px; height:48px; border-radius:999px; background:#f3f4f6;"></div>
-              <% end %>
-              <div class="org-info">
-                <div class="org-name"><%= org[:display_name].presence || org[:name] %></div>
-                <% if org[:pronouns].present? %>
-                  <div class="org-pronouns"><%= org[:pronouns] %></div>
-                <% end %>
-                <% if org[:title].present? %>
-                  <div class="org-pronouns"><%= org[:title] %></div>
-                <% end %>
-              </div>
+    .ysws-stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.7rem;
+        margin-top: 0.75rem;
+    }
+
+    .ysws-stat {
+        border: 1px solid rgba(114, 232, 255, 0.28);
+        border-radius: 10px;
+        background: rgba(9, 14, 40, 0.72);
+        padding: 0.6rem;
+    }
+
+    .ysws-stat strong {
+        display: block;
+        font-family: 'Aldrich', 'Segoe UI', sans-serif;
+        font-size: 1rem;
+        color: #ffffff;
+    }
+
+    .ysws-stat span {
+        color: var(--text-2);
+        font-size: 0.77rem;
+    }
+
+    .ysws-lower {
+        display: grid;
+        grid-template-columns: 1.25fr 1fr;
+        gap: 0.75rem;
+        align-items: start;
+    }
+
+    .ysws-grid {
+        margin-top: 0;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.6rem;
+    }
+
+    .ysws-card {
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        padding: 0.7rem;
+        background: rgba(10, 14, 38, 0.68);
+    }
+
+    .ysws-card h3 {
+        margin: 0;
+        font-size: 0.88rem;
+        color: #fff;
+        letter-spacing: 0.02em;
+        font-family: 'Aldrich', 'Segoe UI', sans-serif;
+        text-transform: uppercase;
+    }
+
+    .ysws-card p {
+        margin: 0.3rem 0 0;
+        color: var(--text-2);
+        font-size: 0.78rem;
+        line-height: 1.35;
+    }
+
+    .ysws-timeline {
+        margin-top: 0;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem;
+    }
+
+    .ysws-step {
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        border-radius: 10px;
+        padding: 0.62rem;
+        background: rgba(16, 22, 56, 0.64);
+    }
+
+    .ysws-step small {
+        color: var(--cyan);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 700;
+        font-size: 0.62rem;
+    }
+
+    .ysws-step p {
+        margin: 0.25rem 0 0;
+        color: var(--text-2);
+        font-size: 0.76rem;
+        line-height: 1.3;
+    }
+
+    .ysws-footer {
+        margin-top: 0;
+        color: #d4ddff;
+        font-size: 0.82rem;
+    }
+
+    @media (max-width: 1200px) {
+        .ysws-lower {
+            grid-template-columns: 1fr;
+        }
+
+        .ysws-grid {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 1020px) {
+        .ysws-landing {
+            min-height: auto;
+            display: block;
+        }
+
+        .ysws-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .ysws-canvas {
+            min-height: 220px;
+        }
+
+        .ysws-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .ysws-timeline {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+    }
+
+    @media (max-width: 680px) {
+        .ysws-stats {
+            grid-template-columns: 1fr;
+        }
+
+        .ysws-grid,
+        .ysws-timeline {
+            grid-template-columns: 1fr;
+        }
+
+        .ysws-title {
+            font-size: clamp(1.75rem, 10vw, 2.5rem);
+        }
+
+        .ysws-copy {
+            font-size: 0.98rem;
+        }
+
+        .ysws-lower {
+            display: block;
+        }
+    }
+</style>
+
+<section class="ysws-landing">
+    <header class="ysws-top">
+        <div class="ysws-brand">
+            <span class="ysws-dot" aria-hidden="true"></span>
+            Metroidmania YSWS
+        </div>
+        <span class="ysws-pill">Open Event • No Time Limit</span>
+    </header>
+
+    <div class="ysws-hero">
+        <div class="ysws-canvas">
+            <%= image_tag "godot_laptop.png", alt: "Metroidvania game development illustration" %>
+        </div>
+
+        <article class="ysws-panel">
+            <p class="ysws-kicker">Hack Club Open Event</p>
+            <h1 class="ysws-title">Build Your Metroidvania</h1>
+            <p class="ysws-copy">Build your world map, movement abilities, and combat loop, then publish devlogs as you grow. Metroidmania stays open year-round, so you can join now and ship when your build is ready.</p>
+
+            <div class="ysws-cta-row">
+                <a href="https://dev.bing-bong.uk/auth/hackclub" class="ysws-cta ysws-cta-primary">Start Building</a>
+                <%= button_to "Look Around", guest_login_path, class: "ysws-cta ysws-cta-secondary", method: :get %>
             </div>
-          <% end %>
-        <% else %>
-          <!-- No orgs configured -->
-        <% end %>
-      </div>
+
+            <div class="ysws-stats">
+                <div class="ysws-stat">
+                    <strong>No Deadline</strong>
+                    <span>Join now, finish at your own pace</span>
+                </div>
+                <div class="ysws-stat">
+                    <strong>Progress Milestones</strong>
+                    <span>Share updates whenever you hit a milestone</span>
+                </div>
+                <div class="ysws-stat">
+                    <strong>Real Prizes</strong>
+                    <span>Earn by shipping meaningful progress</span>
+                </div>
+            </div>
+        </article>
     </div>
-    <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        const orgCards = document.querySelectorAll(".org-card");
-        orgCards.forEach(card => {
-          card.addEventListener("click", function() {
-            const slackId = this.dataset.slackId || this.getAttribute('data-slack-id');
-            if (!slackId) return;
-            const slackUrl = `https://hackclub.slack.com/team/${slackId}`;
-            window.open(slackUrl, "_blank");
-          });
-        });
-      });
-    </script>
-  <% end %>
-</div>
+
+    <div class="ysws-lower">
+        <section class="ysws-grid" id="ysws-how" aria-label="Challenge pillars">
+            <article class="ysws-card">
+                <h3>Explore + Unlock</h3>
+                <p>Create a map with gates, backtracking, and at least one movement unlock.</p>
+            </article>
+            <article class="ysws-card">
+                <h3>Combat + Boss</h3>
+                <p>Build one enemy archetype and one memorable boss encounter.</p>
+            </article>
+            <article class="ysws-card">
+                <h3>Devlog Ritual</h3>
+                <p>Post progress snapshots to show how your game evolves.</p>
+            </article>
+        </section>
+
+        <section class="ysws-timeline" aria-label="Open build path">
+            <article class="ysws-step">
+                <small>Start</small>
+                <p>Set movement, rooms, and first devlog.</p>
+            </article>
+            <article class="ysws-step">
+                <small>Expand</small>
+                <p>Add unlocks, gates, and world depth.</p>
+            </article>
+            <article class="ysws-step">
+                <small>Polish</small>
+                <p>Tune combat and boss personality.</p>
+            </article>
+            <article class="ysws-step">
+                <small>Showcase</small>
+                <p>Ship when ready and share your writeup.</p>
+            </article>
+        </section>
+    </div>
+
+    <p class="ysws-footer">No perfect engine required. Bring your stack, your style, and ship something weird, whenever you are ready.</p>
+</section>

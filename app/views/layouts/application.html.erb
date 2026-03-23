@@ -176,6 +176,14 @@
         opacity: 0;
         transform: translateY(-8px);
         transition: opacity 180ms ease, transform 180ms ease;
+        pointer-events: none;
+      }
+
+      .profile-dropdown.open {
+        visibility: visible;
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
       }
 
       .profile-dropdown li {
@@ -193,22 +201,6 @@
 
       .profile-dropdown li a:hover {
         background: #f4f4f4;
-      }
-
-      /* hovered state: show & animate */
-      .profile-menu:hover .profile-dropdown {
-        visibility: visible;
-        opacity: 1;
-        transform: translateY(0);
-        transition-delay: 0s;
-        /* enlarge hoverable area slightly to cover any remaining tiny gap */
-        pointer-events: auto;
-      }
-
-      /* non-hover state: hide after animation completes */
-      .profile-menu:not(:hover) .profile-dropdown {
-        visibility: hidden;
-        transition-delay: 180ms; /* wait for fade out before hiding */
       }
 
       @media (max-width: 600px) {
@@ -393,6 +385,7 @@
 
               <ul class="profile-dropdown">
                 <li>
+                  <%= link_to 'My Profile', user_profile_path(current_user) %>
                   <%= link_to 'My Charms', charm_slots_loadout_path() %>
                   <%= link_to 'Sign out', logout_path, data: { turbo_method: :delete } %>
                 </li>
@@ -523,6 +516,40 @@
     </footer>
 
     <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        // Profile dropdown menu
+        var profileLink = document.querySelector('.profile-link');
+        var dropdown = document.querySelector('.profile-dropdown');
+        var profileMenu = document.querySelector('.profile-menu');
+
+        if (profileLink && dropdown && profileMenu) {
+          profileLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            // position dropdown to avoid going off-screen
+            var rect = profileLink.getBoundingClientRect();
+            var dropdownRect = dropdown.getBoundingClientRect();
+            var viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+            if (rect.right + dropdownRect.width > viewportWidth) {
+              dropdown.style.left = 'auto';
+              dropdown.style.right = '0';
+            } else {
+              dropdown.style.left = '0';
+              dropdown.style.right = 'auto';
+            }
+
+            dropdown.classList.toggle('open');
+          });
+
+          // Hide dropdown when clicking outside
+          document.addEventListener('click', function(e) {
+            if (!profileMenu.contains(e.target)) {
+              dropdown.classList.remove('open');
+            }
+          });
+        }
+      });
+
       // Mobile menu toggle: accessible + robust across Turbo navigation
       (function() {
         function initMobileMenu() {

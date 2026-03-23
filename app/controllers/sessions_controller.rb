@@ -1,6 +1,21 @@
 class SessionsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: :create
 
+  def ensure_guest_exists
+    User.find_or_create_by!(provider: "guest", uid: "guest") do |user|
+      user.name = "Guest"
+      user.email = "guest@bing-bong.uk"
+      user.role ||= :user
+    end
+  end
+
+  def guest
+    user = ensure_guest_exists
+    session[:user_id] = user.id
+    flash_pass("Signed in as guest!")
+    redirect_to root_path
+  end
+
   def create
     # Successful callback from OmniAuth
     auth = request.env["omniauth.auth"]

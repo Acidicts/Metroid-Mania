@@ -188,6 +188,7 @@ a { font-size: 1.2rem;}
   background: var(--main-900);
   color: var(--accent3);
   box-shadow: 0 6px 0 var(--main-800);
+  height: 68px;
 }
 .retro-navbar a {
   color: var(--accent3);

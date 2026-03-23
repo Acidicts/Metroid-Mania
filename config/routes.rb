@@ -168,9 +168,6 @@ Rails.application.routes.draw do
     end
   end
 
-  get "home/index"
-  get "home" => "home#index"
-
   get "gallery/index"
   get "gallery" => "gallery#index"
 
@@ -193,6 +190,9 @@ Rails.application.routes.draw do
 
   # previous development-only GET fallback is no longer necessary, since the route
   # already accepts GET in all environments.
+  get "/guest", to: "sessions#guest", as: :guest_login
 
-  root "home#index"
+  get "/", to: "home#index", as: :home
+  get "/dashboard", to: "dashboard#index", as: :dashboard
+  root "dashboard#index"
 end
