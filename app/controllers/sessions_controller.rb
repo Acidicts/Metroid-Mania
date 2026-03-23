@@ -43,7 +43,7 @@ class SessionsController < ApplicationController
     origin = request.env["omniauth.origin"] || params[:origin] || root_path
 
     flash_pass("Signed in successfully!")
-    redirect_to origin
+    redirect_to root_path
   end
 
   def failure
