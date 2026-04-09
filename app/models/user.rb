@@ -44,18 +44,29 @@ class User < ApplicationRecord
   validate :get_xp
 
   def get_xp
-    # XP is based on the amount of time that has been devlogged against
-    # projects owned by this user.  Previously we attempted to call
-    # `project.devlogged_seconds`, which is a field on *ships* rather than
-    # projects, and therefore raised a NoMethodError.  Use the existing
-    # helper on Project that sums all user-created devlogs instead.
+    # XP is based on the amount of time the user themself has documented
+    # on projects they own. Devlogs authored by other users on the same
+    # project should not contribute to this user's XP.
     xp_minutes = projects.inject(0) do |sum, project|
-      sum + (project.total_devlogged_seconds.to_i / 60)
+      sum + project.devlogs.where(user_id: id).sum(:duration_seconds).to_i / 60
     end
 
     # Persist the computed value so other code can rely on the `xp` column.
     self.xp = xp_minutes
     xp_minutes
+  end
+
+  def get_level
+    xp = self.xp.to_i
+    lvl = 1
+
+    while xp >= lvl * 100
+      xp -= lvl * 100
+      lvl += 1
+    end
+
+    # return [current_level, xp_into_this_level]
+    [ lvl, xp ]
   end
 
   def not_liked_project(project_id)
@@ -78,24 +89,15 @@ class User < ApplicationRecord
     streak
   end
 
-  def get_level
-    xp = get_xp
-    lvl = 1
-
-    while xp >= lvl * 100
-      xp -= lvl * 100
-      lvl += 1
-    end
-
-    # return [current_level, xp_into_this_level]
-    [ lvl, xp ]
-  end
-
   def get_level_progress_dec
     lvl, xp_into = get_level
     # compute fraction of current tier completed
     denom = lvl * 100.0
-    denom.zero? ? 0.0 : (xp_into.to_f / denom).round(2)
+    return 0.0 if denom.zero?
+
+    raw = xp_into.to_f / denom
+    rounded = raw.round(2)
+    rounded == 1.0 && raw < 1.0 ? raw : rounded
   end
 
   def flagged_for_fraud?

@@ -208,9 +208,13 @@ module ApplicationHelper
   def project_banner_url(project)
     if project.respond_to?(:image) && project.image.respond_to?(:attached?) && project.image.attached?
       # ActiveStorage blob URLs need to be absolute for external crawlers.
-      # Prefer using the current request's base URL when available.
+      # Prefer using the current request's host and protocol when available.
       if defined?(request) && request.present?
-        Rails.application.routes.url_helpers.rails_blob_url(project.image, host: request.base_url)
+        Rails.application.routes.url_helpers.rails_blob_url(
+          project.image,
+          host: request.host_with_port,
+          protocol: request.protocol
+        )
       else
         # try default host first; local view context may still have a value even
         # when `request` is not available (e.g. during preview rendering).

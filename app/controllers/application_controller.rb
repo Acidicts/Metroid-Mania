@@ -156,7 +156,13 @@ class ApplicationController < ActionController::Base
   end
 
   def ensure_goals_enabled
-    if feature_enabled?(:disable_community_goals) || current_user&.admin?
+    disabled = if defined?(SiteSetting)
+                 SiteSetting.enabled?(:disable_community_goals, default: false)
+    else
+                 ENV.fetch("DISABLE_COMMUNITY_GOALS_ENABLED", "false") == "true"
+    end
+
+    if disabled && !current_user&.admin?
       flash_warn("Community goals are disabled.")
       redirect_to root_path and return
     end

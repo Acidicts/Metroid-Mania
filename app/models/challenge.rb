@@ -35,7 +35,7 @@ class Challenge < ApplicationRecord
   end
 
   def still_valid
-    if active && end_at < Time.current
+    if active && end_at.present? && end_at < Time.current
       self.active = false
       save!
     end

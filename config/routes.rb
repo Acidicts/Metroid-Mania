@@ -62,6 +62,7 @@ Rails.application.routes.draw do
   get "/auth/failure", to: "sessions#failure"
 
   get "/leaderboard", to: "leaderboards#index"
+  get "/home", to: "home#index", as: :home_index
 
   # primary logout route: support DELETE for normal operation and GET as a safe fallback
   # some clients (e.g. crawlers or users with JS disabled) may issue a GET, so

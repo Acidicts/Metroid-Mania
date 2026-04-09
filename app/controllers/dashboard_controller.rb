@@ -1,5 +1,4 @@
 class DashboardController < ApplicationController
-  before_action :require_login
 
   def index
     # Load orgs from Slack IDs configured in config/initializers/orgs.rb (ENV: ORG_SLACK_IDS)

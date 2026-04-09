@@ -1,4 +1,5 @@
-<% streak = current_user.has_streak %>
+<% user = local_assigns[:user] || @user || current_user %>
+<% streak = user.has_streak %>
 <% if streak > 0 && streak < 7 %>
     <% color = "orange" %>
     <% rgb = "255, 165, 0" %>

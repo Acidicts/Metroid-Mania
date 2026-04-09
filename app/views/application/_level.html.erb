@@ -32,14 +32,15 @@
     }
 </style>
 
-<%# calculate progress decimal and convert to percentage %>
-<% progress = current_user.get_level_progress_dec %>
+<%# calculate progress decimal and convert to percentage for the profiled/user context %>
+<% user = local_assigns[:user] || @user || current_user %>
+<% progress = user.get_level_progress_dec %>
 <% percent = (progress * 100).round %>
 
-<div style="all:unset; margin-left:6px; display:inline-flex; align-items:center; gap:4px;" title="Level <%= current_user.get_level.first %> with <%= percent %>% progress to next level">
+<div style="all:unset; margin-left:6px; display:inline-flex; align-items:center; gap:4px;" title="Level <%= user.get_level.first %> with <%= percent %>% progress to next level">
     <div id="level-container" style="--progress: <%= percent %>%;">
         <div id="level">
-            <span style="text-shadow: 0 0 0 black; font-size:0.8rem"><%= current_user.get_level.first %></span>
+            <span style="text-shadow: 0 0 0 black; font-size:0.8rem"><%= user.get_level.first %></span>
         </div>
     </div>
 </div>

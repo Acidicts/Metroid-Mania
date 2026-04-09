@@ -8,11 +8,10 @@
      @project.description.presence ||
      "No description provided yet – check the project page for details."
    ).to_s.truncate(200) %>
-<%# Open Graph image must be a URL string; prefer the project's image_url helper, falling
-    back to a generic placeholder if nothing has been attached.  Previously we
-    passed the ActiveStorage attachment object itself which produced empty meta
-    tags and broke link previews. %>
-<% content_for :og_image, @project.image_url %>
+<%# Open Graph image must be a URL string; prefer the request-aware banner URL helper,
+    which generates an absolute blob URL when the asset is attached. %>
+<% displayed_url = project_banner_url(@project) %>
+<% content_for :og_image, displayed_url %>
 <% content_for :twitter_card, "summary_large_image" %>
 <% content_for :og_author, @project.user&.display_name %>
 
@@ -28,7 +27,7 @@
             current HTTP request.  `Project#image_url` is still useful for
             places without a request (migrations, jobs etc) but the view
             needs something request-aware for external crawlers. %>
-        <% displayed_url = @project.image_url %>
+        <% displayed_url = project_banner_url(@project) %>
         <img class="project-media__img" src="<%= displayed_url %>" alt="<%= @project.name %>">
       </div>    
 
