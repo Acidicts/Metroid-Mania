@@ -299,6 +299,11 @@
           border-radius: 6px;
         }
       }
+
+      input[type="checkbox"][disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
     </style>
     <% if current_user&.font_on? %>
       <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -503,6 +508,10 @@
     <% end %>
 
     <%= render 'shared/flash' %>
+
+    <% if current_user && !current_user.setup? %>
+      <%= render 'application/on_start/guide' %>
+    <% end %>
 
     <main class="retro-container" role="main" style="padding-top:18px; padding-bottom:18px;">
       <%= yield %>

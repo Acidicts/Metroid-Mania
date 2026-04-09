@@ -7,6 +7,13 @@ class ApplicationController < ActionController::Base
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
   before_action :load_charm_slots
+  before_action :ensure_user_setup, unless: -> { current_user&.setup? || !logged_in? }
+
+  def ensure_user_setup
+    if !current_user.setup? && request.path != root_path
+      redirect_to root_path and return
+    end
+  end
 
   def ensure_user_not_fraudulent
     if current_user&.flagged_for_fraud?

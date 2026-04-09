@@ -71,6 +71,7 @@ Rails.application.routes.draw do
 
   get "profile", to: "users#edit"
   patch "profile", to: "users#update"
+  get "setup", to: "users#setup", as: :setup
   get "users/:id", to: "users#show", as: "user_profile"
 
   # allow users to cancel or otherwise modify their own orders via PUT/PATCH
@@ -198,7 +199,7 @@ Rails.application.routes.draw do
   # already accepts GET in all environments.
   get "/guest", to: "sessions#guest", as: :guest_login
 
-  get "/", to: "home#index", as: :home
+  get "/", to: "dashboard#index", as: :home
   get "/dashboard", to: "dashboard#index", as: :dashboard
   root "dashboard#index"
 end

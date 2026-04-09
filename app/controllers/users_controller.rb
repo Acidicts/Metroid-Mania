@@ -1,6 +1,7 @@
 class UsersController < ApplicationController
-  before_action :require_login, only: [:edit, :update]
-  before_action :set_user, only: [:show, :edit, :update]
+  before_action :require_login, only: [ :edit, :update, :setup ]
+  skip_before_action :ensure_user_setup, only: [ :edit, :update, :setup ]
+  before_action :set_user, only: [ :show, :edit, :update ]
 
   def show
     # Load user's projects (exclude deleted) with their ships and devlogs
@@ -28,7 +29,7 @@ class UsersController < ApplicationController
     if @user.slack_id.present?
       @slack_profile = Rails.cache.fetch("slack_profile_#{@user.slack_id}", expires_in: 1.hour) do
         begin
-          profile = SlackService.new.users_info([@user.slack_id]).first
+          profile = SlackService.new.users_info([ @user.slack_id ]).first
           profile.present? ? profile : nil
         rescue => e
           Rails.logger.error("UsersController#show Slack fetch error for #{@user.id}: #{e.message}")
@@ -42,6 +43,15 @@ class UsersController < ApplicationController
   end
 
   def edit
+  end
+
+  def setup
+    unless current_user.setup?
+      current_user.update!(setup: true)
+      flash_pass("Setup complete! Welcome to Metroid Mania!")
+    end
+
+    redirect_to new_project_path
   end
 
   def update

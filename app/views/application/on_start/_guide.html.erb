@@ -1,0 +1,388 @@
+<style>
+    :root {
+        --timeline-line: var(--main-500);
+    }
+
+    .timeline::before { display: none; }
+    .timeline-step::before { display: none; }
+    .timeline-step::after { display: none; }
+
+    .container {
+        display: flex;
+        justify-content: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1000;
+        background: rgba(0, 0, 0, 0.6);
+        padding: 24px;
+    }
+
+    .guide {
+        background: var(--accent3);
+        width: min(560px, 100%);
+        padding: 28px 28px 1rem;
+        border-radius: 14px;
+        border: 4px solid var(--main-500);
+        box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        margin-top: 6rem;
+        height: max-content;
+        min-height: 60%;
+    }
+
+    .guide h1 {
+        margin: 0;
+        font-size: 1.7rem;
+        letter-spacing: -0.03em;
+    }
+
+    .guide p {
+        margin: 0;
+        line-height: 1.7;
+        color: var(--main-900);
+    }
+
+    .timeline {
+        position: relative;
+        display: grid;
+        gap: 2rem;
+        padding: 2rem 0 1rem;
+        min-height: 420px;
+    }
+
+    .timeline-step {
+        position: relative;
+        width: min(45%, 260px);
+        padding: 1.2rem 1.4rem;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        z-index: 1;
+    }
+
+    .timeline-step:nth-child(odd) {
+        justify-self: start;
+    }
+
+    .timeline-step:nth-child(even) {
+        justify-self: end;
+    }
+
+    .timeline-step h2 {
+        margin: 0 0 0.45rem;
+        font-size: 1.05rem;
+        color: var(--main-900);
+    }
+
+    .timeline-step p {
+        margin: 0;
+        color: var(--main-900);
+        opacity: 0.9;
+    }
+
+    #page-content-guide {
+        opacity: 0;
+        transition: opacity 240ms ease-in-out;
+    }
+
+    #page-content-guide.visible {
+        opacity: 1;
+    }
+
+    .guide form {
+        display: grid;
+        gap: 18px;
+    }
+
+    .guide .field {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 2px solid rgba(255, 255, 255, 0.14);
+        border-radius: 12px;
+    }
+
+    .guide label {
+        margin: 0;
+        font-size: 1rem;
+        font-weight: 700;
+        color: var(--main-900);
+    }
+
+    .guide input[type="checkbox"] {
+        width: 20px;
+        height: 20px;
+        accent-color: var(--accent1);
+    }
+
+    .form-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+        border: 4px double var(--main-500);
+        background: rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        border-radius: 12px;
+    }
+
+    .guide input[type="submit"] {
+        cursor: pointer;
+    }
+
+    .guide-actions {
+        display: flex;
+        gap: 14px;
+        justify-content: space-between;
+        flex-direction: row;
+        margin-top: auto;
+    }
+
+    .guide-actions button {
+        flex: 1;
+        min-width: 120px;
+        padding: 0.9rem 1rem;
+        margin: 0;
+        border-radius: 10px;
+        border: 2px solid var(--main-500);
+        background: var(--accent2);
+        color: var(--main-900);
+        transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    .guide-actions button:hover {
+        transform: translateY(-1px);
+        background: var(--accent1);
+        border-color: var(--main-700);
+    }
+
+    @media (max-width: 640px) {
+        .guide {
+            padding: 20px;
+        }
+
+        .guide .field {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .form-actions {
+            justify-content: center;
+        }
+    }
+</style>
+
+<div class="container">
+    <div class="guide">
+        <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
+        <div id="page-content-guide"></div>
+        <div class="guide-actions">
+            <button id="guide-next-button" type="button" class="btn-retro">Next</button>
+            <button id="guide-back-button" type="button" class="btn-retro">Back</button>
+        </div>
+
+        <template id="guide-page-0">
+            <p>Metroidvania Mania is a game jam where you can create and share your own Metroidvania games. Whether you're a seasoned developer or just starting out, this is the perfect opportunity to learn, collaborate, and have fun!</p>
+            <%= form_with model: current_user, url: profile_path, method: :patch do |f| %>
+                <div class="field">
+                    <%= f.check_box :font_on, id: "font_on_toggle" %>
+                    <%= f.label :font_on, "Enable Custom Fonts", for: "font_on_toggle" %>
+                </div>
+                <div class="field" disabled>
+                    <% if false %>
+                        <%= f.check_box :theme, id: "theme_toggle" %>
+                    <% else %>
+                        <%= f.check_box :theme, id: "theme_toggle", disabled: true, title: "Dark theme is not available" %>
+                    <% end %>
+                    <%= f.label :theme, "Enable Dark Theme", for: "theme_toggle" %>
+                </div>
+                <div class="form-actions">
+                    <%= f.submit "Save Preferences", class: "btn-retro" %>
+                </div>
+            <% end %>
+        </template>
+
+        <template id="guide-page-1">
+            <div class="timeline">
+                <div class="timeline-step">
+                    <h2>Plan</h2>
+                    <p>Define your idea, goals, and the game flow before you build anything.</p>
+                </div>
+                <div class="timeline-step">
+                    <h2>Build</h2>
+                    <p>Assemble levels, mechanics, and visuals using your chosen tools.</p>
+                </div>
+                <div class="timeline-step">
+                    <h2>Polish</h2>
+                    <p>Refine controls, add sound and balance the gameplay for a tighter experience.</p>
+                </div>
+                <div class="timeline-step">
+                    <h2>Launch</h2>
+                    <p>Share your Metroidvania jam entry and celebrate the process.</p>
+                </div>
+            </div>
+        </template>
+
+        <template id="guide-page-2">
+            <h2>Ready to Dive In?</h2>
+            <p>Start your Metroidvania journey now! Create your first project now!!</p>
+            <%= link_to "Get Started", setup_path, class: "btn-retro", style: "width: 90%;" %>
+        </template>
+
+        <script>
+            (() => {
+                const pages = [
+                    document.getElementById('guide-page-0').innerHTML,
+                    document.getElementById('guide-page-1').innerHTML,
+                    document.getElementById('guide-page-2').innerHTML
+                ];
+                let currentPage = 0;
+                let isTransitioning = false;
+                const content = document.getElementById('page-content-guide');
+                const guideTitle = document.getElementById('guide-title');
+                const nextButton = document.getElementById('guide-next-button');
+                const backButton = document.getElementById('guide-back-button');
+
+                const updateButton = () => {
+                    if (currentPage + 1 < pages.length) {
+                        nextButton.textContent = 'Next';
+                        nextButton.style.display = '';
+                    } else {
+                        nextButton.style.display = 'none';
+                    }
+                    if (currentPage > 0) {
+                        backButton.style.display = '';
+                    } else {
+                        backButton.style.display = 'none';
+                    }
+                };
+
+                const renderPage = () => {
+                    content.innerHTML = pages[currentPage];
+                    updateButton();
+                    requestAnimationFrame(() => {
+                        content.classList.add('visible');
+                        if (currentPage === 1) {
+                            requestAnimationFrame(drawTimelinePath);
+                        }
+                    });
+                };
+
+                const changePage = (nextPage) => {
+                    if (isTransitioning || nextPage === currentPage) return;
+                    isTransitioning = true;
+                    content.classList.remove('visible');
+                    setTimeout(() => {
+                        currentPage = Math.min(nextPage, pages.length - 1);
+                        renderPage();
+                        isTransitioning = false;
+                    }, 240);
+                };
+
+                nextButton.addEventListener('click', () => {
+                    changePage(currentPage + 1);
+                });
+
+                backButton.addEventListener('click', () => {
+                    changePage(currentPage - 1);
+                });
+
+                renderPage();
+            })();
+
+            function drawTimelinePath() {
+                const timeline = document.querySelector('.timeline');
+                if (!timeline) return;
+                const steps = Array.from(timeline.querySelectorAll('.timeline-step'));
+                if (!steps.length) return;
+
+                timeline.querySelectorAll('svg.tl-snake').forEach(s => s.remove());
+
+                const W = timeline.offsetWidth;
+                const H = timeline.offsetHeight;
+                const REM = parseFloat(getComputedStyle(document.documentElement).fontSize);
+
+                const makeSvg = (zIndex) => {
+                    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    svg.classList.add('tl-snake');
+                    svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+                    svg.style.cssText = `position:absolute;top:0;left:0;width:100%;height:${H}px;pointer-events:none;z-index:${zIndex};overflow:visible;`;
+                    return svg;
+                };
+
+                // Path SVG sits behind boxes (z-index 0), dot SVG sits in front (z-index 2)
+                const pathSvg = makeSvg(0);
+                const dotSvg  = makeSvg(2);
+
+                // Dot anchor: where the path visually "touches" each box
+                // Odd steps (0-indexed) are left-aligned → anchor on their RIGHT edge
+                // Even steps are right-aligned → anchor on their LEFT edge
+                const getDotPos = (step, i) => {
+                    const isLeft = i % 2 === 0;
+                    const dotY = step.offsetTop + 1.4 * REM + 8;
+                    const dotX = isLeft
+                        ? step.offsetLeft + step.offsetWidth
+                        : step.offsetLeft;
+                    return { x: dotX, y: dotY };
+                };
+
+                const pts = steps.map(getDotPos);
+
+                const allPts = [...pts];
+
+                // Build a cubic-bezier snake through every point.
+                // C prev.x midY, curr.x midY, curr.x curr.y
+                // This keeps the path vertical at each anchor and transitions
+                // horizontally in the middle — exactly the organic S-curve in the image.
+                let d = `M ${allPts[0].x} ${allPts[0].y}`;
+                for (let i = 1; i < allPts.length; i++) {
+                    const prev = allPts[i - 1];
+                    const curr = allPts[i];
+                    const midY = (prev.y + curr.y) / 2;
+                    d += ` C ${prev.x} ${midY} ${curr.x} ${midY} ${curr.x} ${curr.y}`;
+                }
+
+                const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+                path.setAttribute('d', d);
+                path.setAttribute('fill', 'none');
+                path.setAttribute('stroke', 'var(--timeline-line, rgba(255,255,255,0.6))');
+                path.setAttribute('stroke-width', '11');
+                path.setAttribute('stroke-dasharray', '6 20');
+                path.setAttribute('stroke-linecap', 'round');
+                path.setAttribute('stroke-linejoin', 'round');
+                pathSvg.appendChild(path);
+
+                // Draw dots in the front SVG so they appear above the boxes
+                pts.forEach(pt => {
+                    const c = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                    c.setAttribute('cx', pt.x);
+                    c.setAttribute('cy', pt.y);
+                    c.setAttribute('r', '7');
+                    c.setAttribute('fill', 'var(--accent1)');
+                    c.setAttribute('stroke', 'var(--main-500)');
+                    c.setAttribute('stroke-width', '2.5');
+                    dotSvg.appendChild(c);
+                });
+
+                timeline.prepend(dotSvg);
+                timeline.prepend(pathSvg);
+            }
+
+            window.addEventListener('resize', () => {
+                if (document.querySelector('.timeline')) drawTimelinePath();
+            });
+        </script>
+    </div>
+</div>
