@@ -15,41 +15,21 @@
       </thead>
       <tbody>
         <% @users.each do |u| %>
-          <% if u.name != "Deleted User" %>
-            <tr>
-              <td><%= link_to (u.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %></td>
-              <td class="col-email"><%= u.email %></td>
-              <% trusted = get_trusted_status(slack_id: u.slack_id) %>
-              <% if trusted == "blue" %>
-                <td class="col-role col-shrink">🔵</td>
-              <% elsif trusted == "green" %>
-                <td class="col-role col-shrink">🟢</td>
-              <% elsif trusted == "yellow" %>
-                <td class="col-role col-shrink">🟡</td>
-              <% elsif trusted == "red" %>
-                <td class="col-role col-shrink">🔴</td>
+          <tr>
+            <td><%= link_to (u.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %></td>
+            <td class="col-email"><%= u.email %></td>
+            <td class="col-role col-shrink"><%= trusted_status_icon(@trusted_statuses[u.slack_id]) %></td>
+            <td class="col-id col-shrink"><%= verification_status_icon(u.verification_status) %></td>
+            <td class="col-slack-id col-shrink"><%= u.slack_id.presence || '-' %></td>
+            <td class="col-id col-shrink"><%= u.id %></td>
+            <td class="col-role col-shrink">
+              <% if u.superadmin? %>
+                <strong>Superadmin</strong>
               <% else %>
-                <td class="col-role col-shrink">-</td>
+                <%= u.role.humanize %>
               <% end %>
-
-              <% if u.verification_status == "verified" %>
-                <td class="col-id col-shrink">✅</td>
-              <% elsif u.verification_status.to_s.downcase == "needs submission" %>
-                <td class="col-id col-shrink">⌛</td>
-              <% else %>
-                <td class="col-id col-shrink">❌</td>
-              <% end %>
-              <td class="col-slack-id col-shrink"><%= u.slack_id.presence || '-' %></td>
-              <td class="col-id col-shrink"><%= u.id %></td>
-              <td class="col-role col-shrink">
-                <% if u.superadmin? %>
-                  <strong>Superadmin</strong>
-                <% else %>
-                  <%= u.role.humanize %>
-                <% end %>
-              </td>
-            </tr>
-          <% end %>
+            </td>
+          </tr>
         <% end %>
       </tbody>
     </table>

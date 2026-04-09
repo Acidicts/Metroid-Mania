@@ -4,7 +4,8 @@ module Admin
     before_action :set_user, only: %i[ show edit update destroy revert_actions ]
 
     def index
-      @users = User.not_system.order(:email)
+      @users = User.not_system.where.not(name: "Deleted User").order(:id)
+      @trusted_statuses = fetch_trusted_statuses(@users)
     end
 
     def show
@@ -174,6 +175,15 @@ module Admin
     end
 
     private
+
+    def fetch_trusted_statuses(users)
+      slack_ids = users.map(&:slack_id).compact.uniq
+      return {} if slack_ids.empty?
+
+      slack_ids.index_with do |slack_id|
+        helpers.get_trusted_status(slack_id: slack_id)
+      end
+    end
 
     def set_user
       @user = User.find(params[:id])
