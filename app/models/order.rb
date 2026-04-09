@@ -78,7 +78,9 @@ class Order < ApplicationRecord
   validate :user_denied_is_denied, if: -> { status == "user_denied" }, on: :update
   validate :user_has_enough_free_notches, on: :create, if: -> { status.blank? || status == "pending" }
   # Prevent duplicate pending orders at model level (best-effort; DB unique index is authoritative)
-  validates :product_id, uniqueness: { scope: [ :user_id, :status ], message: "already has a pending order" }, if: -> { status == "pending" }
+  validates :product_id, uniqueness: { scope: [ :user_id, :status ], message: "already has a pending order" }, if: -> {
+    status == "pending" && !(respond_to?(:admin_created?) && admin_created?)
+  }
 
   # canonical mapping used by migration/tests/views
   STATUS_VALUE_MAP = {
@@ -326,6 +328,7 @@ class Order < ApplicationRecord
 
   def grant_amount_valid_for_product
     return if product.blank? || !product.variable_grant?
+    return if respond_to?(:admin_created?) && admin_created?
 
     if grant_amount_cents.nil?
       errors.add(:grant_amount_cents, "must be provided for variable products")

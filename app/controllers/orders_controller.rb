@@ -1,5 +1,6 @@
 class OrdersController < ApplicationController
   before_action :require_login
+  before_action :require_admin, only: %i[ admin_new_order admin_force_create ]
   before_action :ensure_shop_enabled, only: %i[ new create ]
   before_action :set_order, only: %i[ show update ]
   before_action :ensure_user_not_fraudulent, only: %i[ index show ]
@@ -16,6 +17,8 @@ class OrdersController < ApplicationController
   # GET /orders/new?product_id=1
   def new
     @product = Product.find_by(id: params[:product_id])
+    return unless !current_user.orders.where(product_id: @product.id).exists?
+
     if @product
       @order = current_user.orders.build(product: @product)
       # prepopulate charm_image_url when showing the form
@@ -54,6 +57,38 @@ class OrdersController < ApplicationController
     end
 
     redirect_to @order
+  end
+
+  def admin_force_create
+      @product = Product.find(params[:product_id])
+      @user = User.find(params[:user_id])
+      @order_status = params[:status].presence || "pending"
+      @cost_to_user = params[:cost_to_user].presence
+
+      order_attrs = {
+        user: @user,
+        product: @product,
+        status: @order_status,
+        charm_image_url: params[:charm_image_url].presence || @product.image_url
+      }
+      order_attrs[:admin_created] = true if Order.attribute_names.include?("admin_created")
+      order_attrs[:grant_amount_cents] = (params[:grant_amount_dollars].to_f * 100).round if @product.variable_grant? && params[:grant_amount_dollars].present?
+      order_attrs[:notch_cost] = @cost_to_user.to_i if @cost_to_user.present?
+
+      @order = Order.new(order_attrs)
+      if @order.save
+        flash_pass("Order force-created successfully!")
+      else
+        flash_warn("Failed to force-create order: #{@order.errors.full_messages.to_sentence}")
+      end
+      redirect_to products_path
+  end
+
+  def admin_new_order
+    @products = Product.order(:name)
+    @product = Product.find_by(id: params[:product_id])
+    @order = current_user.orders.build(product: @product)
+    @order.charm_image_url = @product.image_url if @product&.image_url.present?
   end
 
   # POST /orders or /orders.json

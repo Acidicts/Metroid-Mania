@@ -73,7 +73,12 @@ Rails.application.routes.draw do
   get "users/:id", to: "users#show", as: "user_profile"
 
   # allow users to cancel or otherwise modify their own orders via PUT/PATCH
-  resources :orders, only: [ :index, :new, :create, :show, :update ]
+  resources :orders, only: [ :index, :new, :create, :show, :update ] do
+    collection do
+      get :admin_new_order
+      post :admin_force_create
+    end
+  end
 
   # Dev-only sign-in to ease testing and local dev (available only in dev & test)
   if Rails.env.development? || Rails.env.test?

@@ -3,7 +3,11 @@
     <div class="order-details">
       <div>
         <strong>Order:</strong>
-        <%= order.name.split(" - ").first %>
+        <% if order.grant_amount_cents.to_i.positive? %>
+          <%= order.name.to_s.sub(/\s+-\s*\$\d+(?:\.\d+)?\z/, '') %>
+        <% else %>
+          <%= order.name.split(" - ").first %>
+        <% end %>
       </div>
 
       <div>

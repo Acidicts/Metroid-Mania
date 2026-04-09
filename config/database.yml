@@ -24,17 +24,41 @@ test:
 # is mounted as a persistent Docker volume in config/deploy.yml.
 production:
   primary:
+<% if ENV["DATABASE_URL"] %>
+    url: "<%= ENV["DATABASE_URL"] %>"
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+<% else %>
     <<: *default
     database: storage/production.sqlite3
+<% end %>
   cache:
+<% if ENV["CACHE_DATABASE_URL"] %>
+    url: "<%= ENV["CACHE_DATABASE_URL"] %>"
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+<% else %>
     <<: *default
     database: storage/production_cache.sqlite3
+<% end %>
     migrations_paths: db/cache_migrate
   queue:
+<% if ENV["QUEUE_DATABASE_URL"] %>
+    url: "<%= ENV["QUEUE_DATABASE_URL"] %>"
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+<% else %>
     <<: *default
     database: storage/production_queue.sqlite3
+<% end %>
     migrations_paths: db/queue_migrate
   cable:
+<% if ENV["CABLE_DATABASE_URL"] %>
+    url: "<%= ENV["CABLE_DATABASE_URL"] %>"
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
+<% else %>
     <<: *default
     database: storage/production_cable.sqlite3
+<% end %>
     migrations_paths: db/cable_migrate

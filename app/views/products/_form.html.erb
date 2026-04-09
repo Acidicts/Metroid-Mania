@@ -42,7 +42,7 @@
           <div class="form-group">
             <%= form.label :notch_cost, "Notch Cost" %>
             <%= form.number_field :notch_cost, step: 1, placeholder: "e.g. 5", class: "form-input", inputmode: "decimal" %>
-            <div class="field-hint">Leave blank to compute from Price &times; Credits/$.</div>
+            <div class="field-hint">1 Notch = $10. Ensure there is always $5 in value overhead to account for regional variations. $20 = 3 charms, $15 = 2</div>
           </div>
         </div>
 
@@ -65,7 +65,7 @@
               <%= form.check_box :limited, {}, "1", "0" %>
               <div>
                 <%= form.label :limited, "Limited availability" %>
-                <div class="field-hint">When stock runs out, hide from store.</div>
+                <div class="field-hint">When stock runs out, hide from store. Only do for stuff that is auto created by system as fallback.</div>
               </div>
             </label>
           </div>

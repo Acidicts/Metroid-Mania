@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_03_02_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_09_140000) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -113,7 +113,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_02_210000) do
     t.integer "reward_notches"
     t.datetime "start_at"
     t.string "title"
-    t.string "type"
+    t.string "type", default: "multiplier", null: false
     t.datetime "updated_at", null: false
   end
 
@@ -169,6 +169,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_02_210000) do
   end
 
   create_table "orders", force: :cascade do |t|
+    t.boolean "admin_created", default: false, null: false
     t.string "charm_image_url"
     t.float "cost"
     t.datetime "created_at", null: false
@@ -183,7 +184,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_02_210000) do
     t.index ["product_id"], name: "index_orders_on_product_id"
     t.index ["public_id"], name: "index_orders_on_public_id", unique: true
     t.index ["status"], name: "index_orders_on_status"
-    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending_unique", unique: true, where: "status = 0"
+    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending_unique", unique: true, where: "status = 0 AND admin_created = false"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
@@ -354,7 +355,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_03_02_210000) do
     t.float "credit_offset", default: 0.0, null: false
     t.float "currency"
     t.string "email"
-    t.boolean "flagged_for_fraud"
+    t.boolean "flagged_for_fraud", default: false, null: false
     t.integer "flagged_for_fraud_by_id"
     t.boolean "font_on", default: true, null: false
     t.string "fraud_reason"

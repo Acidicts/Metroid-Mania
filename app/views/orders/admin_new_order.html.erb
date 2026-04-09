@@ -1,0 +1,63 @@
+<div class="admin-order-page">
+  <% content_for :title, "Admin New Order" %>
+
+  <h1>Admin: Create New Order</h1>
+
+  <% if @product.present? %>
+    <h2>Product : <%= @product.name %></h2>
+
+    <div class="admin-card admin-user-card">
+      <%= form_with url: admin_force_create_orders_path, method: :post, local: true do |f| %>
+        <%= hidden_field_tag :product_id, @product.id %>
+        <%= hidden_field_tag :charm_image_url, @order.charm_image_url if @order&.charm_image_url.present? %>
+
+        <div class="admin-form">
+          <div class="admin-form-row">
+            <%= label_tag :status, "Order status", class: "admin-form-label" %>
+            <div class="admin-form-control">
+              <%= select_tag :status, options_for_select(Order.statuses.keys.map { |s| [s.humanize, s] }, selected: "pending"), class: "admin-input" %>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <%= label_tag :user_id, "Order user", class: "admin-form-label" %>
+            <div class="admin-form-control">
+              <%= select_tag :user_id, options_for_select(User.all.map { |u| [u.name, u.id] }), prompt: "Select a user", class: "admin-input" %>
+            </div>
+          </div>
+
+          <div class="admin-form-row">
+            <%= label_tag :cost_to_user, "Cost to User (Charms)", class: "admin-form-label" %>
+            <div class="admin-form-control">
+              <%= number_field_tag :cost_to_user, nil, step: 1, class: "admin-input" %>
+              <div class="admin-hint">Leave blank to use product's normal price (<%= @product.notch_cost %>)</div>
+            </div>
+          </div>
+
+          <% if @product.variable_grant? %>
+            <div class="admin-form-row">
+              <%= label_tag :grant_amount_dollars, "Grant amount ($)", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= number_field_tag :grant_amount_dollars, @product.grant_min_dollars, step: 1, class: "admin-input" %>
+              </div>
+            </div>
+          <% end %>
+
+          <div class="admin-form-actions">
+            <%= link_to "Back", admin_new_order_orders_path, class: "btn-admin btn-admin--muted" %>
+            <%= f.submit "Force Create Order", class: "btn btn-primary btn-admin--save" %>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  <% else %>
+    <div class="admin-card admin-user-card">
+      <p>Select a product to force-create a pending order for your admin account:</p>
+      <div class="admin-form-actions" style="flex-wrap: wrap; justify-content: flex-start;">
+        <% @products.each do |product| %>
+          <%= link_to product.name, admin_new_order_orders_path(product_id: product.id), class: "btn-retro btn-retro--small", style: "margin: 4px 6px 0 0;" %>
+        <% end %>
+      </div>
+    </div>
+  <% end %>
+</div>
