@@ -1,13 +1,13 @@
-<% content_for :title, "Metroid Mania" %>
-<% content_for :og_title, "Metroid Mania" %>
-<% content_for :og_description, "A YSWS about making Metroidvania Games" %>
-<% if (banner_url = asset_url_safe('metroidmania_banner.png')) %>
+<% content_for :title, "Metroidmania" %>
+<% content_for :og_title, "Metroidmania" %>
+<% content_for :og_description, "Make Metroidvania Games, Get Prizes" %>
+<% if (banner_url = asset_url_safe('og_banner.png')) %>
   <% content_for :og_image, banner_url %>
 <% else %>
   <% content_for :og_image, "https://placehold.co/1200x630" %>
 <% end %>
 <% content_for :twitter_card, "summary_large_image" %>
-<% content_for :og_author, "Alex Hayes - A Member of Hack-Club" %>
+<% content_for :og_author, "Alex Hayes & Lenny" %>
 
 <% content_for :styles do %>
   <style>
