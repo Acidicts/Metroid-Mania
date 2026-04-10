@@ -29,8 +29,9 @@ production:
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% else %>
-    <<: *default
-    database: storage/production.sqlite3
+    adapter: postgresql
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
 <% end %>
   cache:
 <% if ENV["CACHE_DATABASE_URL"] %>
@@ -38,8 +39,9 @@ production:
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% else %>
-    <<: *default
-    database: storage/production_cache.sqlite3
+    adapter: postgresql
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
 <% end %>
     migrations_paths: db/cache_migrate
   queue:
@@ -48,8 +50,9 @@ production:
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% else %>
-    <<: *default
-    database: storage/production_queue.sqlite3
+    adapter: postgresql
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
 <% end %>
     migrations_paths: db/queue_migrate
   cable:
@@ -58,7 +61,8 @@ production:
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% else %>
-    <<: *default
-    database: storage/production_cable.sqlite3
+    adapter: postgresql
+    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+    timeout: 5000
 <% end %>
     migrations_paths: db/cable_migrate
