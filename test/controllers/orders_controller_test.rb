@@ -23,8 +23,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to home_url
 
     # admin users still see the index
-    admin = users(:one)
-    admin.update!(role: :admin, email: "admin@example.com")
+    admin = users(:admin)
     sign_in_as(admin)
     get orders_url
     assert_response :success

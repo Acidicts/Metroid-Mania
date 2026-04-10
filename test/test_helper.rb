@@ -18,6 +18,9 @@ module ActiveSupport
         # Dev login available in test env
         post dev_login_url, params: { email: user.email }
       end
+
+      # Tests assume signed-in users are fully setup unless explicitly testing setup flows.
+      user.update!(setup: true) unless user.setup?
     end
 
     # Add more helper methods to be used by all tests here...
@@ -35,9 +38,9 @@ module ActiveSupport
     end
 
     # Create a tiny PNG file in tmp for use in uploads during tests. Returns absolute path string.
-    def create_sample_image(filename = 'sample.png')
-      path = Rails.root.join('tmp', filename)
-      png_base64 = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII='
+    def create_sample_image(filename = "sample.png")
+      path = Rails.root.join("tmp", filename)
+      png_base64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVQYV2NgYAAAAAMAAWgmWQ0AAAAASUVORK5CYII="
       File.binwrite(path, Base64.decode64(png_base64))
       path.to_s
     end

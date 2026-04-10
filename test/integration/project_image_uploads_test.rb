@@ -62,9 +62,9 @@ class ProjectImageUploadsTest < ActionDispatch::IntegrationTest
     get edit_project_url(project)
     assert_response :success
 
-    # the preview element and filename should be present in the edit form HTML
-    assert_includes response.body, "file-input-preview"
-    assert_includes response.body, "file-input-filename"
+    # the preview element and file input should be present in the edit form HTML
+    assert_select "img.file-input-preview"
+    assert_select "input[type=file][name='project[image]']"
     assert_includes response.body, "prefill.png"
   end
 
