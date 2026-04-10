@@ -6,14 +6,16 @@ WORKDIR /rails
 
 # 1. Install system packages (These rarely change, keep them at the top)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 libpq5 && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
 ENV RAILS_ENV="production" \
+    PORT="80" \
+    RAILS_SERVE_STATIC_FILES="1" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development" \
+    BUNDLE_WITHOUT="development:test" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
 # --- BUILD STAGE ---
@@ -22,7 +24,7 @@ FROM base AS build
 # 2. Install build tools with a cache mount
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config
+    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config libpq-dev postgresql-client
 
 # 3. Install Gems (Using cache mounts to avoid re-downloading)
 COPY Gemfile Gemfile.lock ./
@@ -62,4 +64,4 @@ COPY --chown=rails:rails --from=build /rails /rails
 
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 EXPOSE 80
-CMD ["./bin/thrust", "./bin/rails", "server"]
+CMD ["./bin/thrust", "./bin/rails", "server", "-b", "0.0.0.0", "-p", "80"]
