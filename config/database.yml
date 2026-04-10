@@ -24,65 +24,17 @@ test:
 # is mounted as a persistent Docker volume in config/deploy.yml.
 production:
   primary:
-<% if ENV["DATABASE_URL"] %>
-    url: "<%= ENV["DATABASE_URL"] %>"
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% else %>
-    adapter: postgresql
-    database: <%= ENV.fetch("DB_NAME", "metroid_mania_production") %>
-    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
-    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
-    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
-    port: <%= ENV.fetch("DB_PORT", 5432) %>
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% end %>
+    <<: *default
+    database: storage/production.sqlite3
   cache:
-<% if ENV["CACHE_DATABASE_URL"] %>
-    url: "<%= ENV["CACHE_DATABASE_URL"] %>"
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% else %>
-    adapter: postgresql
-    database: <%= ENV.fetch("CACHE_DB_NAME", "metroid_mania_cache") %>
-    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
-    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
-    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
-    port: <%= ENV.fetch("DB_PORT", 5432) %>
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% end %>
+    <<: *default
+    database: storage/cache.sqlite3
     migrations_paths: db/cache_migrate
   queue:
-<% if ENV["QUEUE_DATABASE_URL"] %>
-    url: "<%= ENV["QUEUE_DATABASE_URL"] %>"
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% else %>
-    adapter: postgresql
-    database: <%= ENV.fetch("QUEUE_DB_NAME", "metroid_mania_queue") %>
-    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
-    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
-    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
-    port: <%= ENV.fetch("DB_PORT", 5432) %>
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% end %>
+    <<: *default
+    database: storage/queue.sqlite3
     migrations_paths: db/queue_migrate
   cable:
-<% if ENV["CABLE_DATABASE_URL"] %>
-    url: "<%= ENV["CABLE_DATABASE_URL"] %>"
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% else %>
-    adapter: postgresql
-    database: <%= ENV.fetch("CABLE_DB_NAME", "metroid_mania_cable") %>
-    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
-    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
-    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
-    port: <%= ENV.fetch("DB_PORT", 5432) %>
-    pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-    timeout: 5000
-<% end %>
+    <<: *default
+    database: storage/cable.sqlite3
     migrations_paths: db/cable_migrate
