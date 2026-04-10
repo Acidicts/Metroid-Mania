@@ -151,10 +151,17 @@ class Product < ApplicationRecord
     base
   end
 
+  ALLOWED_ORDER_STATUSES_FOR_DESTRUCTION = %w[pending submitted shipped].freeze
+
   def destroy!
-    if Order.where(product_id: id).exists?
-      Order.where(product_id: id).destroy_all
+    if orders.exists?
+      orders.where.not(status: ALLOWED_ORDER_STATUSES_FOR_DESTRUCTION).destroy_all
+      if orders.where.not(status: ALLOWED_ORDER_STATUSES_FOR_DESTRUCTION).exists?
+        raise ActiveRecord::RecordNotDestroyed, "Cannot delete product while disallowed order statuses remain"
+      end
+      orders.destroy_all
     end
+
     super
   end
 
