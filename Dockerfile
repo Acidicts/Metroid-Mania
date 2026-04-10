@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # 1. Install system packages (These rarely change, keep them at the top)
 RUN apt-get update -qq && \
-    apt-get install --no-install-recommends -y curl libjemalloc2 libvips sqlite3 libpq5 && \
+    apt-get install --no-install-recommends -y curl libjemalloc2 libvips libpq5 && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
@@ -97,6 +97,32 @@ RUN --mount=type=cache,target=/rails/tmp/cache \
 
 # --- FINAL STAGE ---
 FROM base
+ARG APP_URL
+ARG AUTO_ADMIN
+ARG AUTO_ADMIN_EMAIL
+ARG AUTO_ADMIN_PASSWORD
+ARG HACKATIME_API_KEY
+ARG HACKCLUB_CLIENT_ID
+ARG HACKCLUB_CLIENT_SECRET
+ARG COOLIFY_URL
+ARG COOLIFY_FQDN
+ARG COOLIFY_BRANCH
+ARG COOLIFY_RESOURCE_UUID
+ARG COOLIFY_BUILD_SECRETS_HASH
+ARG SLACK_CLIENT_ID
+ARG SLACK_CLIENT_SECRET
+ARG SLACK_SIGNING_SECRET
+ARG ORG_SLACK_IDS
+ARG ORG_TITLES
+ARG SLACK_BOT_TOKEN
+ARG CDN_KEY
+ARG CREDIT_NAME
+ARG HACKATIME_START_DATE
+ARG CDN_URL
+ARG SUPERADMIN_UID
+ARG SUPERADMIN_EMAIL
+ARG SECRET_KEY_BASE
+ARG DISALLOWED_WORDS
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
