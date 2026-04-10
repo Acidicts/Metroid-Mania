@@ -1,5 +1,3 @@
-require 'omniauth/strategies/hackclub'
-
 Rails.application.config.middleware.use OmniAuth::Builder do
   provider :hackclub, ENV.fetch('HACKCLUB_CLIENT_ID'), ENV.fetch('HACKCLUB_CLIENT_SECRET'),
     scope: 'profile email name slack_id verification_status',
