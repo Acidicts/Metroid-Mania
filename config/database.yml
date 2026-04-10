@@ -30,6 +30,11 @@ production:
     timeout: 5000
 <% else %>
     adapter: postgresql
+    database: <%= ENV.fetch("DB_NAME", "metroid_mania_production") %>
+    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
+    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
+    port: <%= ENV.fetch("DB_PORT", 5432) %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% end %>
@@ -40,6 +45,11 @@ production:
     timeout: 5000
 <% else %>
     adapter: postgresql
+    database: <%= ENV.fetch("CACHE_DB_NAME", "metroid_mania_cache") %>
+    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
+    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
+    port: <%= ENV.fetch("DB_PORT", 5432) %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% end %>
@@ -51,6 +61,11 @@ production:
     timeout: 5000
 <% else %>
     adapter: postgresql
+    database: <%= ENV.fetch("QUEUE_DB_NAME", "metroid_mania_queue") %>
+    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
+    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
+    port: <%= ENV.fetch("DB_PORT", 5432) %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% end %>
@@ -62,6 +77,11 @@ production:
     timeout: 5000
 <% else %>
     adapter: postgresql
+    database: <%= ENV.fetch("CABLE_DB_NAME", "metroid_mania_cable") %>
+    username: <%= ENV["DB_USER"] || ENV["DB_USERNAME"] || ENV["POSTGRES_USER"] %>
+    password: <%= ENV["DB_PASSWORD"] || ENV["POSTGRES_PASSWORD"] %>
+    host: <%= ENV.fetch("DB_HOST", "127.0.0.1") %>
+    port: <%= ENV.fetch("DB_PORT", 5432) %>
     pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
     timeout: 5000
 <% end %>
