@@ -365,8 +365,9 @@
   </head>
 
   <body class="<%= controller.controller_name %> <%= controller.action_name %> <%= 'fonts-enabled' if current_user&.font_on? %> <%= 'dyslexic' if current_user&.font_on == false %>">
-    <header>
-      <nav class="retro-navbar">
+    <div class="page-shell">
+      <header>
+        <nav class="retro-navbar">
         <button type="button" class="menu-icon" aria-label="Toggle navigation" aria-expanded="false">
           <span></span>
           <span></span>
@@ -517,12 +518,13 @@
       <%= yield %>
     </main>
 
-    <footer class="retro-footer" style="margin-top:10%; position:relative; bottom:0; width:100%; overflow:hidden;">
+    <footer class="retro-footer">
       <div class="retro-container">
         <strong>Metroid Mania</strong>
         <p>Made for Hackclub</p>
       </div>
     </footer>
+    </div>
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {

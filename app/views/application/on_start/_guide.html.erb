@@ -168,6 +168,17 @@
         border-color: var(--main-700);
     }
 
+    #get-started-button {
+        position: relative;
+        font-size: 1.1rem;
+        font-weight: 700;
+        width: 40%;
+        align-self: center;
+        margin: 30%;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    }
+
     @media (max-width: 640px) {
         .guide {
             padding: 20px;
@@ -189,8 +200,8 @@
         <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
         <div id="page-content-guide"></div>
         <div class="guide-actions">
-            <button id="guide-next-button" type="button" class="btn-retro">Next</button>
             <button id="guide-back-button" type="button" class="btn-retro">Back</button>
+            <button id="guide-next-button" type="button" class="btn-retro">Next</button>
         </div>
 
         <template id="guide-page-0">
@@ -237,8 +248,16 @@
 
         <template id="guide-page-2">
             <h2>Ready to Dive In?</h2>
-            <p>Start your Metroidvania journey now! Create your first project now!!</p>
-            <%= link_to "Get Started", setup_path, class: "btn-retro", style: "width: 90%;" %>
+            <p>Start your Metroidvania journey now! Create your first project today and bring your map, mechanics, and moodboard to life.</p>
+            <div class="guide-summary">
+                <ul>
+                    <li><strong>Make your Game</strong> design a map with secrets, shortcuts, and memorable rooms.</li>
+                    <li><strong>Build experience</strong> learn new teechniques!</li>
+                    <li><strong>Share it:</strong> have others experience your game!</li>
+                </ul>
+            </div>
+            <p>Once you've got a project idea, jump into setup, add your first level, and share it with the community.</p>
+            <%= link_to "Get Started", setup_path, class: "btn-retro", id:"get-started-button" %>
         </template>
 
         <script>

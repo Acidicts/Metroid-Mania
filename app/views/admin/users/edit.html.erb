@@ -96,6 +96,21 @@
       </div>
 
       <div class="admin-form-row" id="admin-user-fraud-row">
+        <%= f.label :setup, "Guide Complete", class: "admin-form-label" %>
+        <div class="admin-form-control">
+
+          <%= f.check_box :setup, id:"user_flagged_for_fraud", class: "admin-checkbox #{'field-error' if f.object.errors[:flagged_for_fraud].any?}" %>
+          <%# when flagged we show who did it immediately to the right %>
+          <% if @user.flagged_for_fraud? %>
+            <span class="fraud-flagged-by">Flagged by: <%= @user.flagged_for_fraud_by_name || "(unknown)" %></span>
+          <% end %>
+
+          <% if f.object.errors[:flagged_for_fraud].any? %>
+            <div class="field-error-text"><%= f.object.errors.full_messages_for(:flagged_for_fraud).join(', ') %></div>
+          <% end %>
+        </div>
+      </div>
+      <div class="admin-form-row" id="admin-user-fraud-row">
         <%= f.label :flagged_for_fraud, "Flagged for fraud", class: "admin-form-label" %>
         <div class="admin-form-control">
 
