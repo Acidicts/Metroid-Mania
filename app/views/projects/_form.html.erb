@@ -113,18 +113,27 @@
         <div class="form-group">
           <%= form.label :image, "Project image (optional)" %>
           <div class="file-input-wrapper" data-controller="file-input">
-            <%= form.file_field :image, accept: "image/*", class: "visually-hidden file-input-input", data: { action: "change->file-input#update", file_input_target: "input" } %>
+            <label class="file-input-dropzone" data-file-input-target="dropzone" tabindex="0">
+              <div class="file-input-dropzone__text" data-file-input-target="text" style="<%= project.image.attached? ? 'display: none;' : '' %>">
+                <span class="file-input-dropzone__primary">Drop image here</span>
+                <span class="file-input-dropzone__secondary">or <u>browse files</u></span>
+              </div>
+              <img data-file-input-target="preview"
+                   src="<%= project.image.attached? ? url_for(project.image) : '' %>"
+                   alt="Project image preview"
+                   class="file-input-preview"
+                   style="<%= project.image.attached? ? '' : 'display: none;' %>" />
+              <%= form.file_field :image,
+                    accept: "image/*",
+                    class: "visually-hidden file-input-input",
+                    data: {
+                      action: "change->file-input#update",
+                      file_input_target: "input"
+                    }, hidden:true %>
+            </label>
 
-            <% if project.respond_to?(:image) && project.image.attached? && project.persisted? %>
-              <%= image_tag(project.image, class: 'file-input-preview', data: { file_input_target: 'preview' }, alt: 'Selected image preview', loading: 'lazy', style: 'max-height:160px; max-width:100%; height:auto; border-radius:6px;') %>
-            <% else %>
-              <img class="file-input-preview visually-hidden" data-file-input-target="preview" alt="Selected image preview">
-            <% end %>
-
-            <div style="display:flex; gap:8px; flex-direction:column;">
-              <label class="file-input-button" for="<%= form.object_name %>_image">Choose file</label>
-              <span class="file-input-filename" style="padding:3px; border: 3px dashed rgba(0,0,0,0.2); border-radius:6px;" data-file-input-target="filename"><%= project.respond_to?(:image) && project.image.attached? ? project.image.filename.to_s : 'No file selected' %></span>
-              <button type="button" style="padding:0.375rem; font-weight:800; color:white; border:none; border-radius:6px; background-color:#ec3750;" class="file-input-clear <%= project.respond_to?(:image) && project.image.attached? ? '' : 'visually-hidden' %>" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
+            <div class="file-input-actions">
+              <button type="button" style="text-align:left; font-family: inherit;" class="file-input-clear <%= project.respond_to?(:image) && project.image.attached? ? '' : 'visually-hidden' %>" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
             </div>
           </div>
         </div>
