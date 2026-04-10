@@ -176,14 +176,14 @@ class ApplicationController < ActionController::Base
   end
 
   def ensure_asset_project_enabled
-    if feature_enabled?(:disable_asset_project) && !current_user&.admin?
+    if feature_enabled?(:disable_asset_project)
       flash_warn("Asset projects are disabled.")
       redirect_to root_path and return
     end
   end
 
   def asset_project_enabled?
-    !feature_enabled?(:disable_asset_project) || current_user&.admin?
+    !feature_enabled?(:disable_asset_project)
   end
 
   def warn_if_app_url_mismatch
