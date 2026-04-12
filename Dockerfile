@@ -17,7 +17,10 @@ ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development:test" \
-    LD_PRELOAD="/usr/local/lib/libjemalloc.so"
+    LD_PRELOAD="/usr/local/lib/libjemalloc.so" \
+    SECRET_KEY_BASE="1" \
+    HACKCLUB_CLIENT_ID="dummy" \
+    HACKCLUB_CLIENT_SECRET="dummy"
 
 # --- BUILD STAGE ---
 FROM base AS build
