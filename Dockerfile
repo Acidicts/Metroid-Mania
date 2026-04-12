@@ -25,7 +25,7 @@ FROM base AS build
 # 2. Install build tools with a cache mount
 RUN --mount=type=cache,target=/var/cache/apt \
     apt-get update -qq && \
-    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config libpq-dev postgresql-client
+    apt-get install --no-install-recommends -y build-essential git libyaml-dev pkg-config libvips-dev libpq-dev postgresql-client
 
 # 3. Install Gems (Using cache mounts to avoid re-downloading)
 COPY Gemfile Gemfile.lock ./
