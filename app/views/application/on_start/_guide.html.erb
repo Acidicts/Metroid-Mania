@@ -10,19 +10,21 @@
     .container {
         display: flex;
         justify-content: center;
+        align-items: flex-start;
         position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
+        inset: 0;
         z-index: 1000;
         background: rgba(0, 0, 0, 0.6);
-        padding: 24px;
+        padding: 12px;
+        overflow: auto;
+        box-sizing: border-box;
+        min-height: 100vh;
     }
 
     .guide {
         background: var(--accent3);
-        width: min(560px, 100%);
+        width: 100%;
+        max-width: min(560px, calc(100vw - 32px));
         padding: 28px 28px 1rem;
         border-radius: 14px;
         border: 4px solid var(--main-500);
@@ -30,9 +32,12 @@
         display: flex;
         flex-direction: column;
         gap: 18px;
-        margin-top: 6rem;
-        height: max-content;
-        min-height: 60%;
+        margin: 0 auto;
+        max-height: calc(100vh - 32px);
+        min-height: 0;
+        overflow-y: auto;
+        box-sizing: border-box;
+        position: relative;
     }
 
     .guide h1 {
@@ -52,7 +57,8 @@
         display: grid;
         gap: 2rem;
         padding: 2rem 0 1rem;
-        min-height: 420px;
+        min-height: auto;
+        max-height: calc(100vh - 320px);
     }
 
     .timeline-step {
@@ -148,6 +154,11 @@
         justify-content: space-between;
         flex-direction: row;
         margin-top: auto;
+        position: sticky;
+        bottom: 0;
+        background: linear-gradient(var(--accent3), var(--accent3));
+        padding-top: 12px;
+        z-index: 2;
     }
 
     .guide-actions button {
@@ -174,9 +185,7 @@
         font-weight: 700;
         width: 40%;
         align-self: center;
-        margin: 30%;
-        margin-top: 1rem;
-        margin-bottom: 1rem;
+        margin: 1rem auto;
     }
 
     @media (max-width: 640px) {
@@ -197,7 +206,6 @@
 
 <div class="container">
     <div class="guide">
-        <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
         <div id="page-content-guide"></div>
         <div class="guide-actions">
             <button id="guide-back-button" type="button" class="btn-retro">Back</button>
@@ -205,6 +213,7 @@
         </div>
 
         <template id="guide-page-0">
+            <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
             <p>Metroidvania Mania is a game jam where you can create and share your own Metroidvania games. Whether you're a seasoned developer or just starting out, this is the perfect opportunity to learn, collaborate, and have fun!</p>
             <%= form_with model: current_user, url: profile_path, method: :patch do |f| %>
                 <div class="field">
@@ -226,6 +235,7 @@
         </template>
 
         <template id="guide-page-1">
+            <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
             <div class="timeline">
                 <div class="timeline-step">
                     <h2>Plan</h2>

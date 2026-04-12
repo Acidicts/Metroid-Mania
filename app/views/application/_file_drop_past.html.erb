@@ -1,0 +1,39 @@
+<% field_name ||= :image %>
+<% label_text ||= "Project image (optional)" %>
+<% attached_image = form.object.respond_to?(field_name) ? form.object.public_send(field_name) : nil %>
+<% has_attached_image = attached_image&.attached? && attached_image&.blob&.persisted? %>
+<% preview_url = has_attached_image ? url_for(attached_image) : '' %>
+
+<div class="apf-section" data-controller="file-input">
+  <div class="apf-section-title">Image</div>
+  <div class="form-group">
+    <%= form.label field_name, label_text %>
+    <div class="file-input-wrapper">
+      <label class="file-input-dropzone" data-file-input-target="dropzone" tabindex="0">
+        <div class="file-input-dropzone__text" data-file-input-target="text" style="<%= has_attached_image ? 'display: none;' : 'display: flex;' %>">
+          <span class="file-input-dropzone__primary">Drop image here</span>
+          <span class="file-input-dropzone__secondary">Paste, drop, or browse files</span>
+        </div>
+        <img data-file-input-target="preview"
+             src="<%= preview_url %>"
+             alt="Project image preview"
+             class="file-input-preview"
+             style="<%= has_attached_image ? '' : 'display: none;' %>" />
+        <%= form.file_field field_name,
+              accept: "image/*",
+              class: "visually-hidden file-input-input",
+              data: {
+                action: "change->file-input#update",
+                file_input_target: "input"
+              }, hidden:true %>
+      </label>
+
+      <div class="file-input-actions">
+        <button type="button"
+                class="file-input-clear <%= has_attached_image ? '' : 'visually-hidden' %>"
+                data-action="click->file-input#clear"
+                data-file-input-target="clear">Remove</button>
+      </div>
+    </div>
+  </div>
+</div>

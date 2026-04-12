@@ -18,7 +18,7 @@
         <div class="apf-section-title">Project Info</div>
 
         <div class="form-group">
-          <%= form.label :name, "Project Title/Name" %>
+          <%= form.label :name, "Project Title/Name*" %>
           <%= form.text_field :name, class: "form-input" %>
         </div>
 
@@ -107,37 +107,7 @@
 
     <aside class="sidebar-column">
 
-      <!-- ── Image ── -->
-      <div class="apf-section">
-        <div class="apf-section-title">Image</div>
-        <div class="form-group">
-          <%= form.label :image, "Project image (optional)" %>
-          <div class="file-input-wrapper" data-controller="file-input">
-            <label class="file-input-dropzone" data-file-input-target="dropzone" tabindex="0">
-              <div class="file-input-dropzone__text" data-file-input-target="text" style="<%= project.image.attached? ? 'display: none;' : '' %>">
-                <span class="file-input-dropzone__primary">Drop image here</span>
-                <span class="file-input-dropzone__secondary">or <u>browse files</u></span>
-              </div>
-              <img data-file-input-target="preview"
-                   src="<%= project.image.attached? ? url_for(project.image) : '' %>"
-                   alt="Project image preview"
-                   class="file-input-preview"
-                   style="<%= project.image.attached? ? '' : 'display: none;' %>" />
-              <%= form.file_field :image,
-                    accept: "image/*",
-                    class: "visually-hidden file-input-input",
-                    data: {
-                      action: "change->file-input#update",
-                      file_input_target: "input"
-                    }, hidden:true %>
-            </label>
-
-            <div class="file-input-actions">
-              <button type="button" style="text-align:left; font-family: inherit;" class="file-input-clear <%= project.respond_to?(:image) && project.image.attached? ? '' : 'visually-hidden' %>" data-action="click->file-input#clear" data-file-input-target="clear">Remove</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <%= render 'application/file_drop_past', form: form, field_name: :image, attached_image: project.image %>
 
     </aside>
   </div>

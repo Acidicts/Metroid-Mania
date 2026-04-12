@@ -39,3 +39,4 @@ vendor/bundle
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+db/development.sqlite3

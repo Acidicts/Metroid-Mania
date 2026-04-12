@@ -78,7 +78,6 @@ class Project < ApplicationRecord
   end
 
   validates :name, presence: true
-  validates :repository_url, presence: true
 
   # Server-side reachability checks: ensure README URLs (and GitHub repo READMEs)
   # respond successfully. These are conservative (only run for http(s) URLs or

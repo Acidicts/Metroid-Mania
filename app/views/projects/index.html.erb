@@ -4,6 +4,7 @@
 
 <div id="projects">
   <h1>Projects</h1>
+  <%= link_to "New project", new_project_path, class: "btn btn-primary", style: "margin-top: 20px; display: inline-block;" %>
   <div class="project-grid">
     <% @projects.each do |project| %>
       <% if project.name != "Deleted Project" %>
@@ -11,7 +12,6 @@
       <% end %>
     <% end %>
   </div>
-  <%= link_to "New project", new_project_path, style: "margin-top: 20px; display: inline-block;" %>
   <% if @enabled %>
     <h2>Assets Projects</h2>
     <div class="project-grid">
@@ -23,6 +23,7 @@
     </div>
     <%= link_to "New assets project", new_assets_project_path, style: "margin-top: 20px; display: inline-block;" %>
   <% end %>
+  <br>
 </div>
 
 
