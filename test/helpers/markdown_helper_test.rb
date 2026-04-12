@@ -3,6 +3,10 @@ require "test_helper"
 class MarkdownHelperTest < ActionView::TestCase
   include MarkdownHelper
 
+  test "defines the namespaced renderer expected by zeitwerk" do
+    assert_equal Lib::CustomMarkdownRenderer, CustomMarkdownRenderer
+  end
+
   test "renders task list checkboxes for [x] and [ ]" do
     md = "- [x] Done\n- [ ] Not done"
     html = markdown_to_html(md)
