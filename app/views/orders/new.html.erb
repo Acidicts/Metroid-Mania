@@ -127,12 +127,12 @@
           <div class="grant-header"><%= label_tag :grant_amount_display, "Grant amount ($)" %></div>
           <div class="grant-slider-wrapper" style="margin-top:6px;">
             <div class="grant-inputs">
-              <%= number_field_tag :grant_amount_display, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_display", class: 'grant-number', aria: { label: 'Grant amount dollars' } %>
+              <%= number_field_tag :grant_amount_display, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 10, id: "grant_amount_display", class: 'grant-number', aria: { label: 'Grant amount dollars' } %>
 
               <div class="grant-slider" style="flex:1;">
                 <div class="min-max-labels"><span class="min">$<%= sprintf('%.0f', @product.grant_min_dollars) %></span><span class="max">$<%= sprintf('%.0f', @product.grant_max_dollars) %></span></div>
 
-                <%= range_field_tag :grant_amount_range, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 1, id: "grant_amount_range", class: 'grant-range', aria: { valuemin: @product.grant_min_dollars, valuemax: @product.grant_max_dollars, label: 'Grant slider' } %>
+                <%= range_field_tag :grant_amount_range, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 10, id: "grant_amount_range", class: 'grant-range', aria: { valuemin: @product.grant_min_dollars, valuemax: @product.grant_max_dollars, label: 'Grant slider' } %>
 
                 <div class="ticks" aria-hidden="true"></div>
                 <div class="bubble" aria-hidden="true"><span class="bubble-val"></span></div>
@@ -144,7 +144,7 @@
         </div>
 
         <div style="margin-top:8px;">
-          Estimated Credits: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= sprintf('%.2f', @product.credits_for_dollars(@product.grant_min_dollars) || 0) %></span>
+          Estimated Notches: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= @product.grant_notches_for_dollars(@product.grant_min_dollars).to_i || 0 %></span>
         </div>
 
         <div style="margin-top: 12px;">
@@ -171,7 +171,7 @@
             var est = document.getElementById('estimated_credits');
             // Top-of-page credits display (Price (Credits))
             var topCredits = document.getElementById('price_credits_display');
-            var ratio = <%= (@product.credits_per_dollar || 0).to_f %>;
+            var ratio = 0.1;
             var minVal = <%= @product.grant_min_dollars %>;
             var maxVal = <%= @product.grant_max_dollars %>;
 

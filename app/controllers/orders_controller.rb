@@ -17,16 +17,27 @@ class OrdersController < ApplicationController
   # GET /orders/new?product_id=1
   def new
     @product = Product.find_by(id: params[:product_id])
-    return unless !current_user.orders.where(product_id: @product.id).exists?
-
-    if @product
-      @order = current_user.orders.build(product: @product)
-      # prepopulate charm_image_url when showing the form
-      @order.charm_image_url = @product.image_url if @product.image_url.present?
-    else
-      @order = current_user.orders.build
+    unless @product
+      flash_warn("Product not found")
+      redirect_to products_path and return
     end
-    @order
+
+    pending_db_val = if Order.respond_to?(:statuses)
+      Order.statuses["pending"]
+    elsif Order.const_defined?(:STATUS_VALUE_MAP)
+      Order::STATUS_VALUE_MAP["pending"]
+    else
+      "pending"
+    end
+
+    if current_user.orders.where(product_id: @product.id, status: pending_db_val).exists?
+      flash_warn("Already In Loadout")
+      redirect_to products_path and return
+    end
+
+    @order = current_user.orders.build(product: @product)
+    # prepopulate charm_image_url when showing the form
+    @order.charm_image_url = @product.image_url if @product.image_url.present?
   end
 
   # GET /orders/1 or /orders/1.json
@@ -72,7 +83,12 @@ class OrdersController < ApplicationController
         charm_image_url: params[:charm_image_url].presence || @product.image_url
       }
       order_attrs[:admin_created] = true if Order.attribute_names.include?("admin_created")
-      order_attrs[:grant_amount_cents] = (params[:grant_amount_dollars].to_f * 100).round if @product.variable_grant? && params[:grant_amount_dollars].present?
+      if @product.variable_grant? && params[:grant_amount_dollars].present?
+        grant_dollars = params[:grant_amount_dollars].to_f
+        order_attrs[:grant_amount_cents] = (grant_dollars * 100).round
+        order_attrs[:notch_cost] = (grant_dollars / 10.0).round
+        order_attrs[:cost] = (grant_dollars / 10.0).round
+      end
       order_attrs[:notch_cost] = @cost_to_user.to_i if @cost_to_user.present?
 
       @order = Order.new(order_attrs)
@@ -143,8 +159,10 @@ class OrdersController < ApplicationController
         order_attrs = { product: @product, status: pending_db_val }
         # Accept a user-selected grant amount (dollars) for variable products
         if @product.variable_grant? && params[:grant_amount_dollars].present?
-          # store cents on the order model
-          order_attrs[:grant_amount_cents] = (params[:grant_amount_dollars].to_f * 100).round
+          grant_dollars = params[:grant_amount_dollars].to_f
+          order_attrs[:grant_amount_cents] = (grant_dollars * 100).round
+          order_attrs[:notch_cost] = (grant_dollars / 10.0).round
+          order_attrs[:cost] = (grant_dollars / 10.0).round
         end
         # custom charm image URL if provided; otherwise default to product image when one exists
         if params[:charm_image_url].present?

@@ -9,22 +9,76 @@
       rgba(128, 128, 128, 0.2) 8px
     );
   }
+
+  .product-card .product-content p {
+    margin: 0 0 0.75rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .product-card .product-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: baseline;
+    margin-bottom: 0.75rem;
+    color: #4a4a4a;
+    font-size: 0.95rem;
+  }
+
+  .product-card .product-price {
+    font-family: Comfortaa, monospace;
+    color: #167d4f;
+    font-weight: 700;
+  }
+
+  .product-card .product-price .old-price {
+    text-decoration: line-through;
+    color: #888;
+    font-size: 0.9em;
+    margin-left: 0.5rem;
+  }
+
+  .product-card .product-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+  }
+
+  .product-card .product-actions .action-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .product-card .wishlist-button {
+    min-width: 40px;
+    padding: 0.55rem 0.75rem;
+  }
 </style>
 
 <div id="<%= dom_id product %>" class="product-card <%= product.is_unlocked(current_user) ? '' : 'locked' %>">
       <img src="<%= product.image_url %>" width="96px" height="96px" alt="<%= product.name %> image" class="product-image" loading="lazy">
       <div class="product-content">
         <h3><%= product.name %></h3>
-        <p style="word-wrap: break-word; overflow-wrap: break-word;"><%= simple_format(product.description) %></p>
+        <p><%= markdown_to_html(product.description) %></p>
         <% base_cost = product.notch_cost.to_i %>
         <% effective = product.effective_notch_cost %>
-        <p style="word-wrap: break-word; overflow-wrap: break-word;">
-          Notches: <span style="font-family: Comfortaa, monospace;"><%= effective %></span>
-          <% if effective != base_cost %>
-            <span style="text-decoration: line-through; color:#888; margin-left:6px; font-size:0.9em;">(<%= base_cost %>)</span>
+        <div class="product-meta">
+          <div class="product-price">
+            Notches: <span><%= effective %></span>
+            <% if effective != base_cost %>
+              <span class="old-price">(<%= base_cost %>)</span>
+            <% end %>
+          </div>
+          <% if product.limited? %>
+            <div class="product-stock">Stock: <%= product.stock %></div>
           <% end %>
-        </p>
-        <p style="word-wrap: break-word; overflow-wrap: break-word;">Stock: <% if product.limited? %><%= product.stock %><% else %><em>Unlimited</em><% end %></p>
+        </div>
 
         <%# When the user clicks the button we create the order immediately instead of
             showing the intermediate checkout page.  For variable-grant products we
@@ -34,20 +88,26 @@
           <% order_params[:grant_amount_dollars] = product.grant_min_dollars %>
         <% end %>
         <div class="product-actions">
-          <% if product.is_unlocked(current_user) %>
-            <%= button_to "Equip", orders_path(order_params), method: :post,
-                          class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout", form: { "data-turbo" => false } %>
-          <% else %>
-            <button class="btn-retro buy-button disabled" disabled>Locked</button>
-          <% end %>
-          <% if current_user %>
-            <%= button_to add_product_wishlist_path(current_user.wishlist, product_id: product.id), method: :post,
-                          class: 'wishlist-button', title: 'Add to wishlist',
-                          form: { data: { turbo: true, turbo_stream: true } } do %>
-              <%= image_tag "https://icons.hackclub.com/api/icons/0x203c56/view-close-small",
-                            alt: "Add to wishlist",
-                            style: "transform: rotate(45deg); width:1.2rem; height:1.2rem;" %>
+          <div class="action-group">
+            <% if product.is_unlocked(current_user) && product.not_grant? %>
+              <%= button_to "Equip", orders_path(order_params), method: :post,
+                            class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout", form: { "data-turbo" => false } %>
+            <% elsif product.is_unlocked(current_user) && product.variable_grant? %>
+              <%= link_to "Equip", new_order_path(product_id: product.id), class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout" %>
+            <% else %>
+              <button class="btn-retro buy-button disabled" disabled>Locked</button>
             <% end %>
+          </div>
+          <% if current_user %>
+            <div class="action-group">
+              <%= button_to add_product_wishlist_path(current_user.wishlist, product_id: product.id), method: :post,
+                            class: 'wishlist-button', title: 'Add to wishlist',
+                            form: { data: { turbo: true, turbo_stream: true } } do %>
+                <%= image_tag "https://icons.hackclub.com/api/icons/0x203c56/view-close-small",
+                              alt: "Add to wishlist",
+                              style: "transform: rotate(45deg); width:1.2rem; height:1.2rem;" %>
+              <% end %>
+            </div>
           <% end %>
         </div>
         

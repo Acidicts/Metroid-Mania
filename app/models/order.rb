@@ -53,7 +53,7 @@ class Order < ApplicationRecord
     return if product.blank?
 
     if product.variable_grant? && grant_amount_cents.present?
-      self.cost = product.credits_for_dollars(grant_amount_cents.to_f / 100.0).to_f
+      self.cost = product.grant_notches_for_dollars(grant_amount_cents.to_f / 100.0).to_f
     else
       self.cost = product.price_currency.to_f
     end
@@ -63,6 +63,11 @@ class Order < ApplicationRecord
   def set_default_notch_cost
     return if notch_cost.present?
     return if product.blank?
+
+    if product.variable_grant? && grant_amount_cents.present?
+      self.notch_cost = product.grant_notches_for_dollars(grant_amount_cents.to_f / 100.0).to_i
+      return
+    end
 
     required = product.notch_cost.to_i
     if product.present? && (sale = product.active_sale)
@@ -301,10 +306,10 @@ class Order < ApplicationRecord
 
     required = if product.variable_grant?
       if grant_amount_cents.present?
-        product.credits_for_dollars(grant_amount_cents.to_f / 100.0).to_f
+        required = product.grant_notches_for_dollars(grant_amount_cents.to_f / 100.0).to_f
       else
         # If no grant amount provided, assume min allowed
-        product.credits_for_dollars((product.grant_min_cents || Product::DEFAULT_MIN_GRANT_CENTS) / 100.0).to_f
+        required = product.grant_notches_for_dollars((product.grant_min_cents || Product::DEFAULT_MIN_GRANT_CENTS) / 100.0).to_f
       end
     else
       product.cost_in_credits.to_f

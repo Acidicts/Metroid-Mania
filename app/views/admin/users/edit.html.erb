@@ -144,7 +144,7 @@
         <div class="admin-form-row">
           <label class="admin-form-label" for="user_charm_notches">Charm Notches</label>
           <div class="admin-form-control">
-            <%= number_field_tag "user[charm_notches]", @user.charm_notches.count, step: 1, id: "user_charm_notches",
+            <%= number_field_tag "user[charm_notches]", @user.charm_notches.where(charm_slot: nil).count, step: 1, id: "user_charm_notches",
                 class: "admin-input #{'field-error' if @user.errors[:charm_notches].any?}" %>
           </div>
         </div>

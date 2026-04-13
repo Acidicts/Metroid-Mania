@@ -39,6 +39,10 @@ class Product < ApplicationRecord
   validate :notch_cost_is_int
   validate :achievement_configuration
 
+  def not_grant?
+    !variable_grant?
+  end
+
   def notch_cost_is_int
     if notch_cost.present? && !notch_cost.is_a?(Integer)
       if notch_cost < 0
@@ -102,6 +106,13 @@ class Product < ApplicationRecord
   def credits_for_dollars(dollars)
     return nil if credits_per_dollar.blank?
     (dollars.to_f * credits_per_dollar.to_f)
+  end
+
+  # Calculate how many notches a grant should cost when expressed as dollars.
+  # The business rule is: grant dollars / 10 = notches.
+  def grant_notches_for_dollars(dollars)
+    return nil if dollars.blank?
+    (dollars.to_f / 10.0)
   end
 
   # Determine cost in credits for fixed product

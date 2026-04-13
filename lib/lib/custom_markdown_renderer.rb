@@ -14,7 +14,7 @@ module Lib
     # Example: Add target="_blank" to all links
     def link(link, title, content)
       title_attr = title ? " title='#{ERB::Util.html_escape(title)}'" : ""
-      "<a href='#{ERB::Util.html_escape(link)}'#{title_attr} target='_blank' rel='noopener'>#{content}</a>"
+      "<a href='#{ERB::Util.html_escape(link)}'#{title_attr} target='_blank' rel='noopener noreferrer'>#{content}</a>"
     end
 
     # Render GitHub-style task list items: "- [x] ..." and "- [ ] ...".
@@ -77,8 +77,12 @@ def markdown_to_html(markdown_text)
   )
 
   # Convert and sanitize output to prevent XSS
+  sanitize_config = Sanitize::Config::RELAXED.dup
+  sanitize_config[:attributes] = (sanitize_config[:attributes] || {}).dup
+  sanitize_config[:attributes]["a"] = (sanitize_config[:attributes]["a"] || []) | [ "target", "rel" ]
+
   Sanitize.fragment(
     markdown.render(markdown_text),
-    Sanitize::Config::RELAXED
+    sanitize_config
   )
 end
