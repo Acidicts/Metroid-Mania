@@ -153,6 +153,12 @@ body.dyslexic .pixelify-sans {
   padding: 28px 20px;
 }
 
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
 /* Retro header / hero */
 .retro-hero {
   padding: 36px 20px;
@@ -511,13 +517,11 @@ a:hover {
 
 /* Footer */
 .retro-footer {
-  position: sticky;
   width: 100%;
   color: var(--accent3);
   background: var(--main-900);
   box-shadow: 0 -6px 0 var(--main-800);
   margin-top: auto;
-  bottom: 0;
 }
 
 /* Small helpers */
@@ -872,6 +876,8 @@ pre {
 
 /* Improve spacing of main area and keep footer attached */
 main.retro-container {
+  flex: 1 0 auto;
+  width: 100%;
   padding-top: 22px;
   padding-bottom: 22px;
 }

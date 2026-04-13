@@ -358,7 +358,7 @@
     <meta name="turbo-visit-control" content="reload">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :application, "data-turbo-track": "reload" %>
     <%= controller_stylesheet_link_tag %>
     <%= yield :styles %>
     <%= javascript_importmap_tags %>
