@@ -1,5 +1,6 @@
 class RsvpController < ApplicationController
   before_action :ensure_logged_in_for_create, only: [ :create ]
+  skip_before_action :ensure_user_setup
 
   def index
     @rsvp_count = Rsvp.count
