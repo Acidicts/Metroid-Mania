@@ -39,11 +39,15 @@ class SessionsController < ApplicationController
     end
 
     session[:user_id] = user.id
+    stored_return_to = safe_redirect_path(session.delete(:return_to))
 
-    origin = request.env["omniauth.origin"] || params[:origin] || root_path
+    redirect_path = safe_redirect_path(request.env["omniauth.origin"]) ||
+                    safe_redirect_path(params[:origin]) ||
+                    stored_return_to ||
+                    root_path
 
     flash_pass("Signed in successfully!")
-    redirect_to root_path
+    redirect_to redirect_path
   end
 
   def failure

@@ -1,0 +1,51 @@
+<div class="admin-panel">
+  <h1>RSVPs</h1>
+
+  <div class="admin-card" style="margin-bottom: 16px;">
+    <%= form_with url: admin_import_rsvp_path, method: :post, local: true, multipart: true do |form| %>
+      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center;">
+        <label for="csv_file" style="font-weight: 700;">Import CSV</label>
+        <%= form.file_field :csv_file, accept: ".csv,text/csv", required: true %>
+        <%= form.submit "Import RSVPs", class: "btn-retro-admin" %>
+      </div>
+      <div style="margin-top: 8px; font-size: 0.9rem; color: var(--admin-700);">
+        CSV headers must include: <code>slack_id</code> and <code>name</code>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="admin-table-wrapper">
+    <table class="admin-table">
+      <thead>
+        <tr>
+          <th class="col-role col-shrink">Created at</th>
+          <th class="col-role col-shrink">Name</th>
+          <th class="col-slack-id col-shrink">Slack ID</th>
+          <th class="col-slack-id col-shrink">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @rsvps.each do |rsvp| %>
+          <% u = rsvp.user %>
+          <% display_slack_id = rsvp.slack_id.presence || u&.slack_id %>
+          <tr>
+            <td><%= rsvp.created_at.strftime("%Y-%m-%d %H:%M") %></td>
+            <td>
+              <% if u.present? %>
+                <%= link_to (rsvp.name.presence || '(no name)'), edit_admin_user_path(u), title: "Edit #{u.email}" %>
+              <% else %>
+                <%= rsvp.name.presence || '(no name)' %>
+              <% end %>
+            </td>
+            <td class="col-slack-id col-shrink"><%= display_slack_id.presence || '-' %></td>
+            <td class="col-actions col-shrink">
+              <%= button_to 'Delete', admin_destroy_rsvp_path(rsvp), method: :delete, form: { data: { turbo: false } }, data: { confirm: "Are you sure you want to delete this RSVP?" }, class: "button button-danger" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div> <!-- admin-table-wrapper -->
+
+    </div> <!-- admin-panel -->
+  </main>

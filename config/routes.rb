@@ -1,4 +1,10 @@
 Rails.application.routes.draw do
+  # RSVP
+  get "rsvp" => "rsvp#index", as: :rsvp
+  get "rsvp/new" => "rsvp#new", as: :new_rsvp
+  post "rsvp" => "rsvp#create", as: :rsvps
+  get "rsvp/submit_after_login" => "rsvp#submit_after_login", as: :rsvp_submit_after_login
+
   resources :challenges
   # wishlist_items feature removed; routes cleaned up
   # users interact with wishlists via custom member actions for adding/removing
@@ -108,6 +114,11 @@ Rails.application.routes.draw do
   resources :leaderboards, only: [ :index ]
 
   namespace :admin do
+    get "rsvp", to: "rsvp#index", as: :rsvp
+    get "rsvp/index", to: "rsvp#index", as: :rsvp_index
+    post "rsvp/import", to: "rsvp#import", as: :import_rsvp
+    get "rsvp/:id", to: redirect("/admin/rsvp"), as: nil
+    delete "rsvp/:id", to: "rsvp#destroy", as: :destroy_rsvp
     # use a resourceful route so path helpers like `admin_project_tags_path` are defined
     resources :project_tags
     resources :sales

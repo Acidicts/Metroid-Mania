@@ -8,7 +8,9 @@ class ProjectsController < ApplicationController
   def index
     # Require login for the projects index — redirect anonymous users to the home page.
     unless logged_in?
-      redirect_to home_path, flash: { warn: "Please sign in to view projects." } and return
+      redirect_path = safe_redirect_path(request.fullpath)
+      session[:return_to] = redirect_path if redirect_path.present?
+      redirect_to home_path(redirect: redirect_path), flash: { warn: "Please sign in to view projects." } and return
     end
 
     # start with the user's active projects; if a `q` param is present,

@@ -49,4 +49,61 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     OmniAuth.config.test_mode = false
     OmniAuth.config.mock_auth.delete(:hackclub)
   end
+
+  test "redirects to local origin after login" do
+    user = users(:one)
+    auth = auth_hash_for(user.email, uid: user.uid || SecureRandom.hex(6))
+    user.update!(provider: auth.provider, uid: auth.uid)
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback", params: { origin: "/projects/1" }
+
+    assert_redirected_to "/projects/1"
+    follow_redirect!
+    assert_equal user.id, session[:user_id]
+  ensure
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
+
+  test "rejects unsafe origin and redirects to root" do
+    user = users(:one)
+    auth = auth_hash_for(user.email, uid: user.uid || SecureRandom.hex(6))
+    user.update!(provider: auth.provider, uid: auth.uid)
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback", params: { origin: "https://evil.com" }
+
+    assert_redirected_to root_url
+    follow_redirect!
+    assert_equal user.id, session[:user_id]
+  ensure
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
+
+  test "callback clears stale return_to even when origin is present" do
+    user = users(:one)
+    auth = auth_hash_for(user.email, uid: user.uid || SecureRandom.hex(6))
+    user.update!(provider: auth.provider, uid: auth.uid)
+
+    # Set session[:return_to] through RSVP guest flow.
+    get rsvp_submit_after_login_url
+    assert_equal "/rsvp/submit_after_login", session[:return_to]
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback", params: { origin: "/projects" }
+
+    assert_redirected_to "/projects"
+    assert_nil session[:return_to]
+  ensure
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
 end

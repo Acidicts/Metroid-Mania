@@ -80,7 +80,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     delete logout_url rescue nil
 
     get projects_url
-    assert_redirected_to home_path
+    assert_redirected_to home_path(redirect: projects_path)
     # controller sets a :warn flash for this scenario
     assert_match /Please sign in to view projects\./, flash[:warn]
   end

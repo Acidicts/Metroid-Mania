@@ -58,7 +58,7 @@
           <% end %>
         </strong>
     <% else %>
-        <strong style="font-family: var(--nb-font); font-size: 0.9rem;"><%= link_to "Login", "#{ENV['APP_URL']}/auth/hackclub" %> to See User</strong>
+        <strong style="font-family: var(--nb-font); font-size: 0.9rem;"><%= link_to "Login", hackclub_login_url %> to See User</strong>
     <% end %>
     <span class="nb-timestamp"><%= comment.created_at&.strftime("%b %-d, %Y %l:%M %P") %></span>
   </div>

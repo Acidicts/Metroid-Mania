@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile, :user_has_prize?, :prize_order_for
+  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile, :user_has_prize?, :prize_order_for, :hackclub_login_url
   helper MarkdownHelper
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
@@ -101,11 +101,37 @@ class ApplicationController < ActionController::Base
     current_user.admin? || current_user.superadmin?
   end
 
+  def goto_login
+    unless logged_in?
+      redirect_path = safe_redirect_path(request.fullpath)
+      session[:return_to] = redirect_path if redirect_path.present?
+
+      redirect_to hackclub_login_url(redirect_path) and return
+    end
+  end
+
   def require_login
     unless logged_in?
+      redirect_path = safe_redirect_path(request.fullpath)
+      session[:return_to] = redirect_path if redirect_path.present?
+
       flash_warn("You must be logged in to access this section")
-      redirect_to home_path and return
+      redirect_to home_path(redirect: redirect_path) and return
     end
+  end
+
+  def hackclub_login_url(redirect_path = nil)
+    app_url = request.base_url.to_s.chomp("/")
+    auth_path = "#{app_url}/auth/hackclub"
+
+    origin = safe_redirect_path(redirect_path) ||
+             safe_redirect_path(params[:redirect]) ||
+             safe_redirect_path(request.fullpath) ||
+             safe_redirect_path(session[:return_to])
+
+    return auth_path if origin.blank?
+
+    "#{auth_path}?#{Rack::Utils.build_query(origin: origin)}"
   end
 
   def require_admin
@@ -155,6 +181,28 @@ class ApplicationController < ActionController::Base
   end
 
   private
+
+  def safe_redirect_path(path)
+    return nil unless path.present?
+
+    parsed = URI.parse(path.to_s)
+    return nil unless parsed.path.present? && parsed.path.start_with?("/")
+
+    if parsed.scheme.nil? && parsed.host.nil?
+      result = parsed.path
+      result += "?#{parsed.query}" if parsed.query.present?
+      return result
+    end
+
+    return nil unless parsed.scheme.in?(%w[http https])
+    return nil unless parsed.host == request.host
+
+    result = parsed.path
+    result += "?#{parsed.query}" if parsed.query.present?
+    result
+  rescue URI::InvalidURIError
+    nil
+  end
 
   def ensure_shop_enabled
     unless feature_enabled?(:shop) || current_user&.admin?

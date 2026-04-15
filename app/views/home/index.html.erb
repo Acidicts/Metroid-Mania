@@ -399,7 +399,7 @@
             <p class="ysws-copy">Build your world map, movement abilities, and combat loop, then publish devlogs as you grow. Metroidmania is ready for your next ship.</p>
 
             <div class="ysws-cta-row">
-                <button onclick="window.location.href='<%= "#{ENV['APP_URL']}/auth/hackclub" %>'" data-turbo="false" class="ysws-cta ysws-cta-primary">Get Started</button>
+                <button onclick="window.location.href='<%= hackclub_login_url %>'" data-turbo="false" class="ysws-cta ysws-cta-primary">Get Started</button>
                 <%= button_to "Look Around", guest_login_path, class: "ysws-cta ysws-cta-secondary", method: :get %>
             </div>
 

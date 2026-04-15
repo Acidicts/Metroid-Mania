@@ -386,13 +386,12 @@ class User < ApplicationRecord
     return false if system_user?
 
     sys = User.system_user
-    Project.where(user_id: id).update_all(user_id: sys.id)
-    Order.where(user_id: id).update_all(user_id: sys.id)
-    Ship.where(user_id: id).update_all(user_id: sys.id)
-    AssetsProject.where(user_id: id).update_all(user_id: sys.id)
-    ShipRequest.where(user_id: id).update_all(user_id: sys.id)
+
+    [ Project, Order, Devlog, Ship, ShipRequest, AssetsProject, AssetsItem, CharmSlot, CharmNotch, Audit ].each do |model|
+      model.where(user_id: id).update_all(user_id: sys.id)
+    end
+
     ShipRequest.where(processed_by_id: id).update_all(processed_by_id: sys.id)
-    Audit.where(user_id: id).update_all(user_id: sys.id)
 
     super
   end

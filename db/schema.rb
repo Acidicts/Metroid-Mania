@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_09_203058) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_15_100000) do
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -60,6 +60,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_203058) do
     t.text "metadata"
     t.string "service_name"
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "city"
+    t.string "country"
+    t.datetime "created_at", null: false
+    t.boolean "is_default"
+    t.integer "phone"
+    t.string "postal_code"
+    t.string "recipient_name"
+    t.string "secondary_unit"
+    t.string "state"
+    t.string "street_address"
+    t.datetime "updated_at", null: false
+    t.integer "user_id", null: false
+    t.index ["user_id"], name: "index_addresses_on_user_id"
   end
 
   create_table "assets_items", force: :cascade do |t|
@@ -263,6 +279,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_203058) do
     t.index ["user_id"], name: "index_projects_on_user_id"
   end
 
+  create_table "rsvps", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name", null: false
+    t.string "slack_id", null: false
+    t.datetime "updated_at", null: false
+    t.integer "user_id"
+    t.index ["slack_id"], name: "index_rsvps_on_slack_id"
+    t.index ["user_id"], name: "index_rsvps_on_user_id"
+  end
+
   create_table "sales", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -388,6 +414,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_203058) do
   end
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "addresses", "users"
   add_foreign_key "assets_items", "assets_projects"
   add_foreign_key "assets_items", "users"
   add_foreign_key "assets_projects", "users"
@@ -411,6 +438,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_09_203058) do
   add_foreign_key "products", "achievements"
   add_foreign_key "project_tags", "projects"
   add_foreign_key "projects", "users"
+  add_foreign_key "rsvps", "users"
   add_foreign_key "sales", "products"
   add_foreign_key "ship_requests", "projects"
   add_foreign_key "ship_requests", "users"
