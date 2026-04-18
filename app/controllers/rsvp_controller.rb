@@ -1,5 +1,4 @@
 class RsvpController < ApplicationController
-  before_action :ensure_logged_in_for_create, only: [ :create ]
   skip_before_action :ensure_user_setup
 
   def index
@@ -11,7 +10,11 @@ class RsvpController < ApplicationController
   end
 
   def create
-    submit_rsvp
+    if logged_in?
+      submit_signed_in_rsvp
+    else
+      submit_guest_rsvp
+    end
   end
 
   def submit_after_login
@@ -21,21 +24,13 @@ class RsvpController < ApplicationController
       redirect_to hackclub_login_url(redirect_path) and return
     end
 
-    submit_rsvp
+    submit_signed_in_rsvp
   end
 
   private
 
-  def ensure_logged_in_for_create
-    return if logged_in?
-
-    redirect_path = rsvp_submit_after_login_path
-    session[:return_to] = redirect_path
-    redirect_to hackclub_login_url(redirect_path) and return
-  end
-
-  def create_rsvp(slack_id:, name:)
-    @rsvp = Rsvp.new(slack_id: slack_id, name: name, user: current_user)
+  def create_rsvp(slack_id:, name:, user: nil)
+    @rsvp = Rsvp.new(slack_id: slack_id, name: name, user: user)
     if @rsvp.save
       redirect_to rsvp_path, notice: "Thanks for RSVPing! We look forward to seeing your game!"
     else
@@ -44,11 +39,19 @@ class RsvpController < ApplicationController
     end
   end
 
-  def submit_rsvp
+  def submit_signed_in_rsvp
     if Rsvp.exists?(user: current_user)
       return redirect_to rsvp_path, notice: "You have already RSVPed. We look forward to seeing your game!"
     end
 
-    create_rsvp(slack_id: current_user&.slack_id, name: current_user&.name)
+    create_rsvp(slack_id: current_user&.slack_id, name: current_user&.name, user: current_user)
+  end
+
+  def submit_guest_rsvp
+    create_rsvp(slack_id: rsvp_params[:slack_id], name: rsvp_params[:name])
+  end
+
+  def rsvp_params
+    params.fetch(:rsvp, {}).permit(:name, :slack_id)
   end
 end

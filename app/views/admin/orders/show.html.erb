@@ -10,6 +10,7 @@
         <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">By <%= @order.user.name %> — <%= @order.user.slack_id %></div>
         <div style="color:var(--admin-700); font-size:0.95rem; margin-top:6px;">User-id: <%= @order.user.id %></div>
         <div style="margin-top:6px; color:#666; font-size:0.9rem;">Created: <%= l(@order.created_at, format: :short) %></div>
+        <div style="margin-top:6px; color:#666; font-size:0.9rem;">Extra Info: <%= @order.extra_info %></div>
       </div>
 
       <div>

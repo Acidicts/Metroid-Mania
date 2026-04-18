@@ -20,10 +20,12 @@ class ProductsController < ApplicationController
   # GET /products/new
   def new
     @product = Product.new
+    build_accessory_group_rows(@product)
   end
 
   # GET /products/1/edit
   def edit
+    build_accessory_group_rows(@product)
   end
 
   # POST /products or /products.json
@@ -102,7 +104,7 @@ class ProductsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_product
-      @product = Product.find(params[:id])
+      @product = Product.includes(accessory_groups: :accessories).find(params[:id])
     end
 
     # Only allow a list of trusted parameters through.
@@ -130,7 +132,29 @@ class ProductsController < ApplicationController
         :image_url,
         :notch_cost,
         :achievement_boolean,
-        :achievement_id
+        :achievement_id,
+        accessory_groups_attributes: [
+          :id,
+          :name,
+          :required,
+          :_destroy,
+          accessories_attributes: [
+            :id,
+            :name,
+            :cost,
+            :_destroy
+          ]
+        ]
       )
+    end
+
+    def build_accessory_group_rows(product)
+      if product.accessory_groups.empty?
+        product.accessory_groups.build.accessories.build
+      else
+        product.accessory_groups.each do |group|
+          group.accessories.build if group.accessories.empty?
+        end
+      end
     end
 end

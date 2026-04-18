@@ -106,6 +106,17 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "edit form shows existing accessory groups and accessories" do
+    product = Product.create!(name: "WithAccessories", price_currency: 2.99, steam_app_id: 999)
+    group = AccessoryGroup.create!(product: product, name: "Color")
+    Accessory.create!(accessory_group: group, name: "Green")
+
+    get edit_product_url(product)
+    assert_response :success
+    assert_select "input[name='product[accessory_groups_attributes][0][name]'][value='Color']"
+    assert_select "input[name='product[accessory_groups_attributes][0][accessories_attributes][0][name]'][value='Green']"
+  end
+
   test "should update product" do
     patch product_url(@product), params: { product: { name: @product.name, price_currency: @product.price_currency, steam_app_id: @product.steam_app_id, steam_price_cents: @product.steam_price_cents } }
     assert_redirected_to product_url(@product)

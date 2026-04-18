@@ -1,45 +1,63 @@
-<div class="admin-page">
-  <h1>Site settings</h1>
-
-  <%= form_with url: admin_site_settings_path, method: :patch, local: true do %>
-    <div style="margin-bottom:12px;">
-      <label for="site_setting_shop" style="font-weight:600; margin-right:8px;">Store (shop)</label>
-      <%= check_box_tag 'site_setting[shop]', '1', SiteSetting.enabled?('shop'), id: 'site_setting_shop' %>
-      <span style="color:#6b7280; margin-left:8px;">Enable or disable the public storefront</span>
+<div class="admin-panel admin-site-settings-page">
+  <div class="admin-page-header admin-site-settings-header">
+    <div>
+      <p class="admin-site-settings-kicker">Operations</p>
+      <h1>Site settings</h1>
+      <p class="admin-site-settings-subtitle">Control storefront access, event behavior, and global goals from one place.</p>
     </div>
+  </div>
 
-    <div style="margin-bottom:12px;">
-      <label for="site_setting_running" style="font-weight:600; margin-right:8px;">YSWS running</label>
-      <%= check_box_tag 'site_setting[running]', '1', SiteSetting.enabled?('running'), id: 'site_setting_running' %>
-      <span style="color:#6b7280; margin-left:8px;">If unchecked a site-wide banner will tell visitors the event is not active.</span>
+  <%= form_with url: admin_site_settings_path, method: :patch, local: true, class: "admin-site-settings-form" do %>
+    <section class="admin-card admin-site-settings-card">
+      <h2>Access and storefront</h2>
+
+      <div class="admin-site-settings-option">
+        <%= check_box_tag 'site_setting[shop]', '1', SiteSetting.enabled?('shop'), id: 'site_setting_shop', class: 'admin-site-settings-checkbox' %>
+        <label for="site_setting_shop" class="admin-site-settings-label">Store (shop)</label>
+        <p class="admin-site-settings-help">Enable or disable the public storefront.</p>
+      </div>
+
+      <div class="admin-site-settings-option">
+        <%= check_box_tag 'site_setting[running]', '1', SiteSetting.enabled?('running'), id: 'site_setting_running', class: 'admin-site-settings-checkbox' %>
+        <label for="site_setting_running" class="admin-site-settings-label">YSWS running</label>
+        <p class="admin-site-settings-help">If unchecked, a site-wide banner will tell visitors the event is not active.</p>
+      </div>
+
+      <div class="admin-site-settings-option">
+        <%= check_box_tag 'site_setting[disable_non_admin_logins]', '1', SiteSetting.enabled?('disable_non_admin_logins', default: false), id: 'site_setting_disable_non_admin_logins', class: 'admin-site-settings-checkbox' %>
+        <label for="site_setting_disable_non_admin_logins" class="admin-site-settings-label">Prevent non-admin logins</label>
+        <p class="admin-site-settings-help">When enabled, only administrators can sign in.</p>
+      </div>
+
+      <div class="admin-site-settings-option">
+        <%= check_box_tag 'site_setting[disable_asset_project]', '1', SiteSetting.enabled?('disable_asset_project', default: false), id: 'site_setting_disable_asset_project', class: 'admin-site-settings-checkbox' %>
+        <label for="site_setting_disable_asset_project" class="admin-site-settings-label">Disable Asset Project</label>
+        <p class="admin-site-settings-help">When enabled, the asset project functionality will be turned off.</p>
+      </div>
+    </section>
+
+    <section class="admin-card admin-site-settings-card">
+      <h2>Weekly devlog goal</h2>
+      <div class="admin-form-row admin-site-settings-input-row">
+        <label for="site_setting_weekly_goal_threshold_seconds" class="admin-form-label">Threshold (seconds)</label>
+        <div class="admin-form-control">
+          <%= text_field_tag 'site_setting[weekly_goal_threshold_seconds]', SiteSetting.get('weekly_goal_threshold_seconds') || WeeklyGoalService::THRESHOLD_SECONDS, id: 'site_setting_weekly_goal_threshold_seconds', class: 'admin-site-settings-input', inputmode: 'numeric' %>
+          <p class="admin-site-settings-help">Total seconds required to hit the weekly goal (default 360000 = 100h). When reached, a random contributor receives a free "prize" order.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="admin-card admin-site-settings-card">
+      <h2>Community goals</h2>
+      <div class="admin-site-settings-option">
+        <%= check_box_tag 'site_setting[disable_community_goals]', '1', SiteSetting.enabled?('disable_community_goals', default: false), id: 'site_setting_disable_community_goals', class: 'admin-site-settings-checkbox' %>
+        <label for="site_setting_disable_community_goals" class="admin-site-settings-label">Disable Community Goals</label>
+        <p class="admin-site-settings-help">When enabled, community goals functionality will be turned off.</p>
+      </div>
+    </section>
+
+    <div class="admin-form-actions admin-site-settings-actions">
+      <%= submit_tag 'Save settings', class: 'btn-admin btn-admin-success' %>
     </div>
-
-    <div style="margin-bottom:12px;">
-      <label for="site_setting_disable_non_admin_logins" style="font-weight:600; margin-right:8px;">Prevent non‑admin logins</label>
-      <%= check_box_tag 'site_setting[disable_non_admin_logins]', '1', SiteSetting.enabled?('disable_non_admin_logins', default: false), id: 'site_setting_disable_non_admin_logins' %>
-      <span style="color:#6b7280; margin-left:8px;">When enabled only administrators can sign in.</span>
-    </div>
-
-    <div style="margin-bottom:12px;">
-      <label for="site_setting_disable_asset_project" style="font-weight:600; margin-right:8px;">Disable Asset Project</label>
-      <%= check_box_tag 'site_setting[disable_asset_project]', '1', SiteSetting.enabled?('disable_asset_project', default: false), id: 'site_setting_disable_asset_project' %>
-      <span style="color:#6b7280; margin-left:8px;">When enabled the asset project functionality will be turned off.</span>
-    </div>
-
-    <h2>Weekly devlog goal</h2>
-    <div style="margin-bottom:12px;">
-      <label for="site_setting_weekly_goal_threshold_seconds" style="font-weight:600; margin-right:8px;">Threshold (seconds)</label>
-      <%= text_field_tag 'site_setting[weekly_goal_threshold_seconds]', SiteSetting.get('weekly_goal_threshold_seconds') || WeeklyGoalService::THRESHOLD_SECONDS, id: 'site_setting_weekly_goal_threshold_seconds', size: 8 %>
-      <span style="color:#6b7280; margin-left:8px;">Total seconds required to hit the weekly goal (default 360000 = 100h). When reached, a random contributor receives a free \"prize\" order.</span>
-    </div>
-
-    <h2>Community goals</h2>
-    <div style="margin-bottom:12px;">
-      <label for="site_setting_disable_community_goals" style="font-weight:600; margin-right:8px;">Disable Community Goals</label>
-      <%= check_box_tag 'site_setting[disable_community_goals]', '1', SiteSetting.enabled?('disable_community_goals', default: false), id: 'site_setting_disable_community_goals' %>
-      <span style="color:#6b7280; margin-left:8px;">When enabled community goals functionality will be turned off.</span>
-    </div>
-
-    <%= submit_tag 'Save', class: 'btn-retro' %>
   <% end %>
 </div>

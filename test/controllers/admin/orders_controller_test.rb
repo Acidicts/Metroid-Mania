@@ -89,6 +89,25 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_audit_created(action: "order_refunded", project: nil, user: @admin)
   end
 
+  test "decline does not refund twice when refund audit already exists" do
+    prod = Product.create!(name: "NoDoubleRefund", steam_app_id: 100, price_currency: 6.0, notch_cost: 0)
+    u = users(:one)
+    u.update!(currency: 100.0)
+    u.adjust_charm_notches!(100)
+    o = u.orders.create!(product: prod, cost: prod.price_currency)
+
+    # Simulate an already refunded order record before decline runs.
+    Audit.create!(user: @admin, project: nil, action: "order_refunded", details: { order_id: o.id, amount: o.cost.to_f, previous_status: "pending" })
+
+    user_before = o.user.reload.currency
+
+    post decline_admin_order_url(o)
+
+    assert_redirected_to admin_orders_url
+    assert_equal "denied", o.reload.status
+    assert_equal user_before, o.user.reload.currency
+  end
+
   test "missing order redirects with alert" do
     non_existent = Order.maximum(:id).to_i + 100
 

@@ -56,7 +56,18 @@ class ShipRequest < ApplicationRecord
 
   # Update the system devlog when the ship request is updated (e.g. credits awarded)
   def sync_ship_request_devlog
-    d = devlogs.find_by(title: "Ship request ##{id}") || devlogs.where(ship_request: self).order(:created_at).first
+    # Only sync the system-generated marker row (user_id is nil). Avoid touching
+    # linked user-authored devlogs that share this ship_request_id.
+    d = devlogs.where(user_id: nil).find_by(title: "Ship request ##{id}") ||
+        devlogs.where(user_id: nil, ship_request: self).order(:created_at).first
+
+    # Legacy data may be missing the marker row; recreate it so future updates
+    # have a stable record to modify.
+    if d.nil?
+      create_ship_request_devlog
+      d = devlogs.where(user_id: nil, ship_request: self).order(:created_at).first
+    end
+
     return unless d
 
     begin

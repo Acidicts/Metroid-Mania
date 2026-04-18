@@ -303,6 +303,28 @@
 /* Admin product form — Metroid Mania palette
    #fbbbad warm pink · #ee8695 rose · #4a7a96 muted blue · #333f58 dark blue · #292831 near-black */
 
+/* Projects form wrapper mirrors the order-form card shell. */
+.project-form-card {
+  max-width: 1040px;
+  margin: 0 auto 18px;
+  padding: 20px;
+  background-color: #fff;
+  border-radius: 8px;
+  border: 3px solid var(--main-700);
+  box-sizing: border-box;
+}
+
+.project-form-card .admin-product-form {
+  max-width: none;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .project-form-card {
+    padding: 16px;
+  }
+}
+
 .admin-product-form {
   max-width: 980px;
   margin: 18px 0;
@@ -384,7 +406,9 @@
   border-radius: 12px;
   background-color: #f8fafc;
   cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease;
   text-align: center;
   min-height: 60px;
 }
@@ -520,6 +544,74 @@
   transform: translateY(1px);
 }
 
+.btn-secondary {
+  background: rgba(74, 122, 150, 0.08);
+  color: var(--palette-5, #273548);
+  border: 1px solid rgba(74, 122, 150, 0.22);
+  padding: 9px 18px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-weight: 700;
+  transition:
+    background 160ms ease,
+    transform 80ms ease;
+}
+
+.btn-secondary:hover {
+  background: rgba(74, 122, 150, 0.14);
+}
+
+.btn-secondary:active {
+  transform: translateY(1px);
+}
+
+.accessory-group-card {
+  border: 1px solid rgba(74, 122, 150, 0.16);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 18px;
+  background: rgba(246, 250, 255, 0.92);
+}
+
+.accessory-group-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-end;
+  margin-bottom: 12px;
+}
+
+.accessory-row {
+  border: 1px solid rgba(74, 122, 150, 0.12);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: #fff;
+}
+
+.accessory-row-inner {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.accessory-row-inner .form-group {
+  margin-bottom: 0;
+}
+
+.accessory-items {
+  margin-bottom: 14px;
+}
+
+.accessory-group-card .field-hint {
+  margin: 0 0 14px;
+  color: rgba(51, 63, 88, 0.72);
+}
+
+.btn-primary.add-accessory-button,
+#add-accessory-group-button {
+  margin-top: 10px;
+}
+
 /* ── Sidebar ── */
 .admin-product-form .form-note {
   font-size: 0.81rem;
@@ -537,7 +629,6 @@
 }
 .admin-product-form .file-input {
   cursor: pointer;
-  
 }
 .admin-product-form .file-input-wrapper {
   display: grid;

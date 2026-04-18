@@ -15,7 +15,9 @@
 <% content_for :twitter_card, "summary_large_image" %>
 <% content_for :og_author, @project.user&.display_name %>
 
-
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
+<% end %>
 
 <div class="retro-container">
   <button onclick="window.location.href='<%= projects_path %>'" class="btn-retro">Back to Projects</button>

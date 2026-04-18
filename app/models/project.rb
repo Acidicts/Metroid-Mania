@@ -198,10 +198,23 @@ class Project < ApplicationRecord
   end
 
   def total_devlogged_seconds
-    # Count all user-created devlogs (exclude system-generated devlogs which have no user_id).
-    # User-created devlogs are counted regardless of whether they've been linked to a ship request,
-    # so that documented time remains documented after shipping and cannot be reused.
-    devlogs.where.not(user_id: nil).sum(:duration_seconds)
+    # Count all user-created devlogs.
+    #
+    # We intentionally continue counting user-authored rows even when linked to a
+    # ship request, so documented time cannot be reused after shipping.
+    #
+    # Exclude system ship-marker rows (Ship request #..., Ship #..., Rejected ship
+    # request #...). Some legacy records may have a user_id on those markers,
+    # which would otherwise make this method count ship time as devlog time.
+    devlogs
+      .where.not(user_id: nil)
+      .where.not(
+        "ship_request_id IS NOT NULL AND (title LIKE ? OR title LIKE ? OR title LIKE ?)",
+        "Ship request #%",
+        "Ship #%",
+        "Rejected ship request #%"
+      )
+      .sum("COALESCE(duration_seconds, duration_minutes * 60)")
   end
 
   # Remaining seconds on the project that have not been devlogged yet.

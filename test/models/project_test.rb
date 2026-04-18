@@ -120,6 +120,20 @@ class ProjectTest < ActiveSupport::TestCase
     assert_equal 0, p.minutes_needed_for_ship_request
   end
 
+  test "total_devlogged_seconds excludes ship marker rows" do
+    owner = users(:one)
+    p = Project.create!(user: owner, name: "Totals Only Devlogs", repository_url: "x", total_seconds: 8.hours.to_i)
+
+    # Genuine user-authored devlog should always count.
+    p.devlogs.create!(user: owner, title: "Actual work", content: "x", duration_seconds: 1800, log_date: Date.current)
+
+    # Mimic legacy/corrupt marker data where a ship-marker row accidentally has user_id.
+    req = p.ship_requests.create!(user: owner, requested_at: Time.current, devlogged_seconds: 1800, status: "pending")
+    p.devlogs.create!(user: owner, ship_request: req, title: "Ship #1", content: "system marker", duration_seconds: 7200, log_date: Date.current)
+
+    assert_equal 1800, p.total_devlogged_seconds
+  end
+
   test "github_readme_present? returns true when explicit readme_url present" do
     p = Project.new(user: users(:one), name: "R", repository_url: "https://github.com/owner/repo", readme_url: "https://example.com/README.md")
     assert_predicate p, :github_readme_present?

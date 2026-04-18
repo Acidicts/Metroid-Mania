@@ -42,6 +42,12 @@ class User < ApplicationRecord
 
   validate :ensure_fraud_reason, on: :update
   validate :get_xp
+  validate :currency_is_charm_notches, on: :update
+
+  def currency_is_charm_notches
+    self.currency = self.charm_notches.count
+    save(validate: false)
+  end
 
   def get_xp
     # XP is based on the amount of time the user themself has documented

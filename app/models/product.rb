@@ -4,6 +4,10 @@ class Product < ApplicationRecord
   # already, but having an AR-level restriction allows us to show a
   # sensible validation error instead of raising a constraint exception.
   has_many :orders, dependent: :restrict_with_error
+  has_many :accessory_groups, dependent: :destroy, inverse_of: :product
+  has_many :accessories, through: :accessory_groups
+  accepts_nested_attributes_for :accessory_groups, allow_destroy: true, reject_if: :all_blank
+
   # each product may optionally be tied to an achievement. we store the
   # foreign key on `products.achievement_id`, so this is a `belongs_to`
   # association. earlier versions mistakenly used `has_one` which looked for

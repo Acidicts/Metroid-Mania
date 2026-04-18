@@ -115,19 +115,7 @@ module Admin
 
       Order.transaction do
         # If the order is denied but a refund audit doesn't exist, refund the user now (idempotent)
-        if @order.cost.present? && @order.cost.to_f > 0
-          adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
-          refund_exists = if adapter.include?("sqlite")
-            Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", "order_refunded", @order.id.to_s).exists?
-          else
-            Audit.where("action = ? AND (details ->> 'order_id')::text = ?", "order_refunded", @order.id.to_s).exists?
-          end
-
-          unless refund_exists
-            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: "order_refunded", details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
-          end
-        end
+        refund_order_if_needed!(@order, previous_status: previous)
 
         Audit.create!(user: current_user, project: nil, action: "order_deleted", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
         @order.destroy!
@@ -144,43 +132,52 @@ module Admin
 
       previous = @order.status
 
-      begin
-        Order.transaction do
-          db_val = normalize_status_for_db("denied").first || (Order.respond_to?(:statuses) ? Order.statuses["denied"] : "denied")
+      refunded = false
+      Order.transaction do
+        db_val = normalize_status_for_db("denied").first || (Order.respond_to?(:statuses) ? Order.statuses["denied"] : "denied")
 
-          # Set order to denied
-          @order.update!(status: db_val)
+        # Set order to denied
+        @order.update!(status: db_val)
 
-          # Refund user (only if the order had a cost)
-          if @order.cost.present? && @order.cost.to_f > 0
-            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: "order_refunded", details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
-          else
-            Audit.create!(user: current_user, project: nil, action: "order_declined", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
-          end
+        refunded = refund_order_if_needed!(@order, previous_status: previous)
+        unless refunded
+          Audit.create!(user: current_user, project: nil, action: "order_declined", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
         end
-
-        @order.charm_slot&.update!(order: nil)
-
-        redirect_back fallback_location: admin_orders_path, notice: "Order declined and user refunded."
-      rescue ActiveRecord::RecordNotUnique => e
-        # Defensive fallback in case of an unexpected uniqueness race — log and perform refund/audit without deleting
-        Rails.logger.warn "Admin::OrdersController#decline: uniqueness race - #{e.class}: #{e.message}"
-
-        Order.transaction do
-          if @order.cost.present? && @order.cost.to_f > 0
-            @order.user.update!(currency: (@order.user.currency || 0) + @order.cost.to_f, amount_spent: (@order.user.amount_spent || 0).to_f - @order.cost.to_f)
-            Audit.create!(user: current_user, project: nil, action: "order_refunded", details: { order_id: @order.id, order_public_id: @order.public_id, amount: @order.cost.to_f, previous_status: canonical_status(previous) })
-          else
-            Audit.create!(user: current_user, project: nil, action: "order_declined", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
-          end
-        end
-
-        redirect_back fallback_location: admin_orders_path, notice: "Order declined and user refunded."
       end
+
+      @order.charm_slot&.update!(order: nil)
+
+      notice = refunded ? "Order declined and user refunded." : "Order declined."
+      redirect_back fallback_location: admin_orders_path, notice: notice
     end
 
     private
+
+    def refund_order_if_needed!(order, previous_status:)
+      return false unless order.cost.present? && order.cost.to_f > 0
+      return false if refund_audit_exists_for_order?(order)
+
+      order.user.update!(currency: (order.user.currency || 0) + order.cost.to_f,
+                         amount_spent: (order.user.amount_spent || 0).to_f - order.cost.to_f)
+
+      Audit.create!(user: current_user, project: nil, action: "order_refunded",
+                    details: { order_id: order.id, order_public_id: order.public_id,
+                               amount: order.cost.to_f, previous_status: canonical_status(previous_status) })
+      true
+    end
+
+    def refund_audit_exists_for_order?(order)
+      adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
+      exists = if adapter.include?("sqlite")
+        Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", "order_refunded", order.id.to_s).exists?
+      else
+        Audit.where("action = ? AND (details ->> 'order_id')::text = ?", "order_refunded", order.id.to_s).exists?
+      end
+
+      return true if exists
+
+      Audit.where(action: "order_refunded").to_a.any? { |audit| audit.details && audit.details["order_id"].to_i == order.id }
+    end
 
     def set_order
       @order = Order.find_by_param(params[:id])

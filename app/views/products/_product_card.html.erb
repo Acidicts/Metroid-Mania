@@ -69,31 +69,27 @@
         <% base_cost = product.notch_cost.to_i %>
         <% effective = product.effective_notch_cost %>
         <div class="product-meta">
-          <div class="product-price">
+          <p class="product-price">
             Notches: <span><%= effective %></span>
             <% if effective != base_cost %>
               <span class="old-price">(<%= base_cost %>)</span>
             <% end %>
-          </div>
+          </p>
           <% if product.limited? %>
             <div class="product-stock">Stock: <%= product.stock %></div>
           <% end %>
         </div>
 
-        <%# When the user clicks the button we create the order immediately instead of
-            showing the intermediate checkout page.  For variable-grant products we
-            include the minimum dollar amount so the order validates. %>
+        <%# For products that require user choices (variable grant or accessories),
+            send users to the checkout page. Plain products can be equipped directly. %>
         <% order_params = { product_id: product.id } %>
-        <% if product.variable_grant? %>
-          <% order_params[:grant_amount_dollars] = product.grant_min_dollars %>
-        <% end %>
         <div class="product-actions">
           <div class="action-group">
-            <% if product.is_unlocked(current_user) && product.not_grant? %>
+            <% if product.is_unlocked(current_user) && (product.variable_grant? || product.accessory_groups.any?) %>
+              <%= link_to "Equip", new_order_path(product_id: product.id), class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout" %>
+            <% elsif product.is_unlocked(current_user) %>
               <%= button_to "Equip", orders_path(order_params), method: :post,
                             class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout", form: { "data-turbo" => false } %>
-            <% elsif product.is_unlocked(current_user) && product.variable_grant? %>
-              <%= link_to "Equip", new_order_path(product_id: product.id), class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout" %>
             <% else %>
               <button class="btn-retro buy-button disabled" disabled>Locked</button>
             <% end %>

@@ -1,54 +1,136 @@
-<div class="admin-panel">
+<div class="admin-panel admin-ship-request-page">
   <% project_name = @ship_request.project&.name || "Project ##{@ship_request.project_id || 'unknown'}" %>
-  <h1>Ship Request for <%= project_name %> (#<%= @ship_request.id %>)</h1>
+  <% requester_name = @ship_request.user&.name || @ship_request.user&.email || "Unknown user" %>
 
-  <p><strong>Requested at:</strong> <%= l(@ship_request.requested_at, format: :short) %></p>
-  <p><strong>Requester:</strong> <%= @ship_request.user&.name || @ship_request.user&.email %></p>
-  <p><strong>Devlogged:</strong> <%= format_duration(@ship_request.devlogged_seconds.to_i) %></p>
-  <p><strong>Credits per hour:</strong> <%= @ship_request.credits_per_hour.presence || 'not set' %></p>
-  <p><strong>Multiplier:</strong> <%= @ship_request.multiplier.to_f %></p>
-  <p><strong>Status:</strong> <span class="status-badge <%= @ship_request.pending? ? 'status-pending' : (@ship_request.status == 'rejected' ? 'status-denied' : 'status-fulfilled') %>"><%= @ship_request.status.to_s.humanize %></span></p>
+  <div class="admin-page-header admin-ship-request-header">
+    <div>
+      <p class="admin-ship-request-kicker">Review Ship Request</p>
+      <h1><%= project_name %></h1>
+      <p class="admin-ship-request-meta">
+        Request #<%= @ship_request.id %>
+        <% if @ship_request.project.present? %>
+          - <%= link_to "Open project", project_path(@ship_request.project), class: "admin-ship-request-project-link" %>
+        <% else %>
+          - Project is no longer available
+        <% end %>
+      </p>
+    </div>
 
-  <p><strong>Credits awarded:</strong>
-    <% if @ship_request.effective_credits_awarded.present? %>
-      <%= correct_credits(@ship_request.effective_credits_awarded) %>
-      <% if (s = @ship_request.associated_ship).present? %>
-        <small style="color:#666; margin-left:8px">(from Ship ##<%= s.id %> at <%= l(s.shipped_at, format: :short) %>)</small>
-      <% end %>
-    <% else %>
-      <em>Not awarded yet</em>
-    <% end %>
-  </p>
+    <div class="admin-ship-request-status-panel">
+      <span class="admin-ship-request-status-label">Current status</span>
+      <%= ship_request_status_badge(@ship_request) %>
+    </div>
+  </div>
+
+
+  <div class="admin-ship-request-grid">
+    <section class="admin-card admin-ship-request-card">
+      <h2>Request details</h2>
+      <dl class="admin-ship-request-list">
+        <div class="admin-ship-request-list-row">
+          <dt>Requested at</dt>
+          <dd><%= l(@ship_request.requested_at, format: :short) %></dd>
+        </div>
+        <div class="admin-ship-request-list-row">
+          <dt>Requester</dt>
+          <dd><%= requester_name %></dd>
+        </div>
+        <div class="admin-ship-request-list-row">
+          <dt>Devlogged time</dt>
+          <dd><%= format_duration(@ship_request.devlogged_seconds.to_i) %></dd>
+        </div>
+        <div class="admin-ship-request-list-row">
+          <dt>Project id</dt>
+          <dd><%= @ship_request.project_id || "unknown" %></dd>
+        </div>
+      </dl>
+    </section>
+
+    <section class="admin-card admin-ship-request-card">
+      <h2>Credits snapshot</h2>
+      <dl class="admin-ship-request-list">
+        <div class="admin-ship-request-list-row">
+          <dt>Credits per hour</dt>
+          <dd><%= @ship_request.credits_per_hour.presence || "Not set" %></dd>
+        </div>
+        <div class="admin-ship-request-list-row">
+          <dt>Multiplier</dt>
+          <dd><%= @ship_request.multiplier.to_f %></dd>
+        </div>
+        <div class="admin-ship-request-list-row">
+          <dt>Credits awarded</dt>
+          <dd>
+            <% if @ship_request.effective_credits_awarded.present? %>
+              <%= correct_credits(@ship_request.effective_credits_awarded) %>
+              <% if (s = @ship_request.associated_ship).present? %>
+                <span class="admin-ship-request-note">From Ship #<%= s.id %> at <%= l(s.shipped_at, format: :short) %></span>
+              <% end %>
+            <% else %>
+              <em>Not awarded yet</em>
+            <% end %>
+          </dd>
+        </div>
+      </dl>
+    </section>
+  </div>
 
   <% if @ship_request.pending? %>
-    <div style="margin-top:12px; display:flex; gap:8px; align-items:flex-start;">
-      <div style="flex:1;">
-        <%= form_with url: approve_admin_ship_request_path(@ship_request), method: :post, local: true do |f| %>
-          <div>
-            <%= f.label :credits_per_hour, 'Credits per hour (optional)' %><br>
-            <%= f.number_field :credits_per_hour, value: @ship_request.credits_per_hour, step: 0.01, min: 0, style: 'width:160px;' %>
-          </div>
-          <div style="margin-top:8px;">
-            <%= f.label :multiplier, 'Multiplier (optional)' %><br>
-            <%= f.number_field :multiplier, value: @ship_request.multiplier, step: 0.01, min: 0.0, style: 'width:160px;' %>
-          </div>
-          <div style="margin-top:8px;">
-            <%= f.label :recipient_user_id, 'Award credits to user (optional)' %><br>
-            <%= f.select :recipient_user_id, options_from_collection_for_select(@users, :id, ->(u){ u.name.presence || u.email }, @ship_request.user_id), { include_blank: '(project owner)' }, style: 'width:260px;' %>
-            <div style="font-size:12px;color:#666;margin-top:4px;">If none selected, credits are awarded to the project owner.</div>
-          </div>
-          <div style="margin-top:8px;">
-            <%= f.submit 'Approve and ship', class: 'btn-admin btn-admin-success' %>
-          </div>
-        <% end %>
+    <div class="admin-two-col admin-ship-request-actions-layout">
+      <div class="admin-two-col-main">
+        <section class="admin-card admin-ship-request-card">
+          <h2>Approve and ship</h2>
+          <p class="admin-hint">Optionally override defaults before shipping this request.</p>
+
+          <%= form_with url: approve_admin_ship_request_path(@ship_request), method: :post, local: true, class: "admin-form admin-ship-request-form" do |f| %>
+            <div class="admin-form-row">
+              <%= f.label :credits_per_hour, "Credits per hour (optional)", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= f.number_field :credits_per_hour, value: @ship_request.credits_per_hour, step: 0.01, min: 0 %>
+              </div>
+            </div>
+
+            <div class="admin-form-row">
+              <%= f.label :multiplier, "Multiplier (optional)", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= f.number_field :multiplier, value: @ship_request.multiplier, step: 0.01, min: 0.0 %>
+              </div>
+            </div>
+
+            <div class="admin-form-row">
+              <%= f.label :recipient_user_id, "Award credits to user (optional)", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= f.select :recipient_user_id,
+                             options_from_collection_for_select(@users, :id, ->(u) { u.name.presence || u.email }, @ship_request.user_id),
+                             { include_blank: "(project owner)" },
+                             {} %>
+                <span class="admin-ship-request-note">If none selected, credits are awarded to the project owner.</span>
+              </div>
+            </div>
+
+            <div class="admin-form-actions">
+              <%= f.submit "Approve and ship", class: "btn-admin btn-admin-success" %>
+            </div>
+          <% end %>
+        </section>
       </div>
 
-      <div>
-        <%= button_to 'Reject', reject_admin_ship_request_path(@ship_request), method: :post, data: { confirm: 'Reject this request?' }, class: 'btn-admin btn-admin-warning' %>
-      </div>
+      <aside class="admin-actions-panel admin-ship-request-reject-panel">
+        <div class="admin-card admin-actions">
+          <div class="admin-actions-title">
+            <h3>Reject request</h3>
+          </div>
+          <p class="admin-hint">Rejecting keeps this request unshipped and marks it as denied.</p>
+          <%= button_to "Reject", reject_admin_ship_request_path(@ship_request), method: :post, data: { confirm: "Reject this request?" }, class: "btn-admin btn-admin-warning btn-block" %>
+        </div>
+      </aside>
     </div>
   <% else %>
-    <p><strong>Processed at:</strong> <%= l(@ship_request.approved_at, format: :short) %> by <%= @ship_request.processed_by&.name || @ship_request.processed_by&.email %></p>
-  <% end %>
+    <% processed_at = @ship_request.approved_at || @ship_request.updated_at %>
+    <% processed_by = @ship_request.processed_by&.name || @ship_request.processed_by&.email || "Unknown" %>
 
+    <section class="admin-card admin-ship-request-card admin-ship-request-processed">
+      <h2>Processed</h2>
+      <p><strong>Processed at:</strong> <%= l(processed_at, format: :short) %> by <%= processed_by %></p>
+    </section>
+  <% end %>
 </div>

@@ -1,7 +1,7 @@
 class CharmNotchesController < ApplicationController
   before_action :set_charm_notch, only: %i[ show edit update destroy ]
   before_action :ensure_user_not_fraudulent, only: %i[ index show ]
-  before_action :require_login, only: %i[ donate ]
+  before_action :require_login_for_donate, only: %i[ donate ]
 
   # GET /charm_notches or /charm_notches.json
   def index
@@ -78,6 +78,13 @@ class CharmNotchesController < ApplicationController
   end
 
   private
+    def require_login_for_donate
+      return if logged_in?
+
+      flash_warn("You must be logged in to donate charm notches")
+      redirect_to root_path and return
+    end
+
     # Use callbacks to share common setup or constraints between actions.
     def set_charm_notch
       @charm_notch = CharmNotch.find(params.expect(:id))

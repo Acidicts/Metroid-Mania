@@ -110,141 +110,168 @@ class OrdersController < ApplicationController
   # POST /orders or /orders.json
   def create
     @product = Product.find(params[:product_id])
+    pending_status = order_status_value("pending")
 
-    # compute the database value for 'pending' status so we can compare directly
-    pending_db_val = if Order.respond_to?(:statuses)
-      Order.statuses["pending"]
-    elsif Order.const_defined?(:STATUS_VALUE_MAP)
-      Order::STATUS_VALUE_MAP["pending"]
-    else
-      "pending"
-    end
-
-    # block early if there's already a pending order (avoid later uniqueness rescue)
-    if current_user.orders.where(product: @product, status: pending_db_val).exists?
+    if pending_order_exists?(@product, pending_status)
       flash_warn("Already In Loadout")
       redirect_to products_path and return
     end
 
-    begin
-      # Debug: log existing orders for this user/product (helps diagnose intermittant test failures)
-      puts "DEBUG ORDERS LOOKUP (before create): #{Order.where(user_id: current_user.id, product_id: @product.id).map { |o| [ o.id, o.status ] }.inspect }"
-      Rails.logger.debug "ORDERS LOOKUP (before create): #{Order.where(user_id: current_user.id, product_id: @product.id).map { |o| [ o.id, o.status ] }.inspect }"
+    selected_accessory_choices = normalized_accessory_group_choices
+    missing_required_groups = missing_required_accessory_groups(@product, selected_accessory_choices)
+    if missing_required_groups.any?
+      @order = current_user.orders.build(build_order_attrs(@product, pending_status))
+      missing_required_groups.each do |group|
+        group_label = group.name.presence || "Accessory group"
+        @order.errors.add(:base, "Please choose an option for #{group_label}.")
+      end
+      render :new, status: :unprocessable_entity and return
+    end
 
-      # Direct DB lookup for pending order (avoid association cache).
-      # Use the DB-backed enum value when available (some adapters store an integer in the DB).
-      pending_db_val = if Order.respond_to?(:statuses)
-        Order.statuses["pending"]
+    @order = current_user.orders.create!(build_order_attrs(@product, pending_status, selected_accessory_choices))
+    flash_pass("Order placed successfully!")
+    redirect_to products_path
+  rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
+    handle_duplicate_pending_error!(e, pending_status || order_status_value("pending"))
+  rescue ActiveRecord::RecordInvalid => e
+    handle_invalid_order_error!(e.record)
+  end
+
+  private
+    def order_status_value(status_name)
+      if Order.respond_to?(:statuses)
+        Order.statuses[status_name]
       elsif Order.const_defined?(:STATUS_VALUE_MAP)
-        Order::STATUS_VALUE_MAP["pending"]
+        Order::STATUS_VALUE_MAP[status_name]
       else
-        "pending"
+        status_name
+      end
+    end
+
+    def pending_order_exists?(product, pending_status)
+      Order.where(user_id: current_user.id, product_id: product.id, status: pending_status).exists?
+    end
+
+    def build_order_attrs(product, pending_status, selected_accessory_choices = {})
+      order_attrs = { product: product, status: pending_status }
+      accessory_cost_total = selected_accessory_cost_total(product, selected_accessory_choices)
+
+      if product.variable_grant? && params[:grant_amount_dollars].present?
+        grant_dollars = params[:grant_amount_dollars].to_f
+        base_notch_cost = (grant_dollars / 10.0).round
+        base_cost = product.credits_for_dollars(grant_dollars).to_f
+
+        order_attrs[:grant_amount_cents] = (grant_dollars * 100).round
+        order_attrs[:notch_cost] = base_notch_cost + accessory_cost_total
+        order_attrs[:cost] = base_cost + accessory_cost_total
+      elsif accessory_cost_total.positive?
+        order_attrs[:notch_cost] = product.effective_notch_cost + accessory_cost_total
+        order_attrs[:cost] = product.price_currency.to_f + accessory_cost_total
       end
 
-      puts "DEBUG OrdersController#create: pending_db_val=#{pending_db_val.inspect} (class=#{pending_db_val.class})"
-      existing_pending = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
-      puts "DEBUG OrdersController#create: existing_pending=#{existing_pending&.id.inspect} status=#{existing_pending&.status.inspect}"
-      if existing_pending
+      charm_image_url = params[:charm_image_url].presence || product.image_url
+      order_attrs[:charm_image_url] = charm_image_url if charm_image_url.present?
+
+      accessory_extra_info_json = accessory_choices_extra_info_json(product, selected_accessory_choices)
+      order_attrs[:extra_info] = accessory_extra_info_json if accessory_extra_info_json.present?
+
+      order_attrs
+    end
+
+    def normalized_accessory_group_choices
+      raw_choices = params[:accessory_group_choices]
+      return {} if raw_choices.blank?
+
+      choices_hash = if raw_choices.respond_to?(:to_unsafe_h)
+        raw_choices.to_unsafe_h
+      elsif raw_choices.respond_to?(:to_h)
+        raw_choices.to_h
+      else
+        {}
+      end
+
+      choices_hash.each_with_object({}) do |(group_id, accessory_id), normalized|
+        next if group_id.blank? || accessory_id.blank?
+
+        normalized[group_id.to_s] = accessory_id.to_s
+      end
+    end
+
+    def missing_required_accessory_groups(product, selected_choices)
+      return [] unless product.accessory_groups.exists?
+
+      product.accessory_groups.includes(:accessories).select do |group|
+        next false unless group.required?
+        next false if group.accessories.empty?
+
+        selected_accessory_id = selected_choices[group.id.to_s]
+        selected_accessory_id.blank? || group.accessories.none? { |accessory| accessory.id.to_s == selected_accessory_id }
+      end
+    end
+
+    def accessory_choices_extra_info_json(product, selected_choices)
+      return nil if selected_choices.blank?
+
+      selected_map = {}
+
+      product.accessory_groups.includes(:accessories).each do |group|
+        selected_accessory_id = selected_choices[group.id.to_s]
+        next if selected_accessory_id.blank?
+
+        selected_accessory = group.accessories.find { |accessory| accessory.id.to_s == selected_accessory_id }
+        next unless selected_accessory
+
+        key = group.name.to_s.strip.downcase
+        key = "group_#{group.id}" if key.blank?
+        selected_map[key] = selected_accessory.name.to_s
+      end
+
+      return nil if selected_map.empty?
+
+      JSON.generate(selected_map)
+    end
+
+    def selected_accessory_cost_total(product, selected_choices)
+      return 0 if selected_choices.blank?
+
+      total = 0
+      product.accessory_groups.includes(:accessories).each do |group|
+        selected_accessory_id = selected_choices[group.id.to_s]
+        next if selected_accessory_id.blank?
+
+        selected_accessory = group.accessories.find { |accessory| accessory.id.to_s == selected_accessory_id }
+        total += selected_accessory.cost.to_i if selected_accessory
+      end
+
+      total
+    end
+
+    def handle_duplicate_pending_error!(error, pending_status)
+      Rails.logger.warn("OrdersController#create duplicate/statement error: #{error.class} #{error.message.inspect}")
+      msg = error.message.to_s
+      duplicate_like = error.is_a?(ActiveRecord::RecordNotUnique) ||
+                       msg.include?("UNIQUE constraint failed") ||
+                       msg.match?(/duplicate/i)
+
+      if duplicate_like && pending_order_exists?(@product, pending_status)
         flash_warn("Already In Loadout")
-        redirect_to home_path and return
-      end
-
-      puts "DEBUG OrdersController#create: current_user.currency=#{current_user.currency.inspect} product.price_currency=#{@product.price_currency.inspect}"
-
-      # Attempt to create the pending order; handle DB-level uniqueness races explicitly.
-      @order = nil
-      begin
-        puts "DEBUG OrdersController#create: about to create order (user_id=#{current_user.id} product_id=#{@product.id} status=#{pending_db_val.inspect})"
-
-        order_attrs = { product: @product, status: pending_db_val }
-        # Accept a user-selected grant amount (dollars) for variable products
-        if @product.variable_grant? && params[:grant_amount_dollars].present?
-          grant_dollars = params[:grant_amount_dollars].to_f
-          order_attrs[:grant_amount_cents] = (grant_dollars * 100).round
-          order_attrs[:notch_cost] = (grant_dollars / 10.0).round
-          order_attrs[:cost] = (grant_dollars / 10.0).round
-        end
-        # custom charm image URL if provided; otherwise default to product image when one exists
-        if params[:charm_image_url].present?
-          order_attrs[:charm_image_url] = params[:charm_image_url]
-        elsif @product.image_url.present?
-          order_attrs[:charm_image_url] = @product.image_url
-        end
-
-        @order = current_user.orders.create!(order_attrs)
-        puts "DEBUG OrdersController#create: create! returned; order_id=#{@order&.id.inspect} persisted=#{@order&.persisted?.inspect} errors=#{@order&.errors&.full_messages.inspect}"
-      rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
-        Rails.logger.warn "OrdersController#create: caught #{e.class} - #{e.message.inspect}; attempting to locate existing pending order"
-        existing = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
-        if existing
-          flash_warn("Already In Loadout")
-          redirect_to home_path and return
-        end
-      end
-
-      if @order && @order.persisted?
-        flash_pass("Order placed successfully!")
-        redirect_to products_path and return
-      else
-        @order = current_user.orders.build(
-          product: @product,
-          status: pending_db_val,
-          charm_image_url: params[:charm_image_url].presence || @product.image_url
-        )
-        @order.charm_image_url = params[:charm_image_url] if params[:charm_image_url].present?
-
-        # This branch is unlikely to be hit (create! either returns a persisted record
-        # or raises), but keep defensive handling in case the adapter behaves
-        # differently.  We mirror the logic from the RecordInvalid rescue below.
-        insuff = @order.errors[:base].any? { |m| m =~ /\AInsufficient/ }
-        if insuff &&
-           current_user.orders.exists?(product: @product,
-                                      status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] :
-                                                                      (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] :
-                                                                                                         "denied")))
-          flash_warn("Insufficient Notches — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
-        elsif insuff
-          flash_warn("Insufficient Notches")
-        else
-          flash_warn(@order.errors.full_messages.to_sentence)
-        end
-
         redirect_to products_path and return
       end
-    rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
-      puts "DEBUG OrdersController#create: outer rescue caught #{e.class} - #{e.message.inspect}"
-      Rails.logger.warn "OrdersController#create: caught #{e.class} - #{e.message.inspect}; re-checking for existing pending order"
-      # Some DB adapters (SQLite) surface UNIQUE violations differently; treat any 'duplicate' message as the same.
-      msg = e.message.to_s
-      if msg.include?("UNIQUE constraint failed") || msg.match?(/duplicate/i)
-        existing = Order.find_by(user_id: current_user.id, product_id: @product.id, status: pending_db_val)
-        if existing
-          flash_info("Order already placed")
-          redirect_to products_path and return
-        end
-      end
 
-      # If we get here, attempt to surface the original error for debugging
       raise
-    rescue ActiveRecord::RecordInvalid => e
-      puts "DEBUG OrdersController#create: RecordInvalid: #{e.record.errors.full_messages.inspect}"
-      # Save failed due to validation (e.g. insufficient funds). Inspect the invalid record from the exception.
-      invalid_order = e.record
+    end
 
-      # Check for insufficient‑funds/free‑notches/denied‑order scenarios first
-      insuff = invalid_order.errors[:base].any? { |m| m =~ /\AInsufficient/ }
-      if insuff
-        if current_user.orders.exists?(product: @product,
-                                     status: (Order.respond_to?(:statuses) ? Order.statuses["denied"] :
-                                                                             (Order.const_defined?(:STATUS_VALUE_MAP) ? Order::STATUS_VALUE_MAP["denied"] :
-                                                                                                                "denied")))
+    def handle_invalid_order_error!(invalid_order)
+      if insufficient_notches_error?(invalid_order)
+        if denied_order_exists_for_product?(@product)
           flash_warn("Insufficient Notches — a previous denied order exists and may not have been refunded. Contact support if your balance should have been restored.")
         else
           flash_warn("Insufficient Notches")
         end
         redirect_to products_path and return
-      elsif invalid_order.product_id == @product.id
-        # re-render the checkout page with the invalid order so users can fix the input
+      end
+
+      if invalid_order.product_id == @product.id
         @order = invalid_order
         render :new, status: :unprocessable_entity
       else
@@ -252,9 +279,16 @@ class OrdersController < ApplicationController
         redirect_to products_path and return
       end
     end
-  end
 
-  private
+    def insufficient_notches_error?(order)
+      order.errors[:base].any? { |msg| msg =~ /\AInsufficient/ }
+    end
+
+    def denied_order_exists_for_product?(product)
+      denied_status = order_status_value("denied")
+      current_user.orders.where(product_id: product.id, status: denied_status).exists?
+    end
+
     # Use callbacks to share common setup or constraints between actions.
     def set_order
       @order = Order.find_by_param(params[:id])

@@ -1,114 +1,115 @@
-<%= form_with(model: project, html: { multipart: true, class: 'admin-product-form', data: { controller: 'project-url-validator' } }) do |form| %>
-  <% if project.errors.any? %>
-    <div class="error-summary" role="alert">
-      <strong><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</strong>
-      <ul>
-        <% project.errors.full_messages.each do |msg| %>
-          <li><%= msg %></li>
-        <% end %>
-      </ul>
-    </div>
-  <% end %>
-
-  <div class="form-grid">
-    <div class="main-column">
-
-      <!-- ── Project Info ── -->
-      <div class="apf-section">
-        <div class="apf-section-title">Project Info</div>
-
-        <div class="form-group">
-          <%= form.label :name, "Project Title/Name*" %>
-          <%= form.text_field :name, class: "form-input" %>
-        </div>
-
-        <div class="form-group">
-          <%= form.label :description, "Project Description" %>
-          <%= form.text_area :description, rows: 5, placeholder: "Short summary of your project", class: "form-input" %>
-        </div>
+<div class="project-form-card">
+  <%= form_with(model: project, html: { multipart: true, class: 'admin-product-form', data: { controller: 'project-url-validator' } }) do |form| %>
+    <% if project.errors.any? %>
+      <div class="error-summary" role="alert">
+        <strong><%= pluralize(project.errors.count, "error") %> prohibited this project from being saved:</strong>
+        <ul>
+          <% project.errors.full_messages.each do |msg| %>
+            <li><%= msg %></li>
+          <% end %>
+        </ul>
       </div>
+    <% end %>
 
-      <!-- ── Links ── -->
-      <div class="apf-section">
-        <div class="apf-section-title">Links</div>
+    <div class="form-grid">
+      <div class="main-column">
 
-        <div class="form-group">
-          <%= form.label :repository_url, "GitHub Repo URL" %>
-          <%= form.text_field :repository_url, id: "repo_text_box", class: "form-input", data: { project_url_validator_target: 'repo' } %>
-          <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
-        </div>
+        <!-- ── Project Info ── -->
+        <div class="apf-section">
+          <div class="apf-section-title">Project Info</div>
 
-        <div class="form-group">
-          <%= form.label :readme_url, "Readme Address" %>
-          <%= form.text_field :readme_url, id: "readme_text_box", class: "form-input", data: { project_url_validator_target: 'readme' } %>
-          <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
-        </div>
-      </div>
-
-      <!-- ── Hackatime ── -->
-      <div class="apf-section" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
-        <div class="apf-section-title">Hackatime</div>
-
-        <% if @hackatime_projects.present? %>
           <div class="form-group">
-            <%= form.label :hackatime_ids, "Link Hackatime Projects" %>
-            <select id="hackatime-dropdown" class="form-input" data-action="change->hackatime-selector#add">
-              <option value="">Select a Hackatime project...</option>
-              <% @hackatime_projects.each do |p| %>
-                <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
-              <% end %>
-            </select>
+            <%= form.label :name, "Project Title/Name*" %>
+            <%= form.text_field :name, class: "form-input", required: true %>
           </div>
-        <% else %>
-          <p class="field-hint"><em>No Hackatime Projects. Start <a href="https://hackatime.hackclub.com/">here</a></em></p>
-        <% end %>
 
-        <div id="hackatime-selected" class="hackatime-selected">
-          <% (project.hackatime_ids || []).each do |h| %>
-            <% seconds = (@hackatime_seconds || {})[h] || (@hackatime_projects || []).find { |p| p['name'] == h }&.dig('seconds') %>
-            <div class="hackatime-chip" data-hackatime-value="<%= h %>">
-              <span class="hackatime-label"><%= h %></span>
-              <% if seconds.present? && seconds.to_i > 0 %>
-                <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
-              <% end %>
-              <% locked = project.persisted? && project.hackatime_id_locked?(h) %>
-              <% if locked %>
-                <button type="button" class="hackatime-remove hackatime-remove--locked" disabled title="Cannot remove — this was linked when the project was shipped">✕</button>
-              <% else %>
-                <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
-              <% end %>
-              <input type="hidden" name="project[hackatime_ids][]" value="<%= h %>">
+          <div class="form-group">
+            <%= form.label :description, "Project Description" %>
+            <%= form.text_area :description, rows: 5, placeholder: "Short summary of your project", class: "form-input" %>
+          </div>
+        </div>
+
+        <!-- ── Links ── -->
+        <div class="apf-section">
+          <div class="apf-section-title">Links</div>
+
+          <div class="form-group">
+            <%= form.label :repository_url, "GitHub Repo URL" %>
+            <%= form.text_field :repository_url, id: "repo_text_box", class: "form-input", data: { project_url_validator_target: 'repo' } %>
+            <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
+          </div>
+
+          <div class="form-group">
+            <%= form.label :readme_url, "Readme Address" %>
+            <%= form.text_field :readme_url, id: "readme_text_box", class: "form-input", data: { project_url_validator_target: 'readme' } %>
+            <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
+          </div>
+        </div>
+
+        <!-- ── Hackatime ── -->
+        <div class="apf-section" data-controller="hackatime-selector" data-hackatime-selector-taken-value="<%= (@taken_hackatime_names || []).join(',') %>">
+          <div class="apf-section-title">Hackatime</div>
+
+          <% if @hackatime_projects.present? %>
+            <div class="form-group">
+              <%= form.label :hackatime_ids, "Link Hackatime Projects" %>
+              <select id="hackatime-dropdown" class="form-input" data-action="change->hackatime-selector#add">
+                <option value="">Select a Hackatime project...</option>
+                <% @hackatime_projects.each do |p| %>
+                  <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
+                <% end %>
+              </select>
             </div>
+          <% else %>
+            <p class="field-hint"><em>No Hackatime Projects. Start <a href="https://hackatime.hackclub.com/">here</a></em></p>
+          <% end %>
+
+          <div id="hackatime-selected" class="hackatime-selected">
+            <% (project.hackatime_ids || []).each do |h| %>
+              <% seconds = (@hackatime_seconds || {})[h] || (@hackatime_projects || []).find { |p| p['name'] == h }&.dig('seconds') %>
+              <div class="hackatime-chip" data-hackatime-value="<%= h %>">
+                <span class="hackatime-label"><%= h %></span>
+                <% if seconds.present? && seconds.to_i > 0 %>
+                  <span class="hackatime-seconds"><%= format_duration(seconds.to_i) %></span>
+                <% end %>
+                <% locked = project.persisted? && project.hackatime_id_locked?(h) %>
+                <% if locked %>
+                  <button type="button" class="hackatime-remove hackatime-remove--locked" disabled title="Cannot remove — this was linked when the project was shipped">✕</button>
+                <% else %>
+                  <button type="button" class="hackatime-remove" data-action="click->hackatime-selector#remove">✕</button>
+                <% end %>
+                <input type="hidden" name="project[hackatime_ids][]" value="<%= h %>">
+              </div>
+            <% end %>
+          </div>
+        </div>
+
+        <!-- Project Tag -->
+        <div class="apf-section">
+          <div class="apf-section-title">Project Tag</div>
+          <div class="form-group">
+            <%= form.label :project_tag_id, "Project tag" %>
+            <%= form.collection_select :project_tag_id,
+                  ProjectTag.order(:tag_string),
+                  :id, :tag,
+                  { include_blank: "None" },
+                  { class: "form-input" } %>
+          </div>
+        </div>
+
+        <div class="form-actions">
+          <%= form.submit "Submit Project", class: "btn-primary" %>
+          <% if project.persisted? %>
+            <p class="field-hint" style="margin-top: 8px;"><strong>Editing existing project.</strong></p>
           <% end %>
         </div>
       </div>
 
-      <!-- Project Tag -->
-      <div class="apf-section">
-        <div class="apf-section-title">Project Tag</div>
-        <div class="form-group">
-          <%= form.label :project_tag_id, "Project tag" %>
-          <%= form.collection_select :project_tag_id,
-                ProjectTag.order(:tag_string),
-                :id, :tag,
-                { include_blank: "None" },
-                { class: "form-input" } %>
-        </div>
-      </div>
+      <aside class="sidebar-column">
 
-      <div class="form-actions">
-        <%= form.submit "Submit Project", class: "btn-primary" %>
-        <% if project.persisted? %>
-          <p class="field-hint" style="margin-top: 8px;"><strong>Editing existing project.</strong></p>
-        <% end %>
-      </div>
+        <%= render 'application/file_drop_past', form: form, field_name: :image, attached_image: project.image %>
 
+      </aside>
     </div>
-
-    <aside class="sidebar-column">
-
-      <%= render 'application/file_drop_past', form: form, field_name: :image, attached_image: project.image %>
-
-    </aside>
-  </div>
-<% end %>
+  <% end %>
+</div>

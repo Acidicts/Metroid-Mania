@@ -1,4 +1,8 @@
 <div id="new-project">
+  <% content_for :styles do %>
+    <%= stylesheet_link_tag "products", "data-turbo-track": "reload" %>
+  <% end %>
+
   <% content_for :title, "New project" %>
 
   <h1>New project</h1>

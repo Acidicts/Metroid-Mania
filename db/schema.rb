@@ -10,7 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_15_100000) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_18_132212) do
+  create_table "accessories", force: :cascade do |t|
+    t.integer "accessory_group_id", null: false
+    t.integer "cost"
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.datetime "updated_at", null: false
+    t.index ["accessory_group_id"], name: "index_accessories_on_accessory_group_id"
+  end
+
+  create_table "accessory_groups", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.string "name"
+    t.integer "product_id", null: false
+    t.boolean "required", default: false, null: false
+    t.datetime "updated_at", null: false
+    t.index ["product_id"], name: "index_accessory_groups_on_product_id"
+  end
+
   create_table "achievements", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.text "description"
@@ -189,6 +207,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_15_100000) do
     t.string "charm_image_url"
     t.float "cost"
     t.datetime "created_at", null: false
+    t.string "extra_info"
     t.integer "grant_amount_cents"
     t.integer "notch_cost"
     t.float "price_usd"
@@ -413,6 +432,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_15_100000) do
     t.index ["user_id"], name: "index_wishlists_on_user_id"
   end
 
+  add_foreign_key "accessories", "accessory_groups"
+  add_foreign_key "accessory_groups", "products"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "addresses", "users"
   add_foreign_key "assets_items", "assets_projects"

@@ -54,6 +54,131 @@
         </div>
       </div>
 
+      <!-- ── Accessories ── -->
+      <div class="apf-section">
+        <div class="apf-section-title">Accessories</div>
+        <div class="field-hint">Create accessory groups and add accessory names inside each group.</div>
+
+        <% if product.accessory_groups.empty? %>
+          <% product.accessory_groups.build.accessories.build %>
+        <% else %>
+          <% product.accessory_groups.each do |group| %>
+            <% group.accessories.build if group.accessories.empty? %>
+          <% end %>
+        <% end %>
+
+        <div id="accessory-groups-container">
+          <%= form.fields_for :accessory_groups do |group_fields| %>
+            <div class="accessory-group-card" data-accessory-group-card>
+              <%= group_fields.hidden_field :id %>
+              <%= group_fields.hidden_field :_destroy, class: "accessory-group-destroy-flag" %>
+
+              <div class="accessory-group-header">
+                <div class="form-group" style="flex: 1">
+                  <%= group_fields.label :name, "Group name" %>
+                  <%= group_fields.text_field :name, class: "form-input", placeholder: "Accessory group name" %>
+                </div>
+                <div class="form-group" style="flex: 1">
+                  <%= group_fields.label :required, "Required" %>
+                  <%= group_fields.check_box :required, class: "form-checkbox" %>
+                </div>
+                <button type="button" class="btn-secondary remove-accessory-group-button">Remove group</button>
+              </div>
+              <div class="field-hint">Add one or more accessories to this group.</div>
+
+              <div class="accessory-items" data-accessory-items>
+                <%= group_fields.fields_for :accessories do |accessory_fields| %>
+                  <div class="accessory-row" data-accessory-row>
+                    <%= accessory_fields.hidden_field :id %>
+                    <%= accessory_fields.hidden_field :_destroy, class: "accessory-destroy-flag" %>
+
+                    <div class="accessory-row-inner">
+                      <div class="form-group" style="flex: 1">
+                        <%= accessory_fields.label :name, "Accessory name" %>
+                        <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
+                      </div>
+                      <div class="form-group" style="flex: 1">
+                        <%= accessory_fields.label :cost, "Accessory cost" %>
+                        <%= accessory_fields.number_field :cost, class: "form-input", placeholder: "Accessory cost" %>
+                      </div>
+                      <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+
+              <button type="button" class="btn-primary add-accessory-button">+ Add accessory</button>
+
+              <template class="accessory-row-template">
+                <%= group_fields.fields_for :accessories, Accessory.new, child_index: "new_accessories" do |accessory_fields| %>
+                  <div class="accessory-row" data-accessory-row>
+                    <%= accessory_fields.hidden_field :id %>
+                    <%= accessory_fields.hidden_field :_destroy, class: "accessory-destroy-flag" %>
+
+                    <div class="accessory-row-inner">
+                      <div class="form-group" style="flex: 1">
+                        <%= accessory_fields.label :name, "Accessory name" %>
+                        <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
+                      </div>
+                      <div class="form-group" style="flex: 1">
+                        <%= accessory_fields.label :cost, "Accessory cost" %>
+                        <%= accessory_fields.number_field :cost, class: "form-input", placeholder: "Accessory cost" %>
+                      </div>
+                      <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
+                    </div>
+                  </div>
+                <% end %>
+              </template>
+            </div>
+          <% end %>
+        </div>
+
+        <button type="button" class="btn-primary" id="add-accessory-group-button">+ Add accessory group</button>
+
+        <template id="accessory-group-template">
+          <%= form.fields_for :accessory_groups, AccessoryGroup.new, child_index: "new_accessory_groups" do |group_fields| %>
+            <div class="accessory-group-card" data-accessory-group-card>
+              <%= group_fields.hidden_field :id %>
+              <%= group_fields.hidden_field :_destroy, class: "accessory-group-destroy-flag" %>
+
+              <div class="accessory-group-header">
+                <div class="form-group" style="flex: 1">
+                  <%= group_fields.label :name, "Group name" %>
+                  <%= group_fields.text_field :name, class: "form-input", placeholder: "Accessory group name" %>
+                </div>
+                <button type="button" class="btn-secondary remove-accessory-group-button">Remove group</button>
+              </div>
+              <div class="field-hint">Add one or more accessories to this group.</div>
+
+              <div class="accessory-items" data-accessory-items>
+                <template class="accessory-row-template">
+                  <%= group_fields.fields_for :accessories, Accessory.new, child_index: "new_accessories" do |accessory_fields| %>
+                    <div class="accessory-row" data-accessory-row>
+                      <%= accessory_fields.hidden_field :id %>
+                      <%= accessory_fields.hidden_field :_destroy, class: "accessory-destroy-flag" %>
+
+                      <div class="accessory-row-inner">
+                        <div class="form-group" style="flex: 1">
+                          <%= accessory_fields.label :name, "Accessory name" %>
+                          <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
+                        </div>
+                        <div class="form-group" style="flex: 1">
+                          <%= accessory_fields.label :cost, "Accessory cost" %>
+                          <%= accessory_fields.number_field :cost, class: "form-input", placeholder: "Accessory cost" %>
+                        </div>
+                        <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
+                      </div>
+                    </div>
+                  <% end %>
+                </template>
+              </div>
+
+              <button type="button" class="btn-primary add-accessory-button">+ Add accessory</button>
+            </div>
+          <% end %>
+        </template>
+      </div>
+
       <!-- ── Options ── -->
       <div class="apf-section">
         <div class="apf-section-title">Options</div>
@@ -236,6 +361,96 @@
         costInput.addEventListener('input', syncCostToPrice);
         costInput.addEventListener('change', syncCostToPrice);
       }
+
+      // Rails strong params permits nested attribute hashes with numeric keys.
+      // Use strictly numeric dynamic indexes so all added rows are preserved.
+      var nestedIndexSeed = Date.now();
+      var nestedIndexCounter = 0;
+
+      function uniqueId() {
+        nestedIndexCounter += 1;
+        return String(nestedIndexSeed + nestedIndexCounter);
+      }
+
+      function removeElementWithDestroyFlag(button, selector) {
+        var wrapper = button.closest(selector);
+        if (!wrapper) return;
+        var destroyInput = wrapper.querySelector('.accessory-destroy-flag, .accessory-group-destroy-flag');
+        if (destroyInput) {
+          destroyInput.value = '1';
+        }
+        wrapper.style.display = 'none';
+      }
+
+      function bindAccessoryRowButtons(groupCard) {
+        var addAccessoryButton = groupCard.querySelector('.add-accessory-button');
+        if (addAccessoryButton) {
+          addAccessoryButton.addEventListener('click', function() {
+            addAccessoryRow(groupCard);
+          });
+        }
+
+        groupCard.querySelectorAll('.remove-accessory-button').forEach(function(button) {
+          button.addEventListener('click', function() {
+            removeElementWithDestroyFlag(button, '[data-accessory-row]');
+          });
+        });
+
+        var removeGroupButton = groupCard.querySelector('.remove-accessory-group-button');
+        if (removeGroupButton) {
+          removeGroupButton.addEventListener('click', function() {
+            removeElementWithDestroyFlag(removeGroupButton, '[data-accessory-group-card]');
+          });
+        }
+      }
+
+      function addAccessoryRow(groupCard) {
+        var template = groupCard.querySelector('template.accessory-row-template');
+        if (!template) return;
+        var container = groupCard.querySelector('[data-accessory-items]');
+        if (!container) return;
+
+        var newIndex = uniqueId();
+        var html = template.innerHTML.replace(/new_accessories/g, newIndex);
+        container.insertAdjacentHTML('beforeend', html);
+        var addedRow = container.querySelector('[data-accessory-row]:last-child');
+        if (addedRow) {
+          addedRow.querySelector('.remove-accessory-button')?.addEventListener('click', function() {
+            removeElementWithDestroyFlag(this, '[data-accessory-row]');
+          });
+        }
+      }
+
+      function createGroupFromTemplate() {
+        var groupTemplate = document.getElementById('accessory-group-template');
+        if (!groupTemplate) return null;
+        var html = groupTemplate.innerHTML.replace(/new_accessory_groups/g, uniqueId());
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = html;
+        return wrapper.firstElementChild;
+      }
+
+      function initAccessoryGroups() {
+        var groupContainer = document.getElementById('accessory-groups-container');
+        if (!groupContainer) return;
+
+        groupContainer.querySelectorAll('[data-accessory-group-card]').forEach(function(card) {
+          bindAccessoryRowButtons(card);
+        });
+
+        var addGroupButton = document.getElementById('add-accessory-group-button');
+        if (addGroupButton) {
+          addGroupButton.addEventListener('click', function() {
+            var newGroup = createGroupFromTemplate();
+            if (newGroup) {
+              groupContainer.appendChild(newGroup);
+              bindAccessoryRowButtons(newGroup);
+            }
+          });
+        }
+      }
+
+      initAccessoryGroups();
     });
   </script>
 <% end %>

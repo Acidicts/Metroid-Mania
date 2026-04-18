@@ -215,6 +215,8 @@ module Admin
         # Allow admins to adjust the credit offset (computed from credit_target in update action)
         permitted[:credit_offset] = params[:user][:credit_offset] if params[:user].key?(:credit_offset)
         permitted[:setup] = params[:user][:setup] if params[:user].key?(:setup)
+        #
+        permitted[:currency] = params[:user][:currency] if params[:user].key?(:currency)
       end
       permitted
     end

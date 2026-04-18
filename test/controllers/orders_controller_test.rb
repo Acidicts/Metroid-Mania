@@ -67,6 +67,60 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "http://prod/default.png", order2.charm_image_url
   end
 
+  test "required accessory group must have a choice" do
+    product = Product.create!(name: "AccessoryRequired", steam_app_id: 9090, price_currency: 3.0)
+    group = product.accessory_groups.create!(name: "Color", required: true)
+    group.accessories.create!(name: "red", cost: 2)
+
+    assert_no_difference "Order.count" do
+      post orders_url, params: { product_id: product.id }
+    end
+
+    assert_response :unprocessable_entity
+    assert_match(/Please choose an option for Color/, response.body)
+  end
+
+  test "optional accessory group can be left blank" do
+    product = Product.create!(name: "AccessoryOptional", steam_app_id: 9091, price_currency: 3.0)
+    group = product.accessory_groups.create!(name: "Pattern", required: false)
+    group.accessories.create!(name: "dots", cost: 1)
+
+    assert_difference "Order.count", 1 do
+      post orders_url, params: { product_id: product.id }
+    end
+
+    assert_redirected_to products_url
+    assert_nil Order.last.extra_info
+  end
+
+  test "selected accessories are saved in order extra_info JSON" do
+    product = Product.create!(name: "AccessoryWithChoices", steam_app_id: 9092, price_currency: 3.0)
+
+    size_group = product.accessory_groups.create!(name: "size", required: true)
+    color_group = product.accessory_groups.create!(name: "colour", required: true)
+
+    size_accessory = size_group.accessories.create!(name: "128GB", cost: 2)
+    color_accessory = color_group.accessories.create!(name: "green", cost: 1)
+
+    assert_difference "Order.count", 1 do
+      post orders_url, params: {
+        product_id: product.id,
+        accessory_group_choices: {
+          size_group.id.to_s => size_accessory.id.to_s,
+          color_group.id.to_s => color_accessory.id.to_s
+        }
+      }
+    end
+
+    assert_redirected_to products_url
+    order = Order.last
+    assert_equal({ "size" => "128GB", "colour" => "green" }, JSON.parse(order.extra_info))
+
+    # Base fixed product values + selected accessory costs (2 + 1)
+    assert_equal 6.0, order.cost
+    assert_equal 4, order.notch_cost
+  end
+
   test "sale reduces required notches" do
     product = Product.create!(name: "SaleProduct", steam_app_id: 5555, price_currency: 1.0, notch_cost: 3)
     sale = Sale.create!(name: "Nifty", discount_notches: 1, product: product, quantity: 1, starts_at: 1.hour.ago, ends_at: 1.hour.from_now)
@@ -266,7 +320,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action*='#{orders_path}'] button[type=submit]", text: /Equip|Add To Loadout/
   end
 
-  test "product card for variable grant products includes minimum grant value" do
+  test "product card for variable grant products links to checkout" do
     product = Product.create!(
       name: "VariableAuto",
       steam_app_id: 5556,
@@ -279,7 +333,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     get products_url
     assert_response :success
 
-    assert_select "form[action*='grant_amount_dollars']"
+    assert_select "a.buy-button[href='#{new_order_path(product_id: product.id)}']"
   end
 
   test "invalid charm_image_url prevents creation and displays error" do

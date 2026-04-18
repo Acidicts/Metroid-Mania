@@ -12,6 +12,10 @@
     }
 </style>
 
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
+<% end %>
+
 <div id="ship-request-new" class="container">
     <h1>Before You Ship</h1>
 

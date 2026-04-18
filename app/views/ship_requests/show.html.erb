@@ -1,5 +1,9 @@
 <h1>Ship request for <%= @project.name %> (#<%= @ship_request.id %>)</h1>
 
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
+<% end %>
+
 <%= render partial: 'devlogs/ship_request', locals: { ship_request: @ship_request, project: @project } %>
 
 <% for dev in @ship_request.devlogs.order(log_date: :desc) %>

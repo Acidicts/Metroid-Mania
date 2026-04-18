@@ -93,7 +93,7 @@
 
 <div id="order-form-container">
   <% if @product.present? %>
-    <% content_for :title, "Purchase - #{@product.name}" %>
+    <% content_for :title, "Purchase of - #{@product.name}" %>
 
     <h1>Purchase: <%= @product.name %></h1>
 
@@ -143,8 +143,66 @@
           </div>
         </div>
 
+        <% if @product.accessory_groups.any? %>
+          <% accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
+              params[:accessory_group_choices].to_unsafe_h
+            elsif params[:accessory_group_choices].respond_to?(:to_h)
+              params[:accessory_group_choices].to_h
+            else
+              {}
+            end %>
+
+          <div class="accessory-groups">
+            <% @product.accessory_groups.each do |group| %>
+              <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
+              <% group_required = group.required? && group.accessories.any? %>
+              <% group_input_name = "accessory_group_choices[#{group.id}]" %>
+
+              <fieldset class="accessory-group" style="margin-bottom: 12px;">
+                <legend>
+                  <%= group.name %>
+                  <% if group_required %>
+                    <small>(required)</small>
+                  <% else %>
+                    <small>(optional)</small>
+                  <% end %>
+                </legend>
+
+                <div class="accessory-items">
+                  <% unless group_required %>
+                    <% none_id = "accessory_group_#{group.id}_none" %>
+                    <label class="accessory-item" for="<%= none_id %>" style="display: block; margin-bottom: 6px;">
+                      <%= radio_button_tag group_input_name,
+                                           "",
+                                           selected_choice.blank?,
+                                           id: none_id,
+                                           data: { accessory_cost: 0 } %>
+                      <span class="accessory-name">No selection</span>
+                      <span class="accessory-cost">+0 Charm Notches</span>
+                    </label>
+                  <% end %>
+
+                  <% group.accessories.each do |accessory| %>
+                    <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
+                    <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
+                      <%= radio_button_tag group_input_name,
+                                           accessory.id,
+                                           selected_choice == accessory.id.to_s,
+                                           id: input_id,
+                                           required: group_required,
+                                           data: { accessory_cost: accessory.cost.to_i } %>
+                      <span class="accessory-name"><%= accessory.name.humanize %></span>
+                      <span class="accessory-cost"><%= accessory.cost.to_i %> Charm Notches</span>
+                    </label>
+                  <% end %>
+                </div>
+              </fieldset>
+            <% end %>
+          </div>
+        <% end %>
+
         <div style="margin-top:8px;">
-          Estimated Notches: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= @product.grant_notches_for_dollars(@product.grant_min_dollars).to_i || 0 %></span>
+          Estimated Notches: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= (@product.grant_notches_for_dollars(@product.grant_min_dollars)).to_i || 0 %></span>
         </div>
 
         <div style="margin-top: 12px;">
@@ -158,14 +216,14 @@
       <script>
         (function(){
           function initOrderSlider(){
-            var form = document.querySelector('form');
+            var d = document.getElementById('grant_amount_display');
+            var form = d && d.form ? d.form : document.querySelector('#order-form-container form');
             if (!form) return;
             // avoid double-initializing on turbo:load or DOMContentLoaded multiple times
             if (form.dataset.orderSliderInitialized) return;
             form.dataset.orderSliderInitialized = '1';
 
             var r = document.getElementById('grant_amount_range');
-            var d = document.getElementById('grant_amount_display');
             var h = document.getElementById('grant_amount_dollars');
             // Estimated credits shown beneath the slider
             var est = document.getElementById('estimated_credits');
@@ -176,6 +234,17 @@
             var maxVal = <%= @product.grant_max_dollars %>;
 
             function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
+
+            function selectedAccessoryCost(){
+              var total = 0;
+              var selected = form.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
+
+              selected.forEach(function(input){
+                total += toNumber(input.dataset.accessoryCost);
+              });
+
+              return total;
+            }
 
             function update(val){
               var n = toNumber(val);
@@ -188,11 +257,15 @@
               if (h) h.value = n;
               // Update both the estimated credits under the slider and the top credits display
               if (ratio) {
-                if (est) est.innerText = (n * ratio).toFixed(2);
-                if (topCredits) topCredits.innerText = (n * ratio).toFixed(2);
+                var baseNotches = Math.round(n * ratio);
+                var totalNotches = baseNotches + selectedAccessoryCost();
+                var clampedTotal = Math.max(0, totalNotches);
+
+                if (est) est.innerText = String(clampedTotal);
+                if (topCredits) topCredits.innerText = String(clampedTotal);
               }
               var priceDisplay = document.getElementById('price_usd_display');
-              if (priceDisplay) priceDisplay.innerText = n.toFixed(2);
+              if (priceDisplay) priceDisplay.innerText = n.toFixed(1);
 
               // Update bubble and ARIA
               positionBubble(n);
@@ -277,6 +350,14 @@
               });
             }
 
+            form.addEventListener('change', function(event){
+              var target = event.target;
+              if (!target || target.type !== 'radio') return;
+              if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
+
+              update((d && d.value) || (r && r.value) || (h && h.value) || minVal);
+            });
+
             // Initialize values on load - ensure proper synchronization
             // Start with the minimum value as default
             var initial = minVal;
@@ -325,7 +406,66 @@
     <% else %>
       <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :product_id, @product.id %>
-        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', @product.notch_cost || 0) %></strong> Notches.</p>
+
+        <% if @product.accessory_groups.any? %>
+          <% accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
+              params[:accessory_group_choices].to_unsafe_h
+            elsif params[:accessory_group_choices].respond_to?(:to_h)
+              params[:accessory_group_choices].to_h
+            else
+              {}
+            end %>
+
+          <div class="accessory-groups">
+            <% @product.accessory_groups.each do |group| %>
+              <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
+              <% group_required = group.required? && group.accessories.any? %>
+              <% group_input_name = "accessory_group_choices[#{group.id}]" %>
+
+              <fieldset class="accessory-group" style="margin-bottom: 12px;">
+                <legend>
+                  <%= group.name %>
+                  <% if group_required %>
+                    <small>(required)</small>
+                  <% else %>
+                    <small>(optional)</small>
+                  <% end %>
+                </legend>
+
+                <div class="accessory-items">
+                  <% unless group_required %>
+                    <% none_id = "accessory_group_#{group.id}_none" %>
+                    <label class="accessory-item" for="<%= none_id %>" style="display: block; margin-bottom: 6px;">
+                      <%= radio_button_tag group_input_name,
+                                           "",
+                                           selected_choice.blank?,
+                                           id: none_id,
+                                           data: { accessory_cost: 0 } %>
+                      <span class="accessory-name">No selection</span>
+                      <span class="accessory-cost">+0 Charm Notches</span>
+                    </label>
+                  <% end %>
+
+                  <% group.accessories.each do |accessory| %>
+                    <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
+                    <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
+                      <%= radio_button_tag group_input_name,
+                                           accessory.id,
+                                           selected_choice == accessory.id.to_s,
+                                           id: input_id,
+                                           required: group_required,
+                                           data: { accessory_cost: accessory.cost.to_i } %>
+                      <span class="accessory-name"><%= accessory.name.humanize %></span>
+                      <span class="accessory-cost"><%= accessory.cost.to_i %> Charm Notches</span>
+                    </label>
+                  <% end %>
+                </div>
+              </fieldset>
+            <% end %>
+          </div>
+        <% end %>
+
+        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong id="order_total_notches" data-base-cost="<%= @product.effective_notch_cost.to_i %>" style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', @product.effective_notch_cost.to_i) %></strong> Notches.</p>
 
         <div style="margin-top: 12px;">
           <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
@@ -334,6 +474,55 @@
           <% end %>
         </div>
       <% end %>
+
+      <script>
+        (function(){
+          function initAccessoryCostPreview(){
+            var form = document.querySelector('#order-form-container form');
+            var totalEl = document.getElementById('order_total_notches');
+            if (!form || !totalEl) return;
+
+            if (form.dataset.accessoryCostPreviewInitialized) return;
+            form.dataset.accessoryCostPreviewInitialized = '1';
+
+            function toNumber(v){
+              var n = Number(v);
+              return Number.isFinite(n) ? n : 0;
+            }
+
+            var baseCost = toNumber(totalEl.dataset.baseCost);
+
+            function selectedAccessoryCost(){
+              var total = 0;
+              var selected = form.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
+
+              selected.forEach(function(input){
+                total += toNumber(input.dataset.accessoryCost);
+              });
+
+              return total;
+            }
+
+            function updateTotal(){
+              var totalCost = baseCost + selectedAccessoryCost();
+              totalEl.textContent = String(Math.max(0, Math.round(totalCost)));
+            }
+
+            form.addEventListener('change', function(event){
+              var target = event.target;
+              if (!target || target.type !== 'radio') return;
+              if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
+
+              updateTotal();
+            });
+
+            updateTotal();
+          }
+
+          document.addEventListener('DOMContentLoaded', initAccessoryCostPreview);
+          document.addEventListener('turbo:load', initAccessoryCostPreview);
+        })();
+      </script>
     <% end %>
 
   <% else %>

@@ -53,10 +53,18 @@ class CommentsController < ApplicationController
 
   # DELETE /comments/1 or /comments/1.json
   def destroy
+    ship = @comment.ship
+    project = ship.project if ship.present?
     @comment.destroy!
 
     respond_to do |format|
-      format.html { redirect_to comments_path, notice: "Comment was successfully destroyed.", status: :see_other }
+      format.html do
+        if project.present?
+          redirect_to project_path(project), notice: "Comment was successfully destroyed.", status: :see_other
+        else
+          redirect_to comments_path, notice: "Comment was successfully destroyed.", status: :see_other
+        end
+      end
       format.json { head :no_content }
     end
   end

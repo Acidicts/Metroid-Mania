@@ -4,7 +4,8 @@
     <thead>
       <tr>
         <th>When</th>
-        <th>Admin</th>
+        <th>User</th>
+        <th>Role</th>
         <th>Project</th>
         <th>Action</th>
         <th>Details</th>
@@ -14,7 +15,8 @@
       <% @audits.each do |a| %>
         <tr>
           <td><%= a.created_at %></td>
-          <td><%= a.user&.name || a.user&.email %></td>
+          <td><%= link_to  a.user&.name || a.user&.email, admin_user_path(a.user) %></td>
+          <td><%=  a.user&.role %></td>
           <td><%= a.project ? link_to(a.project.name, admin_project_path(a.project)) : '-' %></td>
           <td><%= a.action %></td>
           <td><%= JSON.pretty_generate(a.details || {}) %></td>

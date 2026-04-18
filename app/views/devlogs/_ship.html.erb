@@ -27,7 +27,7 @@
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Notches</span>
-        <span class="nb-stat-value"><%= ship.charm_notches.count %></span>
+        <span class="nb-stat-value"><%= ship.charm_notches.count / 2 %></span>
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Multiplier</span>
@@ -54,16 +54,18 @@
     <% end %>
 
     <% if defined?(current_user) && current_user && (current_user&.admin? || current_user == ship.project.user) %>
-      <hr style="margin: 16px 0;">
-      <div id="comments-for">
-        <% ship.comments.each do |comment| %>
-          <%= render comment %>
-        <% end %>
+      <% if current_user.admin? || ship.comments.any? %>
+        <hr style="margin: 16px 0;">  
+        <div id="comments-for">
+          <% ship.comments.each do |comment| %>
+            <%= render comment %>
+          <% end %>
 
-        <% if current_user&.admin? %>
-          <%= render 'comments/form', comment: Comment.new(ship: ship), ship: ship %>
-        <% end %>
-      </div>
+          <% if current_user&.admin? %>
+            <%= render 'comments/form', comment: Comment.new(ship: ship), ship: ship %>
+          <% end %>
+        </div>
+      <% end %>
     <% end %>
   </div>
 </div>
