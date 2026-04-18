@@ -71,15 +71,15 @@
         <div class="product-meta">
           <p class="product-price">
             Notches: <span><%= effective %></span>
+            <% if product.link.present? %>
+              <div class="product-stock"><%= link_to "More Info", product.link, target: "_blank", rel: "noopener noreferrer" %></div>
+            <% end %>
             <% if effective != base_cost %>
               <span class="old-price">(<%= base_cost %>)</span>
             <% end %>
           </p>
           <% if product.limited? %>
             <div class="product-stock">Stock: <%= product.stock %></div>
-          <% end %>
-          <% if product.link.present? %>
-            <div class="product-stock"><%= link_to "More Info", product.link, target: "_blank", rel: "noopener noreferrer" %></div>
           <% end %>
         </div>
 
