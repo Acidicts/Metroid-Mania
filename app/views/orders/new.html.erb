@@ -95,7 +95,8 @@
   <% if @product.present? %>
     <% content_for :title, "Purchase of - #{@product.name}" %>
 
-    <h1>Purchase: <%= @product.name %></h1>
+    <h1>Purchase : <%= @product.name %></h1>
+    <h3>Base Cost : <%= @product.notch_cost.to_i.to_s %></h3>
 
     <% if @order && @order.errors.any? %>
       <div style="color: red">
@@ -160,7 +161,7 @@
 
               <fieldset class="accessory-group" style="margin-bottom: 12px;">
                 <legend>
-                  <%= group.name %>
+                  <%= group.name.humanize %>
                   <% if group_required %>
                     <small>(required)</small>
                   <% else %>
