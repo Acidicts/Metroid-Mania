@@ -21,6 +21,11 @@ module ShipRequestsHelper
     return false unless project
     return false unless project.eligible_for_ship_request?
     return false if project.ship_requests.where(status: "pending").exists?
+    return false if project.devlogged_minutes_since_baseline < 15
+    return false unless project.github_repo_public?
+    return false unless project.github_readme_present?
+    return false unless project.clonable?
+    return false unless project.respond_to?(:image) && project.image.attached?
     true
   end
 
