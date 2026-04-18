@@ -78,6 +78,9 @@
           <% if product.limited? %>
             <div class="product-stock">Stock: <%= product.stock %></div>
           <% end %>
+          <% if product.link.present? %>
+            <div class="product-stock"><%= link_to "More Info", product.link, target: "_blank", rel: "noopener noreferrer" %></div>
+          <% end %>
         </div>
 
         <%# For products that require user choices (variable grant or accessories),
