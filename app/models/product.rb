@@ -56,8 +56,11 @@ class Product < ApplicationRecord
 
   def has_regional_prices
     for region in REGIONS
-      r = RegionalPrice.find_or_initialize_by(priceable: self, region: region)
-      r.save!
+      r = self.regional_prices.find_or_initialize_by(region: region)
+      if r.new_record?
+        r.region = region
+        r.save!
+      end
     end
   end
 
