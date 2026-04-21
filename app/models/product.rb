@@ -102,10 +102,12 @@ class Product < ApplicationRecord
 
   def cost(region)
     regional_price = regional_prices.find_by(region: region)
-    if regional_price
+    if regional_price && regional_price.enabled?
       regional_price.cost
     else
-      if self[:notch_cost].nil?
+      if self.regional_prices.where(region: "Rest of the World", enabled: true).exists?
+        self.regional_prices.find_by(region: "Rest of the World").cost
+      elsif self[:notch_cost].nil?
         1
       else
         self[:notch_cost].to_i
