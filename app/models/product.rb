@@ -8,7 +8,7 @@ class Product < ApplicationRecord
   has_many :accessories, through: :accessory_groups
   has_many :regional_prices, dependent: :destroy, inverse_of: :priceable
   accepts_nested_attributes_for :accessory_groups, allow_destroy: true, reject_if: :all_blank
-  accepts_nested_attributes_for :regional_prices, allow_destroy: true, reject_if: proc { |attrs| attrs['region'].blank? }
+  accepts_nested_attributes_for :regional_prices, allow_destroy: true, reject_if: proc { |attrs| attrs["region"].blank? }
 
   # each product may optionally be tied to an achievement. we store the
   # foreign key on `products.achievement_id`, so this is a `belongs_to`
@@ -42,7 +42,8 @@ class Product < ApplicationRecord
   alias_attribute :achievement_boolean, :achievement_bool
 
   validate :achievement_configuration
-  validate :has_regional_prices, on: :update
+  before_validation :ensure_regional_prices, on: :create
+  before_validation :normalize_regional_price_regions
 
   REGIONS = [
     "United States",
@@ -54,13 +55,44 @@ class Product < ApplicationRecord
     "Rest of the World"
   ].freeze
 
-  def has_regional_prices
-    for region in REGIONS
-      if self.regional_prices.find_by(region: region).nil?
-        r = self.regional_prices.find_or_initialize_by(region: region)
-        r.region = region
-        r.save!
+  REGION_CANONICAL_MAP = {
+    "US" => "United States",
+    "UNITED STATES" => "United States",
+    "UK" => "United Kingdom",
+    "GB" => "United Kingdom",
+    "UNITED KINGDOM" => "United Kingdom",
+    "IN" => "India",
+    "CA" => "Canada",
+    "AU" => "Australia",
+    "EU" => "EU",
+    "REST OF THE WORLD" => "Rest of the World"
+  }.freeze
+
+  def self.canonical_region(region)
+    return region if region.blank?
+    normalized = region.to_s.strip
+    REGION_CANONICAL_MAP.fetch(normalized.upcase, normalized)
+  end
+
+  def normalize_regional_price_regions
+    regional_prices.each do |price|
+      price.region = self.class.canonical_region(price.region)
+    end
+
+    accessory_groups.each do |group|
+      group.accessories.each do |accessory|
+        accessory.regional_prices.each do |price|
+          price.region = self.class.canonical_region(price.region)
+        end
       end
+    end
+  end
+
+  def ensure_regional_prices
+    return if regional_prices.any?
+
+    REGIONS.each do |region|
+      regional_prices.build(region: region)
     end
   end
 

@@ -106,6 +106,16 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "legacy regional price codes are normalized in edit form" do
+    product = Product.create!(name: "LegacyRegion", price_currency: 1.0)
+    product.regional_prices.create!(region: "us", cost: 5, enabled: true)
+
+    get edit_product_url(product)
+    assert_response :success
+    assert_select "input[name='product[regional_prices_attributes][0][region]'][value='United States']"
+    assert_select "input[value='us']", count: 0
+  end
+
   test "edit form shows existing accessory groups and accessories" do
     product = Product.create!(name: "WithAccessories", price_currency: 2.99, steam_app_id: 999)
     group = AccessoryGroup.create!(product: product, name: "Color")

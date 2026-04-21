@@ -58,7 +58,7 @@
 
 <div id="products" class="products-grid">
   <% @products.each do |product| %>
-    <% if product.show? && product.regional_prices.where(region: @user.set_region, enabled: true).exists? %>
+    <% if product.show? && (product.regional_prices.where(region: @user.set_region, enabled: true).exists? || product.regional_prices.where(region: "Rest of the World", enabled: true).exists? ) %>
       <%= render 'product_card', product: product %>
     <% elsif current_user&.admin? %>
       <%= render 'product_card', product: product %>

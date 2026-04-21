@@ -186,12 +186,20 @@ class ProductsController < ApplicationController
     end
 
     def build_accessory_regional_price_rows(accessory)
+      accessory.regional_prices.each do |price|
+        price.region = Product.canonical_region(price.region)
+      end
+
       Product::REGIONS.each do |region|
         accessory.regional_prices.find_or_initialize_by(region: region)
       end
     end
 
     def build_regional_price_rows(product)
+      product.regional_prices.each do |price|
+        price.region = Product.canonical_region(price.region)
+      end
+
       Product::REGIONS.each do |region|
         product.regional_prices.find_or_initialize_by(region: region)
       end
