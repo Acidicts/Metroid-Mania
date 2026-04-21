@@ -56,8 +56,8 @@ class Product < ApplicationRecord
 
   def has_regional_prices
     for region in REGIONS
-      r = self.regional_prices.find_or_initialize_by(region: region)
-      if r.new_record?
+      if self.regional_prices.find_by(region: region).nil?
+        r = self.regional_prices.find_or_initialize_by(region: region)
         r.region = region
         r.save!
       end
