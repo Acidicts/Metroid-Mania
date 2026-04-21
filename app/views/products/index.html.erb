@@ -11,10 +11,37 @@
     .product-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
 
     body.products .products-placeholder { display: block; }
+
+    .admin-product-form {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .products-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
   </style>
 <% end %>
 
-<h1>Merchant</h1>
+<style>
+  
+</style>
+
+<div class="products-header">
+  <h1>Merchant</h1>
+  <% @user = current_user %>
+  <%= form_with model: @user, url: profile_path, method: :patch, local: true, html: { class: "admin-product-form" } do |f| %>
+    <div class="form-group">
+      <%= f.label :set_region, "Select Your Region" %>
+      <%= f.select :set_region, options_for_select(User::REGIONS.map { |r| [r, r] }, @user.set_region.presence || @user.region), { include_blank: "Choose a region" }, class: "form-input", onchange: "this.form.submit()" %>
+    </div>
+  <% end %>
+</div>
 
 <% if current_user %>
   <%= render current_user.wishlist %>
@@ -31,9 +58,9 @@
 
 <div id="products" class="products-grid">
   <% @products.each do |product| %>
-    <% if product.show? %>
+    <% if product.show? && product.regional_prices.where(region: @user.set_region, enabled: true).exists? %>
       <%= render 'product_card', product: product %>
-    <% elsif !product.show? && current_user&.admin? %>
+    <% elsif current_user&.admin? %>
       <%= render 'product_card', product: product %>
     <% end %>
   <% end %>

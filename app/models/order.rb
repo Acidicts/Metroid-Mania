@@ -69,12 +69,7 @@ class Order < ApplicationRecord
       return
     end
 
-    required = product.notch_cost.to_i
-    if product.present? && (sale = product.active_sale)
-      required -= sale.discount_notches.to_i
-      required = 0 if required < 0
-    end
-    self.notch_cost = required
+    self.notch_cost = product_notch_cost
   end
 
   # Overhaul uses charm notches instead of credits, so validate against user's currency but display free notches on the leaderboard.
@@ -190,13 +185,7 @@ class Order < ApplicationRecord
   def ensure_correct_number_of_notches_used
     return unless charm_slot
 
-    required = product.notch_cost.to_i
-
-    # apply any active sale discount (notches) for this product
-    if product.present? && (sale = product.active_sale)
-      required -= sale.discount_notches.to_i
-      required = 0 if required < 0
-    end
+    required = product_notch_cost
 
     assigned = CharmNotch.where(user_id: user_id, charm_slot_id: charm_slot_id).count
 
@@ -212,16 +201,23 @@ class Order < ApplicationRecord
   def user_has_enough_free_notches
     return if product.blank? || user.blank?
 
-    required = product.notch_cost.to_i
-    if product.present? && (sale = product.active_sale)
-      required -= sale.discount_notches.to_i
-      required = 0 if required < 0
-    end
+    required = product_notch_cost
     available = user.free_notches.to_i
 
     if available < required
       errors.add(:base, "Insufficient free notches")
     end
+  end
+
+  def product_notch_cost
+    return 0 if product.blank? || user.blank?
+
+    required = product.cost(user.set_region).to_i
+    if product.present? && (sale = product.active_sale)
+      required -= sale.discount_notches.to_i
+      required = 0 if required < 0
+    end
+    required
   end
 
   # Return the image that should be shown for this order when it is rendered in contexts
@@ -259,7 +255,7 @@ class Order < ApplicationRecord
     # status has been changed out from under us (or the product has no cost),
     # there's nothing to do.
     return unless status == "pending"
-    return unless product.notch_cost.present? && product.notch_cost.to_i > 0
+    return unless notch_cost.present? && notch_cost.to_i > 0
 
     # Guard against races: acquire a row-level lock on the user so two orders
     # can't examine the old free_notches value at the same time.  If the lock
@@ -269,15 +265,9 @@ class Order < ApplicationRecord
       # reload user associations now that we have the lock
       user.reload
 
-      # use stored notch_cost if available, otherwise compute
-      required = notch_cost.present? ? notch_cost.to_i : product.notch_cost.to_i
-      # fallback compute variant if notch_cost nil (shouldn't happen)
-      if required.nil? || required == 0
-        required = product.notch_cost.to_i
-        if product.present? && (sale = product.active_sale)
-          required -= sale.discount_notches.to_i
-          required = 0 if required < 0
-        end
+      required = notch_cost.to_i
+      if required == 0
+        required = product_notch_cost
       end
       if required > user.free_notches.to_i
         # If the cost has changed or another order drained the account while

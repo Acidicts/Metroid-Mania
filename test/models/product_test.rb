@@ -23,6 +23,14 @@ class ProductTest < ActiveSupport::TestCase
     assert_nil prod_without.achievement
   end
 
+  test "cost falls back to a default base notch when no regional price exists" do
+    prod = Product.create!(name: "Temp", price_currency: 0.5)
+    assert_equal 1, prod.cost(nil)
+
+    prod.regional_prices.create!(region: "us", cost: 5)
+    assert_equal 5, prod.cost("us")
+  end
+
   test "is_unlocked behavior respects boolean flag and achievement state" do
     user = users(:one)
     prod = Product.create!(name: "P", price_currency: 1.0)

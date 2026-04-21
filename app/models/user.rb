@@ -29,7 +29,21 @@ class User < ApplicationRecord
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
   attribute :hackatime_trust_status, :string
+
+  # Region
+  REGIONS = [
+    "United States",
+    "United Kingdom",
+    "India",
+    "Canada",
+    "Australia",
+    "EU",
+    "Rest of the World"
+  ].freeze
+
   attribute :region, :string
+  attribute :set_region, :string
+
   # Store how many charm slots a user has; defaults to zero so new users start with none
   attribute :charm_slots, :integer, default: 0
   attribute :xp, :integer, default: 0
@@ -325,6 +339,15 @@ class User < ApplicationRecord
     end
 
     region
+  end
+
+  # Run user login side effects in one place so controllers can call a single hook.
+  # This must never block authentication.
+  def on_login!(ip: nil)
+    set_region_from_ip(ip)
+  rescue => e
+    Rails.logger.warn("Failed to run login hook for user #{id}: #{e.message}")
+    nil
   end
 
   def admin?

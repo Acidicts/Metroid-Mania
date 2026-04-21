@@ -6,7 +6,9 @@ class Product < ApplicationRecord
   has_many :orders, dependent: :restrict_with_error
   has_many :accessory_groups, dependent: :destroy, inverse_of: :product
   has_many :accessories, through: :accessory_groups
+  has_many :regional_prices, dependent: :destroy, inverse_of: :priceable
   accepts_nested_attributes_for :accessory_groups, allow_destroy: true, reject_if: :all_blank
+  accepts_nested_attributes_for :regional_prices, allow_destroy: true, reject_if: proc { |attrs| attrs['region'].blank? }
 
   # each product may optionally be tied to an achievement. we store the
   # foreign key on `products.achievement_id`, so this is a `belongs_to`
@@ -30,7 +32,6 @@ class Product < ApplicationRecord
   attribute :image_url, :string, default: "https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg"
   attribute :description, :string, default: ""
   attribute :show, :boolean, default: true
-  attribute :notch_cost, :integer, default: 1
   attribute :sale_discount, :integer, default: 0
   attribute :sale_date, :date, default: nil
 
@@ -40,19 +41,39 @@ class Product < ApplicationRecord
   # column is named accordingly.
   alias_attribute :achievement_boolean, :achievement_bool
 
-  validate :notch_cost_is_int
   validate :achievement_configuration
+  validate :has_regional_prices, on: :update
+
+  REGIONS = [
+    "United States",
+    "United Kingdom",
+    "India",
+    "Canada",
+    "Australia",
+    "EU",
+    "Rest of the World"
+  ].freeze
+
+  def has_regional_prices
+    for region in REGIONS
+      r = RegionalPrice.find_or_initialize_by(priceable: self, region: region)
+      r.save!
+    end
+  end
 
   def not_grant?
     !variable_grant?
   end
 
-  def notch_cost_is_int
-    if notch_cost.present? && !notch_cost.is_a?(Integer)
-      if notch_cost < 0
-        self.notch_cost = abs(notch_cost)
+  def cost(region)
+    regional_price = regional_prices.find_by(region: region)
+    if regional_price
+      regional_price.cost
+    else
+      if self[:notch_cost].nil?
+        1
       else
-        self.notch_cost = 1
+        self[:notch_cost].to_i
       end
     end
   end
@@ -152,18 +173,6 @@ class Product < ApplicationRecord
     scope = Sale.active.where(product_id: id)
     scope = scope.where(quantity: quantity) if quantity
     scope.first
-  end
-
-  # Compute the effective notch cost after applying any active sale discount.
-  # Returns an integer >= 0.
-  def effective_notch_cost(quantity: nil)
-    base = notch_cost.to_i
-    if (s = active_sale(quantity))
-      discounted = base - s.discount_notches.to_i
-      return 0 if discounted < 0
-      return discounted
-    end
-    base
   end
 
   ALLOWED_ORDER_STATUSES_FOR_DESTRUCTION = %w[pending submitted shipped].freeze

@@ -55,9 +55,14 @@ class UsersController < ApplicationController
   end
 
   def update
+    return unless @user == current_user || current_user.admin?
     if @user.update(user_params)
       flash_pass("Profile updated successfully.")
-      redirect_to root_path
+      if request.referer.present? && URI.parse(request.referer).path == profile_path
+        redirect_to root_path
+      else
+        redirect_back fallback_location: root_path
+      end
     else
       render :edit
     end
@@ -67,7 +72,7 @@ class UsersController < ApplicationController
 
   def set_user
     # Use explicit id when provided (public profiles or admin), otherwise fall back to the signed-in user
-    if params[:id].present?
+    if params[:id].present? && current_user&.admin?
       @user = User.find(params[:id])
     else
       @user = current_user || (raise ActiveRecord::RecordNotFound, "Couldn't find User without an ID")
@@ -75,6 +80,6 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:hackatime_api_key, :font_on)
+    params.require(:user).permit(:hackatime_api_key, :font_on, :set_region)
   end
 end

@@ -36,6 +36,37 @@ class UserTest < ActiveSupport::TestCase
     assert_nil u.reload.region
   end
 
+  test "on_login! persists region from request ip" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
+
+    fake = Object.new
+    def fake.get_region_by_ip; "Canada"; end
+
+    orig = HackclubIpService.method(:new)
+    HackclubIpService.define_singleton_method(:new) { |*a, **k| fake }
+    begin
+      assert_equal "Canada", u.on_login!(ip: "1.2.3.4")
+    ensure
+      HackclubIpService.define_singleton_method(:new) { |*a, &b| orig.call(*a, &b) }
+    end
+
+    assert_equal "Canada", u.reload.region
+  end
+
+  test "on_login! does not raise when region lookup fails" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
+
+    orig = HackclubIpService.method(:new)
+    HackclubIpService.define_singleton_method(:new) { |*a, **k| raise StandardError, "boom" }
+    begin
+      assert_nil u.on_login!(ip: "1.2.3.4")
+    ensure
+      HackclubIpService.define_singleton_method(:new) { |*a, &b| orig.call(*a, &b) }
+    end
+
+    assert_nil u.reload.region
+  end
+
   test "charm_slots defaults to zero and validates nonnegative integer" do
     u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "t#{SecureRandom.hex(4)}@example.dev")
     # association should start empty

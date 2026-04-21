@@ -165,7 +165,12 @@ class OrdersController < ApplicationController
         order_attrs[:notch_cost] = base_notch_cost + accessory_cost_total
         order_attrs[:cost] = base_cost + accessory_cost_total
       elsif accessory_cost_total.positive?
-        order_attrs[:notch_cost] = product.effective_notch_cost + accessory_cost_total
+        base_notch_cost = product.cost(current_user.set_region).to_i
+        if (sale = product.active_sale)
+          base_notch_cost -= sale.discount_notches.to_i
+          base_notch_cost = 0 if base_notch_cost < 0
+        end
+        order_attrs[:notch_cost] = base_notch_cost + accessory_cost_total
         order_attrs[:cost] = product.price_currency.to_f + accessory_cost_total
       end
 

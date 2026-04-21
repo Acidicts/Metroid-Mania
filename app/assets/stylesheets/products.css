@@ -607,6 +607,101 @@
   color: rgba(51, 63, 88, 0.72);
 }
 
+.accessory-regional-pricing {
+  margin-top: 10px;
+  border: 1px solid rgba(74, 122, 150, 0.18);
+  border-radius: 10px;
+  background: rgba(248, 251, 255, 0.95);
+}
+
+.accessory-regional-pricing > summary {
+  list-style: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--palette-5, #273548);
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.accessory-regional-pricing > summary::-webkit-details-marker {
+  display: none;
+}
+
+.accessory-regional-pricing > summary::after {
+  content: '+';
+  font-size: 1rem;
+  line-height: 1;
+  color: rgba(39, 53, 72, 0.7);
+}
+
+.accessory-regional-pricing[open] > summary::after {
+  content: '-';
+}
+
+.accessory-regional-pricing__content {
+  border-top: 1px dashed rgba(74, 122, 150, 0.2);
+  padding: 10px 12px 12px;
+}
+
+.accessory-regional-pricing__header,
+.accessory-regional-pricing__row {
+  display: grid;
+  grid-template-columns: minmax(130px, 1.4fr) minmax(100px, 1fr) 90px;
+  gap: 10px;
+  align-items: center;
+}
+
+.accessory-regional-pricing__header {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: rgba(39, 53, 72, 0.66);
+  margin-bottom: 8px;
+}
+
+.accessory-regional-pricing__row {
+  padding: 8px 0;
+  border-top: 1px solid rgba(74, 122, 150, 0.12);
+}
+
+.accessory-regional-pricing__row:first-of-type {
+  border-top: none;
+}
+
+.accessory-regional-pricing__region {
+  color: var(--palette-5, #273548);
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.accessory-regional-pricing__cost .form-input {
+  margin-bottom: 0;
+}
+
+.accessory-regional-pricing__enabled {
+  display: flex;
+  align-items: center;
+}
+
+@media (max-width: 640px) {
+  .accessory-regional-pricing__header {
+    display: none;
+  }
+
+  .accessory-regional-pricing__row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .accessory-regional-pricing__enabled {
+    justify-content: flex-start;
+  }
+}
+
 .btn-primary.add-accessory-button,
 #add-accessory-group-button {
   margin-top: 10px;

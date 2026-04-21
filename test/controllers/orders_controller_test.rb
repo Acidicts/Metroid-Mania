@@ -56,7 +56,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_equal product.id, order.product_id
     assert_equal @user.id, order.user_id
     assert_equal "https://cdn.example.com/charm.png", order.charm_image_url
-    assert_equal product.notch_cost, order.notch_cost
+    assert_equal 1, order.notch_cost
 
     # test default when parameter omitted
     product2 = Product.create!(name: "TempDefault", steam_app_id: 9994, price_currency: 4.0, image_url: "http://prod/default.png")

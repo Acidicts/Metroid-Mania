@@ -66,8 +66,12 @@
       <div class="product-content">
         <h3><%= product.name %></h3>
         <p><%= markdown_to_html(product.description) %></p>
-        <% base_cost = product.notch_cost.to_i %>
-        <% effective = product.effective_notch_cost %>
+        <% base_cost = product.cost(current_user&.set_region).to_i %>
+        <% effective = base_cost %>
+        <% if product.present? && (sale = product.active_sale) %>
+          <% effective -= sale.discount_notches.to_i %>
+          <% effective = 0 if effective.negative? %>
+        <% end %>
         <div class="product-meta">
           <p class="product-price">
             Notches: <span><%= effective %></span>

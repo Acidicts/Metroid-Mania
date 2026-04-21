@@ -39,11 +39,25 @@
             <%= form.text_field :price_currency, placeholder: "e.g. 4.99", class: "form-input", inputmode: "decimal" %>
             <div class="field-hint">Decimal value, no $ sign. Used for payments.</div>
           </div>
-          <div class="form-group">
-            <%= form.label :notch_cost, "Notch Cost" %>
-            <%= form.number_field :notch_cost, step: 1, placeholder: "e.g. 5", class: "form-input", inputmode: "decimal" %>
-            <div class="field-hint">1 Notch = $10. Ensure there is always $5 in value overhead to account for regional variations. $20 = 3 charms, $15 = 2</div>
-          </div>
+        </div>
+
+        <div class="apf-section">
+          <div class="apf-section-title">Regional pricing</div>
+          <div class="field-hint">Set a regional cost for each supported region.</div>
+          <%= form.fields_for :regional_prices do |price_fields| %>
+            <div class="form-row">
+              <%= price_fields.hidden_field :id %>
+              <%= price_fields.hidden_field :region %>
+              <div class="form-group" style="flex: 1">
+                <%= price_fields.label :cost, price_fields.object.region %>
+                <%= price_fields.number_field :cost, step: 1, class: "form-input", placeholder: "Cost" %>
+              </div>
+              <div class="form-group" style="flex: 1">
+                <%= price_fields.label :enabled, "Enabled" %>
+                <%= price_fields.check_box :enabled, class: "form-checkbox" %>
+              </div>
+            </div>
+          <% end %>
         </div>
 
         <!-- Credits-per-$ — shown when variable grant is on -->
@@ -97,12 +111,32 @@
                         <%= accessory_fields.label :name, "Accessory name" %>
                         <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
                       </div>
-                      <div class="form-group" style="flex: 1">
-                        <%= accessory_fields.label :cost, "Accessory cost" %>
-                        <%= accessory_fields.number_field :cost, class: "form-input", placeholder: "Accessory cost" %>
-                      </div>
                       <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
                     </div>
+
+                    <details class="accessory-regional-pricing" data-accessory-regional-pricing>
+                      <summary>Regional pricing</summary>
+                      <div class="accessory-regional-pricing__content">
+                        <div class="accessory-regional-pricing__header">
+                          <span>Region</span>
+                          <span>Cost</span>
+                          <span>Enabled</span>
+                        </div>
+                        <%= accessory_fields.fields_for :regional_prices do |accessory_price_fields| %>
+                          <div class="accessory-regional-pricing__row">
+                            <%= accessory_price_fields.hidden_field :id %>
+                            <%= accessory_price_fields.hidden_field :region %>
+                            <div class="accessory-regional-pricing__region"><%= accessory_price_fields.object.region %></div>
+                            <div class="accessory-regional-pricing__cost">
+                              <%= accessory_price_fields.number_field :cost, step: 1, class: "form-input", placeholder: "Cost", aria: { label: "#{accessory_price_fields.object.region} cost" } %>
+                            </div>
+                            <div class="accessory-regional-pricing__enabled">
+                              <%= accessory_price_fields.check_box :enabled, class: "form-checkbox", aria: { label: "#{accessory_price_fields.object.region} enabled" } %>
+                            </div>
+                          </div>
+                        <% end %>
+                      </div>
+                    </details>
                   </div>
                 <% end %>
               </div>
@@ -110,7 +144,9 @@
               <button type="button" class="btn-primary add-accessory-button">+ Add accessory</button>
 
               <template class="accessory-row-template">
-                <%= group_fields.fields_for :accessories, Accessory.new, child_index: "new_accessories" do |accessory_fields| %>
+                <% accessory_template = Accessory.new %>
+                <% Product::REGIONS.each { |region| accessory_template.regional_prices.build(region: region) } %>
+                <%= group_fields.fields_for :accessories, accessory_template, child_index: "new_accessories" do |accessory_fields| %>
                   <div class="accessory-row" data-accessory-row>
                     <%= accessory_fields.hidden_field :id %>
                     <%= accessory_fields.hidden_field :_destroy, class: "accessory-destroy-flag" %>
@@ -126,6 +162,30 @@
                       </div>
                       <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
                     </div>
+
+                    <details class="accessory-regional-pricing" data-accessory-regional-pricing>
+                      <summary>Regional pricing</summary>
+                      <div class="accessory-regional-pricing__content">
+                        <div class="accessory-regional-pricing__header">
+                          <span>Region</span>
+                          <span>Cost</span>
+                          <span>Enabled</span>
+                        </div>
+                        <%= accessory_fields.fields_for :regional_prices do |accessory_price_fields| %>
+                          <div class="accessory-regional-pricing__row">
+                            <%= accessory_price_fields.hidden_field :id %>
+                            <%= accessory_price_fields.hidden_field :region %>
+                            <div class="accessory-regional-pricing__region"><%= accessory_price_fields.object.region %></div>
+                            <div class="accessory-regional-pricing__cost">
+                              <%= accessory_price_fields.number_field :cost, step: 1, class: "form-input", placeholder: "Cost", aria: { label: "#{accessory_price_fields.object.region} cost" } %>
+                            </div>
+                            <div class="accessory-regional-pricing__enabled">
+                              <%= accessory_price_fields.check_box :enabled, class: "form-checkbox", aria: { label: "#{accessory_price_fields.object.region} enabled" } %>
+                            </div>
+                          </div>
+                        <% end %>
+                      </div>
+                    </details>
                   </div>
                 <% end %>
               </template>
@@ -152,7 +212,9 @@
 
               <div class="accessory-items" data-accessory-items>
                 <template class="accessory-row-template">
-                  <%= group_fields.fields_for :accessories, Accessory.new, child_index: "new_accessories" do |accessory_fields| %>
+                  <% accessory_template = Accessory.new %>
+                  <% Product::REGIONS.each { |region| accessory_template.regional_prices.build(region: region) } %>
+                  <%= group_fields.fields_for :accessories, accessory_template, child_index: "new_accessories" do |accessory_fields| %>
                     <div class="accessory-row" data-accessory-row>
                       <%= accessory_fields.hidden_field :id %>
                       <%= accessory_fields.hidden_field :_destroy, class: "accessory-destroy-flag" %>
@@ -168,6 +230,30 @@
                         </div>
                         <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
                       </div>
+
+                      <details class="accessory-regional-pricing" data-accessory-regional-pricing>
+                        <summary>Regional pricing</summary>
+                        <div class="accessory-regional-pricing__content">
+                          <div class="accessory-regional-pricing__header">
+                            <span>Region</span>
+                            <span>Cost</span>
+                            <span>Enabled</span>
+                          </div>
+                          <%= accessory_fields.fields_for :regional_prices do |accessory_price_fields| %>
+                            <div class="accessory-regional-pricing__row">
+                              <%= accessory_price_fields.hidden_field :id %>
+                              <%= accessory_price_fields.hidden_field :region %>
+                              <div class="accessory-regional-pricing__region"><%= accessory_price_fields.object.region %></div>
+                              <div class="accessory-regional-pricing__cost">
+                                <%= accessory_price_fields.number_field :cost, step: 1, class: "form-input", placeholder: "Cost", aria: { label: "#{accessory_price_fields.object.region} cost" } %>
+                              </div>
+                              <div class="accessory-regional-pricing__enabled">
+                                <%= accessory_price_fields.check_box :enabled, class: "form-checkbox", aria: { label: "#{accessory_price_fields.object.region} enabled" } %>
+                              </div>
+                            </div>
+                          <% end %>
+                        </div>
+                      </details>
                     </div>
                   <% end %>
                 </template>

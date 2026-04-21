@@ -7,12 +7,8 @@ module Admin
       if auto_admin_enabled?
         admin = find_or_create_dev_admin
 
-        # Attempt to set region for auto-created dev admin (development/test convenience)
-        begin
-          admin.set_region_from_ip(request.remote_ip)
-        rescue => e
-          Rails.logger.warn("Failed to set region for auto-admin #{admin.email}: #{e.message}")
-        end
+        # Trigger user login hook (safe, non-blocking side effects).
+        admin.on_login!(ip: request.remote_ip)
 
         session[:user_id] = admin.id
         Rails.logger.info("[auto_admin] signed in #{admin.email}") if Rails.env.development? || Rails.env.test?
@@ -30,12 +26,8 @@ module Admin
     def create
       user = User.find_by(email: params[:email])
       if user&.authenticate(params[:password]) && user.admin?
-        # Set region on admin sign-in too
-        begin
-          user.set_region_from_ip(request.remote_ip)
-        rescue => e
-          Rails.logger.warn("Failed to set region for admin user #{user.id}: #{e.message}")
-        end
+        # Trigger user login hook (safe, non-blocking side effects).
+        user.on_login!(ip: request.remote_ip)
 
         session[:user_id] = user.id
         flash_pass("Signed in as admin")
@@ -57,20 +49,20 @@ module Admin
     def auto_admin_enabled?
       # If AUTO_ADMIN is explicitly set, honor its boolean value ("1","true","yes" => true; "0","false","no" => false).
       # Otherwise fall back to enabling in development/test environments by default.
-      val = ENV['AUTO_ADMIN']&.to_s&.strip
-      return ActiveModel::Type::Boolean.new.cast(val) unless val.nil? || val == ''
+      val = ENV["AUTO_ADMIN"]&.to_s&.strip
+      return ActiveModel::Type::Boolean.new.cast(val) unless val.nil? || val == ""
 
       Rails.env.development? || Rails.env.test?
     end
 
     def find_or_create_dev_admin
-      email = ENV.fetch('AUTO_ADMIN_EMAIL', 'admin@example.dev')
-      pw    = ENV['AUTO_ADMIN_PASSWORD'].to_s.strip.presence || SecureRandom.base58(16)
+      email = ENV.fetch("AUTO_ADMIN_EMAIL", "admin@example.dev")
+      pw    = ENV["AUTO_ADMIN_PASSWORD"].to_s.strip.presence || SecureRandom.base58(16)
 
       user = User.find_by(email: email)
       if user
         # If a known password is provided via env, ensure the existing user can be accessed with it
-        if ENV['AUTO_ADMIN_PASSWORD'].present? && user.respond_to?(:password=)
+        if ENV["AUTO_ADMIN_PASSWORD"].present? && user.respond_to?(:password=)
           user.password = pw
           user.password_confirmation = pw if user.respond_to?(:password_confirmation=)
           # persist even if validations would block (dev convenience)
@@ -82,9 +74,9 @@ module Admin
         return user
       end
 
-      attrs = { email: email, name: 'Admin' }
-      attrs[:admin] = true if User.column_names.include?('admin')
-      attrs[:role]  = 'admin' if User.column_names.include?('role')
+      attrs = { email: email, name: "Admin" }
+      attrs[:admin] = true if User.column_names.include?("admin")
+      attrs[:role]  = "admin" if User.column_names.include?("role")
 
       user = User.new(attrs)
       user.password = pw if user.respond_to?(:password=)

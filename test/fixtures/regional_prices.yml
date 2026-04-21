@@ -1,0 +1,13 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  priceable_type: Product
+  priceable_id: <%= ActiveRecord::FixtureSet.identify(:one) %>
+  region: MyString
+  cost: 1
+
+two:
+  priceable_type: Product
+  priceable_id: <%= ActiveRecord::FixtureSet.identify(:two) %>
+  region: MyString
+  cost: 1

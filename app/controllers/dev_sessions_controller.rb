@@ -12,12 +12,8 @@ class DevSessionsController < ApplicationController
         return
       end
 
-      # Set region on dev sign-in as well
-      begin
-        user.set_region_from_ip(request.remote_ip)
-      rescue => e
-        Rails.logger.warn("Failed to set region for dev user #{user.id}: #{e.message}")
-      end
+      # Trigger user login hook (safe, non-blocking side effects).
+      user.on_login!(ip: request.remote_ip)
 
       session[:user_id] = user.id
       render plain: "Signed in", status: :ok

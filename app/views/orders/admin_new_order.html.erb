@@ -30,7 +30,7 @@
             <%= label_tag :cost_to_user, "Cost to User (Charms)", class: "admin-form-label" %>
             <div class="admin-form-control">
               <%= number_field_tag :cost_to_user, nil, step: 1, class: "admin-input" %>
-              <div class="admin-hint">Leave blank to use product's normal price (<%= @product.notch_cost %>)</div>
+              <div class="admin-hint">Leave blank to use product's normal price (<%= @product.cost(current_user.set_region).to_i %>)</div>
             </div>
           </div>
 

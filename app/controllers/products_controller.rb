@@ -21,11 +21,13 @@ class ProductsController < ApplicationController
   def new
     @product = Product.new
     build_accessory_group_rows(@product)
+    build_regional_price_rows(@product)
   end
 
   # GET /products/1/edit
   def edit
     build_accessory_group_rows(@product)
+    build_regional_price_rows(@product)
   end
 
   # POST /products or /products.json
@@ -50,6 +52,8 @@ class ProductsController < ApplicationController
         format.html { flash_pass("Product was successfully created."); redirect_to @product }
         format.json { render :show, status: :created, location: @product }
       else
+        build_accessory_group_rows(@product)
+        build_regional_price_rows(@product)
         format.html { render :new, status: :unprocessable_entity }
         format.json { render json: @product.errors, status: :unprocessable_entity }
       end
@@ -75,6 +79,8 @@ class ProductsController < ApplicationController
         format.html { flash_pass("Product was successfully updated."); redirect_to @product, status: :see_other }
         format.json { render :show, status: :ok, location: @product }
       else
+        build_accessory_group_rows(@product)
+        build_regional_price_rows(@product)
         format.html { render :edit, status: :unprocessable_entity }
         format.json { render json: @product.errors, status: :unprocessable_entity }
       end
@@ -104,7 +110,7 @@ class ProductsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_product
-      @product = Product.includes(accessory_groups: :accessories).find(params[:id])
+      @product = Product.includes(accessory_groups: { accessories: :regional_prices }, regional_prices: []).find(params[:id])
     end
 
     # Only allow a list of trusted parameters through.
@@ -130,9 +136,15 @@ class ProductsController < ApplicationController
         :grant_amount_cents,
         :grant_amount_dollars,
         :image_url,
-        :notch_cost,
         :achievement_boolean,
         :achievement_id,
+        regional_prices_attributes: [
+          :id,
+          :region,
+          :cost,
+          :enabled,
+          :_destroy
+        ],
         accessory_groups_attributes: [
           :id,
           :name,
@@ -142,7 +154,14 @@ class ProductsController < ApplicationController
             :id,
             :name,
             :cost,
-            :_destroy
+            :_destroy,
+            regional_prices_attributes: [
+              :id,
+              :region,
+              :cost,
+              :enabled,
+              :_destroy
+            ]
           ]
         ]
       )
@@ -150,11 +169,31 @@ class ProductsController < ApplicationController
 
     def build_accessory_group_rows(product)
       if product.accessory_groups.empty?
-        product.accessory_groups.build.accessories.build
+        accessory = product.accessory_groups.build.accessories.build
+        build_accessory_regional_price_rows(accessory)
       else
         product.accessory_groups.each do |group|
-          group.accessories.build if group.accessories.empty?
+          if group.accessories.empty?
+            accessory = group.accessories.build
+            build_accessory_regional_price_rows(accessory)
+          else
+            group.accessories.each do |accessory|
+              build_accessory_regional_price_rows(accessory)
+            end
+          end
         end
+      end
+    end
+
+    def build_accessory_regional_price_rows(accessory)
+      Product::REGIONS.each do |region|
+        accessory.regional_prices.find_or_initialize_by(region: region)
+      end
+    end
+
+    def build_regional_price_rows(product)
+      Product::REGIONS.each do |region|
+        product.regional_prices.find_or_initialize_by(region: region)
       end
     end
 end

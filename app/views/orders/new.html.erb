@@ -96,7 +96,7 @@
     <% content_for :title, "Purchase of - #{@product.name}" %>
 
     <h1>Purchase : <%= @product.name %></h1>
-    <h3>Base Cost : <%= @product.notch_cost.to_i.to_s %></h3>
+    <h3>Base Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
 
     <% if @order && @order.errors.any? %>
       <div style="color: red">
@@ -144,7 +144,16 @@
           </div>
         </div>
 
-        <% if @product.accessory_groups.any? %>
+        <% user_region = current_user.set_region %>
+        <% fallback_region = "Rest of the World" %>
+        <% available_accessory_groups = @product.accessory_groups.select do |group|
+             group.accessories.any? do |accessory|
+               accessory.regional_prices.any? do |price|
+                 price.enabled && (price.region == user_region || price.region == fallback_region)
+               end
+             end
+           end %>
+        <% if available_accessory_groups.any? %>
           <% accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
               params[:accessory_group_choices].to_unsafe_h
             elsif params[:accessory_group_choices].respond_to?(:to_h)
@@ -154,9 +163,14 @@
             end %>
 
           <div class="accessory-groups">
-            <% @product.accessory_groups.each do |group| %>
+            <% available_accessory_groups.each do |group| %>
               <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
-              <% group_required = group.required? && group.accessories.any? %>
+              <% available_accessories = group.accessories.select do |accessory|
+                    accessory.regional_prices.any? do |price|
+                      price.enabled && (price.region == user_region || price.region == fallback_region)
+                    end
+                  end %>
+              <% group_required = group.required? && available_accessories.any? %>
               <% group_input_name = "accessory_group_choices[#{group.id}]" %>
 
               <fieldset class="accessory-group" style="margin-bottom: 12px;">
@@ -183,17 +197,18 @@
                     </label>
                   <% end %>
 
-                  <% group.accessories.each do |accessory| %>
+                  <% available_accessories.each do |accessory| %>
                     <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
+                    <% accessory_cost = accessory.regional_prices.where(region: user_region, enabled: true).first&.cost || accessory.regional_prices.where(region: fallback_region, enabled: true).first&.cost || 0 %>
                     <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
                       <%= radio_button_tag group_input_name,
                                            accessory.id,
                                            selected_choice == accessory.id.to_s,
                                            id: input_id,
                                            required: group_required,
-                                           data: { accessory_cost: accessory.cost.to_i } %>
+                                           data: { accessory_cost: accessory_cost } %>
                       <span class="accessory-name"><%= accessory.name.humanize %></span>
-                      <span class="accessory-cost"><%= accessory.cost.to_i %> Charm Notches</span>
+                      <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
                     </label>
                   <% end %>
                 </div>
@@ -408,7 +423,16 @@
       <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :product_id, @product.id %>
 
-        <% if @product.accessory_groups.any? %>
+        <% user_region = current_user.set_region %>
+        <% fallback_region = "Rest of the World" %>
+        <% available_accessory_groups = @product.accessory_groups.select do |group|
+             group.accessories.any? do |accessory|
+               accessory.regional_prices.any? do |price|
+                 price.enabled && (price.region == user_region || price.region == fallback_region)
+               end
+             end
+           end %>
+        <% if available_accessory_groups.any? %>
           <% accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
               params[:accessory_group_choices].to_unsafe_h
             elsif params[:accessory_group_choices].respond_to?(:to_h)
@@ -418,9 +442,14 @@
             end %>
 
           <div class="accessory-groups">
-            <% @product.accessory_groups.each do |group| %>
+            <% available_accessory_groups.each do |group| %>
               <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
-              <% group_required = group.required? && group.accessories.any? %>
+              <% available_accessories = group.accessories.select do |accessory|
+                    accessory.regional_prices.any? do |price|
+                      price.enabled && (price.region == user_region || price.region == fallback_region)
+                    end
+                  end %>
+              <% group_required = group.required? && available_accessories.any? %>
               <% group_input_name = "accessory_group_choices[#{group.id}]" %>
 
               <fieldset class="accessory-group" style="margin-bottom: 12px;">
@@ -447,17 +476,18 @@
                     </label>
                   <% end %>
 
-                  <% group.accessories.each do |accessory| %>
+                  <% available_accessories.each do |accessory| %>
                     <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
+                    <% accessory_cost = accessory.regional_prices.where(region: user_region, enabled: true).first&.cost || accessory.regional_prices.where(region: fallback_region, enabled: true).first&.cost || 0 %>
                     <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
                       <%= radio_button_tag group_input_name,
                                            accessory.id,
                                            selected_choice == accessory.id.to_s,
                                            id: input_id,
                                            required: group_required,
-                                           data: { accessory_cost: accessory.cost.to_i } %>
+                                           data: { accessory_cost: accessory_cost } %>
                       <span class="accessory-name"><%= accessory.name.humanize %></span>
-                      <span class="accessory-cost"><%= accessory.cost.to_i %> Charm Notches</span>
+                      <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
                     </label>
                   <% end %>
                 </div>
@@ -466,7 +496,13 @@
           </div>
         <% end %>
 
-        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong id="order_total_notches" data-base-cost="<%= @product.effective_notch_cost.to_i %>" style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', @product.effective_notch_cost.to_i) %></strong> Notches.</p>
+        <% base_cost = @product.cost(current_user.set_region).to_i %>
+        <% effective_cost = base_cost %>
+        <% if (sale = @product.active_sale) %>
+          <% effective_cost -= sale.discount_notches.to_i %>
+          <% effective_cost = 0 if effective_cost.negative? %>
+        <% end %>
+        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong id="order_total_notches" data-base-cost="<%= effective_cost %>" style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', effective_cost) %></strong> Notches.</p>
 
         <div style="margin-top: 12px;">
           <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>

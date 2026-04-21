@@ -31,12 +31,8 @@ class SessionsController < ApplicationController
       redirect_to root_path and return
     end
 
-    # Update user's region based on request IP on every sign-in (don't break login if the lookup fails)
-    begin
-      user.set_region_from_ip(request.remote_ip)
-    rescue => e
-      Rails.logger.warn("Failed to set region for user #{user.id}: #{e.message}")
-    end
+    # Trigger user login hook (safe, non-blocking side effects).
+    user.on_login!(ip: request.remote_ip)
 
     session[:user_id] = user.id
     stored_return_to = safe_redirect_path(session.delete(:return_to))

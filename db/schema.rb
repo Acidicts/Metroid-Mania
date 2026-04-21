@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_18_211126) do
+ActiveRecord::Schema[8.1].define(version: 2026_04_20_230000) do
   create_table "accessories", force: :cascade do |t|
     t.integer "accessory_group_id", null: false
     t.integer "cost"
@@ -299,6 +299,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_18_211126) do
     t.index ["user_id"], name: "index_projects_on_user_id"
   end
 
+  create_table "regional_prices", force: :cascade do |t|
+    t.integer "cost"
+    t.datetime "created_at", null: false
+    t.boolean "enabled"
+    t.integer "priceable_id", null: false
+    t.string "priceable_type", null: false
+    t.string "region"
+    t.datetime "updated_at", null: false
+    t.index ["priceable_type", "priceable_id"], name: "index_regional_prices_on_priceable"
+  end
+
   create_table "rsvps", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "name", null: false
@@ -413,6 +424,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_18_211126) do
     t.string "provider"
     t.string "region"
     t.integer "role"
+    t.string "set_region"
     t.boolean "setup", default: false, null: false
     t.string "slack_id"
     t.string "uid"
