@@ -111,6 +111,15 @@
                         <%= accessory_fields.label :name, "Accessory name" %>
                         <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
                       </div>
+                      <div class="form-group" style="flex: 1">
+                        <%= accessory_fields.label :image, "Accessory image (optional)" %>
+                        <%= accessory_fields.file_field :image, class: "form-input file-input", accept: "image/*" %>
+                        <% if accessory_fields.object.respond_to?(:image) && accessory_fields.object.image.attached? %>
+                          <img src="<%= url_for(accessory_fields.object.image) %>" alt="<%= accessory_fields.object.name %> image" style="max-width: 160px; max-height: 96px; display: block; margin-top: 8px; border-radius: 6px; object-fit: cover;" />
+                        <% elsif accessory_fields.object.respond_to?(:image_url) && accessory_fields.object.image_url.present? %>
+                          <img src="<%= accessory_fields.object.image_url %>" alt="<%= accessory_fields.object.name %> image" style="max-width: 160px; max-height: 96px; display: block; margin-top: 8px; border-radius: 6px; object-fit: cover;" />
+                        <% end %>
+                      </div>
                       <button type="button" class="btn-secondary remove-accessory-button">Remove accessory</button>
                     </div>
 
@@ -155,6 +164,10 @@
                       <div class="form-group" style="flex: 1">
                         <%= accessory_fields.label :name, "Accessory name" %>
                         <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
+                      </div>
+                      <div class="form-group" style="flex: 1">
+                        <%= accessory_fields.label :image, "Accessory image (optional)" %>
+                        <%= accessory_fields.file_field :image, class: "form-input file-input", accept: "image/*" %>
                       </div>
                       <div class="form-group" style="flex: 1">
                         <%= accessory_fields.label :cost, "Accessory cost" %>
@@ -223,6 +236,10 @@
                         <div class="form-group" style="flex: 1">
                           <%= accessory_fields.label :name, "Accessory name" %>
                           <%= accessory_fields.text_field :name, class: "form-input", placeholder: "Accessory name" %>
+                        </div>
+                        <div class="form-group" style="flex: 1">
+                          <%= accessory_fields.label :image, "Accessory image (optional)" %>
+                          <%= accessory_fields.file_field :image, class: "form-input file-input", accept: "image/*" %>
                         </div>
                         <div class="form-group" style="flex: 1">
                           <%= accessory_fields.label :cost, "Accessory cost" %>
@@ -360,12 +377,12 @@
       <div class="apf-section">
         <div class="apf-section-title">Photo</div>
         <div class="form-group">
-          <%= form.label :image_file, "Upload image (optional)" %>
-          <%= form.file_field :image_file, class: "form-input file-input" %>
-          <% if product.image_url.present? %>
+          <%= form.label :image, "Upload image (optional)" %>
+          <%= form.file_field :image, class: "form-input file-input", accept: "image/*" %>
+          <% if product.image.attached? || product.image_url.present? %>
             <div class="current-image" aria-live="polite">
               <p class="form-note">Current image</p>
-              <img src="<%= product.image_url %>" alt="Product image" />
+              <img src="<%= product.image.attached? ? url_for(product.image) : product.image_url %>" alt="Product image" style="max-width: 100%; height: auto; border-radius: 4px; object-fit: cover;" />
             </div>
           <% end %>
         </div>

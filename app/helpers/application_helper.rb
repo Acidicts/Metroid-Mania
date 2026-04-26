@@ -189,7 +189,7 @@ module ApplicationHelper
 
   # app/helpers/application_helper.rb
   def safe_url(url)
-    if url =~ /\Ahttps?:\/\//
+    if url =~ /\Ahttps?:\/\// || url =~ /\A\//
       url
     else
       "#" # Or a safe fallback URL

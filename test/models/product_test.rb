@@ -58,4 +58,12 @@ class ProductTest < ActiveSupport::TestCase
     user.achievements << ach
     assert prod.is_unlocked(user)
   end
+
+  test "image_url prefers attached ActiveStorage image" do
+    prod = Product.create!(name: "Temp", price_currency: 1.0)
+    blob = ActiveStorage::Blob.create_and_upload!(io: StringIO.new(""), filename: "temp.png", content_type: "image/png")
+    prod.image.attach(blob)
+    assert prod.image.attached?
+    assert_match %r{/rails/active_storage/blobs/}, prod.image_url
+  end
 end

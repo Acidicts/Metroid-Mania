@@ -10,6 +10,9 @@ class Product < ApplicationRecord
   accepts_nested_attributes_for :accessory_groups, allow_destroy: true, reject_if: :all_blank
   accepts_nested_attributes_for :regional_prices, allow_destroy: true, reject_if: proc { |attrs| attrs["region"].blank? }
 
+  # ActiveStorage attachment for the product image. This is optional.
+  has_one_attached :image
+
   # each product may optionally be tied to an achievement. we store the
   # foreign key on `products.achievement_id`, so this is a `belongs_to`
   # association. earlier versions mistakenly used `has_one` which looked for
@@ -32,6 +35,26 @@ class Product < ApplicationRecord
   attribute :image_url, :string, default: "https://assets.bing-bong.uk/image_viewer.html?file=demo/penzance.jpg"
   attribute :description, :string, default: ""
   attribute :show, :boolean, default: true
+
+  def image_url
+    if image.respond_to?(:attached?) && image.attached?
+      product_image_url
+    elsif defined?(@image_url_cache) && @image_url_cache.present?
+      @image_url_cache
+    elsif has_attribute?(:image_url) && self[:image_url].present?
+      self[:image_url]
+    else
+      nil
+    end
+  end
+
+  def image_url=(val)
+    if has_attribute?(:image_url)
+      write_attribute(:image_url, val)
+    else
+      @image_url_cache = val
+    end
+  end
   attribute :sale_discount, :integer, default: 0
   attribute :sale_date, :date, default: nil
 
@@ -236,6 +259,17 @@ class Product < ApplicationRecord
   def achievement_configuration
     if achievement_boolean && achievement.blank?
       errors.add(:achievement, "must be selected when requiring an unlock")
+    end
+  end
+
+  def product_image_url
+    return nil unless image.respond_to?(:attached?) && image.attached?
+
+    host = Rails.application.routes.default_url_options[:host]
+    if host.present?
+      Rails.application.routes.url_helpers.rails_blob_url(image, host: host)
+    else
+      Rails.application.routes.url_helpers.rails_blob_path(image, only_path: true)
     end
   end
 

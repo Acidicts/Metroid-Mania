@@ -1,11 +1,13 @@
-require 'uri'
+require "uri"
 
 module ProjectsHelper
-  # Return a URL string only if it parses as http or https; otherwise nil.
+  # Return a URL string only if it parses as http, https, or a same-host path.
+  # This is useful for ActiveStorage paths like `/rails/active_storage/blobs/...`.
   def safe_url(url)
     return nil if url.blank?
+    return url if url =~ %r{\A/}
     uri = URI.parse(url)
-    return uri.to_s if uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
+    uri.to_s if uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS)
   rescue URI::InvalidURIError
     nil
   end
@@ -16,7 +18,7 @@ module ProjectsHelper
     safe = safe_url(url)
     if safe
       opts[:target] ||= "_blank"
-      opts[:rel] = [opts[:rel], "noopener noreferrer"].compact.join(' ')
+      opts[:rel] = [ opts[:rel], "noopener noreferrer" ].compact.join(" ")
       link_to text, safe, **opts
     else
       text

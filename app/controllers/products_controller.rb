@@ -135,6 +135,7 @@ class ProductsController < ApplicationController
         :grant_max_dollars,    # virtual setter
         :grant_amount_cents,
         :grant_amount_dollars,
+        :image,
         :image_url,
         :achievement_boolean,
         :achievement_id,
@@ -154,6 +155,7 @@ class ProductsController < ApplicationController
             :id,
             :name,
             :cost,
+            :image,
             :_destroy,
             regional_prices_attributes: [
               :id,

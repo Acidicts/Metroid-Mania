@@ -98,6 +98,80 @@
     <h1>Purchase : <%= @product.name %></h1>
     <h3>Base Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
 
+    <% default_preview_src = safe_url(@product.image_url) %>
+    <div class="order-preview" id="order-preview" style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:24px;<%= default_preview_src == "#" ? 'display:none;' : '' %>">
+      <div class="order-preview__image" id="order-preview-image-container">
+        <img id="order-preview-image" data-default-src="<%= default_preview_src %>" src="<%= default_preview_src == "#" ? '' : default_preview_src %>" alt="<%= @product.name %>" onerror="document.getElementById('order-preview').style.display='none'" style="width:100%;height:auto;border-radius:12px;object-fit:cover;border:1px solid #ddd;" />
+      </div>
+      <div>
+        <h2><%= @product.name %></h2>
+        <% if @product.description.present? %>
+          <p><%= @product.description %></p>
+        <% end %>
+      </div>
+    </div>
+
+    <script>
+      (function(){
+        function initAccessoryPreview(){
+          var preview = document.getElementById('order-preview');
+          var previewImage = document.getElementById('order-preview-image');
+          var caption = document.getElementById('order-preview-caption');
+          if (!preview || !previewImage) return;
+
+          function findAccessoryImage(){
+            var selected = document.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
+            var imageUrl = previewImage.dataset.defaultSrc || '';
+            var labelText = 'Product preview';
+
+            selected.forEach(function(input){
+              if (!input) return;
+              var accessoryImageUrl = input.dataset.accessoryImageUrl;
+              if (accessoryImageUrl && accessoryImageUrl.trim() !== "") {
+                imageUrl = accessoryImageUrl;
+                labelText = input.dataset.accessoryName ? input.dataset.accessoryName + ' preview' : 'Accessory preview';
+              }
+            });
+
+            return { imageUrl: imageUrl, labelText: labelText };
+          }
+
+          previewImage.onerror = function() {
+            preview.style.display = 'none';
+            if (caption) caption.style.display = 'none';
+          };
+
+          function updatePreview(){
+            var previewInfo = findAccessoryImage();
+            if (previewInfo.imageUrl && previewInfo.imageUrl.trim() !== "" && previewInfo.imageUrl.trim() !== "#") {
+              preview.style.display = 'grid';
+              previewImage.src = previewInfo.imageUrl;
+              previewImage.alt = previewInfo.labelText;
+              if (caption) {
+                caption.style.display = '';
+                caption.textContent = previewInfo.labelText;
+              }
+            } else {
+              preview.style.display = 'none';
+              if (caption) caption.style.display = 'none';
+            }
+          }
+
+          document.addEventListener('change', function(event){
+            var target = event.target;
+            if (!target || target.type !== 'radio') return;
+            if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
+            updatePreview();
+          });
+
+          updatePreview();
+        }
+
+        document.addEventListener('DOMContentLoaded', initAccessoryPreview);
+        document.addEventListener('turbo:load', initAccessoryPreview);
+      })();
+    </script>
+
     <% if @order && @order.errors.any? %>
       <div style="color: red">
         <h3><%= pluralize(@order.errors.count, "error") %> prevented this purchase:</h3>
@@ -191,7 +265,7 @@
                                            "",
                                            selected_choice.blank?,
                                            id: none_id,
-                                           data: { accessory_cost: 0 } %>
+                                           data: { accessory_cost: 0, accessory_image_url: safe_url(@product.image_url), accessory_name: @product.name } %>
                       <span class="accessory-name">No selection</span>
                       <span class="accessory-cost">+0 Charm Notches</span>
                     </label>
@@ -206,7 +280,7 @@
                                            selected_choice == accessory.id.to_s,
                                            id: input_id,
                                            required: group_required,
-                                           data: { accessory_cost: accessory_cost } %>
+                                           data: { accessory_cost: accessory_cost, accessory_image_url: safe_url(accessory.image_url), accessory_name: accessory.name } %>
                       <span class="accessory-name"><%= accessory.name.humanize %></span>
                       <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
                     </label>
@@ -470,7 +544,7 @@
                                            "",
                                            selected_choice.blank?,
                                            id: none_id,
-                                           data: { accessory_cost: 0 } %>
+                                           data: { accessory_cost: 0, accessory_image_url: safe_url(@product.image_url), accessory_name: @product.name } %>
                       <span class="accessory-name">No selection</span>
                       <span class="accessory-cost">+0 Charm Notches</span>
                     </label>
@@ -485,7 +559,7 @@
                                            selected_choice == accessory.id.to_s,
                                            id: input_id,
                                            required: group_required,
-                                           data: { accessory_cost: accessory_cost } %>
+                                           data: { accessory_cost: accessory_cost, accessory_image_url: safe_url(accessory.image_url), accessory_name: accessory.name } %>
                       <span class="accessory-name"><%= accessory.name.humanize %></span>
                       <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
                     </label>
