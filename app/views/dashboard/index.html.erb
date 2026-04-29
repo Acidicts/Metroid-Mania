@@ -91,7 +91,8 @@
       transform: translateY(-2px);
     }
 
-    .feature h3 { margin: 0 0 8px; font-size: 1.05rem; }
+    .feature h3,
+    .feature-heading { margin: 0 0 8px; font-size: 1.05rem; }
     .feature p { margin: 0; color: #475569; font-size: 0.95rem; }
 
     /* Featured projects */
@@ -197,19 +198,19 @@
 
     <div class="features" role="region" aria-label="Key features">
       <div class="feature">
-        <h3>Build Games</h3>
+        <h2 class="feature-heading">Build Games</h2>
         <p>Create game projects, track and link Hackatime projects.</p>
         <%= link_to "Start Building", new_project_path, class: 'btn-discreet' %>
       </div>
       <div class="feature">
-        <h3>Equip Charms</h3>
+        <h2 class="feature-heading">Equip Charms</h2>
         <p>Visit the merchant to equip charms to get prizes.</p>
         <% if feature_enabled?(:shop) %>
           <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
         <% end %>
       </div>
       <div class="feature">
-        <h3>Boost Your Rewards</h3>
+        <h2 class="feature-heading">Boost Your Rewards</h2>
         <p>Let an admin give you a feature to implement for bonus charm slot.</p>
         <% if feature_enabled?(:shop) %>
           <%= link_to "Get Redeeming", products_path, class: 'btn-discreet' %>
@@ -226,15 +227,15 @@
 
     <div class="features" role="region" aria-label="Why join">
       <div class="feature">
-        <h3>Create & Share</h3>
+        <h2 class="feature-heading">Create & Share</h2>
         <p>Start a Metroidvania Game in any language, show your progress in devlogs, and share with the Hack Club community.</p>
       </div>
       <div class="feature">
-        <h3>Learn Together</h3>
+        <h2 class="feature-heading">Learn Together</h2>
         <p>Find collaborators and learn from other builders on the leaderboard.</p>
       </div>
       <div class="feature">
-        <h3>Participate</h3>
+        <h2 class="feature-heading">Participate</h2>
         <p>Earn prizes, get feedback, and ship polished Metroidvania games.</p>
       </div>
     </div>
@@ -242,9 +243,9 @@
   <% end %>
 
   <% if ORG_SLACK_IDS.any? %>
-    <div id="meet-the-orgs" role="list" aria-label="Organizers">
-      <h2>Organizers</h2>
-      <div id="orgs-list">
+    <h2 id="organizers-heading">Organizers</h2>
+    <div id="meet-the-orgs" role="list" aria-labelledby="organizers-heading">
+      <div id="orgs-list" role="presentation">
         <% if @orgs.present? %>
           <% @orgs.each do |org| %>
             <div class="org-card" role="listitem" data-slack-id="<%= org[:id] %>">

@@ -1,6 +1,6 @@
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <style>
       /* Prevent horizontal overflow across the viewport */
@@ -491,20 +491,20 @@
     </header>
 
     <% unless feature_enabled?(:running) %>
-      <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
-        This ysws is not active yet join us at the beginning of May (Hopefully) – RSVP <%= link_to "here", rsvp_path %>. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+      <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+        This ysws is not active yet join us at the beginning of May (Hopefully) – RSVP <%= link_to "here", rsvp_path, style: "color:#0b4a7f;text-decoration:underline;" %>. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path, style: "color:#0b4a7f;text-decoration:underline;" %> <% end %>
       </div>
     <% end %>
 
     <% unless feature_enabled?(:shop) %>
-      <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
-        Store is currently disabled. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+      <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+        Store is currently disabled. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path, style: "color:#0b4a7f;text-decoration:underline;" %> <% end %>
       </div>
     <% end %>
 
     <% if user_has_prize?(current_user) %>
-      <div class="site-banner" role="status" style="background:#fff4e5;color:#663c00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
-        You have won the weekly goal prize. <%= link_to "View your prize", prize_order_for(current_user) %> <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path %> <% end %>
+      <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+        You have won the weekly goal prize. <%= link_to "View your prize", prize_order_for(current_user), style: "color:#0b4a7f;text-decoration:underline;" %> <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path, style: "color:#0b4a7f;text-decoration:underline;" %> <% end %>
       </div>
     <% end %>
 
