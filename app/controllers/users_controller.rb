@@ -1,9 +1,10 @@
 class UsersController < ApplicationController
   before_action :require_login, only: [ :edit, :update, :setup ]
   skip_before_action :ensure_user_setup, only: [ :edit, :update, :setup ]
-  before_action :set_user, only: [ :show, :edit, :update ]
+  before_action :set_user, only: [ :edit, :update ]
 
   def show
+    @user = User.find(params[:id])
     # Load user's projects (exclude deleted) with their ships and devlogs
     # Use select to only load needed fields for better memory efficiency
     @projects = @user.active_projects
