@@ -1,5 +1,6 @@
 module Admin
-  class Admin::ProjectTagsController < ApplicationController
+  class ProjectTagsController < Admin::ApplicationController
+    before_action :require_admin
     before_action :set_project_tag, only: [ :show, :edit, :update, :destroy ]
 
     def index
