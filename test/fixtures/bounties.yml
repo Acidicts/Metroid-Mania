@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  name: MyString
+  description: MyString
+  type: one
+  charm_slots: MyString
+  rewarded: 1
+  project: one
+
+two:
+  name: MyString
+  description: MyString
+  type: two
+  charm_slots: MyString
+  rewarded: 1
+  project: two

@@ -1,4 +1,9 @@
 Rails.application.routes.draw do
+  get "bounties/index"
+  get "bounties/show"
+  get "bounties/new"
+  get "bounties/edit"
+  get "bounties/_form"
   # RSVP
   get "rsvp" => "rsvp#index", as: :rsvp
   get "rsvp/new" => "rsvp#new", as: :new_rsvp
