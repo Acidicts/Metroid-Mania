@@ -65,7 +65,7 @@ class ApplicationController < ActionController::Base
     return @current_user if defined?(@current_user)
 
     user_id = session[:user_id] || cookies.signed[:user_id]
-    @current_user = User.find_by(id: user_id)
+    @current_user = User.find_cached(user_id)
 
     unless @current_user
       session.delete(:user_id)

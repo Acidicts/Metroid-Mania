@@ -1,4 +1,6 @@
 class User < ApplicationRecord
+  CACHE_TTL = 1.hour
+
   # When a user is deleted we nullify references and reassign them to the system user
   has_many :projects, dependent: :nullify
   # Active (non-deleted) projects owned by this user
@@ -25,6 +27,7 @@ class User < ApplicationRecord
   has_one :wishlist, dependent: :destroy
 
   after_create :ensure_wishlist
+  after_commit :invalidate_user_cache
 
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
@@ -155,6 +158,12 @@ class User < ApplicationRecord
       # user.role = :admin if auth.info.admin
       user.role ||= :user # Default role
     end
+  end
+
+  def self.find_cached(id)
+    return nil if id.nil?
+
+    Rails.cache.fetch("user:#{id}", expires_in: CACHE_TTL) { find_by(id: id) }
   end
 
   def user_charm_notches
@@ -578,6 +587,10 @@ class User < ApplicationRecord
   end
 
   private
+
+  def invalidate_user_cache
+    Rails.cache.delete("user:#{id}")
+  end
 
   # callback used to make sure every user has a wishlist record.  defined
   # here at the end so earlier public methods retain their default visibility.
