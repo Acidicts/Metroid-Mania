@@ -5,6 +5,7 @@ gem "propshaft"
 gem "sqlite3", ">= 2.1", group: [ :development, :test ]
 
 gem "pg", "~> 1.5", group: :production
+gem "redis"
 
 gem "puma", ">= 5.0"
 gem "importmap-rails"

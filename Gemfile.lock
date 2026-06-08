@@ -387,6 +387,10 @@ GEM
       psych (>= 4.0.0)
       tsort
     redcarpet (3.6.1)
+    redis (5.4.1)
+      redis-client (>= 0.22.0)
+    redis-client (0.29.0)
+      connection_pool
     regexp_parser (2.11.3)
     reline (0.6.3)
       io-console (~> 0.5)
@@ -546,6 +550,7 @@ DEPENDENCIES
   pundit (~> 2.4)
   rails (~> 8.1.2)
   redcarpet
+  redis
   rubocop-rails-omakase
   sanitize
   selenium-webdriver

@@ -11,6 +11,9 @@
 # It's strongly recommended that you check this file into your version control system.
 
 ActiveRecord::Schema[8.1].define(version: 2026_04_21_000000) do
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "pg_catalog.plpgsql"
+
   create_table "accessories", force: :cascade do |t|
     t.integer "accessory_group_id", null: false
     t.integer "cost"
@@ -203,7 +206,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000000) do
     t.index ["product_id"], name: "index_orders_on_product_id"
     t.index ["public_id"], name: "index_orders_on_public_id", unique: true
     t.index ["status"], name: "index_orders_on_status"
-    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending_unique", unique: true, where: "status = 0 AND admin_created = false"
+    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending_unique", unique: true, where: "((status = 0) AND (admin_created = false))"
     t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
