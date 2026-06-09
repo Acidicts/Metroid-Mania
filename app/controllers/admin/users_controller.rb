@@ -4,7 +4,7 @@ module Admin
     before_action :set_user, only: %i[ show edit update destroy revert_actions ]
 
     def index
-      @users = User.not_system.where.not(name: "Deleted User").order(:id)
+      @users = User.not_system.where.not(name: "Deleted User").includes(:charm_slots).order(:id)
       @trusted_statuses = fetch_trusted_statuses(@users)
     end
 
