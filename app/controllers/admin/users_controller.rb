@@ -4,7 +4,7 @@ module Admin
     before_action :set_user, only: %i[ show edit update destroy revert_actions ]
 
     def index
-      @users = User.not_system.where.not(name: "Deleted User").includes(:charm_slots).order(:id)
+      @users = User.not_system.where.not(name: "Deleted User").order(:id)
       @trusted_statuses = fetch_trusted_statuses(@users)
     end
 
@@ -181,7 +181,9 @@ module Admin
       return {} if slack_ids.empty?
 
       slack_ids.index_with do |slack_id|
-        helpers.get_trusted_status(slack_id: slack_id)
+        Rails.cache.fetch("admin:trusted_status:#{slack_id}", expires_in: 5.minutes) do
+          helpers.get_trusted_status(slack_id: slack_id)
+        end
       end
     end
 
