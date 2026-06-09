@@ -69,4 +69,5 @@ gem "paper_trail", "~> 17.0"
 gem "redcarpet"
 gem "sanitize"
 
-gem 'faker', group: :development
+gem "faker", group: :development
+gem "ruby-lsp", require: false, group: :development

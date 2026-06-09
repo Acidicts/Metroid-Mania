@@ -1,11 +1,15 @@
 class AchievementsController < ApplicationController
   before_action :set_achievement, only: %i[ show edit update destroy ]
   before_action :require_admin, except: %i[ index show ]
+  before_action :require_login
   before_action :ensure_user_not_fraudulent, except: %i[ index ]
 
   # GET /achievements or /achievements.json
   def index
     @achievements = Achievement.all
+    @achievements.find_each do |achievement|
+      achievement.check_and_grant!(current_user) if current_user.present?
+    end
   end
 
   # GET /achievements/1 or /achievements/1.json
