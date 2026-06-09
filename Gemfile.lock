@@ -435,6 +435,8 @@ GEM
       language_server-protocol (~> 3.17.0)
       prism (>= 1.2, < 2.0)
       rbs (>= 3, < 5)
+    ruby-lsp-rails (0.4.8)
+      ruby-lsp (>= 0.26.0, < 0.27.0)
     ruby-progressbar (1.13.0)
     ruby-vips (2.3.0)
       ffi (~> 1.12)
@@ -564,6 +566,7 @@ DEPENDENCIES
   redis
   rubocop-rails-omakase
   ruby-lsp
+  ruby-lsp-rails
   sanitize
   selenium-webdriver
   solid_cable

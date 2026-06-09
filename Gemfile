@@ -71,3 +71,4 @@ gem "sanitize"
 
 gem "faker", group: :development
 gem "ruby-lsp", require: false, group: :development
+gem "ruby-lsp-rails", require: false, group: :development

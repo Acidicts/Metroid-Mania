@@ -181,7 +181,7 @@ module Admin
       return {} if slack_ids.empty?
 
       slack_ids.index_with do |slack_id|
-        Rails.cache.fetch("admin:trusted_status:#{slack_id}", expires_in: 5.minutes) do
+        Rails.cache.fetch("admin:trusted_status:#{slack_id}", expires_in: 12.hours) do
           helpers.get_trusted_status(slack_id: slack_id)
         end
       end
