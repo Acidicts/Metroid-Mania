@@ -1,5 +1,7 @@
 <div class="admin-panel">
-  <h1><%= @project.name %> <small style="font-weight:600; color: #666;">(##<%= @project.id %>)</small></h1>
+  <%= link_to @project do %>
+    <h1><%= @project.name %> <small style="font-weight:600; color: #666;">(##<%= @project.id %>)</small></h1>
+  <% end %>
 
   <div style="display:flex; gap:18px; align-items:flex-start;">
     <div style="flex:1;">

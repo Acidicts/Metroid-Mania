@@ -21,17 +21,15 @@
 
 <div class="retro-container">
   <button onclick="window.location.href='<%= projects_path %>'" class="btn-retro">Back to Projects</button>
+  <% if logged_in? && current_user.admin? %>
+    <%= link_to "Admin View", admin_project_path(@project), class:"btn-retro", style:"margin-left:0.5rem" %>
+  <% end %>
 
   <section class="project-hero" style="margin-top:18px;">
     <div class="hero-left">
       <div class="project-media">
-        <%# Use helper so that blob URLs are generated in the context of the
-            current HTTP request.  `Project#image_url` is still useful for
-            places without a request (migrations, jobs etc) but the view
-            needs something request-aware for external crawlers. %>
-        <% displayed_url = project_banner_url(@project) %>
         <img class="project-media__img" src="<%= displayed_url %>" alt="<%= @project.name %>">
-      </div>    
+      </div>
 
       <div style="margin-top:12px">
         <h1 class="project-title" style="display: inline-block"><%= @project.name %> <span style="all:unset; color:var(--accent2); font-size:0.8em; background-color:var(--main-900); padding:2px 6px; border-radius:4px; text-shadow:none;"><%= @project.project_tag&.tag %></span></h1>
@@ -57,10 +55,10 @@
           <% if logged_in? %>
             <% if current_user.not_liked_project(@project.id) %>
               <%= button_to '♡ - ' + @project.likers.count.to_s,
-                            like_project_path(@project),
-                            method: :post,
-                            class: 'btn-retro btn-retro--outline'
-              %>
+                      like_project_path(@project),
+                      method: :post,
+                      class: 'btn-retro btn-retro--outline'
+                %>
             <% else %>
               <%= button_to '❤️ - ' + @project.likers.count.to_s,
                               unlike_project_path(@project),

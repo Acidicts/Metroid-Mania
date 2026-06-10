@@ -1,3 +1,25 @@
+# == Schema Information
+#
+# Table name: devlogs
+#
+#  id                :bigint           not null, primary key
+#  content           :text
+#  created_at        :datetime         not null
+#  duration_minutes  :integer
+#  duration_seconds  :integer
+#  log_date          :date
+#  project_id        :integer          not null
+#  ship_request_id   :integer
+#  title             :string
+#  updated_at        :datetime         not null
+#  user_id           :integer
+#
+# Indexes
+#  index_devlogs_on_project_id_and_created_at  (project_id, created_at)
+#  index_devlogs_on_project_id                 (project_id)
+#  index_devlogs_on_ship_request_id            (ship_request_id)
+#  index_devlogs_on_user_id                    (user_id)
+#
 class Devlog < ApplicationRecord
   belongs_to :project, counter_cache: true
   belongs_to :ship_request, optional: true

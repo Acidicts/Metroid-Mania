@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: assets_projects
+#
+#  id              :bigint           not null, primary key
+#  created_at      :datetime         not null
+#  description     :text
+#  hackatime_ids   :text
+#  image_url       :string
+#  media_type      :string
+#  readme_url      :string
+#  repository_url  :string
+#  shipped         :boolean
+#  title           :string
+#  updated_at      :datetime         not null
+#  user_id         :integer          not null
+#
+# Indexes
+#  index_assets_projects_on_user_id  (user_id)
+#
 class AssetsProject < ApplicationRecord
   belongs_to :user
 

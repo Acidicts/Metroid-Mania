@@ -1,3 +1,36 @@
+# == Schema Information
+#
+# Table name: products
+#
+#  id                  :bigint           not null, primary key
+#  achievement_bool    :boolean          default: false
+#  achievement_id      :integer
+#  cost_credits        :float
+#  created_at          :datetime         not null
+#  credits_per_dollar  :float
+#  description         :string
+#  grant_amount_cents  :integer
+#  grant_enabled       :boolean          default: false, not null
+#  grant_max_cents     :integer
+#  grant_min_cents     :integer
+#  image_url           :string
+#  limited             :boolean          default: false, not null
+#  link                :string
+#  name                :string
+#  notch_cost          :integer
+#  price_currency      :float
+#  sale_discount       :integer
+#  sale_time           :date
+#  show                :boolean          default: true
+#  steam_app_id        :integer
+#  steam_price_cents   :integer
+#  stock               :integer          default: 0
+#  updated_at          :datetime         not null
+#  variable_grant      :boolean          default: false, not null
+#
+# Indexes
+#  index_products_on_achievement_id  (achievement_id)
+#
 class Product < ApplicationRecord
   # don't accidentally blow away users' order history when an admin
   # deletes a product. the foreign key in the database enforces this

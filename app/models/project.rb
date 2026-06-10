@@ -1,3 +1,36 @@
+# == Schema Information
+#
+# Table name: projects
+#
+#  id                     :bigint           not null, primary key
+#  approved_at            :datetime
+#  created_at             :datetime         not null
+#  credits_per_hour       :integer
+#  deleted_at             :datetime
+#  demo_link              :string
+#  description            :text
+#  devlogs_count          :integer          default: 0, not null
+#  hackatime_id           :string
+#  hackatime_ids          :text
+#  name                   :string
+#  notch_remainder_seconds :float           default: 0.0, not null
+#  project_tag_id         :integer
+#  readme_url             :string
+#  repository_url         :string
+#  ship_requested_at      :datetime
+#  shipped                :boolean          default: false, not null
+#  shipped_at             :datetime
+#  ships_count            :integer          default: 0, not null
+#  status                 :string
+#  total_seconds          :integer
+#  updated_at             :datetime         not null
+#  user_id                :integer          not null
+#
+# Indexes
+#  index_projects_on_deleted_at                (deleted_at)
+#  index_projects_on_user_id_and_deleted_at    (user_id, deleted_at)
+#  index_projects_on_user_id                   (user_id)
+#
 class Project < ApplicationRecord
   belongs_to :user
 

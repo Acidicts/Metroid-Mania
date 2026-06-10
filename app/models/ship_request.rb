@@ -1,3 +1,28 @@
+# == Schema Information
+#
+# Table name: ship_requests
+#
+#  id                 :bigint           not null, primary key
+#  approved_at        :datetime
+#  created_at         :datetime         not null
+#  credits_awarded    :float
+#  credits_per_hour   :float
+#  devlogged_seconds  :integer
+#  multiplier         :float            default: 1.0, not null
+#  processed_by_id    :integer
+#  project_id         :integer          not null
+#  requested_at       :datetime
+#  ship_id            :integer
+#  status             :string           default: "pending"
+#  updated_at         :datetime         not null
+#  user_id            :integer          not null
+#
+# Indexes
+#  index_ship_requests_on_processed_by_id  (processed_by_id)
+#  index_ship_requests_on_project_id        (project_id)
+#  index_ship_requests_on_ship_id           (ship_id)
+#  index_ship_requests_on_user_id           (user_id)
+#
 class ShipRequest < ApplicationRecord
   belongs_to :project
   belongs_to :user

@@ -1,5 +1,31 @@
 require "securerandom"
 
+# == Schema Information
+#
+# Table name: orders
+#
+#  id                :bigint           not null, primary key
+#  admin_created     :boolean          default: false, not null
+#  charm_image_url   :string
+#  cost              :float
+#  created_at        :datetime         not null
+#  extra_info        :string
+#  grant_amount_cents :integer
+#  notch_cost        :integer
+#  price_usd         :float
+#  product_id        :integer          not null
+#  public_id         :string
+#  status            :integer          default: 0, not null
+#  updated_at        :datetime         not null
+#  user_id           :integer          not null
+#
+# Indexes
+#  index_orders_on_product_id                           (product_id)
+#  index_orders_on_public_id                            (public_id) UNIQUE
+#  index_orders_on_status                               (status)
+#  index_orders_on_user_product_pending_unique           (user_id, product_id) UNIQUE WHERE (status = 0 AND admin_created = false)
+#  index_orders_on_user_id                              (user_id)
+#
 class Order < ApplicationRecord
   belongs_to :user
   belongs_to :product

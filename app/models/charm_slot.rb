@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: charm_slots
+#
+#  id         :bigint           not null, primary key
+#  created_at :datetime         not null
+#  order_id   :integer
+#  updated_at :datetime         not null
+#  user_id    :integer          not null
+#
+# Indexes
+#  index_charm_slots_on_order_id  (order_id)
+#  index_charm_slots_on_user_id   (user_id)
+#
 class CharmSlot < ApplicationRecord
   belongs_to :user
   belongs_to :order, optional: true, default: nil, inverse_of: :charm_slot

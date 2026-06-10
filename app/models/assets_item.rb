@@ -1,3 +1,22 @@
+# == Schema Information
+#
+# Table name: assets_items
+#
+#  id                 :bigint           not null, primary key
+#  assets_project_id  :integer
+#  created_at         :datetime         not null
+#  description        :text
+#  media_type         :string
+#  shipped            :boolean
+#  spritesheet_url    :string
+#  title              :string
+#  updated_at         :datetime         not null
+#  user_id            :integer          not null
+#
+# Indexes
+#  index_assets_items_on_assets_project_id  (assets_project_id)
+#  index_assets_items_on_user_id            (user_id)
+#
 class AssetsItem < ApplicationRecord
   # The underlying table column is `assets_project_id`.  Earlier versions of the
   # app used `project_id`, so we retain a tiny compatibility shim in case any

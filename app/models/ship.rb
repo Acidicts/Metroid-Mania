@@ -1,3 +1,23 @@
+# == Schema Information
+#
+# Table name: ships
+#
+#  id                      :bigint           not null, primary key
+#  created_at              :datetime         not null
+#  credits_awarded         :float
+#  devlogged_seconds       :integer
+#  hackatime_ids_snapshot  :text
+#  multiplier              :float
+#  project_id              :integer          not null
+#  shipped_at              :datetime
+#  updated_at              :datetime         not null
+#  user_id                 :integer          not null
+#
+# Indexes
+#  index_ships_on_project_id_and_shipped_at  (project_id, shipped_at)
+#  index_ships_on_project_id                 (project_id)
+#  index_ships_on_user_id                    (user_id)
+#
 class Ship < ApplicationRecord
   belongs_to :project, counter_cache: true
   belongs_to :user

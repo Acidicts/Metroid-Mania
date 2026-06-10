@@ -1,3 +1,21 @@
+# == Schema Information
+#
+# Table name: sales
+#
+#  id               :bigint           not null, primary key
+#  created_at       :datetime         not null
+#  description      :text
+#  discount_notches :integer          default: 0, not null
+#  ends_at          :datetime
+#  name             :string           not null
+#  product_id       :integer
+#  quantity         :integer          default: 1, not null
+#  starts_at        :datetime
+#  updated_at       :datetime         not null
+#
+# Indexes
+#  index_sales_on_product_id  (product_id)
+#
 class Sale < ApplicationRecord
   belongs_to :product, optional: true
 

@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: achievements
+#
+#  id                 :bigint           not null, primary key
+#  created_at         :datetime         not null
+#  description        :text
+#  image_url          :string
+#  requirement_type   :string
+#  requirement_value  :decimal
+#  title              :string
+#  updated_at         :datetime         not null
+#
 class Achievement < ApplicationRecord
   has_many :user_achievements, dependent: :destroy
   has_many :users, through: :user_achievements

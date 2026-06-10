@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: regional_prices
+#
+#  id              :bigint           not null, primary key
+#  cost            :integer
+#  created_at      :datetime         not null
+#  enabled         :boolean
+#  priceable_id    :integer          not null
+#  priceable_type  :string           not null
+#  region          :string
+#  updated_at      :datetime         not null
+#
+# Indexes
+#  index_regional_prices_on_priceable_and_region  (priceable_type, priceable_id, region) UNIQUE
+#  index_regional_prices_on_priceable             (priceable_type, priceable_id)
+#
 class RegionalPrice < ApplicationRecord
   belongs_to :priceable, polymorphic: true
 

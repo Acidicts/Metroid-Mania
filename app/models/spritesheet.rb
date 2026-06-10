@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: spritesheets
+#
+#  id             :bigint           not null, primary key
+#  assets_item_id :integer          not null
+#  created_at     :datetime         not null
+#  name           :string
+#  updated_at     :datetime         not null
+#  url            :string
+#
+# Indexes
+#  index_spritesheets_on_assets_item_id  (assets_item_id)
+#
 class Spritesheet < ApplicationRecord
   belongs_to :assets_item
 

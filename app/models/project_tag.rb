@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: project_tags
+#
+#  id         :bigint           not null, primary key
+#  created_at :datetime         not null
+#  project_id :integer
+#  tag_string :string
+#  updated_at :datetime         not null
+#
+# Indexes
+#  index_project_tags_on_project_id  (project_id)
+#
 class ProjectTag < ApplicationRecord
   # A tag may optionally be scoped to a particular project; nil indicates a
   # global tag.  the `project_id` column was originally non-nullable but the

@@ -1,3 +1,19 @@
+# == Schema Information
+#
+# Table name: challenges
+#
+#  id              :bigint           not null, primary key
+#  active          :boolean
+#  created_at      :datetime         not null
+#  description     :text
+#  end_at          :datetime
+#  multiplier      :float
+#  reward_notches  :integer
+#  start_at        :datetime
+#  title           :string
+#  type            :string           default: "multiplier", not null
+#  updated_at      :datetime         not null
+#
 class Challenge < ApplicationRecord
   # A challenge grants players bonus notches when
   # they meet the criteria within the specified window.

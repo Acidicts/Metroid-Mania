@@ -1,3 +1,20 @@
+# == Schema Information
+#
+# Table name: charm_notches
+#
+#  id             :bigint           not null, primary key
+#  admin_granted  :boolean          default: false, not null
+#  charm_slot_id  :integer
+#  created_at     :datetime         not null
+#  ship_id        :integer
+#  updated_at     :datetime         not null
+#  user_id        :integer          not null
+#
+# Indexes
+#  index_charm_notches_on_charm_slot_id  (charm_slot_id)
+#  index_charm_notches_on_ship_id        (ship_id)
+#  index_charm_notches_on_user_id        (user_id)
+#
 class CharmNotch < ApplicationRecord
   belongs_to :user
   belongs_to :ship, optional: true

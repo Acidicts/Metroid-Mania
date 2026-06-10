@@ -1,3 +1,17 @@
+# == Schema Information
+#
+# Table name: accessories
+#
+#  id                 :bigint           not null, primary key
+#  accessory_group_id :integer          not null
+#  cost               :integer
+#  created_at         :datetime         not null
+#  name               :string
+#  updated_at         :datetime         not null
+#
+# Indexes
+#  index_accessories_on_accessory_group_id  (accessory_group_id)
+#
 class Accessory < ApplicationRecord
   belongs_to :accessory_group, inverse_of: :accessories
   has_one_attached :image

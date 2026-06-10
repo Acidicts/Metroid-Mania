@@ -1,3 +1,16 @@
+# == Schema Information
+#
+# Table name: site_settings
+#
+#  id         :bigint           not null, primary key
+#  created_at :datetime         not null
+#  key        :string           not null
+#  updated_at :datetime         not null
+#  value      :string
+#
+# Indexes
+#  index_site_settings_on_key  (key) UNIQUE
+#
 class SiteSetting < ApplicationRecord
   validates :key, presence: true, uniqueness: true
 

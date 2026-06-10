@@ -1,3 +1,40 @@
+# == Schema Information
+#
+# Table name: users
+#
+#  id                      :bigint           not null, primary key
+#  amount_spent            :float            default: 0.0, not null
+#  charm_slots             :integer          default: 0, not null
+#  created_at              :datetime         not null
+#  credit_offset           :float            default: 0.0, not null
+#  currency                :float
+#  email                   :string
+#  flagged_for_fraud       :boolean          default: false, not null
+#  flagged_for_fraud_by_id :integer
+#  font_on                 :boolean          default: true, not null
+#  fraud_reason            :string
+#  hackatime_api_key       :string
+#  hackatime_synced_at     :datetime
+#  hackatime_trust_status  :string
+#  name                    :string
+#  password_digest         :string
+#  provider                :string
+#  region                  :string
+#  role                    :integer
+#  set_region              :string
+#  setup                   :boolean          default: false, not null
+#  slack_id                :string
+#  uid                     :string
+#  updated_at              :datetime         not null
+#  verification_status     :string
+#  xp                      :integer          default: 0, not null
+#
+# Indexes
+#  index_users_on_flagged_for_fraud_by_id  (flagged_for_fraud_by_id)
+#  index_users_on_hackatime_trust_status   (hackatime_trust_status)
+#  index_users_on_slack_id                 (slack_id)
+#  index_users_on_uid                      (uid)
+#
 class User < ApplicationRecord
   CACHE_TTL = 1.hour
 
