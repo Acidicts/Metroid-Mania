@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_24_091155) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_25_000002) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -173,15 +173,14 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_091155) do
   end
 
   create_table "comments", force: :cascade do |t|
+    t.bigint "commentable_id"
+    t.string "commentable_type"
     t.datetime "created_at", null: false
-    t.integer "devlog_id"
     t.datetime "last_editted"
     t.text "message"
-    t.integer "ship_id"
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["devlog_id"], name: "index_comments_on_devlog_id"
-    t.index ["ship_id"], name: "index_comments_on_ship_id"
+    t.index ["commentable_type", "commentable_id"], name: "index_comments_on_commentable"
     t.index ["user_id"], name: "index_comments_on_user_id"
   end
 
@@ -204,6 +203,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_091155) do
 
   create_table "orders", force: :cascade do |t|
     t.boolean "admin_created", default: false, null: false
+    t.boolean "can_cancel", default: true, null: false
     t.string "charm_image_url"
     t.float "cost"
     t.datetime "created_at", null: false
@@ -214,6 +214,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_091155) do
     t.integer "product_id", null: false
     t.string "public_id"
     t.integer "status", default: 0, null: false
+    t.boolean "system", default: false, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
     t.index ["product_id"], name: "index_orders_on_product_id"
@@ -461,8 +462,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_24_091155) do
   add_foreign_key "charm_notches", "users"
   add_foreign_key "charm_slots", "orders"
   add_foreign_key "charm_slots", "users"
-  add_foreign_key "comments", "devlogs"
-  add_foreign_key "comments", "ships"
   add_foreign_key "comments", "users"
   add_foreign_key "devlogs", "projects"
   add_foreign_key "devlogs", "ship_requests"

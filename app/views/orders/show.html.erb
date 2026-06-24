@@ -1,6 +1,7 @@
 
 <%= render @order %>
+<%= render partial: 'comments/comment_box', locals: { commentable: @order, admin_only: true, title: "Admin Comments" } %>
 
-<div>
-  <%= link_to "Back to orders", orders_path %>
+<div style="margin-top: 2rem;">
+  <%= link_to "Back to orders", orders_path, class: "nb-btn nb-btn-secondary" %>
 </div>

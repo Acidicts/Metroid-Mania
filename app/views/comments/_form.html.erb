@@ -12,10 +12,11 @@
       </div>
     <% end %>
 
-    <% devlog_id = (comment.respond_to?(:devlog_id) ? comment.devlog_id : nil) || (defined?(devlog) && devlog&.id) %>
-    <%= form.hidden_field :devlog_id, value: devlog_id if devlog_id.present? %>
-    <% ship_id = (comment.respond_to?(:ship_id) ? comment.ship_id : nil) || (defined?(ship) && ship&.id) %>
-    <%= form.hidden_field :ship_id, value: ship_id if ship_id.present? %>
+    <% commentable = local_assigns[:commentable] || comment.commentable %>
+    <% if commentable %>
+      <%= form.hidden_field :commentable_type, value: commentable.class.name %>
+      <%= form.hidden_field :commentable_id, value: commentable.id %>
+    <% end %>
 
     <div class="field">
       <span>New Comment :</span>

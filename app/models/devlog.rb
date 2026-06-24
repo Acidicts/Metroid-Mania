@@ -33,7 +33,7 @@ class Devlog < ApplicationRecord
   validate :owner_minimum_duration
   before_validation :ensure_duration_seconds
 
-  has_many :comments, dependent: :destroy
+  has_many :comments, as: :commentable, dependent: :destroy
 
   # whenever a user adds a devlog we may have changed the global weekly
   # total; check whether the community goal was reached.  This mirrors the

@@ -5,6 +5,8 @@ class OrdersController < ApplicationController
   before_action :set_order, only: %i[ show update ]
   before_action :ensure_user_not_fraudulent, only: %i[ index show ]
 
+  rescue_from ActiveRecord::RecordNotFound, with: :order_not_found
+
   # GET /orders or /orders.json
   def index
     if !current_user.admin?
@@ -42,7 +44,7 @@ class OrdersController < ApplicationController
 
   # GET /orders/1 or /orders/1.json
   def show
-    unless @order.user == current_user
+    unless (@order.user == current_user) || current_user.admin?
       flash_warn("Not authorized")
       redirect_to orders_path and return
     end
@@ -58,13 +60,24 @@ class OrdersController < ApplicationController
   # PUT/PATCH /orders/1
   # Used by the 'Cancel Order' button so we respect RESTful routing.
   def update
-    unless @order.user == current_user
+    unless @order.user == current_user || current_user.admin?
       flash_warn("Not authorized")
       redirect_to orders_path and return
     end
 
-    if params[:status].present? && params[:status] == "user_denied" && @order.status == "pending"
+    if params[:status].present? && params[:status] == "user_denied" && @order.status == "pending" && @order.can_cancel?
       @order.update(status: params[:status])
+    elsif params[:status].present? && params[:status] == "user_denied" && @order.status == "pending" && current_user.admin? && !@order.can_cancel? && current_user != @order.user
+      @order.update(status: "cancelled")
+
+      Comment.create!(
+        user: current_user,
+        commentable: @order,
+        message: "Admin #{current_user.name} updated order status to '#{@order.status.humanize}'"
+      )
+    else
+      flash_warn("Invalid status change")
+      redirect_to @order and return
     end
 
     redirect_to @order
@@ -297,5 +310,9 @@ class OrdersController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def set_order
       @order = Order.find_by_param(params[:id])
+    end
+
+    def order_not_found
+      redirect_to orders_path, alert: "Order not found."
     end
 end

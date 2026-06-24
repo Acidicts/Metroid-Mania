@@ -1,0 +1,27 @@
+<style>
+  #comments-for {
+    margin-top: 16px;
+    padding: 16px 20px;
+    border: 4px solid var(--nb-border);
+    border-left: 8px solid var(--nb-purple);
+    background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
+    box-shadow: var(--nb-shadow);
+    font-family: var(--nb-font);
+  }
+</style>
+
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
+<% end %>
+
+<% if ((commentable.comments.any? && current_user == commentable.user) && (!defined?(admin_view) || !admin_view) ) || current_user&.admin? %>
+  <div id="comments-for">
+    <h2><%= defined?(title) ? title : "Comments" %></h2>
+    <% for comment in commentable.comments %>
+      <%= render comment %>
+    <% end %>
+    <% if defined?(current_user) && current_user && ((!defined?(admin_only) || !admin_only) || current_user.admin?) %>
+      <%= render 'comments/form', comment: Comment.new, commentable: commentable %>
+    <% end %>
+  </div>
+<% end %>

@@ -31,9 +31,45 @@
       <%= f.select :set_region, options_for_select(User::REGIONS.map { |r| [r, r] }, @user.set_region.presence || @user.region), { include_blank: "Choose a region" }, class: "form-input" %>
     </div>
 
-    <div class="form-actions">
+    <%= f.fields_for :address, @user.address || @user.build_address do |af| %>
+      <div class="apf-section">
+        <div class="apf-section-title">Address</div>
+
+        <div class="form-group">
+          <%= af.label :address_line_1, "Address Line 1<span style='color:red; font-family:Comfortaa'>*</span>".html_safe %>
+          <%= af.text_field :address_line_1, required: true, class: "form-input" %>
+        </div>
+
+        <div class="form-group">
+          <%= af.label :address_line_2, "Address Line 2" %>
+          <%= af.text_field :address_line_2, class: "form-input" %>
+        </div>
+
+        <div class="form-group">
+          <%= af.label :city, "City<span style='color:red; font-family:Comfortaa'>*</span>".html_safe %>
+          <%= af.text_field :city, required: true, class: "form-input" %>
+        </div>
+
+        <div class="form-group">
+          <%= af.label :province, "State / Province<span style='color:red; font-family:Comfortaa'>*</span>".html_safe %>
+          <%= af.text_field :province, required: true, class: "form-input" %>
+        </div>
+
+        <div class="form-group">
+          <%= af.label :postal_code, "Zip / Postal Code<span style='color:red; font-family:Comfortaa'>*</span>".html_safe %>
+          <%= af.text_field :postal_code, required: true, class: "form-input" %>
+        </div>
+
+        <div class="form-group">
+          <%= af.label :country, "Country<span style='color:red; font-family:Comfortaa'>*</span>".html_safe %>
+          <%= af.select :country, Address.countries.keys, { include_blank: "Select a country" }, required: true, class: "form-input" %>
+        </div>
+      </div>
+    <% end %>
+
+    <div class="form-actions" style="justify-content: space-between;">
       <%= f.submit "Update Profile", class: "btn-primary" %>
-      <%= link_to "Go Home", (ENV['APP_URL'].presence || root_path), class: "btn-secondary" %>
+      <%= link_to "Go Home", (root_path || ENV['APP_URL'].presence), class: "btn-secondary" %>
     </div>
   <% end %>
 </div>

@@ -23,12 +23,13 @@ class CommentsController < ApplicationController
 
   # POST /comments or /comments.json
   def create
-    # Disallow non-admins from creating comments tied to a Ship
-    if comment_params[:ship_id].present? && !(defined?(current_user) && current_user&.admin?)
+    @commentable = find_commentable
+
+    if @commentable.is_a?(Ship) && !(defined?(current_user) && current_user&.admin?)
       redirect_back fallback_location: root_path, alert: "Only admins may comment on ships." and return
     end
 
-    @comment = Comment.new(comment_params)
+    @comment = Comment.new(comment_params.merge(commentable: @commentable))
     @comment.user = current_user if defined?(current_user) && @comment.user.nil?
 
     if @comment.save
@@ -53,8 +54,12 @@ class CommentsController < ApplicationController
 
   # DELETE /comments/1 or /comments/1.json
   def destroy
-    ship = @comment.ship
-    project = ship.project if ship.present?
+    commentable = @comment.commentable
+    project = if commentable.is_a?(Ship)
+                commentable.project
+              elsif commentable.is_a?(Devlog)
+                commentable.project
+              end
     @comment.destroy!
 
     respond_to do |format|
@@ -70,14 +75,24 @@ class CommentsController < ApplicationController
   end
 
   private
-    # Use callbacks to share common setup or constraints between actions.
     def set_comment
       @comment = Comment.find(params[:id])
     end
 
-    # Only allow a list of trusted parameters through.
     def comment_params
-      params.require(:comment).permit(:message, :devlog_id, :ship_id)
+      params.require(:comment).permit(:message)
+    end
+
+    def find_commentable
+      if params[:comment][:commentable_type].present? && params[:comment][:commentable_id].present?
+        params[:comment][:commentable_type].constantize.find(params[:comment][:commentable_id])
+      elsif params[:devlog_id].present?
+        Devlog.find(params[:devlog_id])
+      elsif params[:ship_id].present?
+        Ship.find(params[:ship_id])
+      elsif params[:order_id].present?
+        Order.find(params[:order_id])
+      end
     end
 
     def ensure_editable

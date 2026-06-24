@@ -46,13 +46,6 @@
       <% end %>
     </div>
     <hr style="margin: 16px 0;">
-    <div id="comments-for">
-      <% for comment in devlog.comments %>
-        <%= render comment %>
-      <% end %>
-      <% if defined?(current_user) && current_user %>
-        <%= render 'comments/form', comment: Comment.new(devlog: devlog), devlog: devlog %>
-      <% end %>
-    </div>
+    <%= render partial: 'comments/comment_box', locals: { commentable: devlog } %>
   </div>
 </div>

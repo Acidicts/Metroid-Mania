@@ -23,7 +23,7 @@ require "securerandom"
 #  index_orders_on_product_id                           (product_id)
 #  index_orders_on_public_id                            (public_id) UNIQUE
 #  index_orders_on_status                               (status)
-#  index_orders_on_user_product_pending_unique           (user_id, product_id) UNIQUE WHERE (status = 0 AND admin_created = false)
+#  index_orders_on_user_product_pending_unique          (user_id, product_id) UNIQUE WHERE (status = 0 AND admin_created = false)
 #  index_orders_on_user_id                              (user_id)
 #
 class Order < ApplicationRecord
@@ -31,6 +31,7 @@ class Order < ApplicationRecord
   belongs_to :product
 
   has_one :charm_slot, dependent: :nullify, inverse_of: :order
+  has_many :comments, as: :commentable, dependent: :destroy
 
   # Optional image used when an order represents a custom "charm" purchase.  This allows
   # callers (typically from the storefront or admin UI) to attach a specific URL which is
@@ -110,11 +111,13 @@ class Order < ApplicationRecord
 
   # canonical mapping used by migration/tests/views
   STATUS_VALUE_MAP = {
-    "pending"     => 0,
-    "denied"      => 1,
-    "shipped"     => 2,
-    "user_denied" => 3,
-    "submitted"   => 4
+    "pending"                      => 0,
+    "denied"                       => 1,
+    "shipped"                      => 2,
+    "user_denied"                  => 3,
+    "submitted"                    => 4,
+    "cancelled"                    => 5,
+    "awaiting_periodic_fulfillment" => 6
   }.freeze
 
   # Select-friendly array (used by views)

@@ -21,12 +21,13 @@
           else 'status-pending' end %>" style="font-size:1rem; padding:8px 12px;"></div>
         <div id="admin-order-actions" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
           <% if @order.status == "pending" || @order.status == "shipped" %>
+            <%= button_to "View", order_path(@order), method: :get, class: 'btn-retro-admin' %>
             <%= button_to "Fulfill", fulfill_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
             <%= button_to "Decline & Refund", decline_admin_order_path(@order), method: :post, data: { confirm: 'Refund user and decline order?' }, class: 'btn-admin btn-retro-admin' %>
           <% elsif @order.status == "denied" %>
             <%= button_to "Delete", delete_admin_order_path(@order), method: :post, data: { confirm: 'Delete denied order?' }, class: 'btn-retro-admin' %>
           <% end %>
-            <%= button_to "DM User", dm_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
+          <%= button_to "DM User", dm_admin_order_path(@order), method: :post, class: 'btn-retro-admin' %>
         </div>
       </div>
     </div>
@@ -47,12 +48,15 @@
 
   <div class="order-status-dropdown" style="margin-top:18px; margin-bottom:12px;">
     <strong>Change Status:</strong>
-    <%= form_with url: update_status_admin_order_path(@order), method: :post, style: 'display:inline-flex; gap:8px; align-items:center; margin-top:8px;' do |f| %>
-      <%= f.select :status,
-            Order::STATUS_VALUE_MAP.keys.map { |s| [s.humanize, s] },
-            { selected: @order.status.to_s },
-            class: 'admin-select', style: 'padding:6px 10px; border:2px solid var(--admin-700, #555); border-radius:4px; font-size:0.95rem;' %>
-      <%= f.submit 'Update Status', class: 'btn-retro-admin', style: 'cursor:pointer;' %>
+    <%= form_with url: update_status_admin_order_path(@order), method: :post, style: 'display:inline-flex; flex-direction:column; gap:8px; margin-top:8px;' do |f| %>
+      <div style="display:inline-flex; gap:8px; align-items:center;">
+        <%= f.select :status,
+              Order::STATUS_VALUE_MAP.keys.map { |s| [s.humanize, s] },
+              { selected: @order.status.to_s },
+              class: 'admin-select', style: 'padding:6px 10px; border:2px solid var(--admin-700, #555); border-radius:4px; font-size:0.95rem;' %>
+        <%= f.submit 'Update Status', class: 'btn-retro-admin', style: 'cursor:pointer;' %>
+      </div>
+      <%= f.text_area :message, placeholder: 'Optional message for this status change...', rows: 2, style: 'padding:6px 10px; border:2px solid var(--admin-700, #555); border-radius:4px; font-size:0.95rem; resize:vertical; max-width:400px;' %>
     <% end %>
   </div>
 

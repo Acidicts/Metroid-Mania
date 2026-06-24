@@ -8,6 +8,7 @@
 #  last_editted  :datetime
 #  message       :text
 #  ship_id       :integer
+#  system        :boolean          default(FALSE), not null
 #  updated_at    :datetime         not null
 #  user_id       :integer          not null
 #
@@ -18,9 +19,9 @@
 #
 class Comment < ApplicationRecord
   belongs_to :user
-  # devlog/ship are optional because some comments may be created outside a devlog/ship context
-  belongs_to :devlog, optional: true
-  belongs_to :ship, optional: true
+  belongs_to :commentable, polymorphic: true, optional: true
+
+  attribute :system, :boolean, default: false
 
   validates :message, presence: true
 
@@ -31,8 +32,12 @@ class Comment < ApplicationRecord
     return true if u.admin? || u.superadmin?
 
     # Only admins may edit comments attached to a Ship
-    return false if ship.present?
+    return false if commentable.is_a?(Ship)
 
     user == u
+  end
+
+  def system?
+    self.system
   end
 end

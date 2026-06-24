@@ -55,7 +55,7 @@
               <%= form.label :hackatime_ids, "Link Hackatime Projects" %>
               <select id="hackatime-dropdown" class="form-input" data-action="change->hackatime-selector#add">
                 <option value="">Select a Hackatime project...</option>
-                <% @hackatime_projects.each do |p| %>
+                <% @hackatime_projects.sort_by { |p| -p['seconds'].to_i }.each do |p| %>
                   <option value="<%= p['name'] %>" data-seconds="<%= p['seconds'] %>"><%= "#{p['name']} - #{format_duration(p['seconds'])}" %></option>
                 <% end %>
               </select>

@@ -48,8 +48,10 @@
       </div>
     </div>
 
-    <div class="form-actions">
-      <button type="button" class="btn-primary address-submit-btn" style="width:80%; margin-left:10%; margin-right:10%"><%= submit_name %></button>
-    </div>
+    <% unless local_assigns[:hide_submit] %>
+      <div class="form-actions">
+        <button type="button" class="btn-primary address-submit-btn" style="width:80%; margin-left:10%; margin-right:10%"><%= submit_name %></button>
+      </div>
+    <% end %>
   <% end %>
 </div>

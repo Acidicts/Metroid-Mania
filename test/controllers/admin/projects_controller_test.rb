@@ -285,7 +285,7 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     # owner's currency should have been reduced by reclaimed amount
     assert_in_delta total_awarded, 100.0 - owner.currency.to_f, 0.001
 
-    assert_redirected_to admin_dashboard_url
+    assert_redirected_to admin_projects_url
     assert_audit_created(action: "delete", project: @project, user: @admin)
 
     # Deleted project should not appear in the admin index (link to the specific project must be absent)

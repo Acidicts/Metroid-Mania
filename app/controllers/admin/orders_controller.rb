@@ -42,9 +42,19 @@ module Admin
 
       previous = @order.status
       @order.update!(status: db_val)
-      Audit.create!(user: current_user, project: nil, action: "order_status_changed",
-                    details: { order_id: @order.id, order_public_id: @order.public_id,
-                               previous_status: canonical_status(previous), new_status: canonical })
+      audit_details = { order_id: @order.id, order_public_id: @order.public_id,
+                        previous_status: canonical_status(previous), new_status: canonical }
+      audit_details[:message] = params[:message].to_s.strip if params[:message].present?
+      Audit.create!(user: current_user, project: nil, action: "order_status_changed", details: audit_details)
+
+      if params[:message].present?
+        Comment.create!(
+          user: current_user,
+          commentable: @order,
+          message: "Order Status Message: #{params[:message].to_s.strip}",
+          system: true
+        )
+      end
       redirect_back fallback_location: admin_order_path(@order), notice: "Order status updated to #{canonical}."
     end
 

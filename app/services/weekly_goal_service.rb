@@ -169,6 +169,7 @@ class WeeklyGoalService
       user: winner,
       product: prize_product,
       cost: 0.0,
+      can_cancel: false,
       status: (Order.respond_to?(:statuses) ? Order.statuses["pending"] : "pending")
     )
   end

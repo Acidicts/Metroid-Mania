@@ -27,6 +27,6 @@
     <%= render comment %>
   <% end %>
   <% if defined?(current_user) && current_user&.admin? %>
-    <%= render 'comments/form', comment: Comment.new(ship: @ship), ship: @ship %>
+    <%= render 'comments/form', comment: Comment.new, commentable: @ship %>
   <% end %>
 </div>

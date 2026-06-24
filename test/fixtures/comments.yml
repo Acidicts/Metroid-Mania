@@ -4,14 +4,21 @@ one:
   user: one
   message: MyText
   last_editted: 2026-02-17 14:41:41
+  commentable: one (Devlog)
 
 two:
   user: two
   message: MyText
   last_editted: 2026-02-17 14:41:41
+  commentable: two (Devlog)
 
 ship_one:
   user: admin
-  ship: one
   message: Ship comment
   last_editted: 2026-02-17 14:41:41
+  commentable: one (Ship)
+
+order_one:
+  user: one
+  message: Order comment
+  commentable: one (Order)
