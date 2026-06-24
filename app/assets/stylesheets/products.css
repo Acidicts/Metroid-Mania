@@ -322,6 +322,8 @@
 @media (max-width: 600px) {
   .project-form-card {
     padding: 16px;
+    margin-left: 0.15rem;
+    margin-right: 2rem;
   }
 }
 

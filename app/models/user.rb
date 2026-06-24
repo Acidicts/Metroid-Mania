@@ -55,6 +55,8 @@ class User < ApplicationRecord
   has_many :user_achievements, dependent: :destroy
   has_many :achievements, through: :user_achievements
 
+  has_one :address, dependent: :destroy
+
   # likes the user has made on projects
   has_many :user_likes, dependent: :destroy
   has_many :liked_projects, through: :user_likes, source: :project
@@ -96,12 +98,6 @@ class User < ApplicationRecord
 
   validate :ensure_fraud_reason, on: :update
   validate :get_xp
-  validate :currency_is_charm_notches, on: :update
-
-  def currency_is_charm_notches
-    self.currency = self.charm_notches.count
-    save(validate: false)
-  end
 
   def get_xp
     # XP is based on the amount of time the user themself has documented

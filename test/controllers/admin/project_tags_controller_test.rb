@@ -3,6 +3,9 @@ require "test_helper"
 class Admin::ProjectTagsControllerTest < ActionDispatch::IntegrationTest
   setup do
     @project_tag = project_tags(:one)
+    admin = users(:one)
+    admin.update!(role: :admin, email: "admin-tags@example.com", password: "password")
+    sign_in_as(admin, password: "password")
   end
 
   test "should get index" do

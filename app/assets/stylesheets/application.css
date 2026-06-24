@@ -1050,3 +1050,8 @@ li.task-list-item {
 .task-list-item-label {
   display: inline-block;
 }
+
+.muted {
+  color: #8492a6;
+  opacity: 0.4;
+}

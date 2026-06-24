@@ -13,7 +13,7 @@ class UserTest < ActiveSupport::TestCase
     begin
       u.set_region_from_ip("1.2.3.4")
     ensure
-      HackclubIpService.define_singleton_method(:new) { |*a, &b| orig.call(*a, &b) }
+      HackclubIpService.define_singleton_method(:new) { |*a, **k, &b| orig.call(*a, **k, &b) }
     end
 
     assert_equal "EU", u.reload.region
@@ -30,7 +30,7 @@ class UserTest < ActiveSupport::TestCase
     begin
       assert_nil u.set_region_from_ip("1.2.3.4")
     ensure
-      HackclubIpService.define_singleton_method(:new) { |*a, &b| orig.call(*a, &b) }
+      HackclubIpService.define_singleton_method(:new) { |*a, **k, &b| orig.call(*a, **k, &b) }
     end
 
     assert_nil u.reload.region
@@ -47,7 +47,7 @@ class UserTest < ActiveSupport::TestCase
     begin
       assert_equal "Canada", u.on_login!(ip: "1.2.3.4")
     ensure
-      HackclubIpService.define_singleton_method(:new) { |*a, &b| orig.call(*a, &b) }
+      HackclubIpService.define_singleton_method(:new) { |*a, **k, &b| orig.call(*a, **k, &b) }
     end
 
     assert_equal "Canada", u.reload.region
@@ -61,7 +61,7 @@ class UserTest < ActiveSupport::TestCase
     begin
       assert_nil u.on_login!(ip: "1.2.3.4")
     ensure
-      HackclubIpService.define_singleton_method(:new) { |*a, &b| orig.call(*a, &b) }
+      HackclubIpService.define_singleton_method(:new) { |*a, **k, &b| orig.call(*a, **k, &b) }
     end
 
     assert_nil u.reload.region
@@ -186,5 +186,98 @@ class UserTest < ActiveSupport::TestCase
     # saving the user should also update xp via validation hook
     user.update!(name: "Updated")
     assert_equal 120, user.reload.xp
+  end
+
+  # --- Superadmin assignment tests ---
+
+  test "superadmin? returns true when role is superadmin" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "sa#{SecureRandom.hex(4)}@example.dev", role: :superadmin)
+    assert u.superadmin?
+  end
+
+  test "superadmin? returns true when role integer is 2" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "sa2#{SecureRandom.hex(4)}@example.dev")
+    u.update_column(:role, 2)
+    u.reload
+    assert u.superadmin?
+  end
+
+  test "superadmin? returns false for regular user" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "ru#{SecureRandom.hex(4)}@example.dev", role: :user)
+    assert_not u.superadmin?
+  end
+
+  test "superadmin? returns false for admin" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "adm#{SecureRandom.hex(4)}@example.dev", role: :admin)
+    assert_not u.superadmin?
+  end
+
+  test "is_superadmin detects SUPERADMIN_UID match" do
+    ENV["SUPERADMIN_UID"] = "uid-env-super"
+    u = User.create!(uid: "uid-env-super", provider: "test", email: "env#{SecureRandom.hex(4)}@example.dev", role: :user)
+    assert u.is_superadmin, "should detect SUPERADMIN_UID match"
+    assert u.superadmin?
+  ensure
+    ENV.delete("SUPERADMIN_UID")
+  end
+
+  test "is_superadmin detects SUPERADMIN_EMAIL match" do
+    ENV["SUPERADMIN_EMAIL"] = "env_super@example.com"
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "env_super@example.com", role: :user)
+    assert u.is_superadmin, "should detect SUPERADMIN_EMAIL match"
+    assert u.superadmin?
+  ensure
+    ENV.delete("SUPERADMIN_EMAIL")
+  end
+
+  test "is_superadmin returns false when no env var matches" do
+    ENV["SUPERADMIN_UID"] = "uid-other"
+    ENV["SUPERADMIN_EMAIL"] = "other@example.com"
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "no_match#{SecureRandom.hex(4)}@example.dev", role: :user)
+    assert_not u.is_superadmin
+    assert_equal "user", u.role
+  ensure
+    ENV.delete("SUPERADMIN_UID")
+    ENV.delete("SUPERADMIN_EMAIL")
+  end
+
+  test "is_superadmin is case-insensitive on email" do
+    ENV["SUPERADMIN_EMAIL"] = "CaseTest@Example.com"
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "casetest@example.com", role: :user)
+    assert u.is_superadmin, "should match case-insensitively"
+  ensure
+    ENV.delete("SUPERADMIN_EMAIL")
+  end
+
+  test "is_superadmin validation runs on update and promotes matching user" do
+    ENV["SUPERADMIN_UID"] = "uid-promote-me"
+    u = User.create!(uid: "uid-promote-me", provider: "test", email: "promote#{SecureRandom.hex(4)}@example.dev", role: :user)
+    assert_equal "user", u.role
+
+    u.update!(name: "Updated Name")
+    assert_equal "superadmin", u.reload.role, "validation should have promoted via is_superadmin"
+  ensure
+    ENV.delete("SUPERADMIN_UID")
+  end
+
+  test "non-matching user is not promoted by is_superadmin validation on update" do
+    ENV["SUPERADMIN_UID"] = "uid-nope"
+    ENV["SUPERADMIN_EMAIL"] = "nope@example.com"
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "notme#{SecureRandom.hex(4)}@example.dev", role: :user)
+    u.update!(name: "Still Regular")
+    assert_equal "user", u.reload.role
+  ensure
+    ENV.delete("SUPERADMIN_UID")
+    ENV.delete("SUPERADMIN_EMAIL")
+  end
+
+  test "admin? returns true for superadmin" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "adm_sa#{SecureRandom.hex(4)}@example.dev", role: :superadmin)
+    assert u.admin?
+  end
+
+  test "regular user is not admin" do
+    u = User.create!(uid: SecureRandom.hex(6), provider: "test", email: "plain#{SecureRandom.hex(4)}@example.dev", role: :user)
+    assert_not u.admin?
   end
 end

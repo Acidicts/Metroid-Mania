@@ -3,6 +3,9 @@ require "test_helper"
 class UsersControllerTest < ActionDispatch::IntegrationTest
   test "show renders when a ship's project is missing" do
     user = users(:one)
+    user.update!(role: :admin, email: "admin-user-show@example.com", password: "password")
+    sign_in_as(user, password: "password")
+    user = users(:one)
 
     # create a temporary project and ship, then soft-delete the project so
     # the association still exists but is marked removed.

@@ -234,3 +234,10 @@ body.users .users-placeholder { display: block; }
   color: #92400e;
   border: 1px solid rgba(251,191,36,0.4);
 }
+
+@media(max-width:600px) {
+  .user-profile-container {
+    margin-right: 1rem;
+    padding: 0 1rem;
+  }
+}

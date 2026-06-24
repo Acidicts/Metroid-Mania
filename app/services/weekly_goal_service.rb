@@ -87,12 +87,13 @@ class WeeklyGoalService
         return false
       end
 
-      winner = User.joins(:devlogs)
-                   .where(devlogs: { ship_request_id: nil,
-                                     log_date: start.to_date..week_end.to_date })
-                   .distinct
-                   .order(Arel.sql("RANDOM()"))
-                   .first
+      eligible_ids = User.joins(:devlogs)
+                         .where(devlogs: { ship_request_id: nil,
+                                           log_date: start.to_date..week_end.to_date })
+                         .distinct
+                         .pluck(:id)
+      winner = eligible_ids.sample
+      winner = winner && User.find_by(id: winner)
       unless winner
         Rails.logger.warn("WeeklyGoalService: no eligible user despite meeting goal")
         return false
@@ -151,12 +152,13 @@ class WeeklyGoalService
   # Pick a random user who logged at least one devlog during the current
   # week.  Mirrors the query used by +check_and_award!+.
   def pick_winner
-    User.joins(:devlogs)
-        .where(devlogs: { ship_request_id: nil,
-                          log_date: week_start.to_date..week_end.to_date })
-        .distinct
-        .order(Arel.sql("RANDOM()"))
-        .first
+    eligible_ids = User.joins(:devlogs)
+                       .where(devlogs: { ship_request_id: nil,
+                                         log_date: week_start.to_date..week_end.to_date })
+                       .distinct
+                       .pluck(:id)
+    id = eligible_ids.sample
+    id && User.find_by(id: id)
   end
 
   # Build and persist a free prize order for the specified user.  Sharing

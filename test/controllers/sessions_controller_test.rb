@@ -11,11 +11,9 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "blocks non-admin login when toggle active" do
-    SiteSetting.set("disable_non_admin_logins", "true")
+    SiteSetting.find_or_initialize_by(key: "disable_non_admin_logins").update!(value: "true")
 
     auth = auth_hash_for("nobody@example.org")
-    # OmniAuth handles its own CSRF/state checks in middleware; enable
-    # test mode and inject our mock response rather than posting directly.
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:hackclub] = auth
 
@@ -25,7 +23,7 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/logins.*disabled/i, response.body)
     assert_nil session[:user_id]
   ensure
-    SiteSetting.set("disable_non_admin_logins", "false")
+    SiteSetting.find_or_initialize_by(key: "disable_non_admin_logins").update!(value: "false")
     OmniAuth.config.test_mode = false
     OmniAuth.config.mock_auth.delete(:hackclub)
   end
@@ -82,6 +80,94 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     follow_redirect!
     assert_equal user.id, session[:user_id]
   ensure
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
+
+  test "new user with matching SUPERADMIN_SLACK gets superadmin role when none exists" do
+    ENV["SUPERADMIN_SLACK"] = "U_SUPER_ADMIN"
+    assert_not User.exists?(role: :superadmin), "no superadmin should exist yet"
+
+    auth = auth_hash_for("superadmin@example.com", uid: "uid-superadmin")
+    auth.info.slack_id = "U_SUPER_ADMIN"
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback"
+
+    new_user = User.find_by(uid: "uid-superadmin")
+    assert new_user.present?, "user should have been created"
+    assert_equal "superadmin", new_user.role
+    assert new_user.superadmin?
+  ensure
+    ENV.delete("SUPERADMIN_SLACK")
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
+
+  test "new user with non-matching SUPERADMIN_SLACK stays as regular user" do
+    ENV["SUPERADMIN_SLACK"] = "U_OTHER_ADMIN"
+
+    auth = auth_hash_for("regular@example.com", uid: "uid-regular")
+    auth.info.slack_id = "U_DIFFERENT_ID"
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback"
+
+    new_user = User.find_by(uid: "uid-regular")
+    assert new_user.present?, "user should have been created"
+    assert_equal "user", new_user.role
+    assert_not new_user.superadmin?
+  ensure
+    ENV.delete("SUPERADMIN_SLACK")
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
+
+  test "new user with matching SUPERADMIN_SLACK does not get superadmin if one already exists" do
+    ENV["SUPERADMIN_SLACK"] = "U_NEW_SUPER"
+    existing = User.create!(provider: "dev", uid: "existing-super", email: "existing@example.com",
+                            name: "Existing Super", role: :superadmin)
+    assert User.exists?(role: :superadmin)
+
+    auth = auth_hash_for("another_super@example.com", uid: "uid-another-super")
+    auth.info.slack_id = "U_NEW_SUPER"
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback"
+
+    new_user = User.find_by(uid: "uid-another-super")
+    assert new_user.present?, "user should have been created"
+    assert_equal "user", new_user.role, "should not be promoted when superadmin already exists"
+  ensure
+    ENV.delete("SUPERADMIN_SLACK")
+    OmniAuth.config.test_mode = false
+    OmniAuth.config.mock_auth.delete(:hackclub)
+  end
+
+  test "existing user with matching SUPERADMIN_SLACK is not promoted on subsequent login" do
+    ENV["SUPERADMIN_SLACK"] = "U_EXISTING"
+    existing = User.create!(provider: "hackclub", uid: "uid-existing", email: "existing_user@example.com",
+                            name: "Existing User", role: :user, slack_id: "U_EXISTING")
+    assert_equal "user", existing.role
+
+    auth = auth_hash_for(existing.email, uid: existing.uid)
+    auth.info.slack_id = "U_EXISTING"
+
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:hackclub] = auth
+
+    get "/auth/hackclub/callback"
+
+    existing.reload
+    assert_equal "user", existing.role, "existing user should not be promoted on login"
+  ensure
+    ENV.delete("SUPERADMIN_SLACK")
     OmniAuth.config.test_mode = false
     OmniAuth.config.mock_auth.delete(:hackclub)
   end

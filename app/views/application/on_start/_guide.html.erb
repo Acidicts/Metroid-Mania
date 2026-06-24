@@ -25,13 +25,13 @@
         background: var(--accent3);
         width: 100%;
         max-width: min(560px, calc(100vw - 32px));
-        padding: 28px 28px 1rem;
+        padding: 20px 20px 0.75rem;
         border-radius: 14px;
         border: 4px solid var(--main-500);
         box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 12px;
         margin: 0 auto;
         max-height: calc(100vh - 32px);
         min-height: 0;
@@ -42,7 +42,7 @@
 
     .guide h1 {
         margin: 0;
-        font-size: 1.7rem;
+        font-size: 1.4rem;
         letter-spacing: -0.03em;
     }
 
@@ -55,21 +55,20 @@
     .timeline {
         position: relative;
         display: grid;
-        gap: 2rem;
-        padding: 2rem 0 1rem;
-        min-height: auto;
-        max-height: calc(100vh - 320px);
+        gap: 1rem;
+        padding: 1rem 0 0.5rem;
     }
 
     .timeline-step {
         position: relative;
-        width: min(45%, 260px);
-        padding: 1.2rem 1.4rem;
-        border-radius: 18px;
+        width: min(42%, 220px);
+        padding: 0.7rem 0.9rem;
+        border-radius: 14px;
         background: rgba(255, 255, 255, 0.08);
         border: 1px solid rgba(255, 255, 255, 0.12);
-        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
         z-index: 1;
+        box-sizing: border-box;
     }
 
     .timeline-step:nth-child(odd) {
@@ -81,13 +80,15 @@
     }
 
     .timeline-step h2 {
-        margin: 0 0 0.45rem;
-        font-size: 1.05rem;
+        margin: 0 0 0.3rem;
+        font-size: 0.9rem;
         color: var(--main-900);
     }
 
     .timeline-step p {
         margin: 0;
+        font-size: 0.8rem;
+        line-height: 1.4;
         color: var(--main-900);
         opacity: 0.9;
     }
@@ -95,15 +96,27 @@
     #page-content-guide {
         opacity: 0;
         transition: opacity 240ms ease-in-out;
+        height: 90vh;
+        box-sizing: border-box;
     }
 
     #page-content-guide.visible {
         opacity: 1;
     }
 
+    @media (max-width: 640px) {
+        #page-content-guide {
+            width: 80vw;
+        }
+    }
+
     .guide form {
         display: grid;
         gap: 18px;
+        padding: 0;
+        border: none;
+        background: none;
+        border-radius: 0;
     }
 
     .guide .field {
@@ -114,6 +127,11 @@
         background: rgba(255, 255, 255, 0.08);
         border: 2px solid rgba(255, 255, 255, 0.14);
         border-radius: 12px;
+    }
+
+    .guide .field[disabled] {
+        opacity: 0.5;
+        pointer-events: none;
     }
 
     .guide label {
@@ -129,23 +147,31 @@
         accent-color: var(--accent1);
     }
 
-    .form-actions {
+    .guide .form-actions {
         display: flex;
         justify-content: flex-end;
     }
 
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-        border: 4px double var(--main-500);
-        background: rgba(0, 0, 0, 0.1);
-        padding: 1rem;
-        border-radius: 12px;
-    }
-
     .guide input[type="submit"] {
         cursor: pointer;
+    }
+
+    .guide-summary ul {
+        list-style: none;
+        margin: 0.5rem 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .guide-summary li {
+        padding: 10px 14px;
+        background: rgba(255, 255, 255, 0.08);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 10px;
+        line-height: 1.5;
+        color: var(--main-900);
     }
 
     .guide-actions {
@@ -156,12 +182,13 @@
         margin-top: auto;
         position: sticky;
         bottom: 0;
-        background: linear-gradient(var(--accent3), var(--accent3));
+        background: var(--accent3);
         padding-top: 12px;
         z-index: 2;
     }
 
-    .guide-actions button {
+    .guide-actions button,
+    .guide-actions a {
         flex: 1;
         min-width: 120px;
         padding: 0.9rem 1rem;
@@ -170,22 +197,24 @@
         border: 2px solid var(--main-500);
         background: var(--accent2);
         color: var(--main-900);
+        text-align: center;
+        text-decoration: none;
+        font-size: inherit;
+        font-family: inherit;
+        font-weight: inherit;
         transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
     }
 
-    .guide-actions button:hover {
+    .guide-actions button:hover,
+    .guide-actions a:hover {
         transform: translateY(-1px);
         background: var(--accent1);
         border-color: var(--main-700);
     }
 
     #get-started-button {
-        position: relative;
         font-size: 1.1rem;
         font-weight: 700;
-        width: 40%;
-        align-self: center;
-        margin: 1rem auto;
     }
 
     @media (max-width: 640px) {
@@ -198,7 +227,7 @@
             align-items: stretch;
         }
 
-        .form-actions {
+        .guide .form-actions {
             justify-content: center;
         }
     }
@@ -207,86 +236,34 @@
 <div class="container">
     <div class="guide">
         <div id="page-content-guide"></div>
-        <div class="guide-actions">
-            <button id="guide-back-button" type="button" class="btn-retro">Back</button>
-            <button id="guide-next-button" type="button" class="btn-retro">Next</button>
-        </div>
 
-        <template id="guide-page-0">
-            <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
-            <p>Metroidvania Mania is a game jam where you can create and share your own Metroidvania games. Whether you're a seasoned developer or just starting out, this is the perfect opportunity to learn, collaborate, and have fun!</p>
-            <%= form_with model: current_user, url: profile_path, method: :patch do |f| %>
-                <div class="field">
-                    <%= f.check_box :font_on, id: "font_on_toggle" %>
-                    <%= f.label :font_on, "Enable Custom Fonts", for: "font_on_toggle" %>
-                </div>
-                <div class="field" disabled>
-                    <% if false %>
-                        <%= f.check_box :theme, id: "theme_toggle" %>
-                    <% else %>
-                        <%= f.check_box :theme, id: "theme_toggle", disabled: true, title: "Dark theme is not available" %>
-                    <% end %>
-                    <%= f.label :theme, "Enable Dark Theme", for: "theme_toggle" %>
-                </div>
-                <div class="form-actions">
-                    <%= f.submit "Save Preferences", class: "btn-retro" %>
-                </div>
-            <% end %>
-        </template>
-
-        <template id="guide-page-1">
-            <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
-            <div class="timeline">
-                <div class="timeline-step">
-                    <h2>Plan</h2>
-                    <p>Define your idea, goals, and the game flow before you build anything.</p>
-                </div>
-                <div class="timeline-step">
-                    <h2>Build</h2>
-                    <p>Assemble levels, mechanics, and visuals using your chosen tools.</p>
-                </div>
-                <div class="timeline-step">
-                    <h2>Polish</h2>
-                    <p>Refine controls, add sound and balance the gameplay for a tighter experience.</p>
-                </div>
-                <div class="timeline-step">
-                    <h2>Launch</h2>
-                    <p>Share your Metroidvania jam entry and celebrate the process.</p>
-                </div>
-            </div>
-        </template>
-
-        <template id="guide-page-2">
-            <h2>Ready to Dive In?</h2>
-            <p>Start your Metroidvania journey now! Create your first project today and bring your map, mechanics, and moodboard to life.</p>
-            <div class="guide-summary">
-                <ul>
-                    <li><strong>Make your Game</strong> design a map with secrets, shortcuts, and memorable rooms.</li>
-                    <li><strong>Build experience</strong> learn new teechniques!</li>
-                    <li><strong>Share it:</strong> have others experience your game!</li>
-                </ul>
-            </div>
-            <p>Once you've got a project idea, jump into setup, add your first level, and share it with the community.</p>
-            <%= link_to "Get Started", setup_path, class: "btn-retro", id:"get-started-button" %>
-        </template>
+        <%= render partial: "application/on_start/page_1"%>
+        <%= render partial: "application/on_start/page_2"%>
+        <%= render partial: "application/on_start/page_3"%>
+        <%= render partial: "application/on_start/page_4"%>
 
         <script>
             (() => {
                 const pages = [
                     document.getElementById('guide-page-0').innerHTML,
                     document.getElementById('guide-page-1').innerHTML,
-                    document.getElementById('guide-page-2').innerHTML
+                    document.getElementById('guide-page-2').innerHTML,
+                    document.getElementById('guide-page-3').innerHTML
                 ];
                 let currentPage = 0;
                 let isTransitioning = false;
+                const guide = document.querySelector('.guide');
                 const content = document.getElementById('page-content-guide');
-                const guideTitle = document.getElementById('guide-title');
-                const nextButton = document.getElementById('guide-next-button');
-                const backButton = document.getElementById('guide-back-button');
+
+                const getButtons = () => ({
+                    nextButton: content.querySelector('#guide-next-button'),
+                    backButton: content.querySelector('#guide-back-button')
+                });
 
                 const updateButton = () => {
+                    const { nextButton, backButton } = getButtons();
+                    if (!nextButton || !backButton) return;
                     if (currentPage + 1 < pages.length) {
-                        nextButton.textContent = 'Next';
                         nextButton.style.display = '';
                     } else {
                         nextButton.style.display = 'none';
@@ -320,12 +297,65 @@
                     }, 240);
                 };
 
-                nextButton.addEventListener('click', () => {
-                    changePage(currentPage + 1);
+                guide.addEventListener('click', (e) => {
+                    const btn = e.target.closest('button');
+                    if (btn && btn.id === 'guide-next-button') {
+                        changePage(currentPage + 1);
+                    } else if (btn && btn.id === 'guide-back-button') {
+                        changePage(currentPage - 1);
+                    }
                 });
 
-                backButton.addEventListener('click', () => {
-                    changePage(currentPage - 1);
+                content.addEventListener('click', (e) => {
+                    const submitBtn = e.target.closest('.address-submit-btn');
+                    if (!submitBtn) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const form = content.querySelector('#address-form');
+                    if (!form) return;
+
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Saving...';
+
+                    const formData = new FormData(form);
+
+                    const addressId = form.dataset.addressId;
+                    const url = addressId ? '/addresses/' + addressId : '/addresses';
+                    const method = addressId ? 'PATCH' : 'POST';
+
+                    fetch(url, {
+                        method: method,
+                        body: formData,
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest',
+                            'Accept': 'application/json'
+                        }
+                    })
+                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
+                    .then(({ ok, data }) => {
+                        if (ok) {
+                            changePage(currentPage + 1);
+                        } else {
+                            submitBtn.disabled = false;
+                            submitBtn.textContent = 'Save & Continue';
+                            if (data.errors) {
+                                let errorDiv = form.querySelector('.address-errors');
+                                if (!errorDiv) {
+                                    errorDiv = document.createElement('div');
+                                    errorDiv.className = 'address-errors';
+                                    errorDiv.innerHTML = '<ul></ul>';
+                                    form.prepend(errorDiv);
+                                }
+                                const ul = errorDiv.querySelector('ul');
+                                ul.innerHTML = data.errors.map(err => '<li>' + err + '</li>').join('');
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Save & Continue';
+                    });
                 });
 
                 renderPage();

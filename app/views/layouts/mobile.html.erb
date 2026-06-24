@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Metroid Mania">
+    <meta name="mobile-web-app-capable" content="yes">
+
+    <% if current_user&.font_on? %>
+      <link rel="preconnect" href="https://fonts.googleapis.com">
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+      <link href="https://fonts.googleapis.com/css2?family=DynaPuff:wght@400..700&family=Pixelify+Sans:wght@400..700&display=swap" rel="stylesheet">
+    <% elsif current_user&.font_on == false %>
+      <link href="https://fonts.cdnfonts.com/css/open-dyslexic" rel="stylesheet">
+    <% end %>
+
+    <title><%= content_for(:title) || "Metroid Mania" %></title>
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <% if content_for?(:og_title) %>
+      <meta property="og:title" content="<%= strip_tags(content_for(:og_title)) %>">
+    <% end %>
+    <% if request && request.original_url.present? %>
+      <meta property="og:url" content="<%= request.original_url %>">
+    <% end %>
+    <meta property="og:description" content="<%= strip_tags(content_for(:og_description).presence || "Metroid Mania project") %>">
+    <% if content_for?(:og_image) %>
+      <meta property="og:image" content="<%= strip_tags(content_for(:og_image)) %>">
+    <% end %>
+    <% if content_for?(:twitter_card) %>
+      <meta name="twitter:card" content="<%= strip_tags(content_for(:twitter_card)) %>">
+    <% end %>
+    <% if content_for?(:og_author) %>
+      <meta property="og:author" content="<%= strip_tags(content_for(:og_author)) %>">
+    <% end %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <meta name="turbo-visit-control" content="reload">
+
+    <%= stylesheet_link_tag :application, "data-turbo-track": "reload" %>
+    <%= controller_stylesheet_link_tag %>
+    <%= yield :styles %>
+    <%= javascript_importmap_tags %>
+
+    <style>
+      html, body { overflow-x: hidden; }
+      body.mobile-layout { padding-bottom: 0; }
+
+      .mobile-topbar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 12px;
+        background: var(--main-900);
+        box-shadow: 0 2px 0 var(--main-800);
+        height: 52px;
+        box-sizing: border-box;
+      }
+
+      .mobile-topbar-title {
+        font-family: 'Pixelify Sans', sans-serif;
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: var(--accent3);
+        text-decoration: none;
+        line-height: 1;
+      }
+
+      .mobile-topbar-right {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .mobile-search-toggle {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 6px;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mobile-search-toggle svg {
+        width: 22px;
+        height: 22px;
+        fill: var(--accent3);
+      }
+
+      .mobile-profile-btn {
+        display: flex;
+        align-items: center;
+        text-decoration: none;
+      }
+
+      .mobile-profile-btn img {
+        width: 32px;
+        height: 32px;
+        border-radius: 999px;
+        border: 2px solid var(--accent3);
+      }
+
+      .mobile-search-bar {
+        position: fixed;
+        top: 52px;
+        left: 0;
+        right: 0;
+        z-index: 99;
+        background: var(--main-900);
+        padding: 8px 12px;
+        display: none;
+        box-shadow: 0 2px 0 var(--main-800);
+      }
+
+      .mobile-search-bar.open {
+        display: block;
+      }
+
+      .mobile-search-bar input {
+        width: 100%;
+        padding: 10px 12px;
+        border: 2px solid var(--main-700);
+        border-radius: 6px;
+        font-size: 1rem;
+        font-family: 'Pixelify Sans', sans-serif;
+        background: #fff;
+        color: var(--main-900);
+        box-sizing: border-box;
+      }
+
+      .mobile-search-bar input:focus {
+        outline: none;
+        border-color: var(--accent2);
+      }
+
+      .mobile-search-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: white;
+        border: 1px solid #ccc;
+        border-radius: 0 0 6px 6px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        max-height: 240px;
+        overflow-y: auto;
+        z-index: 100;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: none;
+      }
+
+      .mobile-search-suggestions.visible {
+        display: block;
+      }
+
+      .mobile-search-suggestions li {
+        padding: 10px 12px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .mobile-search-suggestions li span:not(.badge) {
+        color: var(--main-700);
+      }
+
+      .mobile-search-suggestions .badge {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        padding: 2px 4px;
+        border-radius: 3px;
+        color: white;
+      }
+      .mobile-search-suggestions .badge-project { background: #4a90e2; }
+      .mobile-search-suggestions .badge-user    { background: #7bca00; }
+      .mobile-search-suggestions .badge-tag     { background: #d35400; }
+
+      .mobile-content {
+        padding-top: 52px;
+        padding-bottom: 64px;
+        min-height: 100vh;
+        box-sizing: border-box;
+      }
+
+      .mobile-bottom-tabs {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        display: flex;
+        background: var(--main-900);
+        box-shadow: 0 -2px 0 var(--main-800);
+        height: 56px;
+        padding-bottom: env(safe-area-inset-bottom, 0);
+      }
+
+      .mobile-tab {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-decoration: none;
+        color: var(--accent3);
+        opacity: 0.6;
+        padding: 6px 0;
+        gap: 2px;
+        -webkit-tap-highlight-color: transparent;
+        transition: opacity 150ms ease;
+      }
+
+      .mobile-tab.active {
+        opacity: 1;
+        color: var(--accent2);
+      }
+
+      .mobile-tab svg {
+        width: 24px;
+        height: 24px;
+        fill: currentColor;
+      }
+
+      .mobile-tab span {
+        font-size: 0.65rem;
+        font-family: 'Pixelify Sans', sans-serif;
+        font-weight: 700;
+        line-height: 1;
+      }
+
+      .retro-container {
+        padding: 0.5rem !important;
+      }
+
+      main[role="main"] {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+      }
+
+      main[role="main"] > * {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+      }
+
+      .site-banner {
+        padding: 8px 12px !important;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+
+  <body class="<%= controller.controller_name %> <%= controller.action_name %> mobile-layout <%= 'fonts-enabled' if current_user&.font_on? %> <%= 'dyslexic' if current_user&.font_on == false %>">
+    <div class="page-shell">
+      <div class="mobile-topbar">
+        <a href="<%= root_path %>" class="mobile-topbar-title">Metroid Mania</a>
+        <div class="mobile-topbar-right">
+          <button type="button" class="mobile-search-toggle" aria-label="Toggle search">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          </button>
+          <% if logged_in? %>
+            <a href="<%= user_profile_path(current_user) %>" class="mobile-profile-btn">
+              <% if slack_profile(current_user) && slack_profile(current_user)[:image].present? %>
+                <%= image_tag slack_profile(current_user)[:image], alt: "#{current_user.name} avatar" %>
+              <% end %>
+            </a>
+          <% end %>
+        </div>
+      </div>
+
+      <div class="mobile-search-bar" id="mobile_search_bar">
+        <%= form_with url: projects_path, method: :get do |form| %>
+          <%= form.text_field :q, id: "mobile_search_input", placeholder: "Search projects, users or #tag...", autocomplete: "off" %>
+        <% end %>
+        <ul id="mobile_search_suggestions" class="mobile-search-suggestions" aria-label="Search suggestions"></ul>
+      </div>
+
+      <main class="retro-container" role="main">
+        <% unless feature_enabled?(:running) %>
+          <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+            This ysws is not active yet join us at the beginning of May (Hopefully) – RSVP <%= link_to "here", rsvp_path, style: "color:#0b4a7f;text-decoration:underline;" %>.
+          </div>
+        <% end %>
+
+        <% unless feature_enabled?(:shop) %>
+          <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+            Store is currently disabled.
+          </div>
+        <% end %>
+
+        <% if user_has_prize?(current_user) %>
+          <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
+            You have won the weekly goal prize. <%= link_to "View your prize", prize_order_for(current_user), style: "color:#0b4a7f;text-decoration:underline;" %>
+          </div>
+        <% end %>
+
+        <%= render 'shared/flash' %>
+
+        <% if current_user && !current_user.setup? %>
+          <%= render 'application/on_start/guide' %>
+        <% end %>
+
+        <div class="mobile-content-inner">
+          <%= yield %>
+        </div>
+      </main>
+
+      <nav class="mobile-bottom-tabs" aria-label="Main navigation">
+        <a href="<%= root_path %>" class="mobile-tab <%= 'active' if controller.controller_name == 'dashboard' %>">
+          <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <span>Home</span>
+        </a>
+        <a href="<%= projects_path %>" class="mobile-tab <%= 'active' if controller.controller_name == 'projects' %>">
+          <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>
+          <span>Projects</span>
+        </a>
+        <a href="<%= leaderboard_path %>" class="mobile-tab <%= 'active' if controller.controller_name == 'leaderboards' %>">
+          <svg viewBox="0 0 24 24"><path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94.63 1.5 1.98 2.63 3.61 2.96V19H7v2h10v-2h-4v-3.1c1.63-.33 2.98-1.46 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/></svg>
+          <span>Leaderboard</span>
+        </a>
+        <a href="<%= gallery_path %>" class="mobile-tab <%= 'active' if controller.controller_name == 'gallery' %>">
+          <svg viewBox="0 0 24 24"><path d="M22 16V4c0-1.1-.9-2-2-2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2zm-11-4l2.03 2.71L16 11l4 5H8l3-4zM2 6v14c0 1.1.9 2 2 2h14v-2H4V6H2z"/></svg>
+          <span>Gallery</span>
+        </a>
+      </nav>
+    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        var searchToggle = document.querySelector('.mobile-search-toggle');
+        var searchBar = document.getElementById('mobile_search_bar');
+        var searchInput = document.getElementById('mobile_search_input');
+        var suggestionBox = document.getElementById('mobile_search_suggestions');
+        var searchForm = searchInput && searchInput.closest('form');
+
+        searchToggle.addEventListener('click', function() {
+          searchBar.classList.toggle('open');
+          if (searchBar.classList.contains('open')) {
+            searchInput.focus();
+          }
+        });
+
+        searchInput.addEventListener('blur', function() {
+          setTimeout(function() {
+            suggestionBox.classList.remove('visible');
+          }, 150);
+        });
+
+        function makeSuggestionItem(item) {
+          var li = document.createElement('li');
+          var badge = document.createElement('span');
+          badge.className = 'badge badge-' + item.type;
+          badge.textContent = item.type;
+          var textSpan = document.createElement('span');
+          textSpan.textContent = item.text;
+          li.appendChild(badge);
+          li.appendChild(textSpan);
+          li.addEventListener('mousedown', function(e) {
+            searchInput.value = item.text;
+            suggestionBox.classList.remove('visible');
+            if (searchForm) searchForm.submit();
+          });
+          return li;
+        }
+
+        var debounceTimeout;
+        function fetchSuggestions(q) {
+          if (!q) {
+            suggestionBox.classList.remove('visible');
+            return;
+          }
+          fetch('/projects/suggestions?q=' + encodeURIComponent(q), { headers: { 'Accept': 'application/json' } })
+            .then(function(res) { return res.json(); })
+            .then(function(arr) {
+              suggestionBox.innerHTML = '';
+              arr.forEach(function(item) { suggestionBox.appendChild(makeSuggestionItem(item)); });
+              if (arr.length) suggestionBox.classList.add('visible');
+              else suggestionBox.classList.remove('visible');
+            })
+            .catch(function() { suggestionBox.classList.remove('visible'); });
+        }
+
+        searchInput.addEventListener('input', function() {
+          clearTimeout(debounceTimeout);
+          debounceTimeout = setTimeout(function() { fetchSuggestions(searchInput.value); }, 200);
+        });
+      });
+
+      (function() {
+        var DISALLOWED = <%= (begin; v = ENV['DISALLOWED_WORDS']; if v.present?; begin; JSON.parse(v); rescue; v.split(',').map(&:strip); end; else; []; end; end).to_json.html_safe %>;
+
+        function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&'); }
+
+        function isTextEditable(el) {
+          if (!el) return false;
+          if (el.isContentEditable) return true;
+          if (el.tagName === 'TEXTAREA') return true;
+          if (el.tagName === 'INPUT') {
+            var t = el.type;
+            return ['text','search','email','url','tel'].indexOf(t) !== -1;
+          }
+          return false;
+        }
+
+        function removeDisallowedFromInput(el) {
+          var val = el.value;
+          var original = val;
+          var selStart = el.selectionStart;
+          var selEnd = el.selectionEnd;
+          var removedBeforeStart = 0;
+          var removedBeforeEnd = 0;
+
+          DISALLOWED.forEach(function(word) {
+            var re = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'gi');
+            var m;
+            while ((m = re.exec(val)) !== null) {
+              var idx = m.index;
+              var len = m[0].length;
+              if (idx < selStart) removedBeforeStart += len;
+              if (idx < selEnd) removedBeforeEnd += len;
+            }
+            val = val.replace(re, '');
+          });
+
+          if (val !== original) {
+            el.value = val;
+            try {
+              var newStart = Math.max(0, selStart - removedBeforeStart);
+              var newEnd = Math.max(newStart, selEnd - removedBeforeEnd);
+              el.setSelectionRange(newStart, newEnd);
+            } catch (err) {}
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+
+        function removeDisallowedFromContentEditable(el) {
+          var sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return;
+          var range = sel.getRangeAt(0);
+          var node = range.startContainer;
+          if (node.nodeType !== Node.TEXT_NODE) {
+            var walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+            var found = null;
+            while (walker.nextNode()) {
+              var txt = walker.currentNode.nodeValue;
+              for (var i = 0; i < DISALLOWED.length; i++) {
+                var r = new RegExp('\\b' + escapeRegExp(DISALLOWED[i]) + '\\b', 'i');
+                if (r.test(txt)) { found = walker.currentNode; break; }
+              }
+              if (found) break;
+            }
+            if (!found) return;
+            node = found;
+          }
+
+          var text = node.nodeValue;
+          var original = text;
+          var offset = range.startOffset;
+          var removedBeforeOffset = 0;
+
+          DISALLOWED.forEach(function(word) {
+            var re = new RegExp('\\b' + escapeRegExp(word) + '\\b', 'gi');
+            var m;
+            while ((m = re.exec(text)) !== null) {
+              var idx = m.index;
+              var len = m[0].length;
+              if (idx < offset) removedBeforeOffset += len;
+            }
+            text = text.replace(re, '');
+          });
+
+          if (text !== original) {
+            node.nodeValue = text;
+            var newOffset = Math.max(0, offset - removedBeforeOffset);
+            var newRange = document.createRange();
+            newRange.setStart(node, Math.min(newOffset, node.nodeValue.length));
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+          }
+        }
+
+        document.addEventListener('keydown', function(e) {
+          if (e.isComposing) return;
+          var t = e.target;
+          if (!isTextEditable(t)) return;
+          if (t.tagName === 'INPUT' && t.type === 'password') return;
+
+          setTimeout(function() {
+            if (!t) return;
+            if (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') {
+              removeDisallowedFromInput(t);
+            } else if (t.isContentEditable) {
+              removeDisallowedFromContentEditable(t);
+            }
+          }, 0);
+        }, true);
+      })();
+    </script>
+  </body>
+</html>

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_04_21_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_24_091155) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,6 +81,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000000) do
     t.text "metadata"
     t.string "service_name"
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
+  end
+
+  create_table "addresses", force: :cascade do |t|
+    t.string "address_line_1"
+    t.string "address_line_2"
+    t.string "city"
+    t.integer "country"
+    t.datetime "created_at", null: false
+    t.string "postal_code"
+    t.string "province"
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["user_id"], name: "index_addresses_on_user_id"
   end
 
   create_table "assets_items", force: :cascade do |t|
@@ -415,6 +428,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000000) do
     t.string "set_region"
     t.boolean "setup", default: false, null: false
     t.string "slack_id"
+    t.string "steam_username"
     t.string "uid"
     t.datetime "updated_at", null: false
     t.string "verification_status"
@@ -436,6 +450,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_04_21_000000) do
   add_foreign_key "accessories", "accessory_groups"
   add_foreign_key "accessory_groups", "products"
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "addresses", "users"
   add_foreign_key "assets_items", "assets_projects"
   add_foreign_key "assets_items", "users"
   add_foreign_key "assets_projects", "users"

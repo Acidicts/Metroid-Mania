@@ -157,7 +157,8 @@ class Product < ApplicationRecord
   end
 
   def cost(region)
-    regional_price = regional_prices.find_by(region: region)
+    canonical = RegionalPrice.canonical_region(region)
+    regional_price = regional_prices.find_by(region: canonical)
     if regional_price && regional_price.enabled?
       regional_price.cost
     else

@@ -19,7 +19,7 @@
       <li class="nav-item"><%= link_to admin_sales_path, class: (controller.controller_name == 'sales' ? 'active' : '') do %><span class="nav-icon">💰</span><span class="nav-label">Sales</span><% end %></li>
       <li class="nav-item"><%= link_to admin_rsvp_path, class: (controller.controller_name == 'rsvp' ? 'active' : '') do %><span class="nav-icon">🎟️</span><span class="nav-label">RSVPs</span><% end %></li>
       <li class="nav-item"><%= link_to admin_site_settings_path, class: (controller.controller_name == 'site_settings' ? 'active' : '') do %><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span><% end %></li>
-      <li class="nav-item"><%= link_to ENV['APP_URL'], class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">🔙</span><span class="nav-label">Main Page</span><% end %></li>
+      <li class="nav-item"><%= link_to root_path, class: (controller.controller_name == 'audits' ? 'active' : '') do %><span class="nav-icon">🔙</span><span class="nav-label">Main Page</span><% end %></li>
     </ul>
   </div>
 

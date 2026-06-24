@@ -5,6 +5,8 @@ class ApplicationController < ActionController::Base
   helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile, :user_has_prize?, :prize_order_for, :hackclub_login_url
   helper MarkdownHelper
 
+  layout :choose_layout
+
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
   before_action :load_charm_slots
   before_action :ensure_user_setup, unless: -> { current_user&.setup? || !logged_in? }
@@ -276,5 +278,20 @@ class ApplicationController < ActionController::Base
 
     # Not handled above — re-raise for visibility
     raise exception
+  end
+
+  private
+
+  def choose_layout
+    mobile_request? ? "mobile" : "application"
+  end
+
+  def mobile_request?
+    user_agent = request.user_agent
+    return false if user_agent.blank?
+
+    user_agent.match?(
+      %r{\A(?=.*(?:Android|iPhone|iPad|iPod|webOS|BlackBerry|Windows\s+Phone|Opera\s+Mini|IEMobile))}i
+    )
   end
 end

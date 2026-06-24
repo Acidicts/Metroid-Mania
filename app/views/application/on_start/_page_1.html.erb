@@ -1,0 +1,48 @@
+<template id="guide-page-0">
+    <h1 id="guide-title">Welcome to Metroidvania Mania!</h1>
+    <p>Metroidvania Mania is a game jam where you can create and share your own Metroidvania games. Whether you're a seasoned developer or just starting out, this is the perfect opportunity to learn, collaborate, and have fun!</p>
+    <%= form_with model: current_user, url: profile_path, method: :patch, id: "prefs-form", local: true do |f| %>
+        <div class="field">
+            <%= f.check_box :font_on, id: "font_on_toggle", class: "auto-save-pref" %>
+            <%= f.label :font_on, "Enable Custom Fonts", for: "font_on_toggle" %>
+        </div>
+        <div class="field" disabled>
+            <% if false %>
+                <%= f.check_box :theme, id: "theme_toggle" %>
+            <% else %>
+                <%= f.check_box :theme, id: "theme_toggle", disabled: true, title: "Dark theme is not available" %>
+            <% end %>
+            <%= f.label :theme, "Enable Dark Theme", for: "theme_toggle" %>
+        </div>
+        <span id="prefs-status" class="prefs-status"></span>
+    <% end %>
+    <script>
+        (function() {
+        var form = document.getElementById("prefs-form");
+        if (!form) return;
+        var status = document.getElementById("prefs-status");
+        form.querySelectorAll(".auto-save-pref").forEach(function(input) {
+            input.addEventListener("change", function() {
+            status.textContent = "Saving\u2026";
+            var data = new FormData(form);
+            fetch(form.action, {
+                method: "PATCH",
+                body: data,
+                headers: { "X-Requested-With": "XMLHttpRequest" },
+                credentials: "same-origin"
+            }).then(function(resp) {
+                status.textContent = resp.ok ? "Saved!" : "Error saving";
+                setTimeout(function() { status.textContent = ""; }, 1500);
+            }).catch(function() {
+                status.textContent = "Error saving";
+                setTimeout(function() { status.textContent = ""; }, 1500);
+            });
+            });
+        });
+        })();
+    </script>
+    <div class="guide-actions">
+        <button id="guide-back-button" type="button" class="btn-retro">Back</button>
+        <button id="guide-next-button" type="button" class="btn-retro">Next</button>
+    </div>
+</template>

@@ -27,7 +27,8 @@ class ProductTest < ActiveSupport::TestCase
     prod = Product.create!(name: "Temp", price_currency: 0.5)
     assert_equal 1, prod.cost(nil)
 
-    prod.regional_prices.create!(region: "us", cost: 5)
+    prod.regional_prices.destroy_all
+    prod.regional_prices.create!(region: "us", cost: 5, enabled: true)
     assert_equal 5, prod.cost("us")
   end
 

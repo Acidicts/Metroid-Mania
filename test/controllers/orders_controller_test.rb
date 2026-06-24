@@ -305,6 +305,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
 
   test "product card Add To Loadout button posts directly to orders#create" do
     product = Product.create!(name: "DirectBuy", steam_app_id: 5555, price_currency: 3.0)
+    product.regional_prices.update_all(enabled: true)
     get products_url
     assert_response :success
 
@@ -329,6 +330,7 @@ class OrdersControllerTest < ActionDispatch::IntegrationTest
       grant_min_cents: 2500, # $25.00
       grant_max_cents: 10000 # $100.00
     )
+    product.regional_prices.update_all(enabled: true)
 
     get products_url
     assert_response :success

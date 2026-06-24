@@ -1,0 +1,9 @@
+<template id="guide-page-2">
+    <h2>Add Your Address</h2>
+    <h3 class="muted">Now or Later</h3>
+    <%= render partial: "address/form", locals: { address: current_user.address || current_user.build_address, submit_name: "Submit & Continue" } %>
+    <div class="guide-actions">
+        <button id="guide-back-button" type="button" class="btn-retro">Back</button>
+        <button id="guide-next-button" type="button" class="btn-retro">Skip</button>
+    </div>
+</template>

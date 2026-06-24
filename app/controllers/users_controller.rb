@@ -58,14 +58,22 @@ class UsersController < ApplicationController
   def update
     return unless @user == current_user || current_user.admin?
     if @user.update(user_params)
-      flash_pass("Profile updated successfully.")
-      if request.referer.present? && URI.parse(request.referer).path == profile_path
-        redirect_to root_path
-      else
-        redirect_back fallback_location: root_path
+      respond_to do |format|
+        format.html do
+          flash_pass("Profile updated successfully.")
+          if request.referer.present? && URI.parse(request.referer).path == profile_path
+            redirect_to root_path
+          else
+            redirect_back fallback_location: root_path
+          end
+        end
+        format.json { render json: { success: true } }
       end
     else
-      render :edit
+      respond_to do |format|
+        format.html { render :edit }
+        format.json { render json: { success: false, errors: @user.errors.full_messages }, status: :unprocessable_entity }
+      end
     end
   end
 
@@ -82,5 +90,18 @@ class UsersController < ApplicationController
 
   def user_params
     params.require(:user).permit(:hackatime_api_key, :font_on, :set_region)
+  end
+
+  def user_address_params
+    params.require(:user).permit(
+      address: [
+        :address_line_1,
+        :address_line_2,
+        :city,
+        :province,
+        :postal_code,
+        :country
+      ]
+    )
   end
 end

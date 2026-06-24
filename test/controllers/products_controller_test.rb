@@ -108,6 +108,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
 
   test "legacy regional price codes are normalized in edit form" do
     product = Product.create!(name: "LegacyRegion", price_currency: 1.0)
+    product.regional_prices.destroy_all
     product.regional_prices.create!(region: "us", cost: 5, enabled: true)
 
     get edit_product_url(product)
