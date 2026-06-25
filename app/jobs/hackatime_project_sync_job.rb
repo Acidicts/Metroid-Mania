@@ -3,7 +3,7 @@ class HackatimeProjectSyncJob < ApplicationJob
 
   def perform(user_id)
     user = User.find_by(id: user_id)
-    return unless user && user.slack_id.present?
+    return unless user && (user.slack_id.present? || user.email.present?)
 
     user.sync_hackatime_projects!
   rescue => e

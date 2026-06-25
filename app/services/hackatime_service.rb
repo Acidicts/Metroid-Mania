@@ -3,12 +3,14 @@ class HackatimeService
   #             YYYY-MM-DD
   START_DATE = ENV["HACKATIME_START_DATE"] || "2025-12-15"
 
-  def initialize(slack_id: nil)
+  def initialize(slack_id: nil, email: nil)
     @slack_id = slack_id
+    @email = email
   end
 
-  def get_trusted_status(slack_id: nil)
+  def get_trusted_status(slack_id: nil, email: nil)
     uid = slack_id || @slack_id
+    uid ||= email || @email
     Rails.logger.info "HackatimeService: Resolving trust factor. slack_id: #{uid}"
     return nil unless uid
 

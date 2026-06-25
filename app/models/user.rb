@@ -603,9 +603,9 @@ class User < ApplicationRecord
   # Sync Hackatime project totals for this user's projects.
   # Fetches stats once and updates owned projects that have hackatime_ids.
   def sync_hackatime_projects!
-    return unless slack_id.present?
+    return unless slack_id.present? || email.present?
 
-    service = HackatimeService.new(slack_id: slack_id)
+    service = HackatimeService.new(slack_id: slack_id, email: email)
     stats = service.get_projects
     return unless stats && stats.any?
 
