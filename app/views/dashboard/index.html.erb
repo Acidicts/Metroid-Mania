@@ -124,11 +124,14 @@
       .projects-grid { grid-template-columns: repeat(2, 1fr); }
     }
 
-    @media (max-width: 560px) {
+    @media (max-width: 600px) {
       .home-hero h1 { font-size: 1.6rem; }
       .home-actions { gap: 8px; }
       .projects-grid { grid-template-columns: 1fr; }
       .feature { width: 80%;}
+      .home-hero {
+        margin-right: 1rem;
+      }
     }
 
     /* Orgs (Slack profiles) */
@@ -167,13 +170,6 @@
       padding: 0;
       font-size: 1rem;
       cursor: pointer;
-    }
-
-    @media(max-width:600px){
-      .home-hero {
-        margin-right: 1rem;
-        margin-top: 1rem
-      }
     }
   </style>
 <% end %>

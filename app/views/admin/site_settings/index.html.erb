@@ -56,6 +56,17 @@
       </div>
     </section>
 
+    <section class="admin-card admin-site-settings-card">
+      <h2>Not Running Message</h2>
+      <div class="admin-form-row admin-site-settings-input-row">
+        <label for="site_setting_not_running_message" class="admin-form-label">Not Running Message</label>
+        <div class="admin-form-control">
+          <%= text_field_tag 'site_setting[not_running_message]', SiteSetting.get('not_running_message', default: "This YSWS will start begining of July roughly"), id: 'site_setting_not_running_message', class: 'admin-site-settings-input' %>
+          <p class="admin-site-settings-help">Message displayed in the site-wide banner when the YSWS is not running.</p>
+        </div>
+      </div>
+    </section>
+
     <div class="admin-form-actions admin-site-settings-actions">
       <%= submit_tag 'Save settings', class: 'btn-admin btn-admin-success' %>
     </div>

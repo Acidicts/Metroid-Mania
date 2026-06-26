@@ -492,7 +492,7 @@
 
     <% unless feature_enabled?(:running) %>
       <div class="site-banner" role="status" style="background:#fff4e5;color:#4b2e00;padding:10px;text-align:center;border-top:4px solid #ffd8a8;">
-        This ysws is not active yet join us at the beginning of July (Hopefully) – RSVP <%= link_to "here", rsvp_path, style: "color:#0b4a7f;text-decoration:underline;" %>. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path, style: "color:#0b4a7f;text-decoration:underline;" %> <% end %>
+        <%= @not_running_message %> – RSVP <%= link_to "here", rsvp_path, style: "color:#0b4a7f;text-decoration:underline;" %>. <% if admin? %> <%= link_to "Manage site settings", admin_site_settings_path, style: "color:#0b4a7f;text-decoration:underline;" %> <% end %>
       </div>
     <% end %>
 

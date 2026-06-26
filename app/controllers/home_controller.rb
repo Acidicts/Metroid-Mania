@@ -1,6 +1,5 @@
 class HomeController < ApplicationController
   def index
-    # The home page is a public landing page for signed-in users.
-    # Keep this action render the view instead of redirecting to the dashboard.
+    @not_running_message = SiteSetting.get("not_running_message").to_s
   end
 end

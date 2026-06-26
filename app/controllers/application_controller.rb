@@ -9,6 +9,7 @@ class ApplicationController < ActionController::Base
 
   before_action :warn_if_app_url_mismatch, if: -> { Rails.env.development? }
   before_action :load_charm_slots
+  before_action :load_not_running_message
   before_action :ensure_user_setup, unless: -> { current_user&.setup? || !logged_in? }
 
   def ensure_user_setup
@@ -260,6 +261,10 @@ class ApplicationController < ActionController::Base
     else
       @charm_slots = []
     end
+  end
+
+  def load_not_running_message
+    @not_running_message = SiteSetting.get("not_running_message", default: "This YSWS is Not running")
   end
 
   def handle_record_not_unique(exception)

@@ -11,6 +11,7 @@ module Admin
       @disable_non_admin_logins = SiteSetting.find_or_initialize_by(key: "disable_non_admin_logins")
       @disable_asset_project   = SiteSetting.find_or_initialize_by(key: "disable_asset_project")
       @disable_community_goals = SiteSetting.find_or_initialize_by(key: "disable_community_goals")
+      @not_running_message = SiteSetting.find_by(key: "not_running_message")&.value
 
       # configuration for the weekly devlog goal giveaway
       @weekly_threshold = SiteSetting.find_or_initialize_by(key: "weekly_goal_threshold_seconds")
@@ -27,7 +28,7 @@ module Admin
       end
 
       # allow arbitrary values for our new settings (text fields)
-      %w[weekly_goal_threshold_seconds].each do |key|
+      %w[weekly_goal_threshold_seconds not_running_message].each do |key|
         if params.dig(:site_setting, key)
           SiteSetting.set(key, params.dig(:site_setting, key))
         end
