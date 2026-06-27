@@ -196,7 +196,9 @@
       <% end %>
     </div>
     <div class="home-actions">
-      <%= link_to "Community Goals", goals_path, class: 'btn-retro' %>
+      <% unless SiteSetting.enabled?('disable_community_goals', default: false) %>
+        <%= link_to "Community Goals", goals_path, class: 'btn-retro' %>
+      <% end %>
     </div>
 
     <div class="features" role="region" aria-label="Key features">
