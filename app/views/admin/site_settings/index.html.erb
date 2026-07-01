@@ -34,6 +34,12 @@
         <label for="site_setting_disable_asset_project" class="admin-site-settings-label">Disable Asset Project</label>
         <p class="admin-site-settings-help">When enabled, the asset project functionality will be turned off.</p>
       </div>
+
+      <div class="admin-site-settings-option">
+        <%= check_box_tag 'site_setting[harvest_addresses]', '1', SiteSetting.enabled?('harvest_addresses', default: false), id: 'site_setting_disable_asset_project', class: 'admin-site-settings-checkbox' %>
+        <label for="site_setting_disable_asset_project" class="admin-site-settings-label">Harvest Addresses</label>
+        <p class="admin-site-settings-help">When enabled, the it will collect addresses (from users)</p>
+      </div>
     </section>
 
     <section class="admin-card admin-site-settings-card">

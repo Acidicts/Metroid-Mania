@@ -239,7 +239,9 @@
 
         <%= render partial: "application/on_start/page_1"%>
         <%= render partial: "application/on_start/page_2"%>
-        <%= render partial: "application/on_start/page_3"%>
+        <% if ensure_addresses_enabled %>
+            <%= render partial: "application/on_start/page_3"%>
+        <% end %>
         <%= render partial: "application/on_start/page_4"%>
 
         <script>
@@ -247,7 +249,9 @@
                 const pages = [
                     document.getElementById('guide-page-0').innerHTML,
                     document.getElementById('guide-page-1').innerHTML,
-                    document.getElementById('guide-page-2').innerHTML,
+                    <% if ensure_addresses_enabled %>
+                        document.getElementById('guide-page-2').innerHTML,
+                    <% end %>
                     document.getElementById('guide-page-3').innerHTML
                 ];
                 let currentPage = 0;
