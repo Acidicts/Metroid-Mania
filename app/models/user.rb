@@ -55,7 +55,7 @@ class User < ApplicationRecord
   has_many :user_achievements, dependent: :destroy
   has_many :achievements, through: :user_achievements
 
-  has_one :address, dependent: :destroy
+  has_many :address, dependent: :destroy
   accepts_nested_attributes_for :address, allow_destroy: true, reject_if: :all_blank
 
   # likes the user has made on projects

@@ -14,6 +14,7 @@ function initThemedFormValidationWarnings() {
   window.__themedValidationWarningsBound = true;
 
   let warningCount = 0;
+  const warningTimers = new WeakMap();
 
   function isValidatableField(field) {
     return (
@@ -68,19 +69,35 @@ function initThemedFormValidationWarnings() {
   }
 
   function showFieldWarning(field, message) {
+    const existingWarning = getWarningElement(field);
+    if (existingWarning) {
+      clearTimeout(warningTimers.get(field));
+      existingWarning.classList.remove('fade-out');
+    }
+
     const text = String(message || 'Please fill in this field.').trim();
-    const warning = getWarningElement(field) || createWarningElement(field);
+    const warning = existingWarning || createWarningElement(field);
 
     warning.textContent = text;
     field.classList.add('field-invalid');
     field.dataset.themedFieldInvalid = 'true';
     field.setAttribute('aria-invalid', 'true');
     addDescribedByToken(field, warning.id);
+
+    const timer = setTimeout(() => {
+      warning.classList.add('fade-out');
+      setTimeout(() => clearFieldWarning(field), 400);
+    }, 3000);
+    warningTimers.set(field, timer);
   }
 
   function clearFieldWarning(field) {
+    clearTimeout(warningTimers.get(field));
+    warningTimers.delete(field);
+
     const warning = getWarningElement(field);
     if (warning) {
+      warning.classList.remove('fade-out');
       removeDescribedByToken(field, warning.id);
       warning.remove();
     }

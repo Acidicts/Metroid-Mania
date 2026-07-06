@@ -303,6 +303,16 @@
             <%= form.number_field :stock, min: 0, class: "form-input", placeholder: "Leave blank for unlimited" %>
             <div class="field-hint">Leave blank for unlimited stock.</div>
           </div>
+
+          <div id="physical_container" class="form-group collapsible <%= product.variable_grant? ? '' : 'collapsible--open' %>">
+            <label class="checkbox-card">
+              <%= form.check_box :physical, {}, true, false %>
+              <div>
+                <%= form.label :physical, "Physical Item" %>
+                <div class="field-hint">Tick if prize is physical.</div>
+              </div>
+            </label>
+          </div>
         </div>
 
         <div id="limited_container" class="form-group collapsible <%= product.variable_grant? ? '' : 'collapsible--open' %>">

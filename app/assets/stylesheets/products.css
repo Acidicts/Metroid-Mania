@@ -353,6 +353,24 @@
   border-bottom: 1.5px solid rgba(74, 122, 150, 0.13);
 }
 
+.apf-section-darken {
+  background: rgba(239, 166, 188, 0.65);
+  border: 1.5px solid rgba(71, 121, 149, 0.5);
+  border-radius: 10px;
+  padding: 20px 22px;
+  margin-bottom: 14px;
+}
+.apf-section-darken-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--palette-3, #4a7a96);
+  margin: 0 0 14px;
+  padding-bottom: 9px;
+  border-bottom: 1.5px solid rgba(74, 122, 150, 0.13);
+}
+
 /* ── Labels & inputs ── */
 .admin-product-form .form-group {
   margin-bottom: 14px;
@@ -838,4 +856,52 @@
 
 .hidden {
   display: none !important;
+}
+
+.address-trigger-btn {
+  background: none;
+  border: none;
+  color: #888;
+  font-family: inherit;
+  font-size: 0.94rem;
+  cursor: pointer;
+  padding: 0;
+  margin-top: 8px;
+  text-decoration: underline;
+}
+
+.address-trigger-btn:hover {
+  color: var(--accent1, #d08159);
+}
+
+.del-btn {
+  border-radius: 25%;
+  background-color: #ec374f7a;
+  border-color: #331015;
+  border-width: 2px;
+  padding: 0.5rem 0.5rem;
+  aspect-ratio: 1 / 1;
+  transition: all ease-in-out 0.2s;
+}
+
+.del-btn:hover {
+  background-color: #e8586c7a;
+  border-color: #220c0f;
+  transform: translateY(-0.25rem);
+}
+
+.inline {
+  display: inline-flex
+}
+
+.jsb {
+  justify-content: space-between;
+}
+
+.w100p {
+  width: 100%
+}
+
+.g2r {
+  gap: 2rem
 }

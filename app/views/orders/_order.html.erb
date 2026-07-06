@@ -19,6 +19,12 @@
         <strong>Cost Notches:</strong>
         <%= order.notch_cost %>
       </div>
+      <% if order.address.present? %>
+        <div>
+          <strong>Address:</strong>
+          <%= [order.address.address_line_1, order.address.city, order.address.province].select(&:present?).join(", ") %>
+        </div>
+      <% end %>  
     </div>
     <div class="order-status">
       <div>

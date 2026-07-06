@@ -26,7 +26,7 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to admin_orders_url
     assert_equal "denied", @order.reload.status
     assert_equal user_before + @order.cost.to_f, @order.user.reload.currency
-    assert_audit_created(action: "order_refunded", project: nil, user: @admin)
+    assert_audit_created(action: "order_refunded", project: nil)
   end
 
   test "delete refunds missing refund and destroys denied order" do
@@ -67,7 +67,7 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "decline can refund a previously fulfilled order" do
-    prod = Product.create!(name: "PostFulfillRefund", steam_app_id: 99, price_currency: 5.0, cost_credits: 50.0, notch_cost: 0)
+    prod = Product.create!(name: "PostFulfillRefund", steam_app_id: 99, price_currency: 5.0, cost_credits: 50.0, notch_cost: 5)
     u = users(:one)
     # Seed user with funds and notches so they can make and hold the order; it will be deducted on create
     u.update!(currency: 100.0)
@@ -86,7 +86,7 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal "denied", o.reload.status
     assert_equal user_before + o.cost.to_f, o.user.reload.currency
-    assert_audit_created(action: "order_refunded", project: nil, user: @admin)
+    assert_audit_created(action: "order_refunded", project: nil)
   end
 
   test "decline does not refund twice when refund audit already exists" do

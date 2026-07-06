@@ -33,10 +33,10 @@ class CharmSlot < ApplicationRecord
 
   def get_charm_notches
     order = Order.find(self.order_id)
-    return unless order.cost > self.charm_notches.count
+    return unless order.notch_cost > self.charm_notches.count
     notches = CharmNotch.where(charm_slot_id: nil)
-    return if notches.count < (order.cost - self.charm_notches.count)
-    notches.limit(order.cost - self.charm_notches.count).update_all(charm_slot_id: self.id)
+    return if notches.count < (order.notch_cost - self.charm_notches.count)
+    notches.limit(order.notch_cost - self.charm_notches.count).update_all(charm_slot_id: self.id)
   end
 
   def order_status

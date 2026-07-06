@@ -139,6 +139,7 @@ class ProductsController < ApplicationController
         :image_url,
         :achievement_boolean,
         :achievement_id,
+        :physical,
         regional_prices_attributes: [
           :id,
           :region,

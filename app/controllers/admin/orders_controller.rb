@@ -149,7 +149,7 @@ module Admin
         # Set order to denied
         @order.update!(status: db_val)
 
-        refunded = refund_order_if_needed!(@order, previous_status: previous)
+        refunded = @order.refund
         unless refunded
           Audit.create!(user: current_user, project: nil, action: "order_declined", details: { order_id: @order.id, order_public_id: @order.public_id, previous_status: canonical_status(previous) })
         end
@@ -164,15 +164,15 @@ module Admin
     private
 
     def refund_order_if_needed!(order, previous_status:)
-      return false unless order.cost.present? && order.cost.to_f > 0
+      return false unless order.notch_cost.present? && order.notch_cost.to_f > 0
       return false if refund_audit_exists_for_order?(order)
 
-      order.user.update!(currency: (order.user.currency || 0) + order.cost.to_f,
-                         amount_spent: (order.user.amount_spent || 0).to_f - order.cost.to_f)
+      order.user.update!(currency: (order.user.currency || 0) + order.notch_cost.to_f,
+                         amount_spent: (order.user.amount_spent || 0).to_f - order.notch_cost.to_f)
 
       Audit.create!(user: current_user, project: nil, action: "order_refunded",
                     details: { order_id: order.id, order_public_id: order.public_id,
-                               amount: order.cost.to_f, previous_status: canonical_status(previous_status) })
+                               amount: order.notch_cost.to_f, previous_status: canonical_status(previous_status) })
       true
     end
 

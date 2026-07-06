@@ -295,6 +295,18 @@
           Estimated Notches: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= (@product.grant_notches_for_dollars(@product.grant_min_dollars)).to_i || 0 %></span>
         </div>
 
+        <% if @product.physical? %>
+          <div style="margin-top: 16px; margin-bottom: 12px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
+            <%= select_tag "order[address]",
+                options_for_select((current_user&.address || []).map { |a| [ "#{a.address_line_1}, #{a.city}, #{a.province}", a.id ] }),
+                prompt: "Select a shipping address",
+                style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
+                required: true %>
+            <button type="button" class="address-trigger-btn" onclick="document.getElementById('address-modal').classList.add('active')">+ Add New Address</button>
+          </div>
+        <% end %>
+
         <div style="margin-top: 12px;">
           <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
           <% if feature_enabled?(:shop) %>
@@ -493,7 +505,7 @@
         })();
       </script>
 
-    <% else %>
+    <% elsif @product.accessory_groups.any? %>
       <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
         <%= hidden_field_tag :product_id, @product.id %>
 
@@ -578,6 +590,18 @@
         <% end %>
         <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong id="order_total_notches" data-base-cost="<%= effective_cost %>" style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', effective_cost) %></strong> Notches.</p>
 
+        <% if @product.physical? %>
+          <div style="margin-top: 16px; margin-bottom: 12px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
+            <%= select_tag "order[address]",
+                options_for_select((current_user&.address || []).map { |a| [ "#{a.address_line_1}, #{a.city}, #{a.province}", a.id ] }),
+                prompt: "Select a shipping address",
+                style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
+                required: true %>
+            <button type="button" class="address-trigger-btn" onclick="document.getElementById('address-modal').classList.add('active')">+ Add New Address</button>
+          </div>
+        <% end %>
+
         <div style="margin-top: 12px;">
           <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
           <% if feature_enabled?(:shop) %>
@@ -641,7 +665,7 @@
 
     <h1>New order</h1>
 
-    <%= render "form", order: @order %>
+    <%= render "order/form", order: @order, product: @product %>
 
     <br>
 
@@ -650,3 +674,7 @@
     </div>
   <% end %>
 </div>
+
+<% if @product.present? && @product.physical? %>
+  <%= render "address/new" %>
+<% end %>

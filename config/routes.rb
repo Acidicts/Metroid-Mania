@@ -61,7 +61,7 @@ Rails.application.routes.draw do
       end
     end
   end
-  resources :addresses, only: [ :new, :create, :edit, :update ]
+  resources :addresses, only: [ :new, :create, :edit, :update, :destroy ]
   resources :comments
   get "metroidmania/index"
   get "shared/_retro_sample"

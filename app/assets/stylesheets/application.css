@@ -458,6 +458,7 @@ select:focus {
 .field-invalid {
   border-color: var(--red) !important;
   box-shadow: 0 0 0 4px rgba(236, 55, 80, 0.18) !important;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
 }
 
 .field-validation-warning {
@@ -477,6 +478,13 @@ select:focus {
   font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.25;
+  opacity: 1;
+  transition: opacity 0.4s ease;
+}
+
+.field-validation-warning.fade-out {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .field-validation-warning::before {

@@ -29,6 +29,7 @@ require "securerandom"
 class Order < ApplicationRecord
   belongs_to :user
   belongs_to :product
+  belongs_to :address, required: false
 
   has_one :charm_slot, dependent: :nullify, inverse_of: :order
   has_many :comments, as: :commentable, dependent: :destroy
@@ -55,6 +56,8 @@ class Order < ApplicationRecord
   before_validation :set_public_id, on: :create
 
   validates :public_id, presence: true, uniqueness: true, allow_nil: false, on: :create
+
+  before_create :sync_cost
 
   def set_public_id
     # Ensure the public identifier is set to a unique value like "!a1B2c3"
@@ -189,6 +192,15 @@ class Order < ApplicationRecord
   def user_denied_is_denied
     unless status == "user_denied"
       errors.add(:status, "can only be set to 'user_denied'")
+    end
+    charm_slot_temp = self.charm_slot
+    charm_slot_temp&.update(order: nil)
+    charm_slot_temp&.charm_notches&.update_all(charm_slot_id: nil)
+  end
+
+  def refund
+    unless status == "denied" || status == "cancelled"
+      errors.add(:status, "can only be set to 'denied' or 'cancelled")
     end
     charm_slot_temp = self.charm_slot
     charm_slot_temp&.update(order: nil)
@@ -370,20 +382,28 @@ class Order < ApplicationRecord
   # Refunds the user when an order transitions to `denied` unless a refund was already recorded.
   def refund_if_denied
     prev_status, new_status = saved_change_to_status
-    return unless new_status == "denied" && prev_status != "denied"
+
+    canonical_status = ->(v) {
+      if v.is_a?(Integer) || v.to_s =~ /\A\d+\z/
+        self.class.respond_to?(:statuses) ? (self.class.statuses.key(v.to_i) rescue v.to_s) : v.to_s
+      else
+        v.to_s
+      end
+    }
+
+    new_key = canonical_status.call(new_status)
+    prev_key = canonical_status.call(prev_status)
+
+    return unless new_key == "denied" && prev_key != "denied"
     return unless cost.present? && cost.to_f > 0
 
-    # If an explicit refund audit exists for this order, assume refund already happened.
     adapter = ActiveRecord::Base.connection.adapter_name.to_s.downcase
     refund_exists = if adapter.include?("sqlite")
-      # sqlite: use json_extract
       Audit.where("action = ? AND json_extract(details, '$.order_id') = ?", "order_refunded", id.to_s).exists?
     else
-      # postgres and others: use jsonb operator and cast
       Audit.where("action = ? AND (details ->> 'order_id')::text = ?", "order_refunded", id.to_s).exists?
     end
 
-    # Fallback: some environments may serialize JSON slightly differently — do an in-memory check as a last resort.
     unless refund_exists
       refund_exists = Audit.where(action: "order_refunded").to_a.any? { |a| a.details && a.details["order_id"].to_i == id }
     end
@@ -392,21 +412,9 @@ class Order < ApplicationRecord
 
     user.update!(currency: (user.currency || 0) + cost.to_f, amount_spent: (user.amount_spent || 0).to_f - cost.to_f)
 
-    # Use a real user for the audit entry (prefer an admin if available, otherwise fall back to any user).
     audit_user = User.find_by(role: :admin) || User.first
 
-    # Store a canonical status string in the audit (handle integer-backed enums or legacy string columns).
-    canonical_prev = if self.class.respond_to?(:statuses)
-      if prev_status.is_a?(Integer) || prev_status.to_s =~ /\A\d+\z/
-        self.class.statuses.key(prev_status.to_i).to_s rescue prev_status.to_s
-      else
-        prev_status.to_s
-      end
-    else
-      prev_status.to_s
-    end
-
-    Audit.create!(user: audit_user, project: nil, action: "order_refunded", details: { order_id: id, order_public_id: public_id, amount: cost.to_f, previous_status: canonical_prev })
+    Audit.create!(user: audit_user, project: nil, action: "order_refunded", details: { order_id: id, order_public_id: public_id, amount: cost.to_f, previous_status: prev_key })
   end
 
   public
@@ -448,5 +456,9 @@ class Order < ApplicationRecord
     end
 
     "#{product&.name} - $ #{'%.2f' % usd}"
+  end
+
+  def sync_cost
+    self.cost = self.notch_cost
   end
 end

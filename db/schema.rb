@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_25_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_05_212236) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -202,6 +202,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_000002) do
   end
 
   create_table "orders", force: :cascade do |t|
+    t.bigint "address_id"
     t.boolean "admin_created", default: false, null: false
     t.boolean "can_cancel", default: true, null: false
     t.string "charm_image_url"
@@ -217,6 +218,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_000002) do
     t.boolean "system", default: false, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
+    t.index ["address_id"], name: "index_orders_on_address_id"
     t.index ["product_id"], name: "index_orders_on_product_id"
     t.index ["public_id"], name: "index_orders_on_public_id", unique: true
     t.index ["status"], name: "index_orders_on_status"
@@ -252,6 +254,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_000002) do
     t.string "link"
     t.string "name"
     t.integer "notch_cost"
+    t.boolean "physical", default: false
     t.float "price_currency"
     t.integer "sale_discount"
     t.date "sale_time"
@@ -466,6 +469,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_25_000002) do
   add_foreign_key "devlogs", "projects"
   add_foreign_key "devlogs", "ship_requests"
   add_foreign_key "devlogs", "users"
+  add_foreign_key "orders", "addresses"
   add_foreign_key "orders", "products"
   add_foreign_key "orders", "users"
   add_foreign_key "posts", "projects"

@@ -69,6 +69,8 @@ class Product < ApplicationRecord
   attribute :description, :string, default: ""
   attribute :show, :boolean, default: true
 
+  attribute :physical, :boolean, default: false
+
   def image_url
     if image.respond_to?(:attached?) && image.attached?
       product_image_url
@@ -281,6 +283,10 @@ class Product < ApplicationRecord
     end
 
     super
+  end
+
+  def physical?
+    self.physical
   end
 
   private

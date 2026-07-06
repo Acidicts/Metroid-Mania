@@ -92,7 +92,7 @@
         <% order_params = { product_id: product.id } %>
         <div class="product-actions">
           <div class="action-group">
-            <% if product.is_unlocked(current_user) && (product.variable_grant? || product.accessory_groups.any?) %>
+            <% if product.is_unlocked(current_user) && (product.variable_grant? || product.accessory_groups.any? || product.physical?) %>
               <%= link_to "Equip", new_order_path(product_id: product.id), class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout" %>
             <% elsif product.is_unlocked(current_user) %>
               <%= button_to "Equip", orders_path(order_params), method: :post,

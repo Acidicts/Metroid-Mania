@@ -177,7 +177,8 @@ class OrdersController < ApplicationController
         order_attrs[:grant_amount_cents] = (grant_dollars * 100).round
         order_attrs[:notch_cost] = base_notch_cost + accessory_cost_total
         order_attrs[:cost] = base_cost + accessory_cost_total
-      elsif accessory_cost_total.positive?
+      end
+      if accessory_cost_total.positive?
         base_notch_cost = product.cost(current_user.set_region).to_i
         if (sale = product.active_sale)
           base_notch_cost -= sale.discount_notches.to_i
@@ -185,6 +186,9 @@ class OrdersController < ApplicationController
         end
         order_attrs[:notch_cost] = base_notch_cost + accessory_cost_total
         order_attrs[:cost] = product.price_currency.to_f + accessory_cost_total
+      end
+      if product.physical? && params[:order][:address].present?
+        order_attrs[:address_id] = params[:order][:address].to_i
       end
 
       charm_image_url = params[:charm_image_url].presence || product.image_url
