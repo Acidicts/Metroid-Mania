@@ -209,6 +209,9 @@
     <% @project.ships.order(shipped_at: :desc).each do |s| %>
       <% markers << { type: 'ship', time: s.shipped_at || s.created_at, obj: s } %>
     <% end %>
+    <% @project.ship_requests.where(status: "pending").order(created_at: :desc).each do |s| %>
+      <% markers << { type: 'ship_request', time: s.created_at, obj: s } %>
+    <% end %>
     <% markers.sort_by! { |m| m[:time] || Time.at(0) }.reverse! %>
 
     <% if devlogs.any? || markers.any? %>
@@ -224,7 +227,14 @@
 
         <% if next_marker && (next_devlog.nil? || (next_marker_time && next_devlog_time && next_marker_time > next_devlog_time) || (next_marker_time && next_devlog_time.nil?)) %>
           <% m = markers.shift %>
-          <%= render partial: 'devlogs/ship', locals: { ship: m[:obj] } %>
+          <% if next_marker[:type] == "ship" %>
+            <% ship = m[:obj] %>
+            <%= render partial: 'devlogs/ship', locals: { ship: ship } %>
+          <% elsif next_marker[:type] == "ship_request" %>
+            <% sr = m[:obj] %>
+            <% placement = @pending_ship_requests.pluck(:id).index(sr.id) + 1 %>
+            <%= render partial: 'devlogs/ship_request', locals: { ship_request: sr, ship_queue_placement: placement } %>
+          <% end %>
         <% else %>
           <% d = devlogs.shift %>
           <%= render d %>

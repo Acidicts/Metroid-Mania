@@ -1,3 +1,6 @@
+<% project ||= ship_request.project %>
+<% ship_queue_placement ||= "Shippped" %>
+
 <div class="nb-timeline-item">
   <div class="nb-timeline-dot dot-request"></div>
   <div id="<%= dom_id ship_request %>" class="nb-card card-ship-request">
@@ -24,6 +27,10 @@
       <div class="nb-stat">
         <span class="nb-stat-label">Devlogs</span>
         <span class="nb-stat-value"><%= ship_request.devlogs.where.not(user_id: nil).count %></span>
+      </div>
+      <div class="nb-stat">
+        <span class="nb-stat-label">Ship Request Placement</span>
+        <span class="nb-stat-value"><%= ship_queue_placement %></span>
       </div>
     </div>
 

@@ -21,6 +21,10 @@ class ShipRequestsController < ApplicationController
     # Note: we intentionally do *not* redirect owners away from rejected
     # requests; the earlier implementation attempted to do so and was overly
     # complicated, leading to incorrect behavior and test failures.
+    pending_ship_requests = ShipRequest.where(status: "pending").order(created_at: :asc).order(requested_at: :desc)
+    if pending_ship_requests.any?
+      @ship_queue_placement = pending_ship_requests.pluck(:id).index(@ship_request.id) + 1
+    end
   end
 
   # GET /projects/:project_id/ship_requests/new

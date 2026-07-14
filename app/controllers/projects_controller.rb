@@ -130,6 +130,7 @@ class ProjectsController < ApplicationController
     # Eager load associations to prevent N+1 queries
     @ships = @project.ships.includes(:user).order(shipped_at: :desc)
     @ship_requests = @project.ship_requests.includes(:user, :processed_by).order(requested_at: :desc)
+    @pending_ship_requests = ShipRequest.where(status: "pending").order(created_at: :asc)
   end
 
   # POST /projects/:id/ship - owner requests a ship (creates a request for admin)

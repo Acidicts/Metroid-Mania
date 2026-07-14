@@ -4,7 +4,7 @@
   <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
 <% end %>
 
-<%= render partial: 'devlogs/ship_request', locals: { ship_request: @ship_request, project: @project } %>
+<%= render partial: 'devlogs/ship_request', locals: { ship_request: @ship_request, project: @project, ship_queue_placement: @ship_queue_placement } %>
 
 <% for dev in @ship_request.devlogs.order(log_date: :desc) %>
   <% if !dev.title.downcase.include?("ship") %>
