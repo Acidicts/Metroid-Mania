@@ -24,6 +24,8 @@
 #  index_ship_requests_on_user_id           (user_id)
 #
 class ShipRequest < ApplicationRecord
+  APPROVAL_THREAD_KEY = :_ship_request_approving
+
   belongs_to :project
   belongs_to :user
   belongs_to :processed_by, class_name: "User", optional: true
@@ -126,11 +128,6 @@ class ShipRequest < ApplicationRecord
     rescue => e
       Rails.logger.error "Failed to sync ship request devlog for ShipRequest ##{id}: #{e.message}"
     end
-
-    # Also propagate meaningful changes to an associated Ship (if it exists).
-    # e.g. if an admin edits credits_awarded or devlogged_seconds after approval,
-    # ensure the Ship row and owner currency stay in sync.
-    propagate_changes_to_ship
   end
 
   public
@@ -178,19 +175,27 @@ class ShipRequest < ApplicationRecord
     # ship record will be created via project helper
     # pass multiplier through so ship, notches, and audits can reflect it
     applied_multiplier = multiplier.presence || self.multiplier || 1.0
-    ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient, multiplier: applied_multiplier)
 
-    # record multiplier on the request and (redundantly) ensure ship has it
-    self.multiplier = applied_multiplier
-    ship.update!(multiplier: applied_multiplier) if ship.has_attribute?(:multiplier)
+    # Flag to prevent associate_pending_request and propagate_changes_to_ship
+    # from firing redundant callbacks during the approval flow.
+    Thread.current[APPROVAL_THREAD_KEY] = true
+    begin
+      ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient, multiplier: applied_multiplier)
 
-    # Link the request directly to the created Ship so future updates can operate on the same row.
-    update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id, multiplier: applied_multiplier)
+      # record multiplier on the request and (redundantly) ensure ship has it
+      self.multiplier = applied_multiplier
+      ship.update!(multiplier: applied_multiplier) if ship.has_attribute?(:multiplier)
 
-    # ensure project status reflects this approved ship
-    project.recalculate_status!
+      # Link the request directly to the created Ship so future updates can operate on the same row.
+      update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id, multiplier: applied_multiplier)
 
-    ship
+      # ensure project status reflects this approved ship
+      project.recalculate_status!
+
+      ship
+    ensure
+      Thread.current[APPROVAL_THREAD_KEY] = false
+    end
   end
 
   def reject!(admin_user:)
@@ -247,6 +252,8 @@ class ShipRequest < ApplicationRecord
   # - credits_awarded: adjusts owner currency by the delta and updates ship.credits_awarded
   # - devlogged_seconds: updates ship.devlogged_seconds
   def propagate_changes_to_ship
+    return if Thread.current[APPROVAL_THREAD_KEY]
+
     ship = associated_ship
     return unless ship
 

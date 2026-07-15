@@ -86,6 +86,7 @@ class Ship < ApplicationRecord
   # If there is a pending ShipRequest that matches this ship (requested before shipped_at),
   # update the request to 'approved' and set credits_awarded so the UI reflects the ship.
   def associate_pending_request
+    return if Thread.current[ShipRequest::APPROVAL_THREAD_KEY]
     return unless project.present? && shipped_at.present?
 
     req = project.ship_requests.where(status: "pending").where("requested_at <= ?", shipped_at).order(requested_at: :desc).first
