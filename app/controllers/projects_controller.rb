@@ -3,6 +3,7 @@ class ProjectsController < ApplicationController
   before_action :set_project, only: %i[ show edit update destroy ship ]
   before_action :authorize_owner!, only: %i[ edit update destroy ]
   before_action :ensure_user_not_fraudulent, only: %i[ edit update ship ]
+  skip_before_action :ensure_user_setup, only: [ :like, :unlike ]
 
   # GET /projects or /projects.json
   def index
@@ -184,8 +185,6 @@ class ProjectsController < ApplicationController
   def like
     @project = Project.find(params[:id])
 
-    # Guard against self-likes and duplicates; the view already hides the
-    # link, but we also sanity-check here in case someone issues a raw POST.
     if @project.user_id == current_user.id
       flash_info("You cannot like your own project.")
     elsif current_user.liked_projects.include?(@project)
@@ -195,14 +194,15 @@ class ProjectsController < ApplicationController
       flash_pass("Project liked!")
     end
 
-    redirect_to project_path(@project)
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_back(fallback_location: project_path(@project)) }
+    end
   end
 
   def unlike
     @project = Project.find(params[:id])
 
-    # Guard against self-likes and duplicates; the view already hides the
-    # link, but we also sanity-check here in case someone issues a raw POST.
     if @project.user_id == current_user.id
       flash_info("You cannot like your own project.")
     elsif current_user.liked_projects.include?(@project)
@@ -212,7 +212,10 @@ class ProjectsController < ApplicationController
       flash_info("You haven't liked this project.")
     end
 
-    redirect_to project_path(@project)
+    respond_to do |format|
+      format.turbo_stream
+      format.html { redirect_back(fallback_location: project_path(@project)) }
+    end
   end
 
   # POST /projects or /projects.json

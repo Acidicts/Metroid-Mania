@@ -1,37 +1,41 @@
-<% if flash.any? %>
-  <%# Map Rails flash keys (and custom keys) to our visual tiers %>
-  <% mapping = { notice: :pass, success: :pass, pass: :pass, info: :info, warning: :warn, warn: :warn, warn_reject: :warn, alert: :error, error: :error, danger: :error } %>
+<div id="flash" style="position:fixed; top:50px; padding-top: 25px; left:50%; transform:translateX(-50%); z-index:9999; width:100%; max-width:600px; pointer-events:none;">
+  <% if flash.any? %>
+    <%# Map Rails flash keys (and custom keys) to our visual tiers %>
+    <% mapping = { notice: :pass, success: :pass, pass: :pass, info: :info, warning: :warn, warn: :warn, warn_reject: :warn, alert: :error, error: :error, danger: :error } %>
 
-  <%# Labels --- prefer a label keyed by the original flash key when present %>
-  <% labels = { pass: 'Success', info: 'Info', warn: 'Warn', error: 'Error - System Error', warning: 'Warning', warn_reject: "This was rejected" } %>
+    <%# Labels --- prefer a label keyed by the original flash key when present %>
+    <% labels = { pass: 'Success', info: 'Info', warn: 'Warn', error: 'Error - System Error', warning: 'Warning', warn_reject: "This was rejected" } %>
 
-  <div class="retro-container" style="margin-top:12px;">
-    <% seen = [] %>
-    <% flash.each do |key, msg| %>
-      <% next if msg.blank? %>
-      <% next if seen.include?(msg.to_s) %>
-      <% seen << msg.to_s %>
+    <div class="retro-container" style="margin-top:0; pointer-events:auto;">
+      <% seen = [] %>
+      <% flash.each do |key, msg| %>
+        <% next if msg.blank? %>
+        <% next if seen.include?(msg.to_s) %>
+        <% seen << msg.to_s %>
 
-      <% flash_key = key.to_s.to_sym %>
-      <% tier = mapping[flash_key] || flash_key %>
-      <% tier = :info unless [:pass, :info, :warn, :error].include?(tier) %>
+        <% flash_key = key.to_s.to_sym %>
+        <% tier = mapping[flash_key] || flash_key %>
+        <% tier = :info unless [:pass, :info, :warn, :error].include?(tier) %>
 
-      <% display_label = labels[flash_key] || labels[tier] || flash_key.to_s.humanize %>
+        <% display_label = labels[flash_key] || labels[tier] || flash_key.to_s.humanize %>
 
-      <div class="callout" data-flash="<%= tier %>"><strong><%= display_label %>:</strong> <%= msg %></div>
-    <% end %>
-  </div>
+        <div class="callout" style=" background-color: #FFF2E3; background-opacity:20%; display:flex; justify-content:space-between; align-items:center;" data-flash="<%= tier %>">
+          <span><strong><%= display_label %>:</strong> <%= msg %></span>
+          <button onclick="this.closest('.callout').remove()" style="background:none; border:none; cursor:pointer; font-size:1.2rem; padding:0 4px; opacity:0.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">&times;</button>
+        </div>
+      <% end %>
+    </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function() {
-      // fade out flash callouts after a short delay, then remove them from DOM
-      setTimeout(function() {
-        document.querySelectorAll('.retro-container .callout').forEach(function(el) {
-          el.style.transition = 'opacity 0.5s ease-out';
-          el.style.opacity = '0';
-          setTimeout(function() { el.remove(); }, 500);
-        });
-      }, 3000); // wait 3 seconds before starting fade
-    });
-  </script>
-<% end %>
+    <script>
+      (function() {
+        setTimeout(function() {
+          document.querySelectorAll('#flash .callout').forEach(function(el) {
+            el.style.transition = 'opacity 0.5s ease-out';
+            el.style.opacity = '0';
+            setTimeout(function() { el.remove(); }, 500);
+          });
+        }, 3000);
+      })();
+    </script>
+  <% end %>
+</div>

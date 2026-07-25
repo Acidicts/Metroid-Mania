@@ -1,0 +1,7 @@
+<%= turbo_stream.replace "like_button_#{@project.id}" do %>
+  <%= render "projects/like_button", project: @project %>
+<% end %>
+
+<%= turbo_stream.replace "flash" do %>
+  <%= render "shared/flash" %>
+<% end %>

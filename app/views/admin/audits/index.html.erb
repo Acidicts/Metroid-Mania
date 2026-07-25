@@ -15,8 +15,8 @@
       <% @audits.each do |a| %>
         <tr>
           <td><%= a.created_at %></td>
-          <td><%= link_to  a.user&.name || a.user&.email, admin_user_path(a.user) %></td>
-          <td><%=  a.user&.role %></td>
+          <td><% if a.user %><%= link_to a.user.name || a.user.email, admin_user_path(a.user) %><% else %>-<% end %></td>
+          <td><%= a.user&.role %></td>
           <td><%= a.project ? link_to(a.project.name, admin_project_path(a.project)) : '-' %></td>
           <td><%= a.action %></td>
           <td><%= JSON.pretty_generate(a.details || {}) %></td>

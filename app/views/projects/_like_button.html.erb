@@ -1,0 +1,14 @@
+<%= turbo_frame_tag "like_button_#{project.id}" do %>
+  <% liked = current_user.liked_projects.include?(project) %>
+  <button
+    data-controller="like"
+    data-like-liked-value="<%= liked %>"
+    data-like-like-url-value="<%= like_project_path(project) %>"
+    data-like-unlike-url-value="<%= unlike_project_path(project) %>"
+    data-like-count-value="<%= project.likers.count %>"
+    data-action="click->like#toggle"
+    class="btn-retro btn-retro--outline"
+  >
+    <%= liked ? '❤️' : '♡' %> - <%= project.likers.count %>
+  </button>
+<% end %>

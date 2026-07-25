@@ -53,19 +53,7 @@
             <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>
           <% end %>
           <% if logged_in? %>
-            <% if current_user.not_liked_project(@project.id) %>
-              <%= button_to '♡ - ' + @project.likers.count.to_s,
-                      like_project_path(@project),
-                      method: :post,
-                      class: 'btn-retro btn-retro--outline'
-                %>
-            <% else %>
-              <%= button_to '❤️ - ' + @project.likers.count.to_s,
-                              unlike_project_path(@project),
-                              method: :post,
-                              class: 'btn-retro btn-retro--outline'
-                %>
-            <% end %>
+            <%= render "projects/like_button", project: @project %>
           <% else %>
             <button class="btn-retro btn-retro--outline" disabled title="Sign in to like projects">
               ♡ - <%= @project.likers.count %>
