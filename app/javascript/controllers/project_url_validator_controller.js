@@ -64,21 +64,27 @@ export default class extends Controller {
   // simpler, single-line implementation to avoid accidental newline breaks
   _isGitSsh(str) { return /^git@github\.com:[^\/\s@]+\/[^\/\s@]+(?:\.git)?$/i.test(String(str || '')) }
   _isProbablyUrl(str) { try { new URL(String(str || '')); return true } catch(e) { return false } }
+  _isGithubIdentifier(str) { return /^[a-zA-Z0-9._-]+\/[a-zA-Z0-9._-]+$/.test(String(str || '')) }
 
   _parseGithubRepo(url) {
     if (!url) return null
-    const match = String(url).match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
-    if (!match) {
-      if (this._isGitSsh(url)) {
-        const sshMatch = String(url).match(/^git@github\.com:([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?$/i)
-        if (sshMatch) return { owner: sshMatch[1], repo: sshMatch[2] }
-      }
-      return null
+    const str = String(url)
+    // github.com URLs and SSH
+    const match = str.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
+    if (match) {
+      const owner = match[1]
+      const repoName = match[2].replace(/\.git$/i, '')
+      const branchMatch = str.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
+      return { owner, repo: repoName, branch: branchMatch ? branchMatch[1] : null }
     }
-    const owner = match[1]
-    const repoName = match[2].replace(/\.git$/i, '')
-    const branchMatch = String(url).match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
-    return { owner, repo: repoName, branch: branchMatch ? branchMatch[1] : null }
+    if (this._isGitSsh(url)) {
+      const sshMatch = str.match(/^git@github\.com:([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?$/i)
+      if (sshMatch) return { owner: sshMatch[1], repo: sshMatch[2] }
+    }
+    // plain owner/repo
+    const plainMatch = str.match(/^([a-zA-Z0-9._-]+)\/([a-zA-Z0-9._-]+)$/)
+    if (plainMatch) return { owner: plainMatch[1], repo: plainMatch[2] }
+    return null
   }
 
   async _fetchResponse(url) {
@@ -182,11 +188,19 @@ export default class extends Controller {
 
   async _handleSubmit(e) {
     try {
-      const repoLooksUrl = this.hasRepoTarget && (this._isProbablyUrl((this.repoTarget.value||'').trim()) || this._isGitSsh((this.repoTarget.value||'').trim()))
+      const repoVal = (this.repoTarget.value||'').trim()
+      const repoLooksUrl = this.hasRepoTarget && (this._isProbablyUrl(repoVal) || this._isGitSsh(repoVal) || this._isGithubIdentifier(repoVal))
       const readmeLooksUrl = this.hasReadmeTarget && this._isProbablyUrl((this.readmeTarget.value||'').trim())
       let ok = true
       if (repoLooksUrl) ok = await this.checkRepositoryInput() && ok
       if (readmeLooksUrl) ok = await this.checkReadmeInput() && ok
+
+      if (this.hasRepoTarget && this.repoTarget.value) {
+        const parsed = this._parseGithubRepo(this.repoTarget.value.trim())
+        if (parsed && !this.repoTarget.value.trim().startsWith('https://github.com/')) {
+          this.repoTarget.value = `https://github.com/${parsed.owner}/${parsed.repo}`
+        }
+      }
       if (!ok) {
         e.preventDefault()
         const firstInvalid = this.element.querySelector('[aria-invalid="true"]')

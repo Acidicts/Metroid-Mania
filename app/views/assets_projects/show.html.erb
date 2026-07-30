@@ -32,7 +32,7 @@
         </div>
 
         <div class="cta-row">
-          <%= link_to 'View Repo', safe_url(@project.repository_url), class: 'btn-retro', target: '_blank', rel: 'noopener' %>
+          <%= link_to 'View Repo', safe_url(@project.regulated_repository_url), class: 'btn-retro', target: '_blank', rel: 'noopener' %>
           <% if @project.readme_url.present? %>
             <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>
           <% end %>
@@ -136,7 +136,7 @@
           <p><strong>Media type:</strong> <%= @project.media_type.presence || '—' %></p>
           <p><strong>Shipped:</strong> <%= @project.respond_to?(:shipped) && @project.shipped? ? 'Yes' : 'No' %></p>
           <% if @project.repository_url.present? %>
-            <p><strong>Repository:</strong> <%= link_to safe_url(@project.repository_url), safe_url(@project.repository_url), target: '_blank', rel: 'noopener' %></p>
+            <p><strong>Repository:</strong> <%= link_to safe_url(@project.regulated_repository_url), safe_url(@project.regulated_repository_url), target: '_blank', rel: 'noopener noreferrer' %></p>
           <% end %>
           <% if @project.readme_url.present? %>
             <p><strong>Readme:</strong> <%= link_to 'View README', @project.readme_url, target: '_blank', rel: 'noopener' %></p>

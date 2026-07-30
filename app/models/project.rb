@@ -79,6 +79,23 @@ class Project < ApplicationRecord
     notchs
   end
 
+  def regulated_repository_url
+    url = self.repository_url.to_s.strip
+
+    case url
+    when %r{\Ahttps://}
+      url
+    when %r{\Ahttp://}
+      url.sub("http://", "https://")
+    when %r{\Agithub\.com/}
+      "https://" + url
+    when %r{\A[^/]+/[^/]+\z} # Matches "user/repo" pattern
+      "https://github.com/" + url
+    else
+      url # Fallback if none match
+    end
+  end
+
   def image_url
     # return any transient value that was assigned via the writer when no
     # database column exists (see image_url= below).
@@ -427,14 +444,14 @@ class Project < ApplicationRecord
   # Server-side validator: if repository_url points at GitHub, ensure a README.md exists
   # on a common branch (or the explicit branch if present). Fail on 404.
   def github_repository_must_have_readme
-    return if repository_url.blank?
+    return if regulated_repository_url.blank?
 
-    m = repository_url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
+    m = regulated_repository_url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
     return unless m
 
     owner = m[1]
     repo_name = m[2].gsub(/\.git$/i, "")
-    branch_match = repository_url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
+    branch_match = regulated_repository_url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
     branches_to_try = branch_match ? [ branch_match[1] ] : [ "main", "master" ]
 
     saw_404 = false
@@ -526,12 +543,13 @@ class Project < ApplicationRecord
   # Parse GitHub owner/repo (and optional branch) from repository_url. Returns
   # a hash { owner:, repo:, branch: } or nil when the URL doesn't look like GitHub.
   def github_repo_parts
-    return nil if repository_url.blank?
-    m = repository_url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
+    url = regulated_repository_url
+    return nil if url.blank?
+    m = url.match(/(?:github\.com[:\/])([^\/\s@]+)\/([^\/\s@]+)(?:\.git)?(?:[\/\#?].*)?/i)
     return nil unless m
     owner = m[1]
     repo_name = m[2].gsub(/\.git$/i, "")
-    branch_match = repository_url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
+    branch_match = url.match(/\/(?:tree|blob)\/([^\/\s\/]+)/i)
     { owner: owner, repo: repo_name, branch: (branch_match ? branch_match[1] : nil) }
   end
 
@@ -586,14 +604,15 @@ class Project < ApplicationRecord
   # repos we require the repo to be public; otherwise we accept common git URL
   # formats or any HTTP(S) URL as clonable (best-effort).
   def clonable?
-    return false if repository_url.blank?
+    url = regulated_repository_url
+    return false if url.blank?
 
     if github_repo_parts
       github_repo_public?
     else
-      return true if repository_url =~ /\Agit@[^:]+:[^\/]+\/.+\.git\z/i
-      return true if repository_url =~ /\Ahttps?:\/\/.+\.git\z/i
-      uri = URI.parse(repository_url) rescue nil
+      return true if url =~ /\Agit@[^:]+:[^\/]+\/.+\.git\z/i
+      return true if url =~ /\Ahttps?:\/\/.+\.git\z/i
+      uri = URI.parse(url) rescue nil
       uri && (uri.is_a?(URI::HTTP) || uri.is_a?(URI::HTTPS))
     end
   end

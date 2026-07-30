@@ -164,7 +164,7 @@ class ProjectsControllerTest < ActionDispatch::IntegrationTest
     @project.update!(shipped: false, shipped_at: nil)
 
     new_tag = project_tags(:two)
-    patch project_url(@project), params: { project: { name: @project.name, repository_url: @project.repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id, project_tag_id: new_tag.id } }
+    patch project_url(@project), params: { project: { name: @project.name, repository_url: @project.regulated_repository_url, status: @project.status, total_seconds: @project.total_seconds, user_id: @project.user_id, project_tag_id: new_tag.id } }
     assert_redirected_to project_url(@project)
     assert_equal new_tag.id, @project.reload.project_tag_id
   end

@@ -85,17 +85,19 @@
         </div>
 
         <!-- Project Tag -->
-        <div class="apf-section">
-          <div class="apf-section-title">Project Tag</div>
-          <div class="form-group">
-            <%= form.label :project_tag_id, "Project tag" %>
-            <%= form.collection_select :project_tag_id,
-                  ProjectTag.order(:tag_string),
-                  :id, :tag,
-                  { include_blank: "None" },
-                  { class: "form-input" } %>
+        <% if ProjectTag.any? %>
+          <div class="apf-section">
+            <div class="apf-section-title">Project Tag</div>
+            <div class="form-group">
+              <%= form.label :project_tag_id, "Project tag" %>
+              <%= form.collection_select :project_tag_id,
+                    ProjectTag.order(:tag_string),
+                    :id, :tag,
+                    { include_blank: "None" },
+                    { class: "form-input" } %>
+            </div>
           </div>
-        </div>
+        <% end %>
 
         <div class="form-actions">
           <%= form.submit "Submit Project", class: "btn-primary" %>
