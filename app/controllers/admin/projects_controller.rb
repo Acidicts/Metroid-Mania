@@ -27,7 +27,7 @@ module Admin
 
       if pending_request
         ship = pending_request.approve!(admin_user: current_user, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour)
-        @project.update!(status: "shipped", approved_at: Time.current, shipped: true, shipped_at: Time.current, ship_requested_at: nil)
+        @project.update!(status: "shipped", approved_at: Time.current, shipped: true, shipped_at: pending_request.requested_at, ship_requested_at: nil)
         Audit.create!(user: current_user, project: @project, action: "approve", details: { previous_status: previous_status, credits_per_hour: params[:credits_per_hour].presence || pending_request.credits_per_hour, ship_request_id: pending_request.id, ship_id: ship.id })
         redirect_back fallback_location: admin_dashboard_path, notice: "Ship request approved and marked as shipped."
         return
@@ -52,7 +52,7 @@ module Admin
       # Atomically award credits (when provided) and create the Ship snapshot
       ship = @project.ship_and_award_credits!(admin_user: current_user, rate: credits, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, multiplier: params[:multiplier])
 
-      puts "DEBUG Admin::ProjectsController#approve: ship created id=#{ship.id} devlogged_seconds=#{ship.devlogged_seconds.inspect} credits_awarded=#{ship.credits_awarded.inspect} owner_currency_after=#{@project.user.reload.currency.inspect}"
+      puts "DEBUG Admin::ProjectsController#approve: ship created id=#{ship.id} devlogged_seconds=#{ship.devlogged_seconds.inspect} credits_awarded=#{ship.credits_awarded.inspect} owner_balance_after=#{@project.user.reload.available_balance.inspect}"
 
       redirect_back fallback_location: admin_dashboard_path, notice: "Project approved and marked as shipped."
     end
@@ -111,10 +111,8 @@ module Admin
           s.update!(credits_awarded: 0, devlogged_seconds: 0)
         end
 
-        # Refund owner's currency by subtracting previously awarded amount
-        if total_awarded > 0 && owner.present?
-          owner.update!(currency: (owner.currency || 0) - total_awarded)
-        end
+        # Recalculate owner's currency from canonical sources (ships are zeroed above)
+        owner.recalculate_currency! if total_awarded > 0 && owner.present?
 
         # Anonymize and clear hackatime linkage so others can use those ids
         # Use update_columns to bypass validations so soft-delete always succeeds

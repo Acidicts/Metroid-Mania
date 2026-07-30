@@ -21,17 +21,24 @@
         <span class="nb-stat-value"><%= (ship_request.devlogged_seconds.to_i / 3600.0).round(2) %></span>
       </div>
       <div class="nb-stat">
-        <span class="nb-stat-label">Credits</span>
+        <span class="nb-stat-label">Notches</span>
         <span class="nb-stat-value"><%= (ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)).present? ? format_credits(ship_request.credits_awarded.presence || (ship_request.associated_ship&.credits_awarded)) : "-" %></span>
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Devlogs</span>
         <span class="nb-stat-value"><%= ship_request.devlogs.where.not(user_id: nil).count %></span>
       </div>
-      <div class="nb-stat">
-        <span class="nb-stat-label">Ship Request Placement</span>
-        <span class="nb-stat-value"><%= ship_queue_placement %></span>
-      </div>
+      <% if ship_request.status == "pending" %>
+        <div class="nb-stat">
+          <span class="nb-stat-label">Ship Request Placement</span>
+          <span class="nb-stat-value"><%= ship_queue_placement %></span>
+        </div>
+      <% else %>
+        <div class="nb-stat">
+          <span class="nb-stat-label">Status</span>
+          <span class="nb-stat-value"><%= ship_request.status.humanize %></span>
+        </div>
+      <% end %>
     </div>
 
     <% if ship_request.devlogs.any? %>
@@ -44,6 +51,21 @@
           </li>
         <% end %>
       </ul>
+    <% end %>
+
+    <% if defined?(current_user) && current_user && (current_user&.admin? || current_user == ship_request.project.user) %>
+      <% if current_user.admin? || ship_request.comments.any? %>
+        <hr style="margin: 16px 0;">  
+        <div id="comments-for">
+          <% ship_request.comments.each do |comment| %>
+            <%= render comment %>
+          <% end %>
+
+          <% if current_user&.admin? %>
+            <%= render 'comments/form', comment: Comment.new, commentable: ship_request %>
+          <% end %>
+        </div>
+      <% end %>
     <% end %>
 
     <div class="nb-linkbar">

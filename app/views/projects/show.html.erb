@@ -33,10 +33,12 @@
 
       <div style="margin-top:12px">
         <h1 class="project-title" style="display: inline-block"><%= @project.name %> <span style="all:unset; color:var(--accent2); font-size:0.8em; background-color:var(--main-900); padding:2px 6px; border-radius:4px; text-shadow:none;"><%= @project.project_tag&.tag %></span></h1>
-        <div class="kv" style="margin-bottom:8px">
-          <div class="label">By</div>
-          <div class="value"><%= link_to @project.user.display_name, user_profile_path(@project.user) %></div>
-        </div>
+        <% if defined?(current_user) %>
+          <div class="kv" style="margin-bottom:8px">
+            <div class="label">By</div>
+            <div class="value"><%= link_to @project.user.display_name, user_profile_path(@project.user) %></div>
+          </div>
+        <% end %>
         <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet. \n Required for Ship') %></p>
 
         <div style="margin-top:12px" class="tech-list">
@@ -197,7 +199,7 @@
     <% @project.ships.order(shipped_at: :desc).each do |s| %>
       <% markers << { type: 'ship', time: s.shipped_at || s.created_at, obj: s } %>
     <% end %>
-    <% @project.ship_requests.where(status: "pending").order(created_at: :desc).each do |s| %>
+    <% @project.ship_requests.where(status: [ "pending", "rejected" ]).order(created_at: :desc).each do |s| %>
       <% markers << { type: 'ship_request', time: s.created_at, obj: s } %>
     <% end %>
     <% markers.sort_by! { |m| m[:time] || Time.at(0) }.reverse! %>
@@ -218,9 +220,11 @@
           <% if next_marker[:type] == "ship" %>
             <% ship = m[:obj] %>
             <%= render partial: 'devlogs/ship', locals: { ship: ship } %>
-          <% elsif next_marker[:type] == "ship_request" %>
+          <% elsif next_marker[:type] == "ship_request" && current_user == m[:obj].user %>
             <% sr = m[:obj] %>
-            <% placement = @pending_ship_requests.pluck(:id).index(sr.id) + 1 %>
+            <% if sr.status == "pending" %>
+              <% placement = @pending_ship_requests.pluck(:id).index(sr.id) + 1 %>
+            <% end %>
             <%= render partial: 'devlogs/ship_request', locals: { ship_request: sr, ship_queue_placement: placement } %>
           <% end %>
         <% else %>

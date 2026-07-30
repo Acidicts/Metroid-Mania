@@ -50,10 +50,6 @@
       <h2>Credits snapshot</h2>
       <dl class="admin-ship-request-list">
         <div class="admin-ship-request-list-row">
-          <dt>Credits per hour</dt>
-          <dd><%= @ship_request.credits_per_hour.presence || "Not set" %></dd>
-        </div>
-        <div class="admin-ship-request-list-row">
           <dt>Multiplier</dt>
           <dd><%= @ship_request.multiplier.to_f %></dd>
         </div>
@@ -83,13 +79,6 @@
 
           <%= form_with url: approve_admin_ship_request_path(@ship_request), method: :post, local: true, class: "admin-form admin-ship-request-form" do |f| %>
             <div class="admin-form-row">
-              <%= f.label :credits_per_hour, "Credits per hour (optional)", class: "admin-form-label" %>
-              <div class="admin-form-control">
-                <%= f.number_field :credits_per_hour, value: @ship_request.credits_per_hour, step: 0.01, min: 0 %>
-              </div>
-            </div>
-
-            <div class="admin-form-row">
               <%= f.label :multiplier, "Multiplier (optional)", class: "admin-form-label" %>
               <div class="admin-form-control">
                 <%= f.number_field :multiplier, value: @ship_request.multiplier, step: 0.01, min: 0.0 %>
@@ -107,6 +96,13 @@
               </div>
             </div>
 
+            <div class="form-group mb-3">
+              <%= f.label :comment, "Rejection Reason", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= f.text_area :comment, rows: 3, class: "form-control", placeholder: "Enter reason for rejection...", required: true %>
+              </div>
+            </div>
+
             <div class="admin-form-actions">
               <%= f.submit "Approve and ship", class: "btn-admin btn-admin-success" %>
             </div>
@@ -120,7 +116,16 @@
             <h3>Reject request</h3>
           </div>
           <p class="admin-hint">Rejecting keeps this request unshipped and marks it as denied.</p>
-          <%= button_to "Reject", reject_admin_ship_request_path(@ship_request), method: :post, data: { confirm: "Reject this request?" }, class: "btn-admin btn-admin-warning btn-block" %>
+          <%= form_with url: reject_admin_ship_request_path(@ship_request), method: :post, local: true, data: { confirm: "Reject this request?" } do |f| %>
+            <div class="form-group mb-3">
+              <%= f.label :comment, "Rejection Reason", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= f.text_area :comment, rows: 3, class: "form-control", placeholder: "Enter reason for rejection...", required: true %>
+              </div>
+            </div>
+
+            <%= f.submit "Reject", class: "btn-admin btn-admin-warning btn-block" %>
+          <% end %>
         </div>
       </aside>
     </div>

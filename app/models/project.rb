@@ -618,8 +618,9 @@ class Project < ApplicationRecord
   end
 
 
-  # Award credits to the project owner based on credits_per_hour and either total_seconds or provided seconds
-  # Returns the amount awarded (float) or nil if no rate provided
+  # Compute credits from seconds and a fixed rate of 0.5 credits/hour.
+  # Returns the amount awarded (float) or nil if no rate provided.
+  # Currency recalculation is handled by the caller (ship_and_award_credits!).
   def award_credits!(rate, seconds: nil, recipient: nil)
     return nil if rate.blank?
 
@@ -639,14 +640,12 @@ class Project < ApplicationRecord
 
     target = recipient.present? ? recipient : user
 
-    Rails.logger.debug("award_credits!: computed amount=#{amount.inspect} user_before=#{target.currency.inspect}") if defined?(Rails)
-    target.update!(currency: (target.currency || 0) + amount)
-    Rails.logger.debug("award_credits!: user_after=#{target.currency.inspect}") if defined?(Rails)
+    Rails.logger.debug("award_credits!: computed amount=#{amount.inspect}") if defined?(Rails)
 
     amount
   end
 
-  # Create a Ship record and award credits (if a rate is provided) in a single transaction.
+  # Create a Ship record and award credits in a single transaction.
   # - admin_user: the user performing the ship (stored on the Ship)
   # - rate: credits_per_hour (may be nil)
   # - devlogged_seconds: seconds to use for credit calculation and ship record
@@ -654,6 +653,7 @@ class Project < ApplicationRecord
   # Returns the created Ship.
   # This method is idempotent for the same shipped_at timestamp (will raise if a ship with identical
   # shipped_at and credits_awarded already exists), but will create distinct Ship rows for separate shipments.
+  # Currency is recalculated from canonical sources (ships + credit_offset - amount_spent) at the end.
   def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current, recipient_user: nil, multiplier: nil)
     # ensure ActiveRecord knows about the current DB schema (multiplier column may
     # have been removed by a migration while the server was running).  This avoids
@@ -676,7 +676,7 @@ class Project < ApplicationRecord
 
       amount = nil
 
-      # Pass through recipient_user to award_credits! (still used for legacy currency)
+      # Compute the credit amount for this ship; currency is recalculated later
       amount = award_credits!(0.5, seconds: used_seconds, recipient: recipient_user)
 
       # Ensure stored credits_awarded is numeric (0.0 when no award) so admin UI shows a value
@@ -735,10 +735,9 @@ class Project < ApplicationRecord
         Audit.create!(user: admin_user, project: self, action: "credit_awarded", details: details)
       end
 
-      # Ensure recipient's currency is canonical (sum of ships - spent) in case of prior inconsistencies
-      # Do not force a full currency recalculation here; award_credits! directly updates the recipient's currency by the credited amount
-      # (calling `recalculate_currency!` here interferes with tests and expected immediate additive behavior).
-
+      # Recalculate the recipient's currency from canonical sources
+      target = recipient_user.present? ? recipient_user : user
+      target.recalculate_currency!
 
       ship
     end

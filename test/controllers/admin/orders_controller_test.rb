@@ -69,8 +69,6 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
   test "decline can refund a previously fulfilled order" do
     prod = Product.create!(name: "PostFulfillRefund", steam_app_id: 99, price_currency: 5.0, cost_credits: 50.0, notch_cost: 5)
     u = users(:one)
-    # Seed user with funds and notches so they can make and hold the order; it will be deducted on create
-    u.update!(currency: 100.0)
     u.adjust_charm_notches!(100)
 
     o = u.orders.create!(product: prod, cost: prod.price_currency, cost: prod.price_currency)
@@ -79,13 +77,11 @@ class Admin::OrdersControllerTest < ActionDispatch::IntegrationTest
     post fulfill_admin_order_url(o)
     assert_equal "shipped", o.reload.status
 
-    user_before = o.user.currency || 0
-
     # Now decline and refund
     post decline_admin_order_url(o)
 
     assert_equal "denied", o.reload.status
-    assert_equal user_before + o.cost.to_f, o.user.reload.currency
+    assert_equal o.cost.to_f, o.user.reload.currency.to_f
     assert_audit_created(action: "order_refunded", project: nil)
   end
 

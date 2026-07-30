@@ -280,9 +280,7 @@ class ProjectsController < ApplicationController
         s.update!(credits_awarded: 0, devlogged_seconds: 0)
       end
 
-      if total_awarded > 0 && owner.present?
-        owner.update!(currency: (owner.currency || 0) - total_awarded)
-      end
+      owner.recalculate_currency! if total_awarded > 0 && owner.present?
 
       # Soft-delete without running validations so we can clear metadata (including hackatime links)
       @project.update_columns(deleted_at: Time.current, status: "deleted", name: "Deleted Project", hackatime_ids: nil)

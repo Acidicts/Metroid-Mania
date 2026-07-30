@@ -81,14 +81,55 @@
   </script>
 
   <div class="nb-form-group">
-    <span class="nb-label">Duration</span>
-    <% if devlog.duration_seconds_total.present? && devlog.duration_seconds_total.to_i > 0 %>
-      <span class="nb-chip">⏱ <%= format_duration(devlog.duration_seconds_total.to_i) %></span>
-    <% else %>
-      <p class="nb-empty">Not available</p>
-    <% end %>
-    <p style="font-family: var(--nb-font); font-size: 0.82rem; color: #6b7280; margin-top: 6px;">Duration is automatically calculated from remaining undocumented time and cannot be edited.</p>
+    <%= form.label :duration, "Duration", class: "nb-label" %>
+    <div style="display: flex; gap: 8px; align-items: flex-start;">
+      <div style="flex: 1;">
+        <%= number_field_tag 'duration[hours]', nil,
+              min: 0,
+              max: (devlog.duration_seconds_total || 0) / 3600,
+              id: 'duration_hours',
+              class: 'nb-input',
+              style: 'width: 100%;' %>
+        <span style="font-family: var(--nb-font); font-size: 0.75rem; color: var(--nb-text); opacity: 0.6; margin-top: 2px; display: block;">hours</span>
+      </div>
+      <div style="flex: 1;">
+        <%= number_field_tag 'duration[minutes]', nil,
+              min: 0,
+              max: 59,
+              id: 'duration_minutes_part',
+              class: 'nb-input',
+              style: 'width: 100%;' %>
+        <span style="font-family: var(--nb-font); font-size: 0.75rem; color: var(--nb-text); opacity: 0.6; margin-top: 2px; display: block;">minutes</span>
+      </div>
+    </div>
+    <%= form.hidden_field :duration_minutes,
+          value: (devlog.duration_seconds_total.to_i / 60 if devlog.duration_seconds_total.present?),
+          id: 'duration_minutes_total' %>
+    <p style="font-family: var(--nb-font); font-size: 0.82rem; color: #6b7280; margin-top: 6px;">Remaining undocumented time: <%= format_duration(@project.undocumented_seconds) %>. Minimum 15 minutes.</p>
   </div>
+
+  <script>
+    (function() {
+      var hoursEl = document.getElementById('duration_hours');
+      var minsEl = document.getElementById('duration_minutes_part');
+      var totalEl = document.getElementById('duration_minutes_total');
+
+      function compute() {
+        var h = parseInt(hoursEl.value) || 0;
+        var m = parseInt(minsEl.value) || 0;
+        totalEl.value = h * 60 + m;
+      }
+
+      hoursEl.addEventListener('input', compute);
+      minsEl.addEventListener('input', compute);
+
+      var initial = parseInt(totalEl.value) || 0;
+      if (initial > 0) {
+        hoursEl.value = Math.floor(initial / 60);
+        minsEl.value = initial % 60;
+      }
+    })();
+  </script>
 
   <div class="nb-form-group">
     <%= form.submit class: "nb-btn nb-btn-primary" %>

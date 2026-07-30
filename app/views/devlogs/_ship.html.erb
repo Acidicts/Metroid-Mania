@@ -4,13 +4,12 @@
     <% ship_number = ship.project.ships.where('shipped_at <= ?', ship.shipped_at).count %>
     <div class="nb-meta">
       <span class="nb-badge badge-ship">🚀 Ship <%= ship_number %></span>
-      <span class="nb-timestamp"><%= ship.shipped_at&.strftime("%b %-d, %Y %l:%M %p") %></span>
+      <span class="nb-timestamp"><%= ship.shipped_at&.strftime("%b %-d, %Y") %></span>
     </div>
 
     <% req = ship.project.ship_requests.where(status: 'approved').where(approved_at: ship.shipped_at).or(ship.project.ship_requests.where('requested_at <= ?', ship.shipped_at)).order(approved_at: :desc, requested_at: :desc).first %>
 
     <% hours = (ship.devlogged_seconds.to_i / 3600.0).round(2) %>
-    <% credits_display = ship.credits_awarded.to_f > 0 ? format_credits(ship.credits_awarded) : "-" %>
     <% multiplier_display = if req && req.multiplier.present?
                                  req.multiplier
                                elsif ship.respond_to?(:multiplier) && ship.multiplier.present?
@@ -27,7 +26,7 @@
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Notches</span>
-        <span class="nb-stat-value"><%= ship.charm_notches.count / 2 %></span>
+        <span class="nb-stat-value"><%= ship.charm_notches.count %></span>
       </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Multiplier</span>

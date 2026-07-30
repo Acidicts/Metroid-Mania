@@ -282,8 +282,8 @@ class Admin::ProjectsControllerTest < ActionDispatch::IntegrationTest
     assert_equal 0.0, ship.credits_awarded.to_f
     assert_equal 0, ship.devlogged_seconds.to_i
 
-    # owner's currency should have been reduced by reclaimed amount
-    assert_in_delta total_awarded, 100.0 - owner.currency.to_f, 0.001
+    # owner's currency should be 0 since all ships were zeroed
+    assert_in_delta 0.0, owner.currency.to_f, 0.001
 
     assert_redirected_to admin_projects_url
     assert_audit_created(action: "delete", project: @project, user: @admin)

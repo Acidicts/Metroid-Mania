@@ -23,6 +23,14 @@ module Admin
         # allow multiplier override
         multi = params[:multiplier].presence
         ship = @ship_request.approve!(admin_user: current_user, credits_per_hour: credits.to_f.floor, recipient_user_id: recipient_user_id, multiplier: multi)
+        if params[:comment].present?
+          Comment.create!(
+            user: current_user,
+            commentable: ship,
+            message: params[:comment].to_s.strip,
+            system: true
+          )
+        end
         Audit.create!(user: current_user, project: @ship_request.project, action: "approve_ship_request", details: { ship_request_id: @ship_request.id, credits_per_hour: credits, recipient_user_id: recipient_user_id, multiplier: multi, ship_id: ship.id })
         flash_pass("Ship request approved and shipped.")
         redirect_to admin_ship_path(ship)
@@ -35,6 +43,14 @@ module Admin
       if @ship_request.pending?
         @ship_request.reject!(admin_user: current_user)
         @ship_request.project.update!(status: "rejected", ship_requested_at: nil)
+        if params[:comment].present?
+          Comment.create!(
+            user: current_user,
+            commentable: @ship_request,
+            message: params[:comment].to_s.strip,
+            system: true
+          )
+        end
         Audit.create!(user: current_user, project: @ship_request.project, action: "reject_ship_request", details: { ship_request_id: @ship_request.id })
         redirect_back fallback_location: admin_ship_requests_path, notice: "Ship request rejected."
       else

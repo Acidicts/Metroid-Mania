@@ -524,11 +524,10 @@ class User < ApplicationRecord
     (total_credits - (amount_spent || 0.0)).ceil
   end
 
-  # Recalculate and persist the user's currency to be total_credits minus amount_spent.
-  # Incorporates credit_offset so currency always reflects "earned + offset - spent".
+  # Recalculate and persist the user's currency to be total_shipped_credits + credit_offset - amount_spent.
   # Returns the computed currency value (float).
   def recalculate_currency!
-    new_currency = available_balance
+    new_currency = total_shipped_credits + (credit_offset || 0.0) - (amount_spent || 0.0)
     update!(currency: new_currency)
     new_currency
   end

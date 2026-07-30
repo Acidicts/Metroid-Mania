@@ -151,7 +151,7 @@
         <div class="admin-form-row">
           <label class="admin-form-label" for="user_currency">Currency</label>
           <div class="admin-form-control">
-            <%= number_field_tag "user[currency]", @user.currency, id: "user_currency",
+            <%= number_field_tag "user[currency]", @user.available_balance, id: "user_currency",
                 class: "admin-input #{'field-error' if @user.errors[:currency].any?}" %>
           </div>
         </div>

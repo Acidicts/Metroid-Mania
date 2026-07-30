@@ -167,8 +167,8 @@ module Admin
       return false unless order.notch_cost.present? && order.notch_cost.to_f > 0
       return false if refund_audit_exists_for_order?(order)
 
-      order.user.update!(currency: (order.user.currency || 0) + order.notch_cost.to_f,
-                         amount_spent: (order.user.amount_spent || 0).to_f - order.notch_cost.to_f)
+      order.user.update!(amount_spent: (order.user.amount_spent || 0).to_f - order.notch_cost.to_f)
+      order.user.recalculate_currency!
 
       Audit.create!(user: current_user, project: nil, action: "order_refunded",
                     details: { order_id: order.id, order_public_id: order.public_id,

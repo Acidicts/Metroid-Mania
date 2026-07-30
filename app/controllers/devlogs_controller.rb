@@ -27,7 +27,7 @@ class DevlogsController < ApplicationController
       redirect_to project_path(@project) and return
     end
 
-    undocumented_seconds = [@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max
+    undocumented_seconds = [ @project.total_seconds.to_i - @project.total_devlogged_seconds, 0 ].max
     min_seconds = 15 * 60
     if undocumented_seconds < min_seconds
       flash_info("Not enough undocumented time left (minimum 15 minutes required)")
@@ -56,7 +56,7 @@ class DevlogsController < ApplicationController
     if @project.total_seconds.blank?
       @devlog.errors.add(:base, "Project time not set; cannot create devlog")
     else
-      undocumented_seconds = [@project.total_seconds.to_i - @project.total_devlogged_seconds, 0].max
+      undocumented_seconds = [ @project.total_seconds.to_i - @project.total_devlogged_seconds, 0 ].max
       min_seconds = 15 * 60
       if undocumented_seconds < min_seconds
         @devlog.errors.add(:base, "Not enough undocumented time left (minimum 15 minutes required)")
@@ -69,13 +69,13 @@ class DevlogsController < ApplicationController
           if requested_seconds < 15 * 60
             @devlog.errors.add(:duration_seconds, "must be at least 15 minutes")
           end
-          @devlog.duration_seconds = [requested_seconds, undocumented_seconds].min
+          @devlog.duration_seconds = [ requested_seconds, undocumented_seconds ].min
         elsif requested_minutes.present?
           if requested_minutes < 15
             @devlog.errors.add(:duration_minutes, "must be at least 15 minutes")
           end
           cap_minutes = (undocumented_seconds / 60).to_i
-          @devlog.duration_seconds = [requested_minutes, cap_minutes].min * 60
+          @devlog.duration_seconds = [ requested_minutes, cap_minutes ].min * 60
         else
           @devlog.duration_seconds = undocumented_seconds
         end

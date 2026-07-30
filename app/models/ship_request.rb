@@ -50,6 +50,8 @@ class ShipRequest < ApplicationRecord
   # When a request is updated after approval, propagate meaningful fields into the associated Ship (if it exists).
   after_update_commit :propagate_changes_to_ship
 
+  has_many :comments, as: :commentable, dependent: :destroy
+
   def pending?
     status == "pending"
   end
@@ -180,7 +182,7 @@ class ShipRequest < ApplicationRecord
     # from firing redundant callbacks during the approval flow.
     Thread.current[APPROVAL_THREAD_KEY] = true
     begin
-      ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: Time.current, recipient_user: recipient, multiplier: applied_multiplier)
+      ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: requested_at, recipient_user: recipient, multiplier: applied_multiplier)
 
       # record multiplier on the request and (redundantly) ensure ship has it
       self.multiplier = applied_multiplier
@@ -207,7 +209,7 @@ class ShipRequest < ApplicationRecord
           if old_credits != 0.0
             ship.update!(credits_awarded: 0.0)
             owner = project.user
-            owner.update!(currency: (owner.currency || 0) - old_credits)
+            owner.recalculate_currency!
             Audit.create!(user: admin_user, project: project, action: "reverse_ship_credits", details: { ship_id: ship.id, reversed_amount: old_credits, request_id: id })
           end
         rescue => e
