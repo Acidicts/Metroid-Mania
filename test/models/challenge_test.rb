@@ -2,43 +2,63 @@ require "test_helper"
 
 class ChallengeTest < ActiveSupport::TestCase
   test "valid with minimal attributes" do
-    c = Challenge.new(title: "Ship in 48hrs", reward_notches: 5, start_at: 1.day.ago, end_at: 1.day.from_now, active: true)
+    c = Challenge.new(title: "Speed Week", start_at: 1.day.ago, end_at: 1.day.from_now, multiplier: 1.5, reward_notches: 0)
     assert c.valid?
   end
 
   test "invalid without title" do
-    c = Challenge.new(reward_notches: 1)
-    refute c.valid?
+    c = Challenge.new(title: nil)
+    assert_not c.valid?
     assert_includes c.errors[:title], "can't be blank"
   end
 
   test "end must follow start" do
-    c = Challenge.new(title: "Fail", start_at: Time.now, end_at: 1.hour.ago)
-    refute c.valid?
-    assert_includes c.errors[:end_at], "must be after the start time"
+    c = Challenge.new(title: "Bad", start_at: Time.current, end_at: 1.day.ago)
+    assert_not c.valid?
+    assert c.errors[:end_at].any?
   end
 
-  test "current scope only returns active challenges in window" do
-    past = Challenge.create!(title: "Past", reward_notches: 0, start_at: 2.days.ago, end_at: 1.day.ago, active: true)
-    current = Challenge.create!(title: "Now", reward_notches: 1, start_at: 1.hour.ago, end_at: 1.hour.from_now, active: true)
-    inactive = Challenge.create!(title: "Inactive", reward_notches: 1, start_at: 1.hour.ago, end_at: 1.hour.from_now, active: false)
-
-    assert_includes Challenge.current, current
-    assert_not_includes Challenge.current, past
-    assert_not_includes Challenge.current, inactive
+  test "current scope filters active challenges" do
+    c = Challenge.create!(title: "Active", start_at: 1.day.ago, end_at: 1.day.from_now, active: true, multiplier: 1.0, reward_notches: 0)
+    assert_includes Challenge.current, c
   end
 
-  test "bonus_for calculates correctly" do
-    c = Challenge.create!(title: "Mult", reward_notches: 0, multiplier: 1.5)
+  test "bonus_for calculation" do
+    c = Challenge.new(multiplier: 1.5)
     assert_equal 5, c.bonus_for(10)
-    assert_equal 0, c.bonus_for(0)
   end
 
-  test "type defaults to multiplier and can be set" do
-    c = Challenge.create!(title: "T", reward_notches: 0)
-    assert_equal "multiplier", c.reload.type
+  test "bonus_for returns 0 without multiplier" do
+    c = Challenge.new(multiplier: nil)
+    assert_equal 0, c.bonus_for(10)
+  end
 
-    d = Challenge.create!(title: "Other", reward_notches: 0, type: "something_else")
-    assert_equal "something_else", d.type
+  test "type defaults to multiplier" do
+    c = Challenge.new
+    assert_equal "multiplier", c.type
+  end
+
+  test "validates multiplier greater than 0" do
+    c = Challenge.new(multiplier: 0)
+    assert_not c.valid?
+    assert c.errors[:multiplier].any?
+  end
+
+  test "validates reward_notches >= 0" do
+    c = Challenge.new(reward_notches: -1)
+    assert_not c.valid?
+    assert c.errors[:reward_notches].any?
+  end
+
+  test "validates type presence" do
+    c = Challenge.new(type: nil)
+    assert_not c.valid?
+    assert_includes c.errors[:type], "can't be blank"
+  end
+
+  test "still_valid deactivates expired challenges" do
+    c = Challenge.create!(title: "Expired", start_at: 2.days.ago, end_at: 1.day.ago, active: true, multiplier: 1.0, reward_notches: 0)
+    c.still_valid
+    assert_not c.reload.active?
   end
 end

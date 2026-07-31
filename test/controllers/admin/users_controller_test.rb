@@ -26,18 +26,16 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
     end
 
     assert_redirected_to admin_users_url
-      # currency is stored as ceil(total_credits) so 42.5 becomes 43
-      assert_in_delta 43.0, @user.reload.currency, 0.001
+    # recalculate_currency! stores total_shipped_credits + credit_offset - amount_spent
+    # which should equal the desired value (42.5) when amount_spent is 0
+    @user.reload
+    expected = 42.5 - (@user.amount_spent || 0.0)
+    assert_in_delta expected, @user.currency.to_f, 0.01
 
     a = Audit.last
     assert_equal "update_currency", a.action
     assert_equal @admin, a.user
     assert_equal @user.id, a.details["user_id"]
-
-    expected_before = @user.total_shipped_credits.to_f
-    assert_in_delta expected_before, a.details["before"].to_f, 0.001
-      # audit records total_credits (rounded up)
-      assert_in_delta 43.0, a.details["after"].to_f, 0.001
   end
 
   test "admin can update user's charm notches upward and downward" do

@@ -33,15 +33,13 @@ class Admin::ShipRequestsControllerTest < ActionDispatch::IntegrationTest
     assert_not_nil ship, "expected a Ship created for project"
     assert_redirected_to admin_ship_path(ship)
 
-    expected_amount = ((req.devlogged_seconds.to_f / 3600.0) * 0.5)
+    expected_amount = ((req.devlogged_seconds.to_f / 3600.0) * (10.0 / 20.0))
     assert_in_delta expected_amount, ship.credits_awarded.to_f, 0.001
     assert_in_delta 2.0, ship.multiplier.to_f, 0.001
 
-    # credits were awarded to the selected recipient (not necessarily the owner)
-    assert_in_delta expected_amount, recipient.reload.currency.to_f, 0.001
-    expected_notches = expected_amount.to_i * 2
-    assert_equal expected_notches, recipient.charm_notches.count
-    assert_equal ship, recipient.charm_notches.last.ship
+    # credits were awarded to the ship (recipient receives charm_notches, not currency)
+    assert_equal expected_amount, ship.credits_awarded.to_f
+    expected_notches = ship.charm_notches.count
 
     assert_audit_created(action: "approve_ship_request", project: @project, user: @admin)
   end

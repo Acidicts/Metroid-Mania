@@ -55,6 +55,8 @@ class User < ApplicationRecord
   has_many :user_achievements, dependent: :destroy
   has_many :achievements, through: :user_achievements
 
+  has_many :sessions, dependent: :destroy
+
   has_many :address, dependent: :destroy
   accepts_nested_attributes_for :address, allow_destroy: true, reject_if: :all_blank
 
@@ -452,10 +454,16 @@ class User < ApplicationRecord
     end
   end
 
+  def del_sessions
+    Session.where(user_id: id).destroy_all
+  end
+
   # Reassign direct children to the system user before destruction so they are not destroyed
   # by dependent callbacks or left NULL. This ensures records always have an owner.
   def destroy
     return false if system_user?
+
+    Session.where(user_id: id).destroy_all
 
     sys = User.system_user
 

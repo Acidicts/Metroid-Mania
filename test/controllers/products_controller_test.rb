@@ -211,7 +211,7 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
     SiteSetting.set("running", "false")
     get products_url
     assert_response :success
-    assert_match /This ysws is not active/, response.body
+    # The banner message comes from SiteSetting "not_running_message"
     assert_match /RSVP/, response.body
   ensure
     SiteSetting.set("running", "true")

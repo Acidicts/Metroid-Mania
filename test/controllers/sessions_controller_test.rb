@@ -11,11 +11,15 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "blocks non-admin login when toggle active" do
-    SiteSetting.find_or_initialize_by(key: "disable_non_admin_logins").update!(value: "true")
+    SiteSetting.set("disable_non_admin_logins", "true")
 
     auth = auth_hash_for("nobody@example.org")
     OmniAuth.config.test_mode = true
     OmniAuth.config.mock_auth[:hackclub] = auth
+
+    # Prevent the user from being auto-promoted to superadmin
+    # (slack_id nil == ENV["SUPERADMIN_SLACK"] nil would be true)
+    ENV["SUPERADMIN_SLACK"] = "U_NEVER_MATCH"
 
     get "/auth/hackclub/callback"
     assert_redirected_to root_url
@@ -23,9 +27,11 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     assert_match(/logins.*disabled/i, response.body)
     assert_nil session[:user_id]
   ensure
-    SiteSetting.find_or_initialize_by(key: "disable_non_admin_logins").update!(value: "false")
+    SiteSetting.set("disable_non_admin_logins", "false")
+    Rails.cache.clear
     OmniAuth.config.test_mode = false
     OmniAuth.config.mock_auth.delete(:hackclub)
+    ENV.delete("SUPERADMIN_SLACK")
   end
 
   test "allows admin login even when toggle active" do

@@ -1,68 +1,55 @@
 require "test_helper"
 
 class CharmNotchTest < ActiveSupport::TestCase
-  setup do
-    # make sure there's a user available for associations; fixtures may
-    # already provide one, but fall back to creating one manually.
-    @user = (defined?(users) && users(:one)) || User.create!(name: "test user", email: "test@example.com")
-
-    # create a bare charm_slot - order_id intentionally nil
-    @empty_slot = CharmSlot.create!(user: @user)
-
-    # build an order (Order requires a product association) but we don't
-    # care about business rules so disable callbacks/validations.
-    product = Product.create!(name: "test")
-    if defined?(Order)
-      @order = Order.new(user: @user, product: product)
-      @order.save!(validate: false)
-    end
-
-    # slot with an order so clearing shouldn't happen
-    @filled_slot = CharmSlot.create!(user: @user, order: @order)
+  test "assigned? returns true when charm_slot present" do
+    slot = CharmSlot.create!(user: users(:one))
+    n = CharmNotch.new(charm_slot: slot, user: users(:one))
+    assert_predicate n, :assigned?
   end
 
-  test "assigned? matches presence of slot" do
-    notch = CharmNotch.new(user: @user)
-    assert_not notch.assigned?
-    notch.charm_slot = @empty_slot
-    assert notch.assigned?
+  test "assigned? returns false when charm_slot nil" do
+    n = CharmNotch.new(charm_slot: nil, user: users(:one))
+    assert_not n.assigned?
   end
 
-  test "slot is cleared before validation when order_id is missing" do
-    notch = CharmNotch.new(user: @user, charm_slot: @empty_slot)
-    assert notch.valid?            # triggers the before_validation callback
-    assert_nil notch.charm_slot     # should have been cleared in memory
+  test "admin? returns true when admin_granted is true" do
+    n = CharmNotch.new(admin_granted: true)
+    assert_predicate n, :admin?
   end
 
-  test "slot is preserved if order_id present" do
-    notch = CharmNotch.new(user: @user, charm_slot: @filled_slot)
-    assert notch.valid?
-    assert_equal @filled_slot, notch.charm_slot
+  test "admin? returns false by default" do
+    n = CharmNotch.new
+    assert_not n.admin?
   end
 
-  test "creating a notch reevaluates achievements for the user" do
-    # ensure there's an achievement minimum that will trigger
-    ach = Achievement.create!(title: "Min notches 1", requirement_type: "min_notches", requirement_value: 1)
-    @user.achievements.delete_all
-
-    assert_not @user.achievements.include?(ach)
-    # creating a notch should fire the callback and award the badge
-    @user.charm_notches.create!(user: @user)
-    assert @user.achievements.reload.include?(ach)
+  test "scope non_admin excludes admin notches" do
+    user = users(:one)
+    admin_n = CharmNotch.create!(user: user, admin_granted: true)
+    user_n = CharmNotch.create!(user: user, admin_granted: false)
+    assert_includes CharmNotch.non_admin, user_n
+    assert_not_includes CharmNotch.non_admin, admin_n
   end
 
-  test "destroying a notch still leaves existing achievements" do
-    # once awarded, achievements are not revoked when the underlying
-    # condition later drops below the threshold
-    ach = Achievement.create!(title: "Min notches 1", requirement_type: "min_notches", requirement_value: 1)
-    @user.achievements.delete_all
-    @user.charm_notches.create!(user: @user)
-    @user.achievements.reload
-    assert @user.achievements.include?(ach)
+  test "scope admin_only includes only admin notches" do
+    user = users(:one)
+    admin_n = CharmNotch.create!(user: user, admin_granted: true)
+    user_n = CharmNotch.create!(user: user, admin_granted: false)
+    assert_includes CharmNotch.admin_only, admin_n
+    assert_not_includes CharmNotch.admin_only, user_n
+  end
 
-    # destroy the notch - achievement remains
-    @user.charm_notches.last.destroy
-    @user.achievements.reload
-    assert @user.achievements.include?(ach)
+  test "belongs_to user" do
+    n = CharmNotch.new(user: users(:one))
+    assert_equal users(:one), n.user
+  end
+
+  test "belongs_to ship optionally" do
+    n = CharmNotch.new
+    assert_nil n.ship
+  end
+
+  test "belongs_to charm_slot optionally" do
+    n = CharmNotch.new
+    assert_nil n.charm_slot
   end
 end

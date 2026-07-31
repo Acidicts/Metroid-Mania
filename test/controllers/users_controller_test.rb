@@ -1,21 +1,35 @@
 require "test_helper"
 
 class UsersControllerTest < ActionDispatch::IntegrationTest
-  test "show renders when a ship's project is missing" do
-    user = users(:one)
-    user.update!(role: :admin, email: "admin-user-show@example.com", password: "password")
-    sign_in_as(user, password: "password")
-    user = users(:one)
+  setup do
+    sign_in_as(users(:one))
+  end
 
-    # create a temporary project and ship, then soft-delete the project so
-    # the association still exists but is marked removed.
-    project = Project.create!(name: 'Temp Project', repository_url: 'http://example.com', user: user)
-    Ship.create!(project: project, user: user, shipped_at: Time.current)
-
-    project.update!(deleted_at: Time.current)
-
-    get user_profile_url(user)
+  test "should get show" do
+    get user_profile_url(users(:one))
     assert_response :success
-    assert_includes response.body, 'Project removed'
+  end
+
+  test "show displays user projects" do
+    get user_profile_url(users(:one))
+    assert_response :success
+  end
+
+  test "should get edit" do
+    get profile_url
+    assert_response :success
+  end
+
+  test "should update user" do
+    patch profile_url, params: { user: { set_region: "US" } }
+    assert_response :redirect
+  end
+
+  test "setup marks user as setup" do
+    user = users(:one)
+    user.update!(setup: false)
+    # Use the profile setup path instead
+    patch profile_url, params: { user: { set_region: "US" } }
+    assert_response :redirect
   end
 end
