@@ -100,8 +100,17 @@ class ProductsController < ApplicationController
         format.html { flash_pass("Product was successfully destroyed."); redirect_to products_path, status: :see_other }
         format.json { head :no_content }
       end
+    elsif params[:force] == "true"
+      @product.sales.destroy_all
+      @product.orders.destroy_all
+      @product.destroy
+      respond_to do |format|
+        format.html { flash_pass("Product was successfully destroyed."); redirect_to products_path, status: :see_other }
+        format.json { head :no_content }
+      end
     else
       respond_to do |format|
+        flash[:delete_product_id] = @product.id
         flash_warn("Cannot delete product because there are existing orders.")
         format.html { redirect_to @product }
         format.json { render json: @product.errors, status: :unprocessable_entity }

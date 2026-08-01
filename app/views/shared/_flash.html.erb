@@ -10,6 +10,7 @@
       <% seen = [] %>
       <% flash.each do |key, msg| %>
         <% next if msg.blank? %>
+        <% next if key.to_s == 'delete_product_id' %>
         <% next if seen.include?(msg.to_s) %>
         <% seen << msg.to_s %>
 
@@ -20,7 +21,11 @@
         <% display_label = labels[flash_key] || labels[tier] || flash_key.to_s.humanize %>
 
         <div class="callout" style=" background-color: #FFF2E3; background-opacity:20%; display:flex; justify-content:space-between; align-items:center;" data-flash="<%= tier %>">
-          <span><strong><%= display_label %>:</strong> <%= msg %></span>
+          <span><strong><%= display_label %>:</strong> <%= raw(msg) %>
+            <% if flash[:delete_product_id] && tier == :warn %>
+              <%= button_to 'Force Delete', product_path(flash[:delete_product_id], force: true), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin btn-retro-admin--danger pixelify-sans' %>
+            <% end %>
+          </span>
           <button onclick="this.closest('.callout').remove()" style="background:none; border:none; cursor:pointer; font-size:1.2rem; padding:0 4px; opacity:0.6;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.6'">&times;</button>
         </div>
       <% end %>

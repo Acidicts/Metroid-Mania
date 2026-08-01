@@ -49,12 +49,11 @@
               <% end %>
             </div>
           <% end %>
+          <% if current_user&.admin? %>
+            <div class="action-group action-group--admin">
+              <%= link_to 'View', product_path(product), class: 'btn-retro-admin' %>
+            </div>
+          <% end %>
         </div>
-        
-        <% if current_user&.admin? %>
-          <div style="margin-top:8px;">
-            <%= link_to 'View', product_path(product), class: 'btn-retro-admin' %>
-          </div>
-        <% end %>
       </div>
     </div>

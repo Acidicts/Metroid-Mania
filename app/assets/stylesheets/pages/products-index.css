@@ -6,7 +6,18 @@ html { scroll-behavior: smooth; }
 .product-image { max-width: 100px; max-height: 150px; object-fit: cover; border-radius: 4px; }
 .product-content { display: flex; flex-direction: column; flex: 1 1 auto; position: relative; padding: 6px 8px; }
 .product-content h3 { margin-top: 0; margin-bottom: 6px; }
-.product-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; }
+.product-actions { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: auto; padding-top: 8px; }
+
+.product-actions .action-group--admin {
+  margin-left: auto;
+}
+
+.product-actions form {
+  display: inline-flex;
+  margin: 0;
+  padding: 0;
+  align-items: center;
+}
 
 body.products .products-placeholder { display: block; }
 
@@ -22,4 +33,10 @@ body.products .products-placeholder { display: block; }
     align-items: center;
     justify-content: space-between;
     margin-bottom: 16px;
+    gap: 16px;
+}
+
+.products-header h1 {
+    margin: 0;
+    white-space: nowrap;
 }

@@ -37,7 +37,9 @@ class Product < ApplicationRecord
   # deletes a product. the foreign key in the database enforces this
   # already, but having an AR-level restriction allows us to show a
   # sensible validation error instead of raising a constraint exception.
+  has_many :sales, dependent: :restrict_with_error
   has_many :orders, dependent: :restrict_with_error
+
   has_many :accessory_groups, dependent: :destroy, inverse_of: :product
   has_many :accessories, through: :accessory_groups
   has_many :regional_prices, dependent: :destroy, inverse_of: :priceable

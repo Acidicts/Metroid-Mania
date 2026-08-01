@@ -3,7 +3,7 @@
 <% end %>
 
 <div class="products-header">
-  <h1>Merchant</h1>
+  <h1>The Goods :</h1>
   <% @user = current_user %>
   <%= form_with model: @user, url: profile_path, method: :patch, local: true, html: { class: "admin-product-form" } do |f| %>
     <div class="form-group">
@@ -18,8 +18,6 @@
 <% end %>
 
 <hr style="color: var(--main-600);">
-
-<h2>The Goods</h2>
 
 <% if current_user&.admin? %>
   <%= link_to "New product (Admin)", new_product_path, class: 'btn-retro btn-retro--small' %>
