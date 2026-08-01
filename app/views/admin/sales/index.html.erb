@@ -10,7 +10,7 @@
         <th>Starts At</th>
         <th>Ends At</th>
         <th>Discount (notches)</th>
-        <th></th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -28,8 +28,7 @@
           <td><%= s.ends_at&.strftime("%b %-d, %Y %l:%M %p") %></td>
           <td><%= s.discount_notches %></td>
           <td>
-            <%= link_to 'Edit', edit_admin_sale_path(s), class: 'btn-admin' %>
-            <%= link_to 'Delete', admin_sale_path(s), method: :delete, data: { confirm: 'Are you sure?' }, class: 'btn-admin btn-admin--muted', style: 'margin-left:8px' %>
+            <%= link_to 'View', admin_sale_path(s), class: 'btn-admin' %>
           </td>
         </tr>
       <% end %>

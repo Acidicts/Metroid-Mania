@@ -147,7 +147,8 @@ class OrdersController < ApplicationController
   rescue ActiveRecord::RecordNotUnique, ActiveRecord::StatementInvalid, SQLite3::ConstraintException => e
     handle_duplicate_pending_error!(e, pending_status || order_status_value("pending"))
   rescue ActiveRecord::RecordInvalid => e
-    handle_invalid_order_error!(e.record)
+    flash_warn(e.record.errors.full_messages.to_sentence)
+    redirect_to products_path
   end
 
   private
@@ -192,7 +193,9 @@ class OrdersController < ApplicationController
       end
 
       charm_image_url = params[:charm_image_url].presence || product.image_url
-      order_attrs[:charm_image_url] = charm_image_url if charm_image_url.present?
+      if charm_image_url.present? && charm_image_url.match?(URI::DEFAULT_PARSER.make_regexp(%w[http https]))
+        order_attrs[:charm_image_url] = charm_image_url
+      end
 
       accessory_extra_info_json = accessory_choices_extra_info_json(product, selected_accessory_choices)
       order_attrs[:extra_info] = accessory_extra_info_json if accessory_extra_info_json.present?

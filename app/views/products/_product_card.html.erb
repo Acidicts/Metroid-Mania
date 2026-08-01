@@ -32,8 +32,10 @@
             <% if product.is_unlocked(current_user) && (product.variable_grant? || product.accessory_groups.any? || product.physical?) %>
               <%= link_to "Equip", new_order_path(product_id: product.id), class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout" %>
             <% elsif product.is_unlocked(current_user) %>
-              <%= button_to "Equip", orders_path(order_params), method: :post,
-                            class: 'btn-retro buy-button', title: "Equip #{product.name} to Loadout", form: { "data-turbo" => false } %>
+              <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
+                <%= hidden_field_tag :product_id, product.id %>
+                <button type="submit" class="btn-retro buy-button" title="Equip <%= product.name %> to Loadout">Equip</button>
+              <% end %>
             <% else %>
               <button class="btn-retro buy-button disabled" disabled>Locked</button>
             <% end %>

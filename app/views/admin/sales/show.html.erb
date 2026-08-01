@@ -1,3 +1,7 @@
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/admin-sales", "data-turbo-track": "reload" %>
+<% end %>
+
 <div class="admin-panel">
   <h1>Sale: <%= @sale.name %></h1>
 
@@ -12,17 +16,18 @@
     <dd><%= @sale.quantity %></dd>
 
     <dt>Starts at</dt>
-    <dd><%= @sale.starts_at %></dd>
+    <dd><%= @sale.starts_at ? l(@sale.starts_at, format: :long) : "(none)" %></dd>
 
     <dt>Ends at</dt>
-    <dd><%= @sale.ends_at || "(none)" %></dd>
+    <dd><%= @sale.ends_at ? l(@sale.ends_at, format: :long) : "(none)" %></dd>
 
     <dt>Discount (notches)</dt>
-    <dd><%= @sale.discount_notches %></dd>
+    <dd><span class="discount-badge pixelify-sans">-<%= @sale.discount_notches.to_i %></span></dd>
   </dl>
 
   <div class="form-actions">
     <%= link_to "Edit", edit_admin_sale_path(@sale), class: "admin-btn" %>
+    <%= button_to 'Delete', admin_sale_path(@sale), method: :delete, data: { confirm: 'Delete this sale?' }, class: 'admin-btn admin-btn-danger pixelify-sans' %>
     <%= link_to "Back", admin_sales_path, class: "admin-btn admin-btn-secondary" %>
   </div>
 </div>

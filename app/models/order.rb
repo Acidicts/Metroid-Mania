@@ -292,11 +292,8 @@ class Order < ApplicationRecord
   end
 
   def deduct_notches_after_create
-    # Only charge when the order still looks like a real purchase.  If the
-    # status has been changed out from under us (or the product has no cost),
-    # there's nothing to do.
+    # Skip charging when the status has been changed out from under us.
     return unless status == "pending"
-    return unless notch_cost.present? && notch_cost.to_i > 0
 
     # Guard against races: acquire a row-level lock on the user so two orders
     # can't examine the old free_notches value at the same time.  If the lock
@@ -319,7 +316,12 @@ class Order < ApplicationRecord
         return
       end
 
+      # Always link the order to a charm slot so it shows up in the loadout,
+      # even for free products.  Notches are only assigned when the order
+      # actually costs something.
       slot = charm_slot || create_charm_slot!(user: user)
+
+      return if required.zero?
 
       user_notches = user.charm_notches
                          .where(charm_slot_id: nil)

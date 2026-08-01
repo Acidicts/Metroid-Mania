@@ -18,7 +18,7 @@
               <strong>Price (USD):</strong>
               <span class="stat-pill price pixelify-sans">$<%= sprintf('%.2f', product.price_currency || 0) %></span>
             </li>
-          <% else %>
+          <% elsif product.variable_grant? %>
             <strong>Price (USD):</strong>
             <li class="variable-grant-range">
               <span class="range-label">Range:</span>
@@ -30,9 +30,15 @@
 
           <li>
             <strong>Cost (Credits):</strong>
+            <% base_cost = product.cost(current_user&.set_region).to_i %>
+            <% effective = base_cost %>
+            <% if product.present? && (sale = product.active_sale) %>
+              <% effective -= sale.discount_notches.to_i %>
+              <% effective = 0 if effective.negative? %>
+            <% end %>
             <span class="stat-pill credits pixelify-sans">
-              <% if product.cost_in_credits %>
-                <%= sprintf('%.2f', product.cost_in_credits) %>
+              <% if !product.variable_grant? %>
+                <%= effective %>
               <% else %>
                 <%= (product.cost_in_credits.to_i + product.base_cost.to_i) %> - <%= (product.credits_for_dollars(product.grant_max_dollars).to_i + product.base_cost.to_i) %> Notches
               <% end %>

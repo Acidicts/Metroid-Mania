@@ -162,6 +162,12 @@ class Product < ApplicationRecord
     !variable_grant?
   end
 
+  def standard_cost?
+    return false unless not_grant?
+    return false unless accessory_groups.empty?
+    true
+  end
+
   def cost(region)
     canonical = RegionalPrice.canonical_region(region)
     regional_price = regional_prices.find_by(region: canonical)
@@ -252,7 +258,7 @@ class Product < ApplicationRecord
 
   # Convenience predicate
   def variable_grant?
-    !!variable_grant
+    self.variable_grant
   end
 
   def update_price_from_steam!

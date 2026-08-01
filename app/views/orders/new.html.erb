@@ -3,11 +3,11 @@
 <% end %>
 
 <div id="order-form-container">
-  <% if @product.present? %>
+  <% if !@product.standard_cost? %>
     <% content_for :title, "Purchase of - #{@product.name}" %>
 
     <h1>Purchase : <%= @product.name %></h1>
-    <h3>Base Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
+    <h3>Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
 
     <% default_preview_src = safe_url(@product.image_url) %>
     <div class="order-preview" id="order-preview" style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:24px;<%= default_preview_src == "#" ? 'display:none;' : '' %>">
@@ -573,16 +573,19 @@
     <% end %>
 
   <% else %>
-    <% content_for :title, "New order" %>
+    <% content_for :title, "Purchase of - #{@product.name}" %>
 
-    <h1>New order</h1>
+    <h1>Purchase : <%= @product.name %></h1>
+    <h3>Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
 
-    <%= render "order/form", order: @order, product: @product %>
-
+    <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
+        <%= hidden_field_tag :product_id, @product.id %>
+        <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
+    <% end %>
     <br>
 
     <div>
-      <%= link_to "Back to orders", orders_path %>
+      <%= link_to "Back to Merchant", products_path %>
     </div>
   <% end %>
 </div>

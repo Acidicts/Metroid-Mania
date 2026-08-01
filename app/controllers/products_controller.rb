@@ -20,7 +20,6 @@ class ProductsController < ApplicationController
   # GET /products/new
   def new
     product = Product.new
-    product.credits_per_dollar = 10
     @product = product
     build_accessory_group_rows(@product)
     build_regional_price_rows(@product)
@@ -183,18 +182,13 @@ class ProductsController < ApplicationController
     end
 
     def build_accessory_group_rows(product)
-      if product.accessory_groups.empty?
-        accessory = product.accessory_groups.build.accessories.build
-        build_accessory_regional_price_rows(accessory)
-      else
-        product.accessory_groups.each do |group|
-          if group.accessories.empty?
-            accessory = group.accessories.build
+      product.accessory_groups.each do |group|
+        if group.accessories.empty?
+          accessory = group.accessories.build
+          build_accessory_regional_price_rows(accessory)
+        else
+          group.accessories.each do |accessory|
             build_accessory_regional_price_rows(accessory)
-          else
-            group.accessories.each do |accessory|
-              build_accessory_regional_price_rows(accessory)
-            end
           end
         end
       end

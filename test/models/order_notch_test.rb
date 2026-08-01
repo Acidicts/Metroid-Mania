@@ -16,6 +16,15 @@ class OrderNotchTest < ActiveSupport::TestCase
     end
   end
 
+  test "free order still creates a charm slot linked to the order" do
+    free_product = Product.create!(name: "FreeItem", notch_cost: 0)
+
+    assert_difference "@user.reload.free_notches", 0 do
+      order = Order.create!(user: @user, product: free_product)
+      assert_equal order, order.charm_slot.order
+    end
+  end
+
   test "rolling back an order transaction does not spend notches" do
     initial = @user.free_notches
 

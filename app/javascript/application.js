@@ -150,3 +150,16 @@ function initThemedFormValidationWarnings() {
 }
 
 initThemedFormValidationWarnings();
+
+// Restore data-confirm behavior on links (Turbo Drive is disabled,
+// so Turbo only handles confirm on form submissions, not link clicks).
+document.addEventListener('click', (event) => {
+  const link = event.target.closest('a[data-confirm]');
+  if (!link) return;
+
+  const message = link.getAttribute('data-confirm');
+  if (!confirm(message)) {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }
+}, true);
