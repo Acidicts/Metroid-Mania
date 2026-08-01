@@ -5,6 +5,7 @@
 #  id                  :bigint           not null, primary key
 #  achievement_bool    :boolean          default: false
 #  achievement_id      :integer
+#  base_cost           :integer          default 0
 #  cost_credits        :float
 #  created_at          :datetime         not null
 #  credits_per_dollar  :float
@@ -70,6 +71,7 @@ class Product < ApplicationRecord
   attribute :show, :boolean, default: true
 
   attribute :physical, :boolean, default: false
+  attribute :base_cost, :integer, default: 0
 
   def image_url
     if image.respond_to?(:attached?) && image.attached?
@@ -223,17 +225,19 @@ class Product < ApplicationRecord
     self.grant_max_cents = (val.to_f * 100).round
   end
 
-  # Calculate credits for given dollar amount
+  # Calculate credits for given dollar amount.
+  # credits_per_dollar is stored as dollars per credit, so its inverse (1/credits_per_dollar)
+  # gives credits per dollar; e.g. 9 becomes 1/9.
   def credits_for_dollars(dollars)
-    return nil if credits_per_dollar.blank?
-    (dollars.to_f * credits_per_dollar.to_f)
+    return nil unless credits_per_dollar.present?
+    dollars.to_f / credits_per_dollar.to_f
   end
 
   # Calculate how many notches a grant should cost when expressed as dollars.
   # The business rule is: grant dollars / 10 = notches.
   def grant_notches_for_dollars(dollars)
     return nil if dollars.blank?
-    (dollars.to_f / 10.0)
+    (dollars.to_f / 10.0) / (self.credits_per_dollar || 1)
   end
 
   # Determine cost in credits for fixed product
@@ -241,7 +245,7 @@ class Product < ApplicationRecord
     return cost_credits if cost_credits.present?
     return nil if price_currency.blank? || credits_per_dollar.blank?
 
-    price_currency.to_f * credits_per_dollar.to_f
+    price_currency.to_f / credits_per_dollar.to_f
   end
 
   # Convenience predicate

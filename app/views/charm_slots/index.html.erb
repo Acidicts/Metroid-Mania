@@ -2,60 +2,16 @@
 
 <% content_for :title, "Charm slots" %>
 
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/charm-slots-index", "data-turbo-track": "reload" %>
+<% end %>
+
 <%# compute once for readability %>
 <% ordered_slots = @charm_slots.where.not(order_id: nil).order(:order_id) %>
 <% empty_slots   = @charm_slots.where(order_id: nil) %>
 <% submitted_slots = ordered_slots.select(&:submitted?) %>
 <% available_slots = ordered_slots.reject(&:submitted?) %>
 <% empty_slot = empty_slots.first %>
-
-<style>
-  .submitted-panel {
-    border: 1px solid #6b7280;
-    border-radius: 10px;
-    padding: 12px;
-    background: rgba(107, 114, 128, 0.08);
-  }
-
-  .submitted-panel summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .submitted-panel summary::-webkit-details-marker {
-    display: none;
-  }
-
-  .submitted-summary-title {
-    font-size: 1.1rem;
-    font-weight: 700;
-  }
-
-  .submitted-summary-hint {
-    font-size: 0.85rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    opacity: 0.85;
-  }
-
-  .submitted-summary-hint::after {
-    content: attr(data-collapsed);
-  }
-
-  .submitted-panel[open] .submitted-summary-hint::after {
-    content: attr(data-open);
-  }
-
-  .submitted-summary-copy {
-    margin: 8px 0 12px;
-    font-size: 0.9rem;
-    opacity: 0.9;
-  }
-</style>
 
 <div id="charms-container">
   <section id="submitted-charms" class="charm-section">

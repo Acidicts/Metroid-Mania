@@ -1,6 +1,6 @@
-<!-- Mobile styles moved to `app/assets/stylesheets/application.css` -->
-
-
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/assets-projects-show", "data-turbo-track": "reload" %>
+<% end %>
 
 <div class="retro-container">
   <button onclick="window.location.href='<%= assets_projects_path %>'" class="btn-retro">Back to Assets</button>
@@ -39,45 +39,6 @@
         </div>
       </div>
     </div>
-
-    <style>
-      .README-MENU {
-        position: fixed;
-        margin-top: 24px;
-        padding: 16px;
-        background-color: var(--accent3);
-        border-radius: 8px;
-        top: 10%;
-        width: 70%;
-        left: 15%;
-        border: 4px dashed var(--accent2);
-        z-index: 10;
-        transition: opacity 0.3s ease;
-      }
-
-      .CLOSE_CROSS {
-        position: absolute;
-        top: 8px;
-        right: 12px;
-        background: none;
-        border: none;
-        font-size: 1.2rem;
-        cursor: pointer;
-        color: var(--accent2);
-        transition: transform 0.2s ease, color 0.2s ease;
-      }
-
-      .CLOSE_CROSS:hover {
-        color: white;
-        transform: rotate(180deg) scale(1.2);
-      }
-
-      /* ensure action controls align with the Edit link */
-      .featured-actions { align-items: center; }
-      .featured-actions form { margin: 0; display: inline-block; }
-      .featured-actions > * { align-self: center; }
-
-    </style>
 
     <div class="README-MENU" id="README_MENU" style="opacity: 0;">
       <button class="CLOSE_CROSS" id="README_CLOSE">x</button>

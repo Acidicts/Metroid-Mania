@@ -1,66 +1,3 @@
-<style>
-  .locked {
-    opacity: 0.5;
-    background-image: repeating-linear-gradient(
-      45deg,
-      transparent,
-      transparent 4px,
-      rgba(128, 128, 128, 0.2) 4px,
-      rgba(128, 128, 128, 0.2) 8px
-    );
-  }
-
-  .product-card .product-content p {
-    margin: 0 0 0.75rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-  }
-
-  .product-card .product-meta {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: baseline;
-    margin-bottom: 0.75rem;
-    color: #4a4a4a;
-    font-size: 0.95rem;
-  }
-
-  .product-card .product-price {
-    font-family: Comfortaa, monospace;
-    color: #167d4f;
-    font-weight: 700;
-  }
-
-  .product-card .product-price .old-price {
-    text-decoration: line-through;
-    color: #888;
-    font-size: 0.9em;
-    margin-left: 0.5rem;
-  }
-
-  .product-card .product-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: auto;
-  }
-
-  .product-card .product-actions .action-group {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    align-items: center;
-  }
-
-  .product-card .wishlist-button {
-    min-width: 40px;
-    padding: 0.55rem 0.75rem;
-  }
-</style>
-
 <div id="<%= dom_id product %>" class="product-card <%= product.is_unlocked(current_user) ? '' : 'locked' %>">
       <img src="<%= product.image_url %>" width="96px" height="96px" alt="<%= product.name %> image" class="product-image" loading="lazy">
       <div class="product-content">
@@ -116,9 +53,7 @@
         
         <% if current_user&.admin? %>
           <div style="margin-top:8px;">
-            <%= link_to 'Admin Order', admin_new_order_orders_path(product_id: product.id), class: 'btn-retro-admin' %>
-            <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
-            <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin', style: 'margin-left:6px' %>
+            <%= link_to 'View', product_path(product), class: 'btn-retro-admin' %>
           </div>
         <% end %>
       </div>

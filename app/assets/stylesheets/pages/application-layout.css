@@ -1,0 +1,285 @@
+/* Prevent horizontal overflow across the viewport */
+html, body { overflow-x: hidden; }
+
+/* reduce navbar vertical spacing (override public/styles.css) */
+.retro-navbar {
+    padding: 6px 12px !important;
+    gap: 8px !important;
+}
+.retro-navbar a {
+    padding: 2px 6px !important;
+    line-height: 1 !important;
+    font-size: 1.1rem !important;
+}
+/* shrink avatar image to match tighter bar */
+.profile-link img {
+    height: 32px !important;
+    width: 32px !important;
+    margin-right: 4px !important;
+}
+
+/* Mobile menu icon (hidden on wide screens) */
+.menu-icon {
+    display: none;
+    cursor: pointer;
+    margin: 6px;
+    -webkit-tap-highlight-color: transparent;
+    background: transparent;
+    border: none;
+}
+
+/* --------- search bar + suggestions --------- */
+.search-input {
+    width: 180px;
+    padding: 4px 8px;
+    border: 1px solid #aaa;
+    border-radius: 4px;
+    transition: width 200ms ease;
+}
+
+.search-input:focus {
+    width: 240px;
+    outline: none;
+    border-color: #888;
+}
+
+.search-bar-container {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.search-suggestions {
+    position: absolute;
+    top: calc(100% + 2px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 100;
+    display: none;
+}
+
+.search-suggestions.visible {
+    display: block;
+}
+
+.search-suggestions li {
+    padding: 6px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* ensure suggestion text uses theme color */
+.search-suggestions li span:not(.badge) {
+    color: var(--main-700);
+}
+
+.search-suggestions li:hover,
+.search-suggestions li.active {
+    background: #f0f0f0;
+}
+
+/* badges indicating suggestion type */
+.search-suggestions .badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: white;
+}
+.search-suggestions .badge-project { background: #4a90e2; }
+.search-suggestions .badge-user    { background: #7bca00; }
+.search-suggestions .badge-tag     { background: #d35400; }
+
+
+/* bars */
+.menu-icon span {
+    display: block;
+    width: 28px;
+    height: 5px;
+    background-color: black;
+    margin: 6px 0;
+    border-radius: 3px;
+    transition: transform 250ms ease, opacity 250ms ease;
+}
+
+/* transform into an X when open */
+.menu-icon.open span:nth-child(1) { transform: translateY(11px) rotate(45deg); }
+.menu-icon.open span:nth-child(2) { opacity: 0; }
+.menu-icon.open span:nth-child(3) { transform: translateY(-11px) rotate(-45deg); }
+
+/* common hover styles for profile icon (apply to all screen sizes) */
+.profile-link {
+    margin-top: 6px;
+    transition: transform 220ms ease, opacity 220ms ease;
+    line-height: 1;
+    background: var(--main-800);
+    padding: 4px 8px;
+    display: inline-flex;
+    align-items: center;
+}
+
+.profile-link span {
+    padding-left: 4px
+}
+
+.profile-link img {
+    transition: transform 220ms ease, opacity 220ms ease;
+    display: block;
+}
+
+.profile-link:hover {
+    transform: translateY(-2px);
+}
+
+.profile-link:hover img {
+    transform: scale(1.1);
+    opacity: 0.9;
+}
+
+/* dropdown menu attached to profile picture */
+.profile-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-dropdown {
+    visibility: hidden;
+    position: absolute;
+    right: 0;
+    top: calc(100% + 2px);
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    list-style: none;
+    margin: 0;
+    padding: 4px 0;
+    min-width: 140px;
+    z-index: 50;
+    opacity: 0;
+    transform: translateY(-8px);
+    transition: opacity 180ms ease, transform 180ms ease;
+    pointer-events: none;
+}
+
+.profile-dropdown.open {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.profile-dropdown li {
+    padding: 0;
+}
+
+.profile-dropdown li a {
+    display: block;
+    padding: 10px 16px;
+    width: 100%;
+    box-sizing: border-box;
+    color: #333;
+    text-decoration: none;
+}
+
+.profile-dropdown li a:hover {
+    background: #f4f4f4;
+}
+
+@media (max-width: 600px) {
+    header { position: relative; overflow: visible; }
+    .retro-navbar a, .retro-navbar button, #sign_out_btn {
+        font-size: 0.9rem;
+        padding: 4px 10px;
+    }
+
+    .retro-navbar {
+        display: flex;
+        flex-direction: column;
+        max-height: 0;
+        overflow: hidden;
+        background: var(--bg);
+        transition: max-height 320ms cubic-bezier(.2,.8,.2,1), padding-top 320ms ease, visibility 0ms linear 320ms;
+        padding-top: 12px;
+        padding-right: 56px;
+    }
+
+    .retro-navbar a,
+    .retro-navbar button:not(.menu-icon),
+    .retro-navbar .btn-retro,
+    .retro-navbar #sign_out_btn {
+        display: block;
+        width: calc(100% - 72px);
+        max-width: 440px;
+        margin: 6px auto;
+        text-align: center;
+    }
+
+    .retro-navbar.expanded {
+        max-height: calc(100vh - 64px);
+        padding-top: 18px;
+        padding-right: 56px;
+        background: var(--main-900);
+        visibility: visible;
+        transition-delay: 0s;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .retro-navbar a, .retro-navbar button, .retro-navbar .btn-retro, .retro-navbar #sign_out_btn {
+        transition: color 220ms ease, opacity 220ms ease;
+    }
+
+    .retro-navbar:not(.expanded) a,
+    .retro-navbar:not(.expanded) button,
+    .retro-navbar:not(.expanded) .btn-retro,
+    .retro-navbar:not(.expanded) #sign_out_btn {
+        color: rgba(0,0,0,0.78);
+        opacity: 0.95;
+    }
+
+    .retro-navbar.expanded a,
+    .retro-navbar.expanded button,
+    .retro-navbar.expanded .btn-retro,
+    .retro-navbar.expanded #sign_out_btn {
+        color: var(--accent3);
+        opacity: 1;
+    }
+
+    .menu-icon {
+        display: block;
+        position: absolute;
+        top: 24px;
+        right: 4px;
+        z-index: 60;
+        padding: 6px;
+        background: rgba(255,255,255,0.92);
+        border-radius: 8px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    }
+
+    body.nav-open {
+        position: fixed;
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .menu-icon:focus {
+        outline: 3px solid rgba(0,0,0,0.12);
+        outline-offset: 2px;
+        border-radius: 6px;
+    }
+}
+
+input[type="checkbox"][disabled] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

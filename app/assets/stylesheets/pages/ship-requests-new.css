@@ -1,0 +1,11 @@
+#ship-request-new {
+    margin-top: 2rem;
+    border: 3px solid var(--main-700);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    background-color: fff;
+}
+.nb-btn-danger:hover {
+    text-decoration: none;
+    color: fff;
+}

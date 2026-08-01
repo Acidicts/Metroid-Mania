@@ -1,13 +1,3 @@
-<style>
-  .product-content {
-    flex: 1 1 auto;
-    position: relative;
-    padding: 6px 8px;
-    background-color: #f8f8f8;
-    margin-left: 4rem;
-  }
-</style>
-
 <div id="<%= dom_id product %>" class="product-detail product-card product-card--large">
   <div class="product-detail-grid">
     <% if product.image_url.present? %>
@@ -23,39 +13,66 @@
 
       <aside class="product-info-box">
         <ul class="product-stats">
-          <li><strong>Price (USD):</strong> <span class="price stat-pill pixelify-sans">$<%= sprintf('%.2f', product.price_currency || 0) %></span></li>
+          <% if !product.variable_grant? %>
+            <li>
+              <strong>Price (USD):</strong>
+              <span class="stat-pill price pixelify-sans">$<%= sprintf('%.2f', product.price_currency || 0) %></span>
+            </li>
+          <% else %>
+            <strong>Price (USD):</strong>
+            <li class="variable-grant-range">
+              <span class="range-label">Range:</span>
+              <span class="range-value">$<%= product.grant_min_dollars %></span>
+              <span class="range-separator">to</span>
+              <span class="range-value">$<%= product.grant_max_dollars %></span>
+            </li>
+          <% end %>
 
-          <li><strong>Cost (Credits):</strong>
-            <span class="credits stat-pill pixelify-sans">
+          <li>
+            <strong>Cost (Credits):</strong>
+            <span class="stat-pill credits pixelify-sans">
               <% if product.cost_in_credits %>
                 <%= sprintf('%.2f', product.cost_in_credits) %>
               <% else %>
-                <em>Computed from price × credits-per-$</em>
+                <%= (product.cost_in_credits.to_i + product.base_cost.to_i) %> - <%= (product.credits_for_dollars(product.grant_max_dollars).to_i + product.base_cost.to_i) %> Notches
               <% end %>
             </span>
           </li>
 
           <% if product.link.present? %>
-            <li><strong>Link:</strong> <%= link_to safe_url(product.link), safe_url(product.link), target: "_blank", rel: "noopener", class: "external-link" %></li>
+            <li>
+              <strong>Link:</strong>
+              <%= link_to safe_url(product.link), safe_url(product.link), target: "_blank", rel: "noopener", class: "external-link" %>
+            </li>
           <% end %>
 
           <% if product.variable_grant? %>
-            <li>
+            <li class="variable-grant-info">
               <strong>Variable grant:</strong>
               <span class="badge badge-info">Yes</span>
-              <span class="ml">Allowed: $<%= sprintf('%.2f', product.grant_min_dollars) %>–$<%= sprintf('%.2f', product.grant_max_dollars) %></span>
-              <% if product.credits_per_dollar %> <span class="muted">(<%= sprintf('%.2f', product.credits_per_dollar) %> credits / $)</span><% end %>
+              <% if product.credits_per_dollar %>
+                <span class="muted">($<%= product.credits_per_dollar %> per notch)</span>
+              <% end %>
             </li>
           <% end %>
         </ul>
 
-        <div class="product-actions" >
-          <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro btn-retro--primary' %>
-          <%= link_to "Back to products", products_path, class: 'btn-retro btn-retro--outline' %>
+        <div class="product-actions">
+          <div class="inline" style="margin-bottom: 1rem">
+            <div class="action-group action-group--primary">
+              <%= link_to "Buy Now", new_order_path(product_id: product.id), class: 'btn-retro btn-retro--primary' %>
+            </div>
+            <div class="action-group action-group--secondary">
+              <%= link_to "Back to products", products_path, class: 'btn-retro btn-retro--outline' %>
+            </div>
+          </div>
 
           <% if admin? %>
-            <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
-            <%= link_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin' %>
+            <div class="action-group action-group--admin">
+              <%= link_to 'Admin Order', admin_new_order_orders_path(product_id: product.id), class: 'btn-retro-admin' %>
+              <%= link_to 'Edit', edit_product_path(product), class: 'btn-retro-admin' %>
+              <%= button_to 'Delete', product_path(product), method: :delete, data: { confirm: 'Delete this product?' }, class: 'btn-retro-admin btn-retro-admin--danger pixelify-sans' %>
+            </div>
           <% end %>
         </div>
       </aside>

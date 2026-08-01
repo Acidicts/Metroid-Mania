@@ -1,0 +1,59 @@
+.btn-retro-pos {
+    background-color: var(--main-600);
+    padding: 4px;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    text-align: center;
+    border : 2px dashed var(--main-800);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.btn-retro-pos:hover {
+    background-color: var(--main-500);
+    border : 2px solid var(--main-900);
+    text-decoration: none;
+    transition: all 0.2s ease-in-out;
+    transform: scale(1.05);
+}
+
+.btn-retro-top {
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+}
+
+.btn-retro-bottom {
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+/* make thumbnail images scale to fit the .project-media--thumb container */
+.project-media--thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 5%;
+    display: block;
+}
+
+.project-media--thumb { flex-shrink: 0; }
+
+.project-card {
+    background: var(--main-50);
+    border: 2px solid var(--main-300);
+    border-radius: 8px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: all 0.2s ease-in-out;
+    width: 100%;
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.project-content {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+}

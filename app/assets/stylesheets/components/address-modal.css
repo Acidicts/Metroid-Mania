@@ -1,0 +1,153 @@
+.address-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.address-modal-overlay.active {
+    display: flex;
+}
+
+.address-modal {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-width: 500px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 24px;
+    position: relative;
+}
+
+.address-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(74, 122, 150, 0.15);
+}
+
+.address-modal-header h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--main-900, #292831);
+}
+
+.address-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #666;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+}
+
+.address-modal-close:hover {
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.address-modal .form-group {
+    margin-bottom: 14px;
+}
+
+.address-modal .form-group:last-child {
+    margin-bottom: 0;
+}
+
+.address-modal label {
+    display: block;
+    margin-bottom: 5px;
+    font-size: 0.92rem;
+    font-weight: 700;
+    color: var(--admin-900, #292831);
+}
+
+.address-modal .form-input {
+    width: 100%;
+    padding: 10px 13px;
+    border: 1.5px solid rgba(74, 122, 150, 0.28);
+    border-radius: 7px;
+    font-size: 0.94rem;
+    font-family: inherit;
+    background: #fff;
+    color: var(--admin-900, #292831);
+    box-sizing: border-box;
+    transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.address-modal .form-input:focus {
+    outline: none;
+    border-color: var(--palette-3, #4a7a96);
+    box-shadow: 0 0 0 3px rgba(74, 122, 150, 0.13);
+}
+
+.address-modal .form-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.address-modal .btn-submit {
+    width: 100%;
+    padding: 12px 20px;
+    background: linear-gradient(180deg, var(--accent1, #ec3750), var(--accent2, #d62040));
+    color: var(--main-900, #292831);
+    border: 3px solid var(--main-700, #333);
+    border-radius: 8px;
+    box-shadow: 4px 4px 0 var(--main-800, #222);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 120ms ease-in-out;
+}
+
+.address-modal .btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 6px 6px 0 var(--main-800, #222);
+}
+
+.address-modal .btn-submit:active {
+    transform: translateY(1px);
+    box-shadow: 2px 2px 0 var(--main-800, #222);
+}
+
+.address-modal-error {
+    background: linear-gradient(180deg, #fff4f6, #ffd9df);
+    border: 2px solid var(--red, #ec3750);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 16px;
+    color: #7a1024;
+    font-size: 0.92rem;
+}
+
+.address-modal-error ul {
+    margin: 8px 0 0 0;
+    padding-left: 20px;
+}
+
+.address-trigger-btn {
+    background: none;
+    border: none;
+    color: #888;
+    font-family: inherit;
+    font-size: 0.94rem;
+    cursor: pointer;
+    padding: 0;
+    margin-top: 8px;
+    text-decoration: underline;
+}
+
+.address-trigger-btn:hover {
+    color: var(--accent1, #d08159);
+}

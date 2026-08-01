@@ -1,95 +1,6 @@
-<style>
-  #order-form-container {
-    max-width: 500px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 8px;
-    border: 3px solid var(--main-700);
-  }
-
-  .grant-box {
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 12px;
-    background-color: #f9f9f9;
-    padding-bottom: 20px;
-  }
-
-  .grant-header {
-    font-weight: bold;
-    margin-bottom: 8px;
-  }
-
-  .grant-inputs {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .grant-number {
-    width: 80px;
-    padding: 6px;
-    font-size: 1rem;
-  }
-
-  .grant-slider-wrapper {
-    flex: 1;
-    position: relative;
-  }
-
-  .grant-slider {
-    width: 100%;
-    -webkit-appearance: none;
-    height: 8px;
-    border-radius: 4px;
-    background: #ddd;
-    outline: none;
-    position: relative;
-  }
-
-  .grant-slider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    appearance: none;
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #007bff;
-    cursor: pointer;
-    border: none;
-    margin-top: -4px; /* Center the thumb on the track */
-    position: relative;
-    z-index: 2; /* Ensure thumb is above ticks */
-  }
-
-  .grant-slider::-moz-range-thumb {
-    width: 16px;
-    height: 16px;
-    border-radius: 50%;
-    background: #007bff;
-    cursor: pointer;
-    border: none;
-    position: relative;
-    z-index: 2; /* Ensure thumb is above ticks */
-  }
-
-  .min-max-labels {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.8rem;
-    color: #666;
-    margin-top: -4px; /* Adjust to sit just below the track */
-  }
-
-  .ticks {
-    position: absolute;
-    top: -4px; /* Align with the track */
-    left: 0;
-    right: 0;
-    height: 8px; /* Same as track height for easy alignment */
-    pointer-events:none; /* Allow clicks to pass through to the slider */
-  }
-</style>
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/orders-new", "data-turbo-track": "reload" %>
+<% end %>
 
 <div id="order-form-container">
   <% if @product.present? %>
@@ -331,9 +242,10 @@
             var est = document.getElementById('estimated_credits');
             // Top-of-page credits display (Price (Credits))
             var topCredits = document.getElementById('price_credits_display');
-            var ratio = 0.1;
+            var ratio = <%= @product.credits_for_dollars(1) %>;
             var minVal = <%= @product.grant_min_dollars %>;
             var maxVal = <%= @product.grant_max_dollars %>;
+            var baseCost = <%= @product.base_cost %>
 
             function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
 
@@ -361,7 +273,7 @@
               if (ratio) {
                 var baseNotches = Math.round(n * ratio);
                 var totalNotches = baseNotches + selectedAccessoryCost();
-                var clampedTotal = Math.max(0, totalNotches);
+                var clampedTotal = Math.max(0, totalNotches) + baseCost;
 
                 if (est) est.innerText = String(clampedTotal);
                 if (topCredits) topCredits.innerText = String(clampedTotal);

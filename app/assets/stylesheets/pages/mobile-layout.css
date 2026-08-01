@@ -1,0 +1,210 @@
+html, body { overflow-x: hidden; }
+body.mobile-layout { padding-bottom: 0; }
+
+.mobile-topbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--main-900);
+    box-shadow: 0 2px 0 var(--main-800);
+    height: 52px;
+    box-sizing: border-box;
+}
+
+.mobile-topbar-title {
+    font-family: 'Pixelify Sans', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent3);
+    text-decoration: none;
+    line-height: 1;
+}
+
+.mobile-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mobile-search-toggle {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.mobile-search-toggle svg {
+    width: 22px;
+    height: 22px;
+    fill: var(--accent3);
+}
+
+.mobile-profile-btn {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+}
+
+.mobile-profile-btn img {
+    width: 32px;
+    height: 32px;
+    border-radius: 999px;
+    border: 2px solid var(--accent3);
+}
+
+.mobile-search-bar {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    z-index: 99;
+    background: var(--main-900);
+    padding: 8px 12px;
+    display: none;
+    box-shadow: 0 2px 0 var(--main-800);
+}
+
+.mobile-search-bar.open {
+    display: block;
+}
+
+.mobile-search-bar input {
+    width: 100%;
+    padding: 10px 12px;
+    border: 2px solid var(--main-700);
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: 'Pixelify Sans', sans-serif;
+    background: #fff;
+    color: var(--main-900);
+    box-sizing: border-box;
+}
+
+.mobile-search-bar input:focus {
+    outline: none;
+    border-color: var(--accent2);
+}
+
+.mobile-search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ccc;
+    border-radius: 0 0 6px 6px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-height: 240px;
+    overflow-y: auto;
+    z-index: 100;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: none;
+}
+
+.mobile-search-suggestions.visible {
+    display: block;
+}
+
+.mobile-search-suggestions li {
+    padding: 10px 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.mobile-search-suggestions li span:not(.badge) {
+    color: var(--main-700);
+}
+
+.mobile-search-suggestions .badge {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    padding: 2px 4px;
+    border-radius: 3px;
+    color: white;
+}
+.mobile-search-suggestions .badge-project { background: #4a90e2; }
+.mobile-search-suggestions .badge-user    { background: #7bca00; }
+.mobile-search-suggestions .badge-tag     { background: #d35400; }
+
+.mobile-content {
+    padding-top: 52px;
+    padding-bottom: 64px;
+    min-height: 100vh;
+    box-sizing: border-box;
+}
+
+.mobile-bottom-tabs {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    display: flex;
+    background: var(--main-900);
+    box-shadow: 0 -2px 0 var(--main-800);
+    height: 56px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.mobile-tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: var(--accent3);
+    opacity: 0.6;
+    padding: 6px 0;
+    gap: 2px;
+    -webkit-tap-highlight-color: transparent;
+    transition: opacity 150ms ease;
+}
+
+.mobile-tab.active {
+    opacity: 1;
+    color: var(--accent2);
+}
+
+.mobile-tab svg {
+    width: 24px;
+    height: 24px;
+    fill: currentColor;
+}
+
+.mobile-tab span {
+    font-size: 0.65rem;
+    font-family: 'Pixelify Sans', sans-serif;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.retro-container {
+    padding: 0.5rem !important;
+}
+
+main[role="main"] {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+main[role="main"] > * {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.site-banner {
+    padding: 8px 12px !important;
+    font-size: 0.85rem;
+}

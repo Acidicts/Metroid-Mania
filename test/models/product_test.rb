@@ -116,7 +116,7 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "credits_for_dollars calculates credits" do
-    product = Product.create!(name: "Cred", credits_per_dollar: 2.0, stock: 10, limited: false)
+    product = Product.create!(name: "Cred", credits_per_dollar: 0.5, stock: 10, limited: false)
     assert_equal 20.0, product.credits_for_dollars(10.0)
   end
 
@@ -130,6 +130,11 @@ class ProductTest < ActiveSupport::TestCase
     assert_equal 5.0, product.grant_notches_for_dollars(50.0)
   end
 
+  test "grant_notches_for_dollars uses inverse of credits_per_dollar" do
+    product = Product.create!(name: "GND", credits_per_dollar: 10.0, stock: 10, limited: false)
+    assert_equal 0.5, product.grant_notches_for_dollars(50.0)
+  end
+
   test "grant_notches_for_dollars returns nil for nil input" do
     product = Product.new
     assert_nil product.grant_notches_for_dollars(nil)
@@ -141,7 +146,7 @@ class ProductTest < ActiveSupport::TestCase
   end
 
   test "cost_in_credits calculates from price and credits_per_dollar" do
-    product = Product.create!(name: "CC2", price_currency: 5.0, credits_per_dollar: 2.0, stock: 10, limited: false)
+    product = Product.create!(name: "CC2", price_currency: 5.0, credits_per_dollar: 0.5, stock: 10, limited: false)
     assert_equal 10.0, product.cost_in_credits
   end
 

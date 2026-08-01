@@ -1,62 +1,8 @@
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/admin-dashboard-index", "data-turbo-track": "reload" %>
+<% end %>
+
 <div class="admin-panel">
-  <style>
-    .admin-dash-box {
-    background: linear-gradient(180deg, var(--palette-3-light, rgba(74,122,150,0.5)), rgba(41,40,49,0.2));
-      border: 2px dashed var(--admin-800);
-      padding: 20px;
-      margin-top: 20px;
-      border-radius: 5px;
-      flex: 1; /* responsive: allow boxes to flex instead of fixed width */
-      margin: 0 1%;
-      transition: transform 0.3s ease-in-out;
-      color: var(--admin-900);
-    }
-
-    .admin-dash-box:hover {
-      transform: scale(1.02);
-      box-shadow: 0 6px 18px rgba(41,40,49,0.06);
-    }
-
-    .admin-dash-box-container {
-      display: flex;
-      flex-direction: row;
-      gap: 20px;
-      width: 95%;
-    }
-
-    /* align label (strong) and value so all values line up vertically */
-    .admin-dash-box p {
-      display: grid;
-      grid-template-columns: 140px auto; /* adjust 140px to fit longest label */
-      column-gap: 12px;
-      align-items: center;
-      margin: 0.5rem 0;
-    }
-
-    /* value badge */
-    .admin-dash-box-info {
-      display: inline-flex;
-      justify-content: flex-end;
-      min-width: 3.5rem; /* ensures numeric values line up */
-      font-size: 16px;
-      font-weight: 700;
-      background-color: var(--main-700-dark, color-mix(in srgb, var(--main-700) 85%, var(--admin-900) 8%));
-      color: var(--admin-accent1);
-      padding: 2px 8px;
-      border-radius: 4px;
-      text-align: right;
-    }
-
-    /* responsive: let label use available space on small screens */
-    @media (max-width: 560px) {
-      .admin-dash-box p {
-        grid-template-columns: 1fr auto;
-      }
-      .admin-dash-box {
-        width: 100%;
-      }
-    }
-  </style>
 
   <h1>Admin Dashboard</h1>
 

@@ -1,0 +1,232 @@
+:root {
+    --timeline-line: var(--main-500);
+}
+
+.timeline::before { display: none; }
+.timeline-step::before { display: none; }
+.timeline-step::after { display: none; }
+
+.container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 12px;
+    overflow: auto;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.guide {
+    background: var(--accent3);
+    width: 100%;
+    max-width: min(560px, calc(100vw - 32px));
+    padding: 20px 20px 0.75rem;
+    border-radius: 14px;
+    border: 4px solid var(--main-500);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin: 0 auto;
+    max-height: calc(100vh - 32px);
+    min-height: 0;
+    overflow-y: auto;
+    box-sizing: border-box;
+    position: relative;
+}
+
+.guide h1 {
+    margin: 0;
+    font-size: 1.4rem;
+    letter-spacing: -0.03em;
+}
+
+.guide p {
+    margin: 0;
+    line-height: 1.7;
+    color: var(--main-900);
+}
+
+.timeline {
+    position: relative;
+    display: grid;
+    gap: 1rem;
+    padding: 1rem 0 0.5rem;
+}
+
+.timeline-step {
+    position: relative;
+    width: min(42%, 220px);
+    padding: 0.7rem 0.9rem;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+    z-index: 1;
+    box-sizing: border-box;
+}
+
+.timeline-step:nth-child(odd) {
+    justify-self: start;
+}
+
+.timeline-step:nth-child(even) {
+    justify-self: end;
+}
+
+.timeline-step h2 {
+    margin: 0 0 0.3rem;
+    font-size: 0.9rem;
+    color: var(--main-900);
+}
+
+.timeline-step p {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--main-900);
+    opacity: 0.9;
+}
+
+#page-content-guide {
+    opacity: 0;
+    transition: opacity 240ms ease-in-out;
+    height: 90vh;
+    box-sizing: border-box;
+}
+
+#page-content-guide.visible {
+    opacity: 1;
+}
+
+@media (max-width: 640px) {
+    #page-content-guide {
+        width: 80vw;
+    }
+}
+
+.guide form {
+    display: grid;
+    gap: 18px;
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 0;
+}
+
+.guide .field {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+}
+
+.guide .field[disabled] {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.guide label {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--main-900);
+}
+
+.guide input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    accent-color: var(--accent1);
+}
+
+.guide .form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.guide input[type="submit"] {
+    cursor: pointer;
+}
+
+.guide-summary ul {
+    list-style: none;
+    margin: 0.5rem 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.guide-summary li {
+    padding: 10px 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    line-height: 1.5;
+    color: var(--main-900);
+}
+
+.guide-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: space-between;
+    flex-direction: row;
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    background: var(--accent3);
+    padding-top: 12px;
+    z-index: 2;
+}
+
+.guide-actions button,
+.guide-actions a {
+    flex: 1;
+    min-width: 120px;
+    padding: 0.9rem 1rem;
+    margin: 0;
+    border-radius: 10px;
+    border: 2px solid var(--main-500);
+    background: var(--accent2);
+    color: var(--main-900);
+    text-align: center;
+    text-decoration: none;
+    font-size: inherit;
+    font-family: inherit;
+    font-weight: inherit;
+    transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+}
+
+.guide-actions button:hover,
+.guide-actions a:hover {
+    transform: translateY(-1px);
+    background: var(--accent1);
+    border-color: var(--main-700);
+}
+
+#get-started-button {
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .guide {
+        padding: 20px;
+    }
+
+    .guide .field {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .guide .form-actions {
+        justify-content: center;
+    }
+}

@@ -146,6 +146,10 @@ body.dyslexic .pixelify-sans {
 
 /* Layout helpers */
 
+.gap-1r {
+  gap: 1rem;
+}
+
 /* Layout helpers */
 .retro-container {
   max-width: 1100px;

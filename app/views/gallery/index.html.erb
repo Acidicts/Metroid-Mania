@@ -1,37 +1,10 @@
+<% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/gallery-index", "data-turbo-track": "reload" %>
+<% end %>
 
 <% content_for :title, "Gallery" %>
 
 <h1>Gallery</h1>
-
-<style>
-  /* Gallery grid: 3 columns × 4 rows (when 12 items present) with spacing */
-  #gallery .gallery-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 20px;              /* spacing between cards */
-    grid-auto-rows: 1fr;    /* make all grid rows equal height */
-    align-items: stretch;   /* ensure grid items stretch to fill row height */
-  }
-
-  /* Ensure each project-card fills its grid cell */
-  #gallery .gallery-grid > * {
-    height: 100%;
-  }
-
-  #gallery .project-card {
-    width: 100%;
-    max-width: none;
-    box-sizing: border-box;
-  }
-
-  /* Responsive: 2 columns on medium screens, 1 on small */
-  @media (max-width: 1024px) {
-    #gallery .gallery-grid { grid-template-columns: repeat(2, 1fr); }
-  }
-  @media (max-width: 640px) {
-    #gallery .gallery-grid { grid-template-columns: 1fr; }
-  }
-</style>
 
 <div id="gallery">
   <div class="gallery-grid">

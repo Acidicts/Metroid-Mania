@@ -1,6 +1,6 @@
 class ProductsController < ApplicationController
   before_action :set_product, only: %i[ show edit update destroy ]
-  before_action :require_admin, only: %i[ new edit create update destroy ]
+  before_action :require_admin, only: %i[ show new edit create update destroy ]
   before_action :ensure_shop_enabled, only: %i[ index ]
   before_action :ensure_user_not_fraudulent, only: %i[ index show ]
 
@@ -19,7 +19,9 @@ class ProductsController < ApplicationController
 
   # GET /products/new
   def new
-    @product = Product.new
+    product = Product.new
+    product.credits_per_dollar = 10
+    @product = product
     build_accessory_group_rows(@product)
     build_regional_price_rows(@product)
   end
@@ -117,6 +119,7 @@ class ProductsController < ApplicationController
     def product_params
       params.require(:product).permit(
         :name,
+        :base_cost,
         :description,
         :steam_app_id,
         :price_currency,
@@ -193,8 +196,10 @@ class ProductsController < ApplicationController
         price.region = Product.canonical_region(price.region)
       end
 
+      existing = accessory.regional_prices.map { |rp| rp.region }
       Product::REGIONS.each do |region|
-        accessory.regional_prices.find_or_initialize_by(region: region)
+        next if existing.include?(region)
+        accessory.regional_prices.build(region: region)
       end
     end
 
@@ -203,8 +208,10 @@ class ProductsController < ApplicationController
         price.region = Product.canonical_region(price.region)
       end
 
+      existing = product.regional_prices.map { |rp| rp.region }
       Product::REGIONS.each do |region|
-        product.regional_prices.find_or_initialize_by(region: region)
+        next if existing.include?(region)
+        product.regional_prices.build(region: region)
       end
     end
 end

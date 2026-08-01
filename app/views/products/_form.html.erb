@@ -62,9 +62,16 @@
 
         <!-- Credits-per-$ — shown when variable grant is on -->
         <div id="credits_per_dollar_container" class="form-group collapsible <%= product.variable_grant? ? 'collapsible--open' : '' %>" aria-hidden="<%= !product.variable_grant? %>">
-          <%= form.label :credits_per_dollar, "Credits per $" %>
-          <%= form.number_field :credits_per_dollar, step: 0.01, class: "form-input", placeholder: "e.g. 10" %>
-          <div class="field-hint">Conversion ratio used to calculate credits from a dollar amount.</div>
+          <%= form.label :credits_per_dollar, "Dollars per credit" %>
+          <%= form.number_field :credits_per_dollar, step: 1, class: "form-input", placeholder: "e.g. 10" %>
+          <div class="field-hint">Dollar amount per credit eg 10 would be $10. Recommended 10 with base of 1 or 2</div>
+        </div>
+        
+        <!-- Credits base cost -->
+        <div id="credits_base_cost_container" class="form-group collapsible <%= product.variable_grant? ? 'collapsible--open' : '' %>" aria-hidden="<%= !product.variable_grant? %>">
+          <%= form.label :base_cost, "Base Cost ($)" %>
+          <%= form.number_field :base_cost, step: 1, class: "form-input", placeholder: "e.g. 10" %>
+          <div class="field-hint">Base grant cost to discourage grant and encourage set prizes :D</div>
         </div>
       </div>
 
@@ -430,6 +437,13 @@
           ratioContainer.classList.toggle('collapsible--open', !!checked);
           ratioContainer.setAttribute('aria-hidden', (!checked).toString());
         }
+        
+        // base_cost field
+        var baseCostContainer = document.getElementById('credits_base_cost_container');
+        if (baseCostContainer) {
+          baseCostContainer.classList.toggle('collapsible--open', !!checked);
+          baseCostContainer.setAttribute('aria-hidden', (!checked).toString());
+        }
 
         // limited + stock fields
         ['limited_container', 'stock_container'].forEach(function(id) {
@@ -456,12 +470,12 @@
       function syncPriceToCost(){
         if (!priceInput || !ratioInput || !costInput) return;
         var ratio = toNumber(ratioInput.value);
-        if (ratio > 0) costInput.value = (toNumber(priceInput.value) * ratio).toFixed(2);
+        if (ratio > 0) costInput.value = (toNumber(priceInput.value) / ratio).toFixed(2);
       }
       function syncCostToPrice(){
         if (!priceInput || !ratioInput || !costInput) return;
         var ratio = toNumber(ratioInput.value);
-        if (ratio > 0) priceInput.value = (toNumber(costInput.value) / ratio).toFixed(2);
+        if (ratio > 0) priceInput.value = (toNumber(costInput.value) * ratio).toFixed(2);
       }
 
       if (priceInput && ratioInput) {

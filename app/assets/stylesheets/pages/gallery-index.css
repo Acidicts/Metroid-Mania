@@ -1,0 +1,24 @@
+#gallery .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    grid-auto-rows: 1fr;
+    align-items: stretch;
+}
+
+#gallery .gallery-grid > * {
+    height: 100%;
+}
+
+#gallery .project-card {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
+}
+
+@media (max-width: 1024px) {
+    #gallery .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+    #gallery .gallery-grid { grid-template-columns: 1fr; }
+}

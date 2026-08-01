@@ -1,18 +1,5 @@
-<style>
-    #ship-request-new {
-        margin-top: 2rem;
-        border: 3px solid var(--main-700);
-        border-radius: 0.5rem;
-        padding: 1rem;
-        background-color: fff;
-    }
-    .nb-btn-danger:hover {
-        text-decoration: none;
-        color: fff;
-    }
-</style>
-
 <% content_for :styles do %>
+  <%= stylesheet_link_tag "pages/ship-requests-new", "data-turbo-track": "reload" %>
   <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
 <% end %>
 

@@ -1,0 +1,9 @@
+#comments-for {
+    margin-top: 16px;
+    padding: 16px 20px;
+    border: 4px solid var(--nb-border);
+    border-left: 8px solid var(--nb-purple);
+    background: linear-gradient(135deg, #f5f3ff 0%, #ffffff 100%);
+    box-shadow: var(--nb-shadow);
+    font-family: var(--nb-font);
+}

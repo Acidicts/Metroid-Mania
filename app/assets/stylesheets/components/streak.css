@@ -1,0 +1,9 @@
+#streak {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    border: 2px solid currentColor;
+    padding: 4px;
+    border-radius: 10%;
+    background: rgba(0, 0, 0, 0.3);
+}
