@@ -100,6 +100,9 @@ class GoalsControllerTest < ActionDispatch::IntegrationTest
   ensure
     SiteSetting.set("weekly_goal_threshold_seconds", "")
     SiteSetting.set("weekly_goal_last_awarded_at", "")
-    Order.where(product: WeeklyGoalService.prize_product).delete_all
+    prize = WeeklyGoalService.prize_product
+    orders = Order.where(product: prize)
+    CharmSlot.where(order_id: orders).update_all(order_id: nil)
+    orders.delete_all
   end
 end

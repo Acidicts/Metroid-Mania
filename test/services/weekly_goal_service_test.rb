@@ -13,7 +13,7 @@ class WeeklyGoalServiceTest < ActiveSupport::TestCase
     # then destroy the product.
     prize = Product.find_by(name: "prize")
     if prize
-      Order.where(product: prize).delete_all
+      delete_prize_orders(prize)
       prize.destroy
     end
   end
@@ -23,9 +23,22 @@ class WeeklyGoalServiceTest < ActiveSupport::TestCase
     SiteSetting.set("weekly_goal_last_awarded_at", "")
     prize = Product.find_by(name: "prize")
     if prize
-      Order.where(product: prize).delete_all
+      delete_prize_orders(prize)
       prize.destroy
     end
+  end
+
+  # Every order (even a free prize order) is linked to a charm slot by
+  # Order#deduct_notches_after_create, so those references must be cleared
+  # before deleting orders directly – the FK on charm_slots.order_id would
+  # otherwise block the DELETE.
+  def delete_prize_orders(prize = nil)
+    prize ||= Product.find_by(name: "prize")
+    return unless prize
+
+    orders = Order.where(product: prize)
+    CharmSlot.where(order_id: orders).update_all(order_id: nil)
+    orders.delete_all
   end
 
   # Helper: create a qualifying devlog for the given user and date.
@@ -257,7 +270,7 @@ class WeeklyGoalServiceTest < ActiveSupport::TestCase
 
     # Remove the week-1 pending order so the uniqueness constraint (pending
     # order per user+product) does not block a week-2 award.
-    Order.where(product: prize).delete_all
+    delete_prize_orders(prize)
     SiteSetting.set("weekly_goal_last_awarded_at", "")
 
     # Week 2 – Tuesday 2026-02-24
@@ -285,6 +298,7 @@ class WeeklyGoalServiceTest < ActiveSupport::TestCase
       # once an order exists pending for the user+product, a second force_award!
       # attempt may be blocked by the unique index.  defensively delete the first
       # order to confirm subsequent calls still succeed.
+      CharmSlot.where(order_id: order.id).update_all(order_id: nil)
       Order.where(id: order.id).delete_all
       order2 = WeeklyGoalService.force_award!
       assert_not_nil order2
