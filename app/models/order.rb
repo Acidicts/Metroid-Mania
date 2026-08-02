@@ -316,10 +316,25 @@ class Order < ApplicationRecord
         return
       end
 
-      # Always link the order to a charm slot so it shows up in the loadout,
-      # even for free products.  Notches are only assigned when the order
-      # actually costs something.
-      slot = charm_slot || create_charm_slot!(user: user)
+      # Always link the order to a charm slot so it shows up in the loadout.
+      # Prefer reusing an existing empty slot for this user before creating
+      # additional records.
+      slot = charm_slot || user.charm_slots.where(order_id: nil).order(:id).first
+
+      if slot.nil?
+        slot_limit = user.read_attribute(:charm_slots).to_i
+        slot_limit = 5 if slot_limit <= 0
+
+        if user.charm_slots.count >= slot_limit
+          Rails.logger.warn("Order #{id} not charged: user #{user.id} has no available charm slots")
+          update!(status: "denied") if status == "pending"
+          return
+        end
+
+        slot = user.charm_slots.create!
+      end
+
+      slot.update!(order: self) if slot.order_id != id
 
       return if required.zero?
 

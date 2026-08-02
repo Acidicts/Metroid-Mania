@@ -4,14 +4,11 @@
       partial is ever reused elsewhere. %>
   <% if request.path != charm_slots_path %>
     <% pending_slots = @charm_slots.select { |s| s.order&.pending? } %>
-    <% empty_slots = 5 - pending_slots.count %>
+    <% slot_capacity = current_user&.read_attribute(:charm_slots).to_i %>
+    <% slot_capacity = 5 if slot_capacity <= 0 %>
+    <% empty_slots = [slot_capacity - pending_slots.count, 0].max %>
 
-
-    <% if CharmSlot.where(order_id: nil).count == 0 %>
-      <% empty_slot = CharmSlot.new %>
-    <% else %>
-      <% empty_slot = CharmSlot.where(order_id: nil).first %>
-    <% end %>
+    <% empty_slot = @charm_slots.find { |slot| slot.order_id.nil? } || CharmSlot.new %>
 
     <% empty_slots.times do %>
       <%= render empty_slot %>

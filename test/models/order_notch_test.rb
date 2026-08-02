@@ -25,6 +25,17 @@ class OrderNotchTest < ActiveSupport::TestCase
     end
   end
 
+  test "order creation reuses an existing empty charm slot" do
+    existing_empty_slot = @user.charm_slots.create!
+    empty_slot_ids_before = @user.charm_slots.where(order_id: nil).pluck(:id)
+    assert_includes empty_slot_ids_before, existing_empty_slot.id
+
+    assert_no_difference "@user.charm_slots.count" do
+      order = Order.create!(user: @user, product: @product)
+      assert_includes empty_slot_ids_before, order.reload.charm_slot.id
+    end
+  end
+
   test "rolling back an order transaction does not spend notches" do
     initial = @user.free_notches
 

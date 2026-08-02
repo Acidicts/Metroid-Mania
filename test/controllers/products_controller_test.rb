@@ -216,4 +216,20 @@ class ProductsControllerTest < ActionDispatch::IntegrationTest
   ensure
     SiteSetting.set("running", "true")
   end
+
+  test "products header loadout shows newly created pending charm order" do
+    user = users(:one)
+    sign_in_as(user)
+
+    # Ensure at least one empty slot exists so order creation can claim it.
+    user.charm_slots.create! unless user.charm_slots.where(order_id: nil).exists?
+
+    free_product = Product.create!(name: "HeaderLoadoutFree", notch_cost: 0)
+    order = Order.create!(user: user, product: free_product)
+
+    get products_url
+    assert_response :success
+
+    assert_select "#charm_slots a[href='#{order_path(order)}']", minimum: 1
+  end
 end
