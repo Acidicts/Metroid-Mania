@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_01_194515) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -360,6 +360,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_01_194515) do
   end
 
   create_table "ships", force: :cascade do |t|
+    t.integer "approved_seconds"
     t.datetime "created_at", null: false
     t.float "credits_awarded"
     t.integer "devlogged_seconds"

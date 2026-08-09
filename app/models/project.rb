@@ -134,7 +134,6 @@ class Project < ApplicationRecord
   # GitHub repos) and use short timeouts so they don't slow normal requests.
   validate :readme_url_must_be_reachable
   validate :github_repository_must_have_readme
-  validate :ship_total_notches, on: :update
 
   validate :ensure_has_image_url,
            on: :update,
@@ -224,22 +223,6 @@ class Project < ApplicationRecord
       YAML.safe_load(raw) || []
     rescue
       raw.to_s.split(",").map(&:strip)
-    end
-  end
-
-  def ship_total_notches
-    for ship in ships
-      ship_time = ship.devlogged_seconds.to_i
-      expected_amount = ((ship_time.to_f / 3600.0) * 0.5).to_f.floor()
-      if ship.charm_notches.count > expected_amount
-        ship.charm_notches.where.not(charm_slot_id: nil).limit(ship.charm_notches.count - expected_amount).each do |n|
-          n.destroy!
-        end
-      elsif ship.charm_notches.count < expected_amount
-        (expected_amount - ship.charm_notches.count).to_i.times do
-          CharmNotch.create!(user: ship.user, ship: ship, charm_slot: nil)
-        end
-      end
     end
   end
 
@@ -654,7 +637,7 @@ class Project < ApplicationRecord
   # This method is idempotent for the same shipped_at timestamp (will raise if a ship with identical
   # shipped_at and credits_awarded already exists), but will create distinct Ship rows for separate shipments.
   # Currency is recalculated from canonical sources (ships + credit_offset - amount_spent) at the end.
-  def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current, recipient_user: nil, multiplier: nil)
+  def ship_and_award_credits!(admin_user:, rate: nil, devlogged_seconds: nil, shipped_at: Time.current, recipient_user: nil, multiplier: nil, approved_seconds: nil)
     # ensure ActiveRecord knows about the current DB schema (multiplier column may
     # have been removed by a migration while the server was running).  This avoids
     # inserting a non‑existent column and crashing requests.
@@ -672,12 +655,13 @@ class Project < ApplicationRecord
 
       # Determine the actual seconds used to compute credits: prefer post-baseline
       # devlogged_seconds when present, otherwise fall back to the project's total_seconds.
-      used_seconds = devlogged_seconds.present? ? devlogged_seconds.to_i : total_seconds.to_i
+      approved_seconds ||= devlogged_seconds.present? ? devlogged_seconds.to_i : total_seconds.to_i
+      used_seconds ||= devlogged_seconds.present? ? devlogged_seconds.to_i : total_seconds.to_i
 
       amount = nil
 
       # Compute the credit amount for this ship; currency is recalculated later
-      amount = award_credits!(0.5, seconds: used_seconds, recipient: recipient_user)
+      amount = award_credits!(0.5, seconds: approved_seconds, recipient: recipient_user)
 
       # Ensure stored credits_awarded is numeric (0.0 when no award) so admin UI shows a value
       stored_credits = amount.present? ? amount : 0.0
@@ -687,17 +671,14 @@ class Project < ApplicationRecord
         user: admin_user,
         shipped_at: shipped_at,
         devlogged_seconds: used_seconds,
-        credits_awarded: stored_credits
+        credits_awarded: stored_credits,
+        approved_seconds: approved_seconds
       }
       # multiplier belongs on the Ship, not the Project.  The column may or may
-      # not exist depending on migrations, so set it unconditionally and then
-      # update again after creation if necessary.
+      # not exist depending on migrations, so set it unconditionally.
       ship_attrs[:multiplier] = multiplier.to_f if multiplier.present?
 
       ship = ships.create!(ship_attrs)
-      if multiplier.present? && ship.has_attribute?(:multiplier)
-        ship.update!(multiplier: multiplier.to_f)
-      end
 
       # Award charm notches corresponding to the credited amount.  Fractional
       # notches are floored and the leftover time (in seconds) is carried over
@@ -707,7 +688,7 @@ class Project < ApplicationRecord
       if amount.present?
         # Include any remainder seconds carried over from a previous ship.
         remainder = notch_remainder_seconds.to_f
-        notch_seconds = used_seconds.to_f + remainder
+        notch_seconds = approved_seconds.to_f + remainder
         raw_notches = notch_seconds / 7200.0
         notch_count = raw_notches.floor
         new_remainder = notch_seconds - (notch_count * 7200)

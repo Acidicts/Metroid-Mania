@@ -162,8 +162,12 @@ class ShipRequest < ApplicationRecord
 
   # Approve this request: create the Ship (via project helper which awards credits)
   # Returns the created Ship record
-  def approve!(admin_user:, credits_per_hour: nil, recipient_user_id: nil, multiplier: nil)
+  def approve!(admin_user:, credits_per_hour: nil, recipient_user_id: nil, multiplier: nil, approved_seconds: nil)
     raise "cannot approve non-pending request" unless pending?
+
+    if approved_seconds.nil?
+      approved_seconds = self.devlogged_seconds
+    end
 
     # Compute the devlogged seconds if not already stored
     self.devlogged_seconds = devlogs.sum(:duration_seconds).to_i if devlogged_seconds.blank? || devlogged_seconds.to_i <= 0
@@ -182,11 +186,10 @@ class ShipRequest < ApplicationRecord
     # from firing redundant callbacks during the approval flow.
     Thread.current[APPROVAL_THREAD_KEY] = true
     begin
-      ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: requested_at, recipient_user: recipient, multiplier: applied_multiplier)
+      ship = project.ship_and_award_credits!(admin_user: admin_user, rate: rate, devlogged_seconds: devlogged_seconds, shipped_at: requested_at, recipient_user: recipient, multiplier: applied_multiplier, approved_seconds: approved_seconds)
 
-      # record multiplier on the request and (redundantly) ensure ship has it
+      # record multiplier on the request (ship already has it from ship_and_award_credits!)
       self.multiplier = applied_multiplier
-      ship.update!(multiplier: applied_multiplier) if ship.has_attribute?(:multiplier)
 
       # Link the request directly to the created Ship so future updates can operate on the same row.
       update!(status: "approved", approved_at: Time.current, processed_by: admin_user, credits_awarded: ship.credits_awarded, devlogged_seconds: ship.devlogged_seconds, ship_id: ship.id, multiplier: applied_multiplier)
@@ -205,9 +208,13 @@ class ShipRequest < ApplicationRecord
       # If a Ship was already created for this request, reverse awarded credits (if any)
       if (ship = associated_ship)
         begin
+          ship.charm_notches.destroy_all
           old_credits = ship.credits_awarded.to_f
           if old_credits != 0.0
             ship.update!(credits_awarded: 0.0)
+            # Drop any stale cached ship rows so the project's ship_total_notches
+            # validation sees the zeroed credits and won't recreate the notches.
+            project.ships.reset
             owner = project.user
             owner.recalculate_currency!
             Audit.create!(user: admin_user, project: project, action: "reverse_ship_credits", details: { ship_id: ship.id, reversed_amount: old_credits, request_id: id })

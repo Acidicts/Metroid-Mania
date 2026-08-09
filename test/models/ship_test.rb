@@ -1,6 +1,77 @@
 require "test_helper"
 
 class ShipTest < ActiveSupport::TestCase
+  test "approved_seconds determines notch award" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    # Create a ship with approved_seconds set explicitly
+    # 4 hours = 14400 seconds, at 0.5 notches per hour = 2 notches
+    ship = p.ships.create!(user: owner, devlogged_seconds: 14400, approved_seconds: 14400, credits_awarded: 0.0, shipped_at: Time.current)
+
+    # Reconcile should award notches based on approved_seconds
+    desired = owner.reconcile_charm_notches!
+    expected_notches = (14400.to_f / 3600.0 * 0.5).floor # 4 hours * 0.5 = 2 notches
+
+    assert_equal expected_notches, desired
+    assert_equal expected_notches, owner.charm_notches.count
+    assert_equal expected_notches, ship.charm_notches.count
+  end
+
+  test "devlogged_seconds copied to approved_seconds on create when approved_seconds not set" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    # Create ship without explicit approved_seconds - should be copied from devlogged_seconds
+    # 3 hours = 10800 seconds -> 1 notch (0.5 per hour, floor)
+    ship = p.ships.create!(user: owner, devlogged_seconds: 10800, credits_awarded: 0.0, shipped_at: Time.current)
+
+    assert_equal 10800, ship.reload.approved_seconds
+
+    desired = owner.reconcile_charm_notches!
+    expected_notches = (10800.to_f / 3600.0 * 0.5).floor # 3 hours * 0.5 = 1 notch
+
+    assert_equal expected_notches, desired
+    assert_equal expected_notches, owner.charm_notches.count
+  end
+
+  test "explicit approved_seconds overrides devlogged_seconds for notch calculation" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    # devlogged_seconds = 10 hours but approved_seconds = 2 hours
+    ship = p.ships.create!(user: owner, devlogged_seconds: 36000, approved_seconds: 7200, credits_awarded: 0.0, shipped_at: Time.current)
+
+    # Reconcile uses approved_seconds, not devlogged_seconds
+    desired = owner.reconcile_charm_notches!
+    expected_notches = (7200.to_f / 3600.0 * 0.5).floor # 2 hours * 0.5 = 1 notch
+
+    assert_equal expected_notches, desired
+    assert_equal expected_notches, owner.charm_notches.count
+  end
+
+  test "carryover hours across multiple ships" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+    owner.ships.destroy_all
+
+    # Ship 1: 3 hours (1 notch + 1 hour carryover)
+    ship1 = p.ships.create!(user: owner, devlogged_seconds: 10800, approved_seconds: 10800, credits_awarded: 0.0, shipped_at: 2.days.ago)
+    # Ship 2: 1 hour (total 2 hours with carryover = 1 notch)
+    ship2 = p.ships.create!(user: owner, devlogged_seconds: 3600, approved_seconds: 3600, credits_awarded: 0.0, shipped_at: 1.day.ago)
+    # Ship 3: 1 hour (total 2 hours with carryover = 1 notch)
+    ship3 = p.ships.create!(user: owner, devlogged_seconds: 3600, approved_seconds: 3600, credits_awarded: 0.0, shipped_at: Time.current)
+
+    # 3h + 1h + 1h = 5 hours carried over -> 2 notches (4 hours) with 1 hour remaining
+    desired = owner.reconcile_charm_notches!
+    assert_equal 2, desired
+    assert_equal 2, owner.charm_notches.count
+  end
+
   test "multiplier on creation affects notch count" do
     p = projects(:one)
     admin = users(:one)
@@ -183,5 +254,72 @@ class ShipTest < ActiveSupport::TestCase
 
     ship.destroy
     assert_not Comment.exists?(comment.id)
+  end
+
+  # --- recalculate_charm_notches! ---
+
+  test "recalculate_charm_notches! syncs notches from approved_seconds" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    # 4 hours approved = 2 notches (0.5 per hour)
+    ship = p.ships.create!(user: owner, devlogged_seconds: 14400, approved_seconds: 14400, credits_awarded: 0.0, shipped_at: Time.current)
+
+    count = ship.recalculate_charm_notches!
+    assert_equal 2, count
+    assert_equal 2, ship.charm_notches.count
+  end
+
+  test "recalculate_charm_notches! applies multiplier" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    # 4 hours = 2 base notches, with 2.0 multiplier = 4 notches
+    ship = p.ships.create!(user: owner, devlogged_seconds: 14400, approved_seconds: 14400, credits_awarded: 0.0, shipped_at: Time.current, multiplier: 2.0)
+
+    count = ship.recalculate_charm_notches!
+    assert_equal 4, count
+    assert_equal 4, ship.charm_notches.count
+  end
+
+  test "recalculate_charm_notches! removes excess notches" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    # 2 hours = 1 notch
+    ship = p.ships.create!(user: owner, devlogged_seconds: 7200, approved_seconds: 7200, credits_awarded: 0.0, shipped_at: Time.current)
+
+    # Pre-create 5 notches (more than expected)
+    5.times { CharmNotch.create!(user: owner, ship: ship) }
+    assert_equal 5, ship.charm_notches.count
+
+    count = ship.recalculate_charm_notches!
+    assert_equal 1, count
+    assert_equal 1, ship.charm_notches.count
+  end
+
+  test "recalculate_charm_notches! preserves admin_granted notches" do
+    p = projects(:one)
+    owner = p.user
+    owner.charm_notches.destroy_all
+
+    ship = p.ships.create!(user: owner, devlogged_seconds: 7200, approved_seconds: 7200, credits_awarded: 0.0, shipped_at: Time.current)
+
+    # Create 1 admin notch and 1 regular notch
+    CharmNotch.create!(user: owner, ship: ship, admin_granted: true)
+    CharmNotch.create!(user: owner, ship: ship, admin_granted: false)
+    assert_equal 2, ship.charm_notches.count
+
+    # 1 hour = 0 notches (floor), but we have 1 admin notch that should be preserved
+    # Actually 1 hour * 0.5 = 0.5 floor = 0 notches expected
+    # But wait, the method only removes non-admin notches
+    count = ship.recalculate_charm_notches!
+    # Expected = 0 notches, but 1 admin notch exists and won't be removed
+    # So we'll have 1 notch left (the admin one)
+    assert_equal 1, ship.charm_notches.count
+    assert_equal 1, ship.charm_notches.admin_only.count
   end
 end

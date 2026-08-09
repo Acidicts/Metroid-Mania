@@ -3,6 +3,7 @@
 # Table name: ships
 #
 #  id                      :bigint           not null, primary key
+#  approved_seconds        :integer
 #  created_at              :datetime         not null
 #  credits_awarded         :float
 #  devlogged_seconds       :integer
@@ -43,9 +44,13 @@ class Ship < ApplicationRecord
   before_create :snapshot_hackatime_ids
   after_create :touch_project_status
   after_create :associate_pending_request
+  # Ensure approved_seconds is set from devlogged_seconds if not explicitly provided
+  before_validation :set_approved_seconds, on: :create
   # notch adjustment should run any time multiplier is changed
   after_update_commit :adjust_notches_for_multiplier
   after_destroy :touch_project_status
+
+  attribute :approved_seconds, default: 0, null: false
 
   # Accessor helpers for hackatime_ids_snapshot (YAML serialization)
   def hackatime_ids_snapshot
@@ -186,5 +191,51 @@ class Ship < ApplicationRecord
     end
   rescue => e
     Rails.logger.error("Failed to adjust notches for Ship ##{id} after multiplier change: #{e.message}")
+  end
+
+  # Recalculate and sync charm notches for this ship based on its approved_seconds,
+  # credits_awarded, and multiplier. This is useful when approved_seconds or
+  # credits_awarded are updated directly (e.g. via admin approval) and you want
+  # the notches to reflect the new values immediately.
+  #
+  # Returns the new notch count for this ship.
+  def recalculate_charm_notches!
+    # Calculate expected notches from approved_seconds (0.5 notches per hour)
+    hours = approved_seconds.to_f / 3600.0
+    base_notches = (hours * 0.5).floor
+
+    # Apply multiplier if present
+    mult = multiplier.to_f
+    mult = 1.0 if mult <= 0
+    expected = (base_notches * mult).to_i
+
+    # Adjust to match expected
+    current = charm_notches.count
+    delta = expected - current
+
+    if delta > 0
+      target_user = charm_notches.first&.user || project.user
+      delta.times do
+        CharmNotch.create!(user: target_user, charm_slot: nil, ship: self)
+      end
+    elsif delta < 0
+      to_remove = charm_notches.where(admin_granted: false).order(:id).limit(-delta)
+      if to_remove.count < -delta
+        extra = charm_notches.order(:id).limit((-delta) - to_remove.count)
+        to_remove = to_remove + extra
+      end
+      to_remove.each(&:destroy)
+    end
+
+    charm_notches.count
+  end
+
+  private
+
+  def set_approved_seconds
+    return if approved_seconds.to_i > 0
+    return if devlogged_seconds.blank? || devlogged_seconds <= 0
+
+    self.approved_seconds = devlogged_seconds
   end
 end

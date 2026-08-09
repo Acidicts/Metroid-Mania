@@ -9,6 +9,7 @@
 
     <% req = ship.project.ship_requests.where(status: 'approved').where(approved_at: ship.shipped_at).or(ship.project.ship_requests.where('requested_at <= ?', ship.shipped_at)).order(approved_at: :desc, requested_at: :desc).first %>
 
+    <% approved_hours = (ship.approved_seconds.to_i / 3600.0).round(2) %>
     <% hours = (ship.devlogged_seconds.to_i / 3600.0).round(2) %>
     <% multiplier_display = if req && req.multiplier.present?
                                  req.multiplier
@@ -20,6 +21,10 @@
     <% devlogs_count = req ? req.devlogs.where.not(user_id: nil).count : 0 %>
 
     <div class="nb-stats">
+      <div class="nb-stat">
+        <span class="nb-stat-label">Approved Hours</span>
+        <span class="nb-stat-value"><%= approved_hours %></span>
+      </div>
       <div class="nb-stat">
         <span class="nb-stat-label">Hours</span>
         <span class="nb-stat-value"><%= hours %></span>

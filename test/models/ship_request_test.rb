@@ -143,6 +143,35 @@ class ShipRequestTest < ActiveSupport::TestCase
     assert_equal 0.0, ship.reload.credits_awarded
   end
 
+  test "reject! destroys charm notches earned from the ship" do
+    user = users(:one)
+    project = projects(:one)
+    project.update!(credits_per_hour: 5)
+    req = ShipRequest.create!(user: user, project: project, status: "pending", devlogged_seconds: 7200, requested_at: Time.current)
+    ship = req.approve!(admin_user: user, credits_per_hour: 5)
+    assert ship.charm_notches.count > 0
+
+    req.reject!(admin_user: user)
+    assert_equal 0, ship.reload.charm_notches.count
+  end
+
+  test "reject! destroys charm notches earned by a recipient user" do
+    admin = users(:admin)
+    owner = users(:one)
+    recipient = users(:two)
+    recipient.charm_notches.destroy_all
+    project = projects(:one)
+    project.update!(credits_per_hour: 5)
+    req = ShipRequest.create!(user: owner, project: project, status: "pending", devlogged_seconds: 7200, requested_at: Time.current)
+    ship = req.approve!(admin_user: admin, credits_per_hour: 5, recipient_user_id: recipient.id)
+    assert_equal ship.charm_notches.count, recipient.charm_notches.count
+    assert ship.charm_notches.count > 0
+
+    req.reject!(admin_user: admin)
+    assert_equal 0, ship.reload.charm_notches.count
+    assert_equal 0, recipient.reload.charm_notches.count
+  end
+
   test "reject! dissociates devlogs from the request" do
     user = users(:one)
     project = projects(:one)

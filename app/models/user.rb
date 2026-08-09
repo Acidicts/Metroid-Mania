@@ -286,7 +286,7 @@ class User < ApplicationRecord
     carry_hours = 0.0
     desired_by_ship = {}
     owned_ships.each do |s|
-      hrs = (s.devlogged_seconds.to_f / 3600.0) + carry_hours
+      hrs = (s.approved_seconds.to_f / 3600.0) + carry_hours
       count = (hrs / 2.0).floor
       desired_by_ship[s.id] = count
       carry_hours = hrs - count * 2.0

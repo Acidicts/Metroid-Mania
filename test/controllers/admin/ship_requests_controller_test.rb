@@ -65,6 +65,27 @@ class Admin::ShipRequestsControllerTest < ActionDispatch::IntegrationTest
     assert_equal expected_notches, ship.charm_notches.count
   end
 
+  test "approve respects approved_seconds for notch calculation" do
+    sign_in_as(@admin, password: "password")
+
+    # Request has 4 hours devlogged, but admin only approves 2 hours
+    req = @project.ship_requests.create!(user: @project.user, requested_at: Time.current, devlogged_seconds: 4.hours.to_i, status: "pending")
+    existing_ship_ids = Ship.where(project: @project).pluck(:id)
+
+    # Approve with only 2 hours (7200 seconds)
+    post approve_admin_ship_request_url(req), params: { credits_per_hour: 10, approved_seconds: 7200 }
+
+    req.reload
+    assert_equal "approved", req.status
+
+    ship = Ship.where(project: @project).where.not(id: existing_ship_ids).first
+    assert_not_nil ship
+
+    # 2 hours approved = 1 notch (0.5 per hour, floor)
+    assert_equal 7200, ship.approved_seconds
+    assert_equal 1, ship.charm_notches.count
+  end
+
   test "reject updates devlog title, clears duration_seconds and makes it re-associable" do
     sign_in_as(@admin, password: "password")
 

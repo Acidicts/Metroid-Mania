@@ -86,6 +86,13 @@
             </div>
 
             <div class="admin-form-row">
+              <%= f.label :multiplier, "Approved Time", class: "admin-form-label" %>
+              <div class="admin-form-control">
+                <%= f.number_field :approved_seconds, value: @ship_request.devlogged_seconds, step: 1, min: 0, max: @ship_request.devlogged_seconds %>
+              </div>
+            </div>
+
+            <div class="admin-form-row">
               <%= f.label :recipient_user_id, "Award credits to user (optional)", class: "admin-form-label" %>
               <div class="admin-form-control">
                 <%= f.select :recipient_user_id,
@@ -99,7 +106,7 @@
             <div class="form-group mb-3">
               <%= f.label :comment, "Approval Note", class: "admin-form-label" %>
               <div class="admin-form-control">
-                <%= f.text_area :comment, rows: 3, class: "form-control", placeholder: "Enter reason for rejection...", required: false %>
+                <%= f.text_area :comment, rows: 3, class: "form-control", placeholder: "Enter comment / feedback...", required: false %>
               </div>
             </div>
 

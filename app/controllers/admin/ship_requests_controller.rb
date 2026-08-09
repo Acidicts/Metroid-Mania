@@ -22,7 +22,8 @@ module Admin
       if @ship_request.pending?
         # allow multiplier override
         multi = params[:multiplier].presence
-        ship = @ship_request.approve!(admin_user: current_user, credits_per_hour: credits.to_f.floor, recipient_user_id: recipient_user_id, multiplier: multi)
+        approved_seconds = params[:approved_seconds].presence
+        ship = @ship_request.approve!(admin_user: current_user, credits_per_hour: credits.to_f.floor, recipient_user_id: recipient_user_id, multiplier: multi, approved_seconds: approved_seconds)
         if params[:comment].present?
           Comment.create!(
             user: current_user,
@@ -31,7 +32,7 @@ module Admin
             system: true
           )
         end
-        Audit.create!(user: current_user, project: @ship_request.project, action: "approve_ship_request", details: { ship_request_id: @ship_request.id, credits_per_hour: credits, recipient_user_id: recipient_user_id, multiplier: multi, ship_id: ship.id })
+        Audit.create!(user: current_user, project: @ship_request.project, action: "approve_ship_request", details: { ship_request_id: @ship_request.id, credits_per_hour: credits, recipient_user_id: recipient_user_id, multiplier: multi, ship_id: ship.id, approved_seconds: approved_seconds })
         flash_pass("Ship request approved and shipped.")
         redirect_to admin_ship_path(ship)
       else
