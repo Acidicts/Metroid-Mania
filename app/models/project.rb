@@ -102,7 +102,7 @@ class Project < ApplicationRecord
   end
 
   def regulate_url(url)
-    return "" if url.empty?
+    return "" if url.nil? || url.empty?
 
     # 1. Strip out any existing protocol (e.g., "http://", "ftp://", "https://")
     clean_url = url.sub(%r{\A[a-z0-9]+://}i, "")
