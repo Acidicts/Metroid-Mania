@@ -42,11 +42,7 @@ class HackclubAuthService
 
   def get_user_addresses
     user_data = get_user
-    if user_data.nil?
-      TEST_ADDRESSES
-    else
-      user_data["addresses"] || []
-    end
+    user_data["addresses"] || []
   end
 
   def get_address_from_id(id)
