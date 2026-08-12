@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_12_221141) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -81,19 +81,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
     t.text "metadata"
     t.string "service_name"
     t.index ["key"], name: "index_active_storage_blobs_on_key", unique: true
-  end
-
-  create_table "addresses", force: :cascade do |t|
-    t.string "address_line_1"
-    t.string "address_line_2"
-    t.string "city"
-    t.integer "country"
-    t.datetime "created_at", null: false
-    t.string "postal_code"
-    t.string "province"
-    t.datetime "updated_at", null: false
-    t.bigint "user_id", null: false
-    t.index ["user_id"], name: "index_addresses_on_user_id"
   end
 
   create_table "assets_items", force: :cascade do |t|
@@ -202,7 +189,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
   end
 
   create_table "orders", force: :cascade do |t|
-    t.bigint "address_id"
+    t.string "address_id"
     t.boolean "admin_created", default: false, null: false
     t.boolean "can_cancel", default: true, null: false
     t.string "charm_image_url"
@@ -218,12 +205,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
     t.boolean "system", default: false, null: false
     t.datetime "updated_at", null: false
     t.integer "user_id", null: false
-    t.index ["address_id"], name: "index_orders_on_address_id"
-    t.index ["product_id"], name: "index_orders_on_product_id"
-    t.index ["public_id"], name: "index_orders_on_public_id", unique: true
-    t.index ["status"], name: "index_orders_on_status"
-    t.index ["user_id", "product_id"], name: "index_orders_on_user_product_pending_unique", unique: true, where: "((status = 0) AND (admin_created = false))"
-    t.index ["user_id"], name: "index_orders_on_user_id"
   end
 
   create_table "posts", force: :cascade do |t|
@@ -414,6 +395,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
 
   create_table "users", force: :cascade do |t|
     t.float "amount_spent", default: 0.0, null: false
+    t.string "birthdate"
     t.integer "charm_slots", default: 0, null: false
     t.datetime "created_at", null: false
     t.float "credit_offset", default: 0.0, null: false
@@ -426,8 +408,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
     t.string "hackatime_api_key"
     t.datetime "hackatime_synced_at"
     t.string "hackatime_trust_status"
+    t.string "hca_id"
     t.string "name"
     t.string "password_digest"
+    t.string "phone_number"
     t.string "provider"
     t.string "region"
     t.integer "role"
@@ -453,30 +437,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
     t.index ["user_id"], name: "index_wishlists_on_user_id"
   end
 
-  add_foreign_key "accessories", "accessory_groups"
-  add_foreign_key "accessory_groups", "products"
-  add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
-  add_foreign_key "addresses", "users"
-  add_foreign_key "assets_items", "assets_projects"
-  add_foreign_key "assets_items", "users"
-  add_foreign_key "assets_projects", "users"
-  add_foreign_key "audits", "projects"
-  add_foreign_key "audits", "users"
-  add_foreign_key "charm_notches", "charm_slots"
-  add_foreign_key "charm_notches", "ships"
-  add_foreign_key "charm_notches", "users"
-  add_foreign_key "charm_slots", "orders"
-  add_foreign_key "charm_slots", "users"
-  add_foreign_key "comments", "users"
-  add_foreign_key "devlogs", "projects"
-  add_foreign_key "devlogs", "ship_requests"
-  add_foreign_key "devlogs", "users"
-  add_foreign_key "orders", "addresses"
-  add_foreign_key "orders", "products"
-  add_foreign_key "orders", "users"
   add_foreign_key "posts", "projects"
   add_foreign_key "posts", "users"
-  add_foreign_key "products", "achievements"
   add_foreign_key "project_tags", "projects"
   add_foreign_key "projects", "users"
   add_foreign_key "rsvps", "users"
@@ -486,8 +448,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_08_214407) do
   add_foreign_key "ship_requests", "users", column: "processed_by_id"
   add_foreign_key "ships", "projects"
   add_foreign_key "ships", "users"
-  add_foreign_key "spritesheets", "assets_items"
-  add_foreign_key "user_achievements", "achievements"
   add_foreign_key "user_achievements", "users"
   add_foreign_key "user_likes", "projects"
   add_foreign_key "user_likes", "users"

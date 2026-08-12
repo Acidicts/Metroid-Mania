@@ -210,11 +210,11 @@
           <div style="margin-top: 16px; margin-bottom: 12px;">
             <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
             <%= select_tag "order[address]",
-                options_for_select((current_user&.address || []).map { |a| [ "#{a.address_line_1}, #{a.city}, #{a.province}", a.id ] }),
+                options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
                 prompt: "Select a shipping address",
                 style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
                 required: true %>
-            <button type="button" class="address-trigger-btn" onclick="document.getElementById('address-modal').classList.add('active')">+ Add New Address</button>
+            <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
           </div>
         <% end %>
 
@@ -506,11 +506,11 @@
           <div style="margin-top: 16px; margin-bottom: 12px;">
             <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
             <%= select_tag "order[address]",
-                options_for_select((current_user&.address || []).map { |a| [ "#{a.address_line_1}, #{a.city}, #{a.province}", a.id ] }),
+                options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
                 prompt: "Select a shipping address",
                 style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
                 required: true %>
-            <button type="button" class="address-trigger-btn" onclick="document.getElementById('address-modal').classList.add('active')">+ Add New Address</button>
+            <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
           </div>
         <% end %>
 
@@ -579,6 +579,18 @@
     <h3>Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
 
     <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
+        <% if @product.physical? %>
+          <div style="margin-top: 16px; margin-bottom: 12px;">
+            <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
+            <%= select_tag "order[address]",
+                options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
+                prompt: "Select a shipping address",
+                style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
+                required: true %>
+            <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
+          </div>
+        <% end %>
+
         <%= hidden_field_tag :product_id, @product.id %>
         <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
     <% end %>
@@ -589,7 +601,3 @@
     </div>
   <% end %>
 </div>
-
-<% if @product.present? && @product.physical? %>
-  <%= render "address/new" %>
-<% end %>

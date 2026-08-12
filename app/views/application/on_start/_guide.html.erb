@@ -6,20 +6,14 @@
 
         <%= render partial: "application/on_start/page_1"%>
         <%= render partial: "application/on_start/page_2"%>
-        <% if ensure_addresses_enabled %>
-            <%= render partial: "application/on_start/page_3"%>
-        <% end %>
-        <%= render partial: "application/on_start/page_4"%>
+        <%= render partial: "application/on_start/page_3"%>
 
         <script>
             (() => {
                 const pages = [
                     document.getElementById('guide-page-0').innerHTML,
                     document.getElementById('guide-page-1').innerHTML,
-                    <% if ensure_addresses_enabled %>
-                        document.getElementById('guide-page-2').innerHTML,
-                    <% end %>
-                    document.getElementById('guide-page-3').innerHTML
+                    document.getElementById('guide-page-2').innerHTML
                 ];
                 let currentPage = 0;
                 let isTransitioning = false;
@@ -75,58 +69,6 @@
                     } else if (btn && btn.id === 'guide-back-button') {
                         changePage(currentPage - 1);
                     }
-                });
-
-                content.addEventListener('click', (e) => {
-                    const submitBtn = e.target.closest('.address-submit-btn');
-                    if (!submitBtn) return;
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const form = content.querySelector('#address-form');
-                    if (!form) return;
-
-                    submitBtn.disabled = true;
-                    submitBtn.textContent = 'Saving...';
-
-                    const formData = new FormData(form);
-
-                    const addressId = form.dataset.addressId;
-                    const url = addressId ? '/addresses/' + addressId : '/addresses';
-                    const method = addressId ? 'PATCH' : 'POST';
-
-                    fetch(url, {
-                        method: method,
-                        body: formData,
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => response.json().then(data => ({ ok: response.ok, data })))
-                    .then(({ ok, data }) => {
-                        if (ok) {
-                            changePage(currentPage + 1);
-                        } else {
-                            submitBtn.disabled = false;
-                            submitBtn.textContent = 'Save & Continue';
-                            if (data.errors) {
-                                let errorDiv = form.querySelector('.address-errors');
-                                if (!errorDiv) {
-                                    errorDiv = document.createElement('div');
-                                    errorDiv.className = 'address-errors';
-                                    errorDiv.innerHTML = '<ul></ul>';
-                                    form.prepend(errorDiv);
-                                }
-                                const ul = errorDiv.querySelector('ul');
-                                ul.innerHTML = data.errors.map(err => '<li>' + err + '</li>').join('');
-                            }
-                        }
-                    })
-                    .catch(() => {
-                        submitBtn.disabled = false;
-                        submitBtn.textContent = 'Save & Continue';
-                    });
                 });
 
                 renderPage();

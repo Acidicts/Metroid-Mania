@@ -29,7 +29,6 @@ require "securerandom"
 class Order < ApplicationRecord
   belongs_to :user
   belongs_to :product
-  belongs_to :address, required: false
 
   has_one :charm_slot, dependent: :nullify, inverse_of: :order
   has_many :comments, as: :commentable, dependent: :destroy

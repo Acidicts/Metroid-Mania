@@ -72,7 +72,7 @@ class HackatimeService
     response = self.class.connection.get("leaderboard") do |req|
       req.headers["Authorization"] = "Bearer #{ENV["HACKATIME_API_KEY"]}" if ENV["HACKATIME_API_KEY"].present?
     end
-    
+
     if response.success?
       JSON.parse(response.body)
     else
@@ -83,7 +83,7 @@ class HackatimeService
     Rails.logger.error "HackatimeService leaderboard exception: #{e.message}"
     []
   end
-  
+
   # Method to fetch stats for the current user (used for sync)
   # This version uses an instance-level cache to avoid calling the API repeatedly
   # during a single request/operation.
@@ -134,8 +134,8 @@ class HackatimeService
     params[:end_date] = end_date if end_date
 
     cache_key = "hackatime:stats:#{hackatime_uid}:#{start_date}:#{end_date || 'none'}"
-    ttl_seconds = (ENV['HACKATIME_CACHE_TTL_SECONDS'] || 300).to_i
-    bypass_cache = ENV['HACKATIME_BYPASS_CACHE'].present?
+    ttl_seconds = (ENV["HACKATIME_CACHE_TTL_SECONDS"] || 300).to_i
+    bypass_cache = ENV["HACKATIME_BYPASS_CACHE"].present?
 
     unless bypass_cache
       cached = Rails.cache.read(cache_key)
@@ -152,7 +152,7 @@ class HackatimeService
       data = JSON.parse(response.body)
       Rails.logger.info "HackatimeService: Stats response headers: #{response.headers}"
       Rails.logger.info "HackatimeService: Stats response body (truncated): #{response.body[0..200]}"
-      
+
       projects = data.dig("data", "projects") || []
       result = {
         projects: projects.to_h { |p| [ p["name"], p["total_seconds"].to_i ] },

@@ -57,9 +57,6 @@ class User < ApplicationRecord
 
   has_many :sessions, dependent: :destroy
 
-  has_many :address, dependent: :destroy
-  accepts_nested_attributes_for :address, allow_destroy: true, reject_if: :all_blank
-
   # likes the user has made on projects
   has_many :user_likes, dependent: :destroy
   has_many :liked_projects, through: :user_likes, source: :project
@@ -74,6 +71,8 @@ class User < ApplicationRecord
   # Toggle for whether user sees custom fonts in the UI (DB-backed boolean column)
   attribute :font_on, :boolean, default: true
   attribute :hackatime_trust_status, :string
+
+  attribute :hca_id, default: ""
 
   # Region
   REGIONS = [
@@ -185,15 +184,29 @@ class User < ApplicationRecord
   validate :is_superadmin, on: :update
 
   def self.from_omniauth(auth)
-    where(provider: auth.provider, uid: auth.uid).first_or_create do |user|
-      user.name = auth.info.name
-      user.email = auth.info.email
-      user.slack_id = auth.info.slack_id
-      user.verification_status = auth.info.verification_status
-      # Set admin role if the auth provider says so (and we trust it)
-      # user.role = :admin if auth.info.admin
-      user.role ||= :user # Default role
+    # 1. Use first_or_initialize so existing users get updated on every login
+    user = where(provider: auth.provider, uid: auth.uid).first_or_initialize
+
+    # 2. Assign attributes (auth.info methods work for name, email, slack_id, verification_status)
+    user.hca_id              = auth.uid # OIDC 'sub' maps directly to auth.uid
+    user.name                = auth.info.name
+    user.email               = auth.info.email
+    user.slack_id            = auth.info.slack_id
+    user.verification_status = auth.info.verification_status
+
+    # 3. Handle optional/HQ attributes safely from raw_info identity nested hash
+    if ENV["HQ"]
+      identity          = auth.extra&.raw_info&.identity
+      user.phone_number = identity&.phone_number
+      user.birthdate    = identity&.birthdate
     end
+
+    # 4. Default role for new records
+    user.role ||= :user
+
+    # 5. Persist changes
+    user.save!
+    user
   end
 
   def self.find_cached(id)

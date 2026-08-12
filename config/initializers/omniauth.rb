@@ -2,9 +2,15 @@ require Rails.root.join("lib/omniauth/strategies/hackclub")
 
 if ENV["HACKCLUB_CLIENT_ID"].present? && ENV["HACKCLUB_CLIENT_SECRET"].present?
   Rails.application.config.middleware.use OmniAuth::Builder do
-    provider_options = {
-      scope: "profile email name slack_id verification_status"
-    }
+    if ENV["HQ"]&.downcase == "true"
+      provider_options = {
+        scope: "profile email name slack_id verification_status basic_info address"
+      }
+    else
+      provider_options = {
+        scope: "profile email name slack_id verification_status"
+      }
+    end
 
     # Optional explicit redirect URI for environments that require a fixed host.
     # When unset, the custom strategy callback_url uses request.base_url.

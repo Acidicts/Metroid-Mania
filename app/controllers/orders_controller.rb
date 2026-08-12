@@ -19,6 +19,8 @@ class OrdersController < ApplicationController
   # GET /orders/new?product_id=1
   def new
     @product = Product.find_by(id: params[:product_id])
+    @addresses = HackclubAuthService.new(current_user).get_user_addresses
+
     unless @product
       flash_warn("Product not found")
       redirect_to products_path and return
@@ -189,7 +191,7 @@ class OrdersController < ApplicationController
         order_attrs[:cost] = product.price_currency.to_f + accessory_cost_total
       end
       if product.physical? && params[:order][:address].present?
-        order_attrs[:address_id] = params[:order][:address].to_i
+        order_attrs[:address_id] = params[:order][:address].to_s
       end
 
       charm_image_url = params[:charm_image_url].presence || product.image_url

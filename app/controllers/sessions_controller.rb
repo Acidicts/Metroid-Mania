@@ -25,10 +25,6 @@ class SessionsController < ApplicationController
 
     user = User.from_omniauth(auth)
 
-    if user.previously_new_record? && !User.exists?(role: :superadmin) && user.slack_id == ENV["SUPERADMIN_SLACK"]
-      user.update(role: :superadmin)
-    end
-
     # block logins if the setting is flipped and the user isn't an admin
     if SiteSetting.enabled?("disable_non_admin_logins", default: false) && !user.admin?
       flash_warn("Logins are temporarily disabled for non-admin users")

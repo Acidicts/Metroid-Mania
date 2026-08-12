@@ -19,10 +19,11 @@
         <strong>Cost Notches:</strong>
         <%= order.notch_cost %>
       </div>
-      <% if order.address.present? %>
+      <% if order.address_id.present? %>
         <div>
           <strong>Address:</strong>
-          <%= [order.address.address_line_1, order.address.city, order.address.province].select(&:present?).join(", ") %>
+          <% address = HackclubAuthService.new(current_user).get_address_from_id(order.address_id) %>
+          <%= [address[:line_1], address[:city], address[:state]].select(&:present?).join(", ") %>
         </div>
       <% end %>  
     </div>

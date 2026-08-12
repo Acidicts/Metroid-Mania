@@ -12,8 +12,6 @@ module Admin
       @disable_asset_project   = SiteSetting.find_or_initialize_by(key: "disable_asset_project")
       @disable_community_goals = SiteSetting.find_or_initialize_by(key: "disable_community_goals")
       @not_running_message = SiteSetting.find_by(key: "not_running_message")&.value
-      
-      @harvest_addresses = SiteSetting.find_or_initialize_by(key: "harvest_addresses")
 
       # configuration for the weekly devlog goal giveaway
       @weekly_threshold = SiteSetting.find_or_initialize_by(key: "weekly_goal_threshold_seconds")
@@ -24,7 +22,7 @@ module Admin
       # otherwise. Iterate the keys we care about to keep the controller
       # easy to extend in future.
       # boolean toggles are still handled the same way
-      %w[shop running disable_non_admin_logins disable_asset_project disable_community_goals harvest_addresses].each do |key|
+      %w[shop running disable_non_admin_logins disable_asset_project disable_community_goals].each do |key|
         enabled = params.dig(:site_setting, key) == "1"
         SiteSetting.set(key, enabled ? "true" : "false")
       end

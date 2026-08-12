@@ -89,21 +89,6 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:hackatime_api_key, :font_on, :set_region,
-      address_attributes: [:id, :address_line_1, :address_line_2, :city, :province, :postal_code, :country]
-    )
-  end
-
-  def user_address_params
-    params.require(:user).permit(
-      address: [
-        :address_line_1,
-        :address_line_2,
-        :city,
-        :province,
-        :postal_code,
-        :country
-      ]
-    )
+    params.require(:user).permit(:hackatime_api_key, :font_on, :set_region)
   end
 end

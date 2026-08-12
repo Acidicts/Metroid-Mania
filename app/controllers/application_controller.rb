@@ -2,7 +2,7 @@ class ApplicationController < ActionController::Base
   # Only allow modern browsers supporting webp images, web push, badges, import maps, CSS nesting, and CSS :has.
   allow_browser versions: :modern
 
-  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile, :user_has_prize?, :prize_order_for, :hackclub_login_url, :ensure_addresses_enabled
+  helper_method :current_user, :logged_in?, :admin?, :feature_enabled?, :slack_profile, :user_has_prize?, :prize_order_for, :hackclub_login_url
   helper MarkdownHelper
 
   layout :choose_layout
@@ -211,10 +211,6 @@ class ApplicationController < ActionController::Base
     unless feature_enabled?(:shop) || current_user&.admin?
       redirect_to root_path and return
     end
-  end
-  
-  def ensure_addresses_enabled
-    SiteSetting.enabled?("harvest_addresses", default: false)
   end
 
   def ensure_goals_enabled
