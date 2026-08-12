@@ -150,6 +150,14 @@ body.dyslexic .pixelify-sans {
   gap: 1rem;
 }
 
+.click_blocked {
+  cursor: not-allowed;
+}
+
+.click_btn {
+  cursor: not-allowed;
+}
+
 /* Layout helpers */
 .retro-container {
   max-width: 1100px;

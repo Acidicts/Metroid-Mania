@@ -1,4 +1,13 @@
 module ApplicationHelper
+  def regulate_url(url)
+    return "" if url.empty?
+
+    # 1. Strip out any existing protocol (e.g., "http://", "ftp://", "https://")
+    clean_url = url.sub(%r{\A[a-z0-9]+://}i, "")
+
+    # 2. Prepend https://
+    "https://#{clean_url}"
+  end
   # convert a duration in seconds to a compact human string like "3h 12m".
   def human_duration(seconds)
     return "0h" if seconds.nil? || seconds.to_i <= 0

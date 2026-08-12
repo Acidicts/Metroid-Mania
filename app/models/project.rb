@@ -9,6 +9,7 @@
 #  deleted_at             :datetime
 #  demo_link              :string
 #  description            :text
+#  demo_link              :string
 #  devlogs_count          :integer          default: 0, not null
 #  hackatime_id           :string
 #  hackatime_ids          :text
@@ -55,6 +56,10 @@ class Project < ApplicationRecord
 
   validate :del_charm_notches_if_destroy, on: :update, if: -> { self.name.downcase == "deleted project" }
 
+  attribute :demo_link, :string, default: ""
+  attribute :repository_url, :string, default: ""
+  attribute :readme_url, :string, default: ""
+
   # Provide a unified "image_url" reader so views (and metadata tags) can
   # consume either the legacy URL-style attribute (if present) or an
   # ActiveStorage attachment.  Previously the show template referenced
@@ -94,6 +99,16 @@ class Project < ApplicationRecord
     else
       url # Fallback if none match
     end
+  end
+
+  def regulate_url(url)
+    return "" if url.empty?
+
+    # 1. Strip out any existing protocol (e.g., "http://", "ftp://", "https://")
+    clean_url = url.sub(%r{\A[a-z0-9]+://}i, "")
+
+    # 2. Prepend https://
+    "https://#{clean_url}"
   end
 
   def image_url
@@ -547,7 +562,7 @@ class Project < ApplicationRecord
     branches = parts[:branch] ? [ parts[:branch] ] : [ "main", "master" ]
 
     branches.any? do |br|
-      Rails.cache.fetch("project:#{id}:github_readme:#{br}", expires_in: 10.minutes) do
+      Rails.cache.fetch("project:#{id}:github_readme:#{br}", expires_in: 1.minutes) do
         uri = URI.parse("https://raw.githubusercontent.com/#{parts[:owner]}/#{parts[:repo]}/#{CGI.escape(br)}/README.md")
         begin
           Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 3) do |http|
@@ -569,7 +584,7 @@ class Project < ApplicationRecord
     parts = github_repo_parts
     return false unless parts
 
-    Rails.cache.fetch("project:#{id}:github_public", expires_in: 10.minutes) do
+    Rails.cache.fetch("project:#{id}:github_public", expires_in: 1.minutes) do
       uri = URI.parse("https://github.com/#{parts[:owner]}/#{parts[:repo]}")
       begin
         Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 3) do |http|
@@ -580,6 +595,21 @@ class Project < ApplicationRecord
       rescue StandardError
         false
       end
+    end
+  end
+
+  def demo_link_valid?
+    return false unless self.demo_link.present?
+
+    uri = URI.parse(regulate_url(self.demo_link.to_s))
+    begin
+      Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https", open_timeout: 3, read_timeout: 3) do |http|
+        req = Net::HTTP::Head.new(uri.request_uri)
+        res = http.request(req) rescue nil
+        res && res.is_a?(Net::HTTPSuccess)
+      end
+    rescue StandardError
+      false
     end
   end
 

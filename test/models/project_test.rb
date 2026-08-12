@@ -567,4 +567,115 @@ class ProjectTest < ActiveSupport::TestCase
     assert_includes Project::STATUSES, "shipped"
     assert_includes Project::STATUSES, "unshipped"
   end
+
+  # --- demo_link_valid? ---
+
+  test "demo_link_valid? returns false when demo_link is blank" do
+    p = Project.new(demo_link: "")
+    assert_not p.demo_link_valid?
+
+    p.demo_link = nil
+    assert_not p.demo_link_valid?
+  end
+
+  test "demo_link_valid? returns true when HEAD request succeeds" do
+    p = Project.new(demo_link: "example.com/demo")
+
+    fake_response = Net::HTTPOK.new("1.1", "200", "OK")
+    mock_http = Object.new
+    mock_http.define_singleton_method(:request) { |_req| fake_response }
+
+    orig = Net::HTTP.method(:start)
+    Net::HTTP.define_singleton_method(:start) do |*args, &blk|
+      blk.call(mock_http)
+    end
+
+    begin
+      assert_predicate p, :demo_link_valid?
+    ensure
+      Net::HTTP.define_singleton_method(:start) { |*a, &b| orig.call(*a, &b) }
+    end
+  end
+
+  test "demo_link_valid? returns false when HEAD request returns non-success" do
+    p = Project.new(demo_link: "example.com/demo")
+
+    fake_response = Net::HTTPNotFound.new("1.1", "404", "Not Found")
+    mock_http = Object.new
+    mock_http.define_singleton_method(:request) { |_req| fake_response }
+
+    orig = Net::HTTP.method(:start)
+    Net::HTTP.define_singleton_method(:start) do |*args, &blk|
+      blk.call(mock_http)
+    end
+
+    begin
+      assert_not p.demo_link_valid?
+    ensure
+      Net::HTTP.define_singleton_method(:start) { |*a, &b| orig.call(*a, &b) }
+    end
+  end
+
+  test "demo_link_valid? returns false when request times out" do
+    p = Project.new(demo_link: "example.com/demo")
+
+    mock_http = Object.new
+    mock_http.define_singleton_method(:request) { |_req| raise Net::OpenTimeout }
+
+    orig = Net::HTTP.method(:start)
+    Net::HTTP.define_singleton_method(:start) do |*args, &blk|
+      blk.call(mock_http)
+    end
+
+    begin
+      assert_not p.demo_link_valid?
+    ensure
+      Net::HTTP.define_singleton_method(:start) { |*a, &b| orig.call(*a, &b) }
+    end
+  end
+
+  test "demo_link_valid? returns false on any StandardError" do
+    p = Project.new(demo_link: "example.com/demo")
+
+    mock_http = Object.new
+    mock_http.define_singleton_method(:request) { |_req| raise StandardError, "network error" }
+
+    orig = Net::HTTP.method(:start)
+    Net::HTTP.define_singleton_method(:start) do |*args, &blk|
+      blk.call(mock_http)
+    end
+
+    begin
+      assert_not p.demo_link_valid?
+    ensure
+      Net::HTTP.define_singleton_method(:start) { |*a, &b| orig.call(*a, &b) }
+    end
+  end
+
+  test "demo_link_valid? normalizes URL via regulate_url" do
+    p = Project.new(demo_link: "example.com/demo")
+
+    fake_response = Net::HTTPOK.new("1.1", "200", "OK")
+    mock_http = Object.new
+    mock_http.define_singleton_method(:request) { |_req| fake_response }
+
+    # Capture the host/port passed to Net::HTTP.start
+    captured_host = nil
+    captured_port = nil
+
+    orig = Net::HTTP.method(:start)
+    Net::HTTP.define_singleton_method(:start) do |host, port, *args, &blk|
+      captured_host = host
+      captured_port = port
+      blk.call(mock_http)
+    end
+
+    begin
+      assert_predicate p, :demo_link_valid?
+      assert_equal "example.com", captured_host
+      assert_equal 443, captured_port # HTTPS default port
+    ensure
+      Net::HTTP.define_singleton_method(:start) { |*a, &b| orig.call(*a, &b) }
+    end
+  end
 end

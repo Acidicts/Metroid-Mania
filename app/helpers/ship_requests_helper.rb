@@ -22,6 +22,7 @@ module ShipRequestsHelper
     return false unless project.eligible_for_ship_request?
     return false if project.ship_requests.where(status: "pending").exists?
     return false if project.devlogged_minutes_since_baseline < 15
+    return false unless project.demo_link_valid?
     return false unless project.github_repo_public?
     return false unless project.github_readme_present?
     return false unless project.clonable?
@@ -35,6 +36,7 @@ module ShipRequestsHelper
     <<~MD
       - [#{project.devlogged_minutes_since_baseline >= 15 ? "x" : " "}] At least 15 minutes of devlogs since last ship or project creation
       - [#{project.ship_requests.where(status: 'pending').exists? ? " " : "x"}] No existing pending ship request
+      - [#{project.demo_link_valid? ? "x" : " "}] Demo Link is Valid
       - [#{project.github_repo_public? ? "x" : " "}] Github Repo is Public
       - [#{project.github_readme_present? ? "x" : " "}] Project has a README
       - [#{project.clonable? ? "x" : " "}] Project is clonable

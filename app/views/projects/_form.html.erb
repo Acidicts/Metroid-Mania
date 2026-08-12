@@ -34,15 +34,23 @@
           <div class="apf-section-title">Links</div>
 
           <div class="form-group">
-            <%= form.label :repository_url, "GitHub Repo URL" %>
-            <%= form.text_field :repository_url, id: "repo_text_box", class: "form-input", data: { project_url_validator_target: 'repo' } %>
-            <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
+            <%= form.label :demo_link, "Demo URL" %>
+            <%= form.text_field :demo_link, id: "repo_text_box", class: "form-input" %>
           </div>
 
-          <div class="form-group">
-            <%= form.label :readme_url, "Readme Address" %>
-            <%= form.text_field :readme_url, id: "readme_text_box", class: "form-input", data: { project_url_validator_target: 'readme' } %>
-            <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
+          <div class="apf-section">
+            <div class="apf-section-title">Repo</div>
+            <div class="form-group">
+              <%= form.label :repository_url, "GitHub Repo URL" %>
+              <%= form.text_field :repository_url, id: "repo_text_box", class: "form-input", data: { project_url_validator_target: 'repo' } %>
+              <div id="repo-url-status" class="input-status" data-project-url-validator-target="repoStatus" aria-live="polite"></div>
+            </div>
+
+            <div class="form-group">
+              <%= form.label :readme_url, "Readme Address" %>
+              <%= form.text_field :readme_url, id: "readme_text_box", class: "form-input", data: { project_url_validator_target: 'readme' } %>
+              <div id="readme-url-status" class="input-status" data-project-url-validator-target="readmeStatus" aria-live="polite"></div>
+            </div>
           </div>
         </div>
 

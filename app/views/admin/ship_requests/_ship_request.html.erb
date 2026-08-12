@@ -1,0 +1,23 @@
+<% if r.status == "pending" && r.user&.name != "Deleted User" %> 
+    <div class="ship-request">
+        <% project_name = r.project&.name || "Project ##{r.project_id || 'unknown'}" %>
+        <h3><%= link_to "#{project_name} - Request ##{r.id}", admin_ship_request_path(r) %></h3>
+        <div class="meta">
+            <span class="meta-item">
+                <span class="meta-label">Requested:</span>
+                <%= r.requested_at %>
+            </span>
+            <span class="meta-item">
+                <span class="meta-label">Devlogged:</span>
+                <%= format_duration(r.devlogged_seconds.to_i) %>
+            </span>
+            <span class="meta-item">
+                <span class="meta-label">Requester:</span>
+                <%= r.user&.name || r.user&.email %>
+            </span>
+            <span class="meta-item">
+                <span class="status <%= r.status %>"><%= r.status %></span>
+            </span>
+        </div>
+    </div>
+<% end %>

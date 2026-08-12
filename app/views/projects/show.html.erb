@@ -51,6 +51,7 @@
         </div>
 
         <div class="cta-row">
+          <%= link_to 'Demo', safe_url(@project.regulate_url(@project.demo_link)), class: 'btn-retro', target: '_blank', rel: 'noopener noreferrer' %>
           <%= link_to 'View Repo', safe_url(@project.regulated_repository_url), class: 'btn-retro', target: '_blank', rel: 'noopener noreferrer' %>
           <% if @project.readme_url.present? %>
             <button id="README_BTN" class="btn-retro btn-retro--outline">READ ME</button>

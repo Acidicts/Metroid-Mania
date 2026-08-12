@@ -10,6 +10,7 @@
         Request #<%= @ship_request.id %>
         <% if @ship_request.project.present? %>
           - <%= link_to "Open project", project_path(@ship_request.project), class: "admin-ship-request-project-link" %>
+          - <%= link_to "Open Demo", regulate_url(@ship_request.project.demo_link), class: "admin-ship-request-project-link" %>
         <% else %>
           - Project is no longer available
         <% end %>
