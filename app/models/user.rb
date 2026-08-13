@@ -194,6 +194,8 @@ class User < ApplicationRecord
     user.slack_id            = auth.info.slack_id
     user.verification_status = auth.info.verification_status
 
+    user.access_token = auth.credentials&.token.to_s
+
     # 3. Handle optional/HQ attributes safely from raw_info identity nested hash
     if ENV["HQ"]
       identity          = auth.extra&.raw_info&.identity

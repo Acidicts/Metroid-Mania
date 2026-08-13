@@ -4,40 +4,32 @@ class HackclubAuthService
 
   def initialize(user)
     @user = user
+    @access_token = user.access_token
+  end
+
+  # me function from github.com/hackclub/stardance in app/services/hca_service.rb edited to remove need for access_token param
+  def me
+    raise ArgumentError, "access_token is required" if @access_token.blank?
+
+    response = connection.get("/api/v1/me") do |req|
+      req.headers["Authorization"] = "Bearer #{@access_token}"
+      req.headers["Accept"] = "application/json"
+    end
+
+    unless response.success?
+      Rails.logger.warn("HCA /me fetch failed with status #{response.status}")
+      return nil
+    end
+
+    JSON.parse(response.body)
+  rescue StandardError => e
+    Rails.logger.warn("HCA /me fetch error: #{e.class}: #{e.message}")
+    nil
   end
 
   def get_user
-    cache_key = "hca:identity:#{@user.hca_id}"
-    bypass_cache = ENV["HCA_BYPASS_CACHE"].present?
-
-    unless bypass_cache
-      cached = Rails.cache.read(cache_key)
-      return cached unless cached.nil?
-    end
-
-    response = self.class.connection.get("api/v1/identities/#{@user.hca_id}") do |req|
-      req.headers["Authorization"] = "Bearer #{ENV["HACKCLUB_PROGRAM_KEY"]}"
-    end
-
-    result =
-      if response.success?
-        JSON.parse(response.body)["identity"]
-      elsif response.status == 404
-        Rails.logger.debug "HackclubAuthService: User not found (404) for hca_id=#{@user.hca_id}"
-        nil
-      elsif response.status == 403
-        Rails.logger.debug "HackclubAuthService: Insufficient Permissions / Scopes"
-        nil
-      elsif response.status == 401
-        Rails.logger.debug "HackclubAuthService: Unauthorised missing or invalid token"
-        nil
-      else
-        Rails.logger.error "HackclubAuthService identity error: #{response.status} - #{response.body}"
-        nil
-      end
-
-    Rails.cache.write(cache_key, result, expires_in: CACHE_TTL_SECONDS) unless bypass_cache
-    result
+    result = me
+    result&.dig("identity") || {}
   end
 
   def get_user_addresses
