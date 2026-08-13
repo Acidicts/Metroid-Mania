@@ -15,7 +15,7 @@ module Admin
     end
 
     def update
-      if @user.superadmin? && !(current_user&.superadmin?)
+      if @user.superadmin?
         redirect_to admin_users_path, alert: "Cannot change the superadmin's role"
         return
       end

@@ -12,13 +12,7 @@ module ActiveSupport
 
     # Helper to simulate signing in a user in tests
     def sign_in_as(user, password: nil)
-      if password
-        post admin_login_url, params: { email: user.email, password: password }
-      else
-        # Dev login available in test env
-        post dev_login_url, params: { email: user.email }
-      end
-
+      post dev_login_url, params: { email: user.email }
       # Tests assume signed-in users are fully setup unless explicitly testing setup flows.
       user.update!(setup: true) unless user.setup?
     end

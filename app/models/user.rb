@@ -181,8 +181,6 @@ class User < ApplicationRecord
   validates :provider, presence: true
   validates :charm_slots, numericality: { only_integer: true, greater_than_or_equal_to: 0 }
 
-  validate :is_superadmin, on: :update
-
   def self.from_omniauth(auth)
     # 1. Use first_or_initialize so existing users get updated on every login
     user = where(provider: auth.provider, uid: auth.uid).first_or_initialize
@@ -417,18 +415,6 @@ class User < ApplicationRecord
   # Is this user the superadmin defined by environment?
   def superadmin?
     if self.role == "superadmin" or self.role == 2
-      true
-    else
-      false
-      is_superadmin
-    end
-  end
-
-  def is_superadmin
-    env_uid = ENV["SUPERADMIN_UID"]
-    env_email = ENV["SUPERADMIN_EMAIL"]&.downcase
-    if (env_uid.present? && uid == env_uid) || (env_email.present? && email&.downcase == env_email)
-      self.role = 2
       true
     else
       false

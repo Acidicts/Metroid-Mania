@@ -161,16 +161,14 @@ class Admin::UsersControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "cannot change superadmin role" do
-    ENV["SUPERADMIN_EMAIL"] = "super@example.com"
-    super_user = User.create!(provider: "dev", uid: "super-1", email: "super@example.com", name: "Super", role: :user)
+    super_user = User.create!(provider: "dev", uid: "super-1", email: "super@example.com", name: "Super", role: :superadmin)
+    super_user2 = User.create!(provider: "dev", uid: "super-2", email: "super2@example.com", name: "Super2", role: :superadmin)
 
-    sign_in_as(@admin, password: "password")
-    patch admin_user_url(super_user), params: { user: { role: "admin" } }
+    sign_in_as(super_user, password: "password")
+    patch admin_user_url(super_user2), params: { user: { role: "admin" } }
 
     assert_redirected_to admin_users_url
-    assert_equal "user", super_user.reload.role
-  ensure
-    ENV.delete("SUPERADMIN_EMAIL")
+    assert_equal "superadmin", super_user2.reload.role
   end
 
   test "cannot delete the system placeholder user" do

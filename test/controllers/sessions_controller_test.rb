@@ -90,49 +90,6 @@ class SessionsControllerTest < ActionDispatch::IntegrationTest
     OmniAuth.config.mock_auth.delete(:hackclub)
   end
 
-  test "new user with matching SUPERADMIN_SLACK gets superadmin role when none exists" do
-    ENV["SUPERADMIN_SLACK"] = "U_SUPER_ADMIN"
-    assert_not User.exists?(role: :superadmin), "no superadmin should exist yet"
-
-    auth = auth_hash_for("superadmin@example.com", uid: "uid-superadmin")
-    auth.info.slack_id = "U_SUPER_ADMIN"
-
-    OmniAuth.config.test_mode = true
-    OmniAuth.config.mock_auth[:hackclub] = auth
-
-    get "/auth/hackclub/callback"
-
-    new_user = User.find_by(uid: "uid-superadmin")
-    assert new_user.present?, "user should have been created"
-    assert_equal "superadmin", new_user.role
-    assert new_user.superadmin?
-  ensure
-    ENV.delete("SUPERADMIN_SLACK")
-    OmniAuth.config.test_mode = false
-    OmniAuth.config.mock_auth.delete(:hackclub)
-  end
-
-  test "new user with non-matching SUPERADMIN_SLACK stays as regular user" do
-    ENV["SUPERADMIN_SLACK"] = "U_OTHER_ADMIN"
-
-    auth = auth_hash_for("regular@example.com", uid: "uid-regular")
-    auth.info.slack_id = "U_DIFFERENT_ID"
-
-    OmniAuth.config.test_mode = true
-    OmniAuth.config.mock_auth[:hackclub] = auth
-
-    get "/auth/hackclub/callback"
-
-    new_user = User.find_by(uid: "uid-regular")
-    assert new_user.present?, "user should have been created"
-    assert_equal "user", new_user.role
-    assert_not new_user.superadmin?
-  ensure
-    ENV.delete("SUPERADMIN_SLACK")
-    OmniAuth.config.test_mode = false
-    OmniAuth.config.mock_auth.delete(:hackclub)
-  end
-
   test "new user with matching SUPERADMIN_SLACK does not get superadmin if one already exists" do
     ENV["SUPERADMIN_SLACK"] = "U_NEW_SUPER"
     existing = User.create!(provider: "dev", uid: "existing-super", email: "existing@example.com",

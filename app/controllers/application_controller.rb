@@ -138,6 +138,9 @@ class ApplicationController < ActionController::Base
   end
 
   def require_admin
+    require_login
+    return if performed?  # stop if require_login already redirected/rendered
+
     if !admin?
       flash_warn("Not authorized")
       redirect_to root_path and return
