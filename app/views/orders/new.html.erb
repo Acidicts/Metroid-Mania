@@ -2,13 +2,17 @@
   <%= stylesheet_link_tag "pages/orders-new", "data-turbo-track": "reload" %>
 <% end %>
 
+<% content_for :title, "Purchase of - #{@product.name}" %>
+
 <div id="order-form-container">
-  <% if !@product.standard_cost? %>
-    <% content_for :title, "Purchase of - #{@product.name}" %>
-
-    <h1>Purchase : <%= @product.name %></h1>
+  <h1>Equip : <%= @product.name %></h1>
+  <% if !@product.variable_grant? %>
     <h3>Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
+  <% end %>
 
+  <% if @product.standard_cost? %>
+    <%# ---- Standard-cost product: no preview, no accessories, no sale banner ---- %>
+  <% else %>
     <% default_preview_src = safe_url(@product.image_url) %>
     <div class="order-preview" id="order-preview" style="display:grid;grid-template-columns:200px 1fr;gap:16px;margin-bottom:24px;<%= default_preview_src == "#" ? 'display:none;' : '' %>">
       <div class="order-preview__image" id="order-preview-image-container">
@@ -22,81 +26,8 @@
       </div>
     </div>
 
-    <script>
-      (function(){
-        function initAccessoryPreview(){
-          var preview = document.getElementById('order-preview');
-          var previewImage = document.getElementById('order-preview-image');
-          var caption = document.getElementById('order-preview-caption');
-          if (!preview || !previewImage) return;
-
-          function findAccessoryImage(){
-            var selected = document.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
-            var imageUrl = previewImage.dataset.defaultSrc || '';
-            var labelText = 'Product preview';
-
-            selected.forEach(function(input){
-              if (!input) return;
-              var accessoryImageUrl = input.dataset.accessoryImageUrl;
-              if (accessoryImageUrl && accessoryImageUrl.trim() !== "") {
-                imageUrl = accessoryImageUrl;
-                labelText = input.dataset.accessoryName ? input.dataset.accessoryName + ' preview' : 'Accessory preview';
-              }
-            });
-
-            return { imageUrl: imageUrl, labelText: labelText };
-          }
-
-          previewImage.onerror = function() {
-            preview.style.display = 'none';
-            if (caption) caption.style.display = 'none';
-          };
-
-          function updatePreview(){
-            var previewInfo = findAccessoryImage();
-            if (previewInfo.imageUrl && previewInfo.imageUrl.trim() !== "" && previewInfo.imageUrl.trim() !== "#") {
-              preview.style.display = 'grid';
-              previewImage.src = previewInfo.imageUrl;
-              previewImage.alt = previewInfo.labelText;
-              if (caption) {
-                caption.style.display = '';
-                caption.textContent = previewInfo.labelText;
-              }
-            } else {
-              preview.style.display = 'none';
-              if (caption) caption.style.display = 'none';
-            }
-          }
-
-          document.addEventListener('change', function(event){
-            var target = event.target;
-            if (!target || target.type !== 'radio') return;
-            if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
-            updatePreview();
-          });
-
-          updatePreview();
-        }
-
-        document.addEventListener('DOMContentLoaded', initAccessoryPreview);
-        document.addEventListener('turbo:load', initAccessoryPreview);
-      })();
-    </script>
-
-    <% if @order && @order.errors.any? %>
-      <div style="color: red">
-        <h3><%= pluralize(@order.errors.count, "error") %> prevented this purchase:</h3>
-        <ul>
-          <% @order.errors.full_messages.each do |m| %>
-            <li><%= m %></li>
-          <% end %>
-        </ul>
-      </div>
-    <% end %>
-    
-    </p>
-
-    <% if defined?(@product) && (sale = @product.active_sale) %>
+    <% if @product.active_sale %>
+      <% sale = @product.active_sale %>
       <div class="flash-pass" style="margin-bottom:12px;">
         Sale: save <%= sale.discount_notches %> notches
         <% if sale.product && sale.quantity %>
@@ -104,500 +35,406 @@
         <% end %>
       </div>
     <% end %>
+  <% end %>
+
+  <% if @order && @order.errors.any? %>
+    <div style="color: red">
+      <h3><%= pluralize(@order.errors.count, "error") %> prevented this purchase:</h3>
+      <ul>
+        <% @order.errors.full_messages.each do |m| %>
+          <li><%= m %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <%
+    user_region = current_user.set_region
+    fallback_region = "Rest of the World"
+
+    available_accessory_groups = @product.accessory_groups.select do |group|
+      group.accessories.any? do |accessory|
+        accessory.regional_prices.any? do |price|
+          price.enabled && (price.region == user_region || price.region == fallback_region)
+        end
+      end
+    end
+
+    accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
+      params[:accessory_group_choices].to_unsafe_h
+    elsif params[:accessory_group_choices].respond_to?(:to_h)
+      params[:accessory_group_choices].to_h
+    else
+      {}
+    end
+
+    base_cost = @product.base_cost.to_i
+    effective_cost = @product.cost(current_user.set_region).to_i
+    if (sale = @product.active_sale)
+      effective_cost -= sale.discount_notches.to_i
+      effective_cost = 0 if effective_cost.negative?
+    end
+  %>
+
+  <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
+    <%= hidden_field_tag :product_id, @product.id %>
 
     <% if @product.variable_grant? %>
-      <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
-        <%= hidden_field_tag :product_id, @product.id %>
+      <div class="grant-box">
+        <div class="grant-header"><%= label_tag :grant_amount_display, "Grant amount ($)" %></div>
+        <div class="grant-slider-wrapper" style="margin-top:6px;">
+          <div class="grant-inputs">
+            <%= number_field_tag :grant_amount_display, @product.grant_min_dollars, min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 10, id: "grant_amount_display", class: 'grant-number', aria: { label: 'Grant amount dollars' } %>
 
-        <div class="grant-box">
-          <div class="grant-header"><%= label_tag :grant_amount_display, "Grant amount ($)" %></div>
-          <div class="grant-slider-wrapper" style="margin-top:6px;">
-            <div class="grant-inputs">
-              <%= number_field_tag :grant_amount_display, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 10, id: "grant_amount_display", class: 'grant-number', aria: { label: 'Grant amount dollars' } %>
+            <div class="grant-slider" style="flex:1;">
+              <div class="min-max-labels"><span class="min">$<%= sprintf('%.0f', @product.grant_min_dollars) %></span><span class="max">$<%= sprintf('%.0f', @product.grant_max_dollars) %></span></div>
 
-              <div class="grant-slider" style="flex:1;">
-                <div class="min-max-labels"><span class="min">$<%= sprintf('%.0f', @product.grant_min_dollars) %></span><span class="max">$<%= sprintf('%.0f', @product.grant_max_dollars) %></span></div>
+              <%= range_field_tag :grant_amount_range, @product.grant_min_dollars, min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 10, id: "grant_amount_range", class: 'grant-range', aria: { valuemin: @product.grant_min_dollars, valuemax: @product.grant_max_dollars, label: 'Grant slider' } %>
 
-                <%= range_field_tag :grant_amount_range, (@product.grant_min_dollars), min: @product.grant_min_dollars, max: @product.grant_max_dollars, step: 10, id: "grant_amount_range", class: 'grant-range', aria: { valuemin: @product.grant_min_dollars, valuemax: @product.grant_max_dollars, label: 'Grant slider' } %>
-
-                <div class="ticks" aria-hidden="true"></div>
-                <div class="bubble" aria-hidden="true"><span class="bubble-val"></span></div>
-              </div>
-
-              <%= hidden_field_tag :grant_amount_dollars, (@product.grant_min_dollars), id: "grant_amount_dollars" %>
+              <div class="ticks" aria-hidden="true"></div>
+              <div class="bubble" aria-hidden="true"><span class="bubble-val"></span></div>
             </div>
+
+            <%= hidden_field_tag :grant_amount_dollars, @product.grant_min_dollars, id: "grant_amount_dollars" %>
           </div>
         </div>
-
-        <% user_region = current_user.set_region %>
-        <% fallback_region = "Rest of the World" %>
-        <% available_accessory_groups = @product.accessory_groups.select do |group|
-             group.accessories.any? do |accessory|
-               accessory.regional_prices.any? do |price|
-                 price.enabled && (price.region == user_region || price.region == fallback_region)
-               end
-             end
-           end %>
-        <% if available_accessory_groups.any? %>
-          <% accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
-              params[:accessory_group_choices].to_unsafe_h
-            elsif params[:accessory_group_choices].respond_to?(:to_h)
-              params[:accessory_group_choices].to_h
-            else
-              {}
-            end %>
-
-          <div class="accessory-groups">
-            <% available_accessory_groups.each do |group| %>
-              <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
-              <% available_accessories = group.accessories.select do |accessory|
-                    accessory.regional_prices.any? do |price|
-                      price.enabled && (price.region == user_region || price.region == fallback_region)
-                    end
-                  end %>
-              <% group_required = group.required? && available_accessories.any? %>
-              <% group_input_name = "accessory_group_choices[#{group.id}]" %>
-
-              <fieldset class="accessory-group" style="margin-bottom: 12px;">
-                <legend>
-                  <%= group.name.humanize %>
-                  <% if group_required %>
-                    <small>(required)</small>
-                  <% else %>
-                    <small>(optional)</small>
-                  <% end %>
-                </legend>
-
-                <div class="accessory-items">
-                  <% unless group_required %>
-                    <% none_id = "accessory_group_#{group.id}_none" %>
-                    <label class="accessory-item" for="<%= none_id %>" style="display: block; margin-bottom: 6px;">
-                      <%= radio_button_tag group_input_name,
-                                           "",
-                                           selected_choice.blank?,
-                                           id: none_id,
-                                           data: { accessory_cost: 0, accessory_image_url: safe_url(@product.image_url), accessory_name: @product.name } %>
-                      <span class="accessory-name">No selection</span>
-                      <span class="accessory-cost">+0 Charm Notches</span>
-                    </label>
-                  <% end %>
-
-                  <% available_accessories.each do |accessory| %>
-                    <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
-                    <% accessory_cost = accessory.regional_prices.where(region: user_region, enabled: true).first&.cost || accessory.regional_prices.where(region: fallback_region, enabled: true).first&.cost || 0 %>
-                    <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
-                      <%= radio_button_tag group_input_name,
-                                           accessory.id,
-                                           selected_choice == accessory.id.to_s,
-                                           id: input_id,
-                                           required: group_required,
-                                           data: { accessory_cost: accessory_cost, accessory_image_url: safe_url(accessory.image_url), accessory_name: accessory.name } %>
-                      <span class="accessory-name"><%= accessory.name.humanize %></span>
-                      <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
-                    </label>
-                  <% end %>
-                </div>
-              </fieldset>
-            <% end %>
-          </div>
-        <% end %>
-
-        <div style="margin-top:8px;">
-          Estimated Notches: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= (@product.grant_notches_for_dollars(@product.grant_min_dollars)).to_i || 0 %></span>
-        </div>
-
-        <% if @product.physical? %>
-          <div style="margin-top: 16px; margin-bottom: 12px;">
-            <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
-            <%= select_tag "order[address]",
-                options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
-                prompt: "Select a shipping address",
-                style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
-                required: true %>
-            <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
-          </div>
-        <% end %>
-
-        <div style="margin-top: 12px;">
-          <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
-          <% if feature_enabled?(:shop) %>
-            <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
-          <% end %>
-        </div>
-      <% end %>
-
-      <script>
-        (function(){
-          function initOrderSlider(){
-            var d = document.getElementById('grant_amount_display');
-            var form = d && d.form ? d.form : document.querySelector('#order-form-container form');
-            if (!form) return;
-            // avoid double-initializing on turbo:load or DOMContentLoaded multiple times
-            if (form.dataset.orderSliderInitialized) return;
-            form.dataset.orderSliderInitialized = '1';
-
-            var r = document.getElementById('grant_amount_range');
-            var h = document.getElementById('grant_amount_dollars');
-            // Estimated credits shown beneath the slider
-            var est = document.getElementById('estimated_credits');
-            // Top-of-page credits display (Price (Credits))
-            var topCredits = document.getElementById('price_credits_display');
-            var ratio = <%= @product.credits_for_dollars(1) %>;
-            var minVal = <%= @product.grant_min_dollars %>;
-            var maxVal = <%= @product.grant_max_dollars %>;
-            var baseCost = <%= @product.base_cost %>
-
-            function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
-
-            function selectedAccessoryCost(){
-              var total = 0;
-              var selected = form.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
-
-              selected.forEach(function(input){
-                total += toNumber(input.dataset.accessoryCost);
-              });
-
-              return total;
-            }
-
-            function update(val){
-              var n = toNumber(val);
-              // Clamp to min/max
-              if (n < minVal) n = minVal;
-              if (n > maxVal) n = maxVal;
-
-              if (d && d.value != n) d.value = n;
-              if (r && r.value != n) r.value = n;
-              if (h) h.value = n;
-              // Update both the estimated credits under the slider and the top credits display
-              if (ratio) {
-                var baseNotches = Math.round(n * ratio);
-                var totalNotches = baseNotches + selectedAccessoryCost();
-                var clampedTotal = Math.max(0, totalNotches) + baseCost;
-
-                if (est) est.innerText = String(clampedTotal);
-                if (topCredits) topCredits.innerText = String(clampedTotal);
-              }
-              var priceDisplay = document.getElementById('price_usd_display');
-              if (priceDisplay) priceDisplay.innerText = n.toFixed(1);
-
-              // Update bubble and ARIA
-              positionBubble(n);
-              if (r) r.setAttribute('aria-valuenow', n);
-            }
-
-            // Update hidden field immediately when inputs change
-            function updateHidden(val){
-              if (h) h.value = val;
-            }
-
-            function createTicks(){
-              var ticksEl = form.querySelector('.ticks');
-              if (!ticksEl || !r) return;
-              ticksEl.innerHTML = '';
-              var range = maxVal - minVal;
-              var step = Math.max(1, Number(r.step) || 1);
-              // Show up to 10 ticks (including endpoints)
-              var segments = 10;
-              for (var i = 0; i <= segments; i++){
-                var val = minVal + (range * (i / segments));
-                var percent = ((val - minVal) / range) * 100;
-                var tick = document.createElement('div');
-                tick.className = 'tick';
-                tick.style.left = percent + '%';
-                ticksEl.appendChild(tick);
-              }
-            }
-
-            function positionBubble(value){
-              var bubble = form.querySelector('.bubble');
-              var rangeEl = r;
-              if (!bubble || !rangeEl) return;
-              var pct = 0;
-              var range = maxVal - minVal;
-              if (range > 0) pct = (value - minVal) / range;
-              // compute left based on thumb center. Need bounding client rect of range.
-              var rect = rangeEl.getBoundingClientRect();
-              var thumbX = rect.left + pct * rect.width;
-              var relLeft = thumbX - rect.left; // px
-              bubble.style.left = (relLeft) + 'px';
-              var valSpan = bubble.querySelector('.bubble-val');
-              if (valSpan) valSpan.textContent = '$' + Number(value).toFixed(0);
-            }
-
-            if (r){
-              // Show bubble when pointer is down (dragging) and hide on release
-              r.addEventListener('pointerdown', function(e){
-                var sliderWrap = form.querySelector('.grant-slider');
-                if (sliderWrap) sliderWrap.classList.add('bubble-visible');
-              });
-
-              // Ensure we hide the bubble on pointerup anywhere
-              window.addEventListener('pointerup', function(e){
-                var sliderWrap = form.querySelector('.grant-slider');
-                if (sliderWrap) sliderWrap.classList.remove('bubble-visible');
-              });
-
-              r.addEventListener('input', function(e){ 
-                update(e.target.value); 
-                updateHidden(e.target.value);
-              });
-              r.addEventListener('change', function(e){ 
-                update(e.target.value); 
-                updateHidden(e.target.value);
-                // in case of keyboard change, briefly show bubble for feedback then hide
-                var sliderWrap = form.querySelector('.grant-slider');
-                if (sliderWrap) {
-                  sliderWrap.classList.add('bubble-visible');
-                  setTimeout(function(){ sliderWrap.classList.remove('bubble-visible'); }, 600);
-                }
-              });
-            }
-            if (d){
-              d.addEventListener('input', function(e){ 
-                update(e.target.value); 
-                updateHidden(e.target.value);
-              });
-              d.addEventListener('change', function(e){ 
-                update(e.target.value); 
-                updateHidden(e.target.value);
-              });
-            }
-
-            form.addEventListener('change', function(event){
-              var target = event.target;
-              if (!target || target.type !== 'radio') return;
-              if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
-
-              update((d && d.value) || (r && r.value) || (h && h.value) || minVal);
-            });
-
-            // Initialize values on load - ensure proper synchronization
-            // Start with the minimum value as default
-            var initial = minVal;
-
-            // Check if fields have existing values (from form reload or other)
-            if (d && d.value && toNumber(d.value) >= minVal && toNumber(d.value) <= maxVal) {
-              initial = toNumber(d.value);
-            } else if (r && r.value && toNumber(r.value) >= minVal && toNumber(r.value) <= maxVal) {
-              initial = toNumber(r.value);
-            } else if (h && h.value && toNumber(h.value) >= minVal && toNumber(h.value) <= maxVal) {
-              initial = toNumber(h.value);
-            }
-
-            // Force set all fields to the initial value
-            if (d) d.value = initial;
-            if (r) r.value = initial;
-            if (h) h.value = initial;
-
-            // Update displays
-            update(initial);
-
-            // create ticks and ensure bubble positioned, and reposition on resize
-            createTicks();
-            positionBubble(initial);
-            window.addEventListener('resize', function(){ positionBubble((d&&d.value) || (r&&r.value) || minVal); });
-
-            // Ensure hidden field is set on submit - use capture phase to ensure it runs before form submission
-            if (form){
-              form.addEventListener('submit', function(e){
-                // Update the hidden field with current values from either input
-                var val = (d && d.value) || (r && r.value) || (h && h.value) || minVal;
-                if (h) h.value = val;
-
-                // Also ensure the number field has the correct value for submission
-                if (d) d.value = val;
-              }, true); // Use capture phase to ensure this runs before other handlers
-            }
-          }
-
-          // Initialize on full page loads and Turbo visits
-          document.addEventListener('DOMContentLoaded', initOrderSlider);
-          document.addEventListener('turbo:load', initOrderSlider);
-        })();
-      </script>
-
-    <% elsif @product.accessory_groups.any? %>
-      <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
-        <%= hidden_field_tag :product_id, @product.id %>
-
-        <% user_region = current_user.set_region %>
-        <% fallback_region = "Rest of the World" %>
-        <% available_accessory_groups = @product.accessory_groups.select do |group|
-             group.accessories.any? do |accessory|
-               accessory.regional_prices.any? do |price|
-                 price.enabled && (price.region == user_region || price.region == fallback_region)
-               end
-             end
-           end %>
-        <% if available_accessory_groups.any? %>
-          <% accessory_group_choices = if params[:accessory_group_choices].respond_to?(:to_unsafe_h)
-              params[:accessory_group_choices].to_unsafe_h
-            elsif params[:accessory_group_choices].respond_to?(:to_h)
-              params[:accessory_group_choices].to_h
-            else
-              {}
-            end %>
-
-          <div class="accessory-groups">
-            <% available_accessory_groups.each do |group| %>
-              <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
-              <% available_accessories = group.accessories.select do |accessory|
-                    accessory.regional_prices.any? do |price|
-                      price.enabled && (price.region == user_region || price.region == fallback_region)
-                    end
-                  end %>
-              <% group_required = group.required? && available_accessories.any? %>
-              <% group_input_name = "accessory_group_choices[#{group.id}]" %>
-
-              <fieldset class="accessory-group" style="margin-bottom: 12px;">
-                <legend>
-                  <%= group.name %>
-                  <% if group_required %>
-                    <small>(required)</small>
-                  <% else %>
-                    <small>(optional)</small>
-                  <% end %>
-                </legend>
-
-                <div class="accessory-items">
-                  <% unless group_required %>
-                    <% none_id = "accessory_group_#{group.id}_none" %>
-                    <label class="accessory-item" for="<%= none_id %>" style="display: block; margin-bottom: 6px;">
-                      <%= radio_button_tag group_input_name,
-                                           "",
-                                           selected_choice.blank?,
-                                           id: none_id,
-                                           data: { accessory_cost: 0, accessory_image_url: safe_url(@product.image_url), accessory_name: @product.name } %>
-                      <span class="accessory-name">No selection</span>
-                      <span class="accessory-cost">+0 Charm Notches</span>
-                    </label>
-                  <% end %>
-
-                  <% available_accessories.each do |accessory| %>
-                    <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
-                    <% accessory_cost = accessory.regional_prices.where(region: user_region, enabled: true).first&.cost || accessory.regional_prices.where(region: fallback_region, enabled: true).first&.cost || 0 %>
-                    <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
-                      <%= radio_button_tag group_input_name,
-                                           accessory.id,
-                                           selected_choice == accessory.id.to_s,
-                                           id: input_id,
-                                           required: group_required,
-                                           data: { accessory_cost: accessory_cost, accessory_image_url: safe_url(accessory.image_url), accessory_name: accessory.name } %>
-                      <span class="accessory-name"><%= accessory.name.humanize %></span>
-                      <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
-                    </label>
-                  <% end %>
-                </div>
-              </fieldset>
-            <% end %>
-          </div>
-        <% end %>
-
-        <% base_cost = @product.cost(current_user.set_region).to_i %>
-        <% effective_cost = base_cost %>
-        <% if (sale = @product.active_sale) %>
-          <% effective_cost -= sale.discount_notches.to_i %>
-          <% effective_cost = 0 if effective_cost.negative? %>
-        <% end %>
-        <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong id="order_total_notches" data-base-cost="<%= effective_cost %>" style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', effective_cost) %></strong> Notches.</p>
-
-        <% if @product.physical? %>
-          <div style="margin-top: 16px; margin-bottom: 12px;">
-            <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
-            <%= select_tag "order[address]",
-                options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
-                prompt: "Select a shipping address",
-                style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
-                required: true %>
-            <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
-          </div>
-        <% end %>
-
-        <div style="margin-top: 12px;">
-          <%= f.submit "Confirm Purchase", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
-          <% if feature_enabled?(:shop) %>
-            <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
-          <% end %>
-        </div>
-      <% end %>
-
-      <script>
-        (function(){
-          function initAccessoryCostPreview(){
-            var form = document.querySelector('#order-form-container form');
-            var totalEl = document.getElementById('order_total_notches');
-            if (!form || !totalEl) return;
-
-            if (form.dataset.accessoryCostPreviewInitialized) return;
-            form.dataset.accessoryCostPreviewInitialized = '1';
-
-            function toNumber(v){
-              var n = Number(v);
-              return Number.isFinite(n) ? n : 0;
-            }
-
-            var baseCost = toNumber(totalEl.dataset.baseCost);
-
-            function selectedAccessoryCost(){
-              var total = 0;
-              var selected = form.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
-
-              selected.forEach(function(input){
-                total += toNumber(input.dataset.accessoryCost);
-              });
-
-              return total;
-            }
-
-            function updateTotal(){
-              var totalCost = baseCost + selectedAccessoryCost();
-              totalEl.textContent = String(Math.max(0, Math.round(totalCost)));
-            }
-
-            form.addEventListener('change', function(event){
-              var target = event.target;
-              if (!target || target.type !== 'radio') return;
-              if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
-
-              updateTotal();
-            });
-
-            updateTotal();
-          }
-
-          document.addEventListener('DOMContentLoaded', initAccessoryCostPreview);
-          document.addEventListener('turbo:load', initAccessoryCostPreview);
-        })();
-      </script>
+      </div>
     <% end %>
 
-  <% else %>
-    <% content_for :title, "Purchase of - #{@product.name}" %>
+    <% if available_accessory_groups.any? %>
+      <div class="accessory-groups">
+        <% available_accessory_groups.each do |group| %>
+          <% selected_choice = accessory_group_choices[group.id.to_s].to_s %>
+          <% available_accessories = group.accessories.select do |accessory|
+                accessory.regional_prices.any? do |price|
+                  price.enabled && (price.region == user_region || price.region == fallback_region)
+                end
+              end %>
+          <% group_required = group.required? && available_accessories.any? %>
+          <% group_input_name = "accessory_group_choices[#{group.id}]" %>
 
-    <h1>Purchase : <%= @product.name %></h1>
-    <h3>Cost : <%= @product.cost(current_user.set_region).to_i %></h3>
+          <fieldset class="accessory-group" style="margin-bottom: 12px;">
+            <legend>
+              <%= group.name.humanize %>
+              <% if group_required %>
+                <small>(required)</small>
+              <% else %>
+                <small>(optional)</small>
+              <% end %>
+            </legend>
 
-    <%= form_with url: orders_path, method: :post, data: { turbo: false } do |f| %>
-        <% if @product.physical? %>
-          <div style="margin-top: 16px; margin-bottom: 12px;">
-            <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
-            <%= select_tag "order[address]",
-                options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
-                prompt: "Select a shipping address",
-                style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
-                required: true %>
-            <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
-          </div>
+            <div class="accessory-items">
+              <% unless group_required %>
+                <% none_id = "accessory_group_#{group.id}_none" %>
+                <label class="accessory-item" for="<%= none_id %>" style="display: block; margin-bottom: 6px;">
+                  <%= radio_button_tag group_input_name,
+                                       "",
+                                       selected_choice.blank?,
+                                       id: none_id,
+                                       data: { accessory_cost: 0, accessory_image_url: safe_url(@product.image_url), accessory_name: @product.name } %>
+                  <span class="accessory-name">No selection</span>
+                  <span class="accessory-cost">+0 Charm Notches</span>
+                </label>
+              <% end %>
+
+              <% available_accessories.each do |accessory| %>
+                <% input_id = "accessory_group_#{group.id}_accessory_#{accessory.id}" %>
+                <% accessory_cost = accessory.regional_prices.where(region: user_region, enabled: true).first&.cost || accessory.regional_prices.where(region: fallback_region, enabled: true).first&.cost || 0 %>
+                <label class="accessory-item" for="<%= input_id %>" style="display: block; margin-bottom: 6px;">
+                  <%= radio_button_tag group_input_name,
+                                       accessory.id,
+                                       selected_choice == accessory.id.to_s,
+                                       id: input_id,
+                                       required: group_required,
+                                       data: { accessory_cost: accessory_cost, accessory_image_url: safe_url(accessory.image_url), accessory_name: accessory.name } %>
+                  <span class="accessory-name"><%= accessory.name.humanize %></span>
+                  <span class="accessory-cost">+<%= accessory_cost %> Charm Notches</span>
+                </label>
+              <% end %>
+            </div>
+          </fieldset>
         <% end %>
-
-        <%= hidden_field_tag :product_id, @product.id %>
-        <%= f.submit "Place Order", class: 'btn-retro', data: { disable_with: 'Processing...' } %>
+      </div>
     <% end %>
+
+    <% if @product.variable_grant? %>
+      <div style="margin-top:8px;">
+        Estimated Notches: <span style="font-family: Atkinson Hyperlegible Next; font-weight:700;" id="estimated_credits"><%= @product.grant_notches_for_dollars(@product.grant_min_dollars).to_i || 0 %></span>
+      </div>
+    <% elsif !@product.standard_cost? %>
+      <p>Confirm purchase of <strong><%= @product.name %></strong> for <strong id="order_total_notches" data-base-cost="<%= effective_cost %>" style="font-family: Comfortaa, monospace; font-weight: bold;"><%= sprintf('%.0f', effective_cost) %></strong> Notches.</p>
+    <% end %>
+
+    <% if @product.physical? %>
+      <div style="margin-top: 16px; margin-bottom: 12px;">
+        <label style="display: block; font-weight: 700; margin-bottom: 6px;">Shipping Address</label>
+        <%= select_tag "order[address]",
+            options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
+            prompt: "Select a shipping address",
+            style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;",
+            required: true %>
+        <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
+      </div>
+    <% end %>
+
+    <div style="margin-top: 12px;">
+      <%= f.submit(@product.variable_grant? ? "Place Order" : (@product.standard_cost? ? "Place Order" : "Confirm Purchase"), class: 'btn-retro', data: { disable_with: 'Processing...' }) %>
+      <% if feature_enabled?(:shop) %>
+        <%= link_to "Back to store", products_path, class: 'btn-retro btn-retro--outline', style: 'margin-left: 8px;' %>
+      <% end %>
+    </div>
+  <% end %>
+
+  <% if @product.standard_cost? %>
     <br>
-
     <div>
       <%= link_to "Back to Merchant", products_path %>
     </div>
   <% end %>
 </div>
+
+<script>
+  (function(){
+    // ---- Accessory image preview (runs for any product with accessory groups) ----
+    function initAccessoryPreview(){
+      var preview = document.getElementById('order-preview');
+      var previewImage = document.getElementById('order-preview-image');
+      var caption = document.getElementById('order-preview-caption');
+      if (!preview || !previewImage) return;
+
+      function findAccessoryImage(){
+        var selected = document.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
+        var imageUrl = previewImage.dataset.defaultSrc || '';
+        var labelText = 'Product preview';
+
+        selected.forEach(function(input){
+          if (!input) return;
+          var accessoryImageUrl = input.dataset.accessoryImageUrl;
+          if (accessoryImageUrl && accessoryImageUrl.trim() !== "") {
+            imageUrl = accessoryImageUrl;
+            labelText = input.dataset.accessoryName ? input.dataset.accessoryName + ' preview' : 'Accessory preview';
+          }
+        });
+
+        return { imageUrl: imageUrl, labelText: labelText };
+      }
+
+      previewImage.onerror = function() {
+        preview.style.display = 'none';
+        if (caption) caption.style.display = 'none';
+      };
+
+      function updatePreview(){
+        var previewInfo = findAccessoryImage();
+        if (previewInfo.imageUrl && previewInfo.imageUrl.trim() !== "" && previewInfo.imageUrl.trim() !== "#") {
+          preview.style.display = 'grid';
+          previewImage.src = previewInfo.imageUrl;
+          previewImage.alt = previewInfo.labelText;
+          if (caption) {
+            caption.style.display = '';
+            caption.textContent = previewInfo.labelText;
+          }
+        } else {
+          preview.style.display = 'none';
+          if (caption) caption.style.display = 'none';
+        }
+      }
+
+      document.addEventListener('change', function(event){
+        var target = event.target;
+        if (!target || target.type !== 'radio') return;
+        if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
+        updatePreview();
+      });
+
+      updatePreview();
+    }
+
+    // ---- Accessory cost total (flat-cost products with a visible running total) ----
+    function initAccessoryCostPreview(){
+      var form = document.querySelector('#order-form-container form');
+      var totalEl = document.getElementById('order_total_notches');
+      if (!form || !totalEl) return;
+      if (form.dataset.accessoryCostPreviewInitialized) return;
+      form.dataset.accessoryCostPreviewInitialized = '1';
+
+      function toNumber(v){
+        var n = Number(v);
+        return Number.isFinite(n) ? n : 0;
+      }
+
+      var baseCost = toNumber(totalEl.dataset.baseCost);
+
+      function selectedAccessoryCost(){
+        var total = 0;
+        var selected = form.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
+        selected.forEach(function(input){ total += toNumber(input.dataset.accessoryCost); });
+        return total;
+      }
+
+      function updateTotal(){
+        var totalCost = baseCost + selectedAccessoryCost();
+        totalEl.textContent = String(Math.max(0, Math.round(totalCost)));
+      }
+
+      form.addEventListener('change', function(event){
+        var target = event.target;
+        if (!target || target.type !== 'radio') return;
+        if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
+        updateTotal();
+      });
+
+      updateTotal();
+    }
+
+    // ---- Variable-grant slider (only present when the product is variable_grant) ----
+    function initOrderSlider(){
+      var d = document.getElementById('grant_amount_display');
+      var form = d && d.form ? d.form : document.querySelector('#order-form-container form');
+      if (!d || !form) return;
+      if (form.dataset.orderSliderInitialized) return;
+      form.dataset.orderSliderInitialized = '1';
+
+      var r = document.getElementById('grant_amount_range');
+      var h = document.getElementById('grant_amount_dollars');
+      var est = document.getElementById('estimated_credits');
+      var topCredits = document.getElementById('price_credits_display');
+      var ratio = <%= @product.variable_grant? ? @product.credits_for_dollars(1) : 0 %>;
+      var minVal = <%= @product.variable_grant? ? @product.grant_min_dollars : 0 %>;
+      var maxVal = <%= @product.variable_grant? ? @product.grant_max_dollars : 0 %>;
+      var baseCost = <%= @product.variable_grant? ? @product.base_cost : 0 %>;
+
+      function toNumber(v){ return Number(String(v || '').replace(/[^0-9.\-]/g, '')) || 0; }
+
+      function selectedAccessoryCost(){
+        var total = 0;
+        var selected = form.querySelectorAll('input[type="radio"][name^="accessory_group_choices["]:checked');
+        selected.forEach(function(input){ total += toNumber(input.dataset.accessoryCost); });
+        return total;
+      }
+
+      function update(val){
+        var n = toNumber(val);
+        if (n < minVal) n = minVal;
+        if (n > maxVal) n = maxVal;
+
+        if (d && d.value != n) d.value = n;
+        if (r && r.value != n) r.value = n;
+        if (h) h.value = n;
+
+        if (ratio) {
+          var baseNotches = Math.round(n * ratio);
+          var totalNotches = baseNotches + selectedAccessoryCost();
+          var clampedTotal = Math.max(0, totalNotches) + baseCost;
+
+          if (est) est.innerText = String(clampedTotal);
+          if (topCredits) topCredits.innerText = String(clampedTotal);
+        }
+        var priceDisplay = document.getElementById('price_usd_display');
+        if (priceDisplay) priceDisplay.innerText = n.toFixed(1);
+
+        positionBubble(n);
+        if (r) r.setAttribute('aria-valuenow', n);
+      }
+
+      function updateHidden(val){ if (h) h.value = val; }
+
+      function createTicks(){
+        var ticksEl = form.querySelector('.ticks');
+        if (!ticksEl || !r) return;
+        ticksEl.innerHTML = '';
+        var range = maxVal - minVal;
+        var segments = 10;
+        for (var i = 0; i <= segments; i++){
+          var val = minVal + (range * (i / segments));
+          var percent = range > 0 ? ((val - minVal) / range) * 100 : 0;
+          var tick = document.createElement('div');
+          tick.className = 'tick';
+          tick.style.left = percent + '%';
+          ticksEl.appendChild(tick);
+        }
+      }
+
+      function positionBubble(value){
+        var bubble = form.querySelector('.bubble');
+        if (!bubble || !r) return;
+        var pct = 0;
+        var range = maxVal - minVal;
+        if (range > 0) pct = (value - minVal) / range;
+        var rect = r.getBoundingClientRect();
+        var thumbX = rect.left + pct * rect.width;
+        var relLeft = thumbX - rect.left;
+        bubble.style.left = relLeft + 'px';
+        var valSpan = bubble.querySelector('.bubble-val');
+        if (valSpan) valSpan.textContent = '$' + Number(value).toFixed(0);
+      }
+
+      r && r.addEventListener('pointerdown', function(){
+        var sliderWrap = form.querySelector('.grant-slider');
+        if (sliderWrap) sliderWrap.classList.add('bubble-visible');
+      });
+
+      window.addEventListener('pointerup', function(){
+        var sliderWrap = form.querySelector('.grant-slider');
+        if (sliderWrap) sliderWrap.classList.remove('bubble-visible');
+      });
+
+      if (r){
+        r.addEventListener('input', function(e){ update(e.target.value); updateHidden(e.target.value); });
+        r.addEventListener('change', function(e){
+          update(e.target.value);
+          updateHidden(e.target.value);
+          var sliderWrap = form.querySelector('.grant-slider');
+          if (sliderWrap) {
+            sliderWrap.classList.add('bubble-visible');
+            setTimeout(function(){ sliderWrap.classList.remove('bubble-visible'); }, 600);
+          }
+        });
+      }
+      if (d){
+        d.addEventListener('input', function(e){ update(e.target.value); updateHidden(e.target.value); });
+        d.addEventListener('change', function(e){ update(e.target.value); updateHidden(e.target.value); });
+      }
+
+      form.addEventListener('change', function(event){
+        var target = event.target;
+        if (!target || target.type !== 'radio') return;
+        if (!target.name || target.name.indexOf('accessory_group_choices[') !== 0) return;
+        update((d && d.value) || (r && r.value) || (h && h.value) || minVal);
+      });
+
+      var initial = minVal;
+      if (d && d.value && toNumber(d.value) >= minVal && toNumber(d.value) <= maxVal) {
+        initial = toNumber(d.value);
+      } else if (r && r.value && toNumber(r.value) >= minVal && toNumber(r.value) <= maxVal) {
+        initial = toNumber(r.value);
+      } else if (h && h.value && toNumber(h.value) >= minVal && toNumber(h.value) <= maxVal) {
+        initial = toNumber(h.value);
+      }
+
+      if (d) d.value = initial;
+      if (r) r.value = initial;
+      if (h) h.value = initial;
+
+      update(initial);
+      createTicks();
+      positionBubble(initial);
+      window.addEventListener('resize', function(){ positionBubble((d && d.value) || (r && r.value) || minVal); });
+
+      form.addEventListener('submit', function(){
+        var val = (d && d.value) || (r && r.value) || (h && h.value) || minVal;
+        if (h) h.value = val;
+        if (d) d.value = val;
+      }, true);
+    }
+
+    function initAll(){
+      initAccessoryPreview();
+      initAccessoryCostPreview();
+      initOrderSlider();
+    }
+
+    document.addEventListener('DOMContentLoaded', initAll);
+    document.addEventListener('turbo:load', initAll);
+  })();
+</script>
