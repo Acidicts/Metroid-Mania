@@ -13,7 +13,7 @@
 <% displayed_url = project_banner_url(@project) %>
 <% content_for :og_image, displayed_url %>
 <% content_for :twitter_card, "summary_large_image" %>
-<% content_for :og_author, @project.user&.display_name %>
+<% content_for :og_author, @project.user&.username %>
 
 <% content_for :styles do %>
   <%= stylesheet_link_tag "devlogs", "data-turbo-track": "reload" %>
@@ -37,7 +37,7 @@
         <% if defined?(current_user) %>
           <div class="kv" style="margin-bottom:8px">
             <div class="label">By</div>
-            <div class="value"><%= link_to @project.user.display_name, user_profile_path(@project.user) %></div>
+            <div class="value"><%= link_to @project.user.username, user_profile_path(@project.user) %></div>
           </div>
         <% end %>
         <p class="project-desc"><%= simple_format(@project.description || 'No description provided yet. \n Required for Ship') %></p>

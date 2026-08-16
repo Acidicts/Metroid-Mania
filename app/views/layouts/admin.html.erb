@@ -22,5 +22,6 @@
         <%= yield %>
       </main>
     </div>
+    <%= javascript_include_tag "application", type: "module", "data-turbo-track": "reload" %>
   </body>
 </html>

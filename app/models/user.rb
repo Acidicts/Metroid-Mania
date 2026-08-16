@@ -8,6 +8,7 @@
 #  created_at              :datetime         not null
 #  credit_offset           :float            default: 0.0, not null
 #  currency                :float
+#  default_address_id      :string
 #  email                   :string
 #  flagged_for_fraud       :boolean          default: false, not null
 #  flagged_for_fraud_by_id :integer
@@ -16,6 +17,7 @@
 #  hackatime_api_key       :string
 #  hackatime_synced_at     :datetime
 #  hackatime_trust_status  :string
+#  nda                     :boolean
 #  name                    :string
 #  password_digest         :string
 #  provider                :string
@@ -26,6 +28,7 @@
 #  slack_id                :string
 #  uid                     :string
 #  updated_at              :datetime         not null
+#  username                :string
 #  verification_status     :string
 #  xp                      :integer          default: 0, not null
 #
@@ -73,6 +76,10 @@ class User < ApplicationRecord
   attribute :hackatime_trust_status, :string
 
   attribute :hca_id, default: ""
+  attribute :nda, default: false
+  attribute :default_address_id, default: ""
+
+  attribute :username, default: ""
 
   # Region
   REGIONS = [
@@ -100,6 +107,15 @@ class User < ApplicationRecord
 
   validate :ensure_fraud_reason, on: :update
   validate :get_xp
+
+  validate :ensure_username
+
+  def ensure_username
+    if username.blank?
+      self.setup = false
+      save(validate: false)
+    end
+  end
 
   def get_xp
     # XP is based on the amount of time the user themself has documented
@@ -423,7 +439,7 @@ class User < ApplicationRecord
 
   # Display name for the user (falls back to email or name)
   def display_name
-    name.presence || email.presence || "User #{id}"
+    name.presence || "User #{id}"
   end
 
   # System placeholder user used to own records of deleted users. Created lazily.

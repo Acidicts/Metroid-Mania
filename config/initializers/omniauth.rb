@@ -4,7 +4,7 @@ if ENV["HACKCLUB_CLIENT_ID"].present? && ENV["HACKCLUB_CLIENT_SECRET"].present?
   Rails.application.config.middleware.use OmniAuth::Builder do
     if ENV["HQ"]&.downcase == "true"
       provider_options = {
-        scope: "profile email name slack_id verification_status basic_info address"
+        scope: "profile email name slack_id verification_status basic_info address legal_name"
       }
     else
       provider_options = {

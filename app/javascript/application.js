@@ -9,6 +9,20 @@ Turbo.session.drive = false;
 
 console.log('Turbo Drive disabled - using traditional page loads to prevent frozen UI');
 
+document.addEventListener('click', (event) => {
+  const button = event.target.closest('[data-controller="admin-overlay"] [data-admin-overlay-target="button"]');
+  if (!button) return;
+
+  const container = button.closest('[data-controller="admin-overlay"]');
+  const overlay = container && container.querySelector('[data-admin-overlay-target="overlay"]');
+  if (!overlay) return;
+
+  overlay.hidden = !overlay.hidden;
+  overlay.classList.toggle('hidden', overlay.hidden);
+  button.textContent = overlay.hidden ? 'Show DB Info' : 'Hide DB Info';
+  button.setAttribute('aria-expanded', String(!overlay.hidden));
+});
+
 function initThemedFormValidationWarnings() {
   if (window.__themedValidationWarningsBound) return;
   window.__themedValidationWarningsBound = true;

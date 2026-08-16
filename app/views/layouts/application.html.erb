@@ -96,7 +96,7 @@
                 <% if slack_profile(current_user) && slack_profile(current_user)[:image].present? %>
                   <%= image_tag slack_profile(current_user)[:image], alt: "#{current_user.name} avatar", style: "height:40px; width:40px; border-radius:999px; vertical-align:middle; margin-right:8px;" %>
                 <% end %>
-                <span><%= current_user.name %></span>
+                <span><%= current_user.username %></span>
               </a>
 
               <ul class="profile-dropdown">

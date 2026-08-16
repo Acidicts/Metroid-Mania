@@ -32,6 +32,20 @@ class HackclubAuthService
     result&.dig("identity") || {}
   end
 
+  def get_user_legal_name
+    user_data = get_user
+    if user_data["legal_first_name"].present? && user_data["legal_last_name"].present?
+      [ user_data["legal_first_name"], user_data["legal_last_name"], true ]
+    else
+      [ @user.name.split(" ").first, @user.name.split(" ").last, false ]
+    end
+  end
+
+  def get_user_birthday
+    user_data = get_user
+    user_data["birthday"] || "Birthday Not Found"
+  end
+
   def get_user_addresses
     user_data = get_user
     user_data["addresses"] || []

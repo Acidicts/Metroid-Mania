@@ -65,7 +65,7 @@
         <p style="margin-top:8px; margin-bottom:0">
           <strong>Request:</strong> <%= link_to "Request ##{ship_request.id}", project_ship_request_path(project, ship_request) %><br>
           <% if ship_request.processed_by %>
-            <strong>Rejected by:</strong> <%= ship_request.processed_by&.name || ship_request.processed_by&.email %><br>
+            <strong>Rejected by:</strong> <%= ship_request.processed_by&.username %><br>
           <% end %>
           <strong>Processed:</strong> <%= ship_request.approved_at&.strftime("%b %-d, %Y %l:%M %p") %>
         </p>

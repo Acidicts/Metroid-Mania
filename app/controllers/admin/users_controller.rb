@@ -15,11 +15,6 @@ module Admin
     end
 
     def update
-      if @user.superadmin?
-        redirect_to admin_users_path, alert: "Cannot change the superadmin's role"
-        return
-      end
-
       # When the admin supplies a credit_target (desired total = ships + offset),
       # derive credit_offset = target - total_shipped so the formula holds.
       # Also support the legacy `currency` parameter: tests and some admin UI
@@ -30,6 +25,17 @@ module Admin
       unless base_params.is_a?(Hash)
         Rails.logger.warn "Admin::UsersController#update - expected hash from user_params but got #{base_params.inspect}; defaulting to empty hash"
         base_params = {}
+      end
+
+      previous_nda = @user.nda
+
+      if current_user.superadmin?
+        base_params[:nda] = params[:user][:nda] if params[:user].key?(:nda)
+      end
+
+      if !@user.superadmin?
+        # Allow role changes only when role param present
+        permitted[:role] = params[:user][:role] if params[:user][:role].present?
       end
 
       if (params[:user].is_a?(Hash) || params[:user].is_a?(ActionController::Parameters)) && params[:user].key?(:credit_target)
@@ -79,6 +85,9 @@ module Admin
       # record isn't saved and the errors are displayed.
       if @user.errors.any?
         render :edit, status: :unprocessable_entity
+        Audit.create(user: current_user, action: "failed_to_update_user", deatils: {
+          errors: @user.errors
+        })
         return
       end
 
@@ -124,6 +133,14 @@ module Admin
           else
             @user.update_column(:flagged_for_fraud_by_id, nil) if @user.flagged_for_fraud_by_id.present?
           end
+        end
+
+        if previous_nda != base_params[:nda]
+          Audit.create(user: current_user, action: "change_nda_status", details: {
+            user_id: @user.id,
+            previous_nda: previous_nda,
+            nda: @user.nda
+          })
         end
 
         flash_pass("User updated")
@@ -211,16 +228,24 @@ module Admin
         permitted[:flagged_for_fraud] = params[:user][:flagged_for_fraud] if params[:user].key?(:flagged_for_fraud)
         permitted[:fraud_reason] = params[:user][:fraud_reason] if params[:user].key?(:fraud_reason)
 
-        # Allow role changes only when role param present
-        permitted[:role] = params[:user][:role] if params[:user][:role].present?
-
         # Allow admins to adjust the credit offset (computed from credit_target in update action)
         permitted[:credit_offset] = params[:user][:credit_offset] if params[:user].key?(:credit_offset)
         permitted[:setup] = params[:user][:setup] if params[:user].key?(:setup)
+
         #
         permitted[:currency] = params[:user][:currency] if params[:user].key?(:currency)
       end
       permitted
+    end
+
+    private
+
+    def int_to_bool(int)
+      if int == 1
+        true
+      else
+        false
+      end
     end
   end
 end

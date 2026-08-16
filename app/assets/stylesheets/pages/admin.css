@@ -455,8 +455,13 @@ body.admin .admin-card {
 }
 
 /* side panel for edit forms */
-.admin-two-col { display: flex; gap: 20px; align-items: flex-start; }
+.admin-two-col {
+  display: flex;
+  gap: 20px;
+  align-items: stretch; /* was: flex-start — this made the aside shrink to its own content height */
+}
 .admin-two-col-main { flex: 1; }
+
 .admin-side-panel {
   width: 380px;
   max-width: 92vw;
@@ -471,10 +476,17 @@ body.admin .admin-card {
 .admin-side-panel .close-panel { background: transparent; border: none; font-size: 1.1rem; cursor: pointer; }
 .admin-side-panel .panel-body { max-height: 72vh; overflow: auto; }
 
-/* Admin actions panel styles */
-.admin-actions-panel { width: 320px; min-width: 220px; align-self: flex-start; position: sticky; top: 18px; }
+.admin-actions-panel {
+  display: flex;
+  flex-direction: column;
+  width: 320px;
+  min-width: 220px;
+  align-self: stretch;      /* was: flex-start — this was overriding the grid's stretch */
+  position: sticky;
+  top: 18px;
+}
 
-.admin-card.admin-actions { padding: 16px; border-radius: 8px; background: var(--admin-bg); box-shadow: 0 6px 18px rgba(13,43,69,0.06); }
+.admin-card.admin-actions { position: relative; padding: 16px; border-radius: 8px; background: var(--admin-bg); box-shadow: 0 6px 18px rgba(13,43,69,0.06); }
 
 .admin-actions-title { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom: 12px; }
 .admin-actions-title h3 { margin: 0; font-size: 1.05rem; }
@@ -650,7 +662,11 @@ body.admin .admin-card {
   line-height: 1.4;
 }
 
-.admin-ship-request-actions-layout { gap: 16px; }
+.admin-ship-request-actions-layout { 
+  gap: 16px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+}
 
 .admin-ship-request-form .admin-form-row { grid-template-columns: 190px 1fr; }
 
@@ -686,6 +702,12 @@ body.admin .admin-card {
 .admin-ship-request-form .admin-form-actions {
   margin-top: 10px;
   justify-content: flex-start;
+}
+
+.admin-ship-request-reject-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 
 .admin-ship-request-reject-panel .admin-card {
@@ -845,6 +867,41 @@ body.admin .admin-card {
   margin-top: 4px;
 }
 
+.admin-overlay {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  z-index: 1000;
+  background: var(--admin-bg);
+  border: 2px dashed var(--palette-2);
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 6px 18px rgba(13,43,69,0.12);
+  min-width: 300px;
+}
+
+.admin-overlay-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  width: 100%;
+}
+
+.admin-overlay-header button {
+  background: var(--palette-2);
+  color: white;
+  border-radius: 50%;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+
+.hidden {
+  display: none !important;
+}
+
 @media (max-width: 700px) {
   .admin-site-settings-input-row { grid-template-columns: 1fr; }
   .admin-site-settings-input-row .admin-form-label { margin-top: 0; }
@@ -870,4 +927,14 @@ body.admin .admin-card {
   .admin-actions-group { justify-content: flex-start; }
 }
 
+.gap-1r {
+  gap: 1rem;
+}
 
+.jc-sb {
+  justify-content: space-between;
+}
+
+.h-100 {
+  height: 100%;
+}

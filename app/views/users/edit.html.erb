@@ -20,9 +20,29 @@
     <% end %>
 
     <div class="form-group">
+      <div class="">
+        <%= f.label :username, "Set or Change Your Username" %>
+        <%= f.text_field :username, id: "font_on_toggle", style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;" %>
+      </div>
+    </div>
+    
+    <div class="form-group">
       <div class="checkbox-card">
         <%= f.check_box :font_on, id: "font_on_toggle" %>
         <%= f.label :font_on, "Enable Custom Fonts", for: "font_on_toggle" %>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="">
+        <%= f.label :default_address_id, "Default Address" %>
+        <%= select_tag "order[address]",
+            options_for_select((@addresses || []).map { |a| [ "#{a[:line_1]}, #{a[:city]}, #{a[:state]}", a[:id] ] }),
+            prompt: "Select a shipping address",
+            style: "display: block; width: 100%; padding: 10px 13px; border: 1.5px solid rgba(74,122,150,0.28); border-radius: 7px; font-size: 0.94rem; font-family: inherit; background: #fff; box-sizing: border-box; color: #292831;"
+          %>
+        <%= link_to " Add New Address", "https://auth.hackclub.com/addresses", class: "address-trigger-btn", target: "_blank", rel: "noopener" %>
+      
       </div>
     </div>
 

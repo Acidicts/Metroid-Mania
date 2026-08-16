@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_08_13_132529) do
+ActiveRecord::Schema[8.1].define(version: 2026_08_15_100109) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -401,6 +401,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_132529) do
     t.datetime "created_at", null: false
     t.float "credit_offset", default: 0.0, null: false
     t.float "currency"
+    t.string "default_address_id"
     t.string "email"
     t.boolean "flagged_for_fraud", default: false, null: false
     t.integer "flagged_for_fraud_by_id"
@@ -411,6 +412,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_132529) do
     t.string "hackatime_trust_status"
     t.string "hca_id"
     t.string "name"
+    t.boolean "nda", default: false
     t.string "password_digest"
     t.string "phone_number"
     t.string "provider"
@@ -422,6 +424,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_08_13_132529) do
     t.string "steam_username"
     t.string "uid"
     t.datetime "updated_at", null: false
+    t.string "username"
     t.string "verification_status"
     t.integer "xp", default: 0, null: false
     t.index ["flagged_for_fraud_by_id"], name: "index_users_on_flagged_for_fraud_by_id"

@@ -12,7 +12,13 @@ module Admin
     def show
       @users = User.order(:name)
 
-      # nothing to sync (multiplier removed)
+      hca_s = HackclubAuthService.new(@ship_request.project.user)
+
+      @legal_name = hca_s.get_user_legal_name
+      @birthday = hca_s.get_user_birthday
+      @address = @ship_request.project.user.default_address_id.present? ? hca_s.get_address_from_id(@ship_request.project.user.default_address_id) : "Address Not Found"
+
+      @max_hours = @ship_request.devlogged_seconds / 3600.0
     end
 
     def approve

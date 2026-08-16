@@ -70,6 +70,9 @@
 
     <div class="nb-linkbar">
       <%= link_to "View Request →", project_ship_request_path(project, ship_request), class: "nb-btn nb-btn-primary nb-btn-sm" %>
+      <% if current_user.admin? %>
+        <%= link_to "Admin View →", admin_ship_request_path(ship_request), class: "nb-btn nb-btn-primary nb-btn-sm" %>
+      <% end %>
     </div>
   </div>
 </div>

@@ -118,8 +118,8 @@
         </section>
       </div>
 
-      <aside class="admin-actions-panel admin-ship-request-reject-panel">
-        <div class="admin-card admin-actions">
+      <aside class="admin-actions-panel gap-1r jc-sb h-100">
+        <div class="admin-card admin-actions admin-ship-request-reject-panel">
           <div class="admin-actions-title">
             <h3>Reject request</h3>
           </div>
@@ -135,6 +135,9 @@
             <%= f.submit "Reject", class: "btn-admin btn-admin-warning btn-block" %>
           <% end %>
         </div>
+        <% if current_user.nda? %>
+          <%= render "admin/unified_db_info", project: @ship_request.project%>
+        <% end %>
       </aside>
     </div>
   <% else %>

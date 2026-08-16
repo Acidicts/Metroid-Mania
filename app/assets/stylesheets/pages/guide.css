@@ -155,6 +155,53 @@
     cursor: pointer;
 }
 
+.guide-username-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+}
+
+.guide-username-field label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--main-700);
+}
+
+.guide-username-input {
+    width: 100%;
+    padding: 0.7rem 0.9rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.12);
+    color: var(--main-900);
+    outline: none;
+    transition: border-color 120ms ease, box-shadow 120ms ease;
+    box-sizing: border-box;
+}
+
+.guide-username-input::placeholder {
+    color: rgba(41, 40, 49, 0.35);
+    font-weight: 400;
+}
+
+.guide-username-input:focus {
+    border-color: var(--accent1);
+    box-shadow: 0 0 0 4px rgba(251, 186, 173, 0.25);
+}
+
+.guide-username-status {
+    font-size: 0.8rem;
+    min-height: 1.2em;
+    color: var(--main-700);
+}
+
 .guide-summary ul {
     list-style: none;
     margin: 0.5rem 0;
@@ -184,6 +231,7 @@
     background: var(--accent3);
     padding-top: 12px;
     z-index: 2;
+    bottom: 0;
 }
 
 .guide-actions button,
@@ -228,5 +276,13 @@
 
     .guide .form-actions {
         justify-content: center;
+    }
+
+    .guide-username-field {
+        padding: 12px;
+    }
+
+    .guide-username-input {
+        font-size: 1rem;
     }
 }

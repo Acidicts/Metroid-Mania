@@ -1,0 +1,255 @@
+<div class="admin-card unified-db-card" data-controller="admin-overlay">
+  <div class="unified-db-header">
+    <h3 class="unified-db-title">Unified DB Info</h3>
+    <button id="show-db-info" class="unified-db-toggle-btn">Show DB Info</button>
+  </div>
+
+  <div class="admin-overlay unified-db-overlay hidden" hidden id="unified-db-info-overlay">
+    <div class="admin-overlay-header">
+        <h3>Unified DB Fields Information</h3>
+      <button id="close-db-info" class="unified-db-close-btn">&times;</button>
+    </div>
+
+    <div class="unified-db-grid">
+      <div class="unified-db-section">
+        <h4 class="unified-db-section-label">Links</h4>
+        <div class="unified-db-row">
+          <div class="unified-db-field">
+            <span class="unified-db-key">Code URL</span>
+            <span class="unified-db-value"><%= regulate_url(project.repository_url) %></span>
+          </div>
+          <div class="unified-db-field">
+            <span class="unified-db-key">Demo URL</span>
+            <span class="unified-db-value"><%= regulate_url(project.demo_link) %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="unified-db-section">
+        <h4 class="unified-db-section-label">Identity</h4>
+        <div class="unified-db-row">
+          <div class="unified-db-field">
+            <span class="unified-db-key">Name</span>
+            <span class="unified-db-value"><%= @legal_name[0] %> <%= @legal_name[1] %></span>
+            <span class="unified-db-meta"><%= @legal_name[2] ? "Retrieved" : "Not Retrieved" %></span>
+          </div>
+          <div class="unified-db-field">
+            <span class="unified-db-key">Email</span>
+            <span class="unified-db-value"><%= @ship_request.project.user.email %></span>
+          </div>
+          <div class="unified-db-field">
+            <span class="unified-db-key">Birthday</span>
+            <span class="unified-db-value"><%= @birthday %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="unified-db-section">
+        <h4 class="unified-db-section-label">Address</h4>
+        <div class="unified-db-row">
+          <div class="unified-db-field">
+            <span class="unified-db-key">Full Address</span>
+            <span class="unified-db-value">
+              <% if @address.is_a?(Hash) %>
+                <%= [@address["line_1"], @address["line_2"], @address["city"], @address["country"], @address["postal_code"]].compact_blank.join(", ") %>
+              <% else %>
+                <%= @address %>
+              <% end %>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="unified-db-section">
+        <h4 class="unified-db-section-label">Review Details</h4>
+        <div class="unified-db-row">
+          <div class="unified-db-field">
+            <span class="unified-db-key">Max Hours</span>
+            <span class="unified-db-value"><%= @max_hours.round(2) %></span>
+          </div>
+          <div class="unified-db-field">
+            <span class="unified-db-key">Reviewer Input</span>
+            <span class="unified-db-value">Screenshot &amp; Description</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      const button = document.getElementById("show-db-info");
+      const closeButton = document.getElementById("close-db-info");
+      const overlay = document.getElementById("unified-db-info-overlay");
+
+      button.addEventListener("click", function() {
+        overlay.classList.toggle("hidden");
+        overlay.hidden = !overlay.hidden;
+      });
+
+      closeButton.addEventListener("click", function() {
+        overlay.classList.toggle("hidden");
+        overlay.hidden = !overlay.hidden;
+      });
+    });
+  </script>
+</div>
+
+<style>
+  /* Unified DB Info Card */
+  .unified-db-card {
+    padding: 16px 20px;
+    border-radius: 10px;
+    background: var(--admin-bg);
+    border: 1px solid rgba(13,43,69,0.06);
+    box-shadow: 0 1px 3px rgba(13,43,69,0.04);
+    margin-bottom: 12px;
+  }
+
+  .unified-db-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .unified-db-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--admin-900);
+  }
+
+  .unified-db-toggle-btn {
+    padding: 6px 14px;
+    border: 2px solid var(--palette-2);
+    border-radius: 6px;
+    background: linear-gradient(180deg, #fff, rgba(255,255,255,0.92));
+    color: var(--palette-2);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 120ms ease;
+    white-space: nowrap;
+  }
+
+  .unified-db-toggle-btn:hover {
+    background: var(--palette-2);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(238,134,149,0.25);
+  }
+
+  /* Overlay */
+  .unified-db-overlay {
+    width: 520px;
+    max-width: calc(100vw - 40px);
+    max-height: 80vh;
+    overflow-y: auto;
+  }
+
+  .unified-db-close-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--palette-2);
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    font-size: 1.2rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 120ms ease;
+  }
+
+  .unified-db-close-btn:hover {
+    background: var(--palette-3);
+  }
+
+  /* Grid layout inside overlay */
+  .unified-db-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .unified-db-section {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(13,43,69,0.05);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+
+  .unified-db-section-label {
+    margin: 0 0 8px 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--palette-3);
+    border-bottom: 1px solid rgba(13,43,69,0.06);
+    padding-bottom: 6px;
+  }
+
+  .unified-db-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+  }
+
+  .unified-db-field {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .unified-db-key {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--admin-700);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .unified-db-value {
+    font-size: 0.9rem;
+    color: var(--admin-900);
+    font-weight: 500;
+    word-break: break-word;
+  }
+
+  .unified-db-meta {
+    font-size: 0.75rem;
+    color: var(--admin-700);
+    font-style: italic;
+  }
+
+  /* Responsive */
+  @media (max-width: 560px) {
+    .unified-db-overlay {
+      width: 100%;
+      max-width: 100%;
+      left: 0;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      transform: none;
+      border-radius: 0;
+      border: none;
+    }
+
+    .unified-db-row {
+      grid-template-columns: 1fr;
+    }
+
+    .unified-db-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .unified-db-toggle-btn {
+      width: 100%;
+    }
+  }
+</style>
