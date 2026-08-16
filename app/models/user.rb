@@ -111,7 +111,7 @@ class User < ApplicationRecord
   validate :ensure_username
 
   def ensure_username
-    if username.blank?
+    if username.blank? || username.nil?
       self.setup = false
       save(validate: false)
     end
