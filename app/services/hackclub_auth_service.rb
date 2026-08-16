@@ -57,12 +57,12 @@ class HackclubAuthService
     addresses.find { |item| item["id"].to_s == id.to_s || item[:id].to_s == id.to_s }
   end
 
-  class << self
-    def connection
-      @connection ||= Faraday.new(url: BASE_URL) do |conn|
-        conn.headers["Content-Type"] = "application/json"
-        conn.headers["User-Agent"] = "MetroidMania/1.0"
-      end
+  private
+
+  def connection
+    @connection ||= Faraday.new(url: BASE_URL) do |conn|
+      conn.headers["Content-Type"] = "application/json"
+      conn.headers["User-Agent"] = "MetroidMania/1.0"
     end
   end
 end
