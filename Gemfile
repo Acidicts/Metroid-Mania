@@ -15,7 +15,7 @@ gem "jbuilder"
 
 gem "tzinfo-data", platforms: %i[ windows jruby ]
 
-gem "bcrypt", "~> 3.1.18"
+gem "bcrypt", "~> 3.1.22"
 
 gem "solid_cache"
 gem "solid_queue"
