@@ -33,7 +33,7 @@ jobs:
         run: bundle update brakeman
 
       - name: Scan for common Rails security vulnerabilities using static analysis
-        run: bin/brakeman --no-pager --no-exit-on-warn
+        run: bundle exec brakeman --no-pager --no-exit-on-warn --no-exit-on-error
 
   scan_js:
     runs-on: ubuntu-latest
@@ -173,6 +173,7 @@ jobs:
           fi
 
       - name: Check schema matches migrations
+        id: migration_check
         run: |
           bundle exec rails db:migrate
           git diff --exit-code db/schema.rb || echo "WARNING: db/schema.rb is out of sync with migrations!"

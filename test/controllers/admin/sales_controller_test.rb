@@ -2,7 +2,14 @@ require "test_helper"
 
 class Admin::SalesControllerTest < ActionDispatch::IntegrationTest
   setup do
-    @admin = users(:admin)
+    @admin = User.create!(
+      provider: "test",
+      uid: "sales-admin-#{SecureRandom.uuid}",
+      email: "sales-admin-#{SecureRandom.uuid}@example.com",
+      name: "Sales Admin",
+      role: :admin,
+      setup: true
+    )
     @sale = sales(:one)
     @product = products(:one) rescue Product.create!(name: "Notches")
   end
