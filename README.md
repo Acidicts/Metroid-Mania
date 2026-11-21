@@ -75,7 +75,7 @@ This project is a Ruby on Rails based system for managing the You Ship We Ship (
 ## Installation
 
 ### Prerequisites
-- Ruby 3.4.3 (see `.ruby-version`)
+- Ruby 3.4.13 (see `.ruby-version`)
 - Rails 8.1.2
 - SQLite3 (development) or PostgreSQL (production)
 - Node.js (for asset compilation)
